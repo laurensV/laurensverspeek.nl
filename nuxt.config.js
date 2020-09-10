@@ -1,5 +1,3 @@
-import colors from 'vuetify/es5/util/colors'
-
 export default {
   /*
   ** Nuxt rendering mode
@@ -31,12 +29,15 @@ export default {
   ** Global CSS
   */
   css: [
+    '@/assets/scss/common.scss'
   ],
   /*
   ** Plugins to load before mounting the App
   ** https://nuxtjs.org/guide/plugins
   */
   plugins: [
+    '~/plugins/modal.js',
+    '~/plugins/snackbar.js'
   ],
   /*
   ** Auto import components
@@ -47,8 +48,6 @@ export default {
   ** Nuxt.js dev-modules
   */
   buildModules: [
-    // Doc: https://github.com/nuxt-community/eslint-module
-    '@nuxtjs/eslint-module',
     '@nuxtjs/vuetify'
   ],
   /*
@@ -68,18 +67,22 @@ export default {
   ** https://github.com/nuxt-community/vuetify-module
   */
   vuetify: {
-    customVariables: ['~/assets/variables.scss'],
+    customVariables: ['~/assets/scss/variables.scss'],
+    options: {
+      customProperties: true
+    },
+    treeShake: true,
     theme: {
-      dark: true,
+      dark: false,
       themes: {
-        dark: {
-          primary: colors.blue.darken2,
-          accent: colors.grey.darken3,
-          secondary: colors.amber.darken3,
-          info: colors.teal.lighten1,
-          warning: colors.amber.base,
-          error: colors.deepOrange.accent4,
-          success: colors.green.accent3
+        light: {
+          primary: '#243454',
+          secondary: '#86bfd9',
+          accent: '#f4bf55',
+          error: '#FF5252',
+          info: '#2196F3',
+          success: '#4CAF50',
+          warning: '#FFC107'
         }
       }
     }
@@ -89,5 +92,11 @@ export default {
   ** See https://nuxtjs.org/api/configuration-build/
   */
   build: {
+    extractCSS: true,
+    /*
+    ** You can extend webpack config here
+    */
+    extend (config, ctx) {
+    }
   }
 }
