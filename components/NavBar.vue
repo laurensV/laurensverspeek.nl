@@ -149,9 +149,6 @@
       .navbar-menu {
         .navbar-item {
           color: $grey-light;
-          &:after {
-            background: white;
-          }
           &.is-active, &:hover {
             color: white;
           }
