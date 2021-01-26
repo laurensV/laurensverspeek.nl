@@ -1,132 +1,22 @@
-// Ref: https://github.com/nuxt-community/vuetify-module#customvariables
-//
-// The variables you want to modify
-// $font-size-root: 20px;
+/* Import Bulma Utilities */
+@import '../../node_modules/bulma/sass/utilities/initial-variables';
+@import '../../node_modules/bulma/sass/utilities/functions';
 
-// Required for modifying core defaults
-@import '~vuetify/src/styles/styles.sass';
-$container-max-widths: map-deep-merge(
-    $container-max-widths,
-    (
-      'md': min(map-get($grid-breakpoints, 'md') * 0.9375, 1080px),
-      'lg': min(map-get($grid-breakpoints, 'lg') * 0.9375, 1280px),
-      'xl': min(map-get($grid-breakpoints, 'xl') * 0.9375, 1480px)
-    )
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
+$family-sans-serif: 'Space Grotesk', sans-serif;
+
+// Colors
+$primary: black;
+$secondary: #f5381c;
+$secondary-invert: findColorInvert($secondary) !default;
+$accent: #5fdaef;
+$accent-invert: findColorInvert($accent) !default;;
+
+$custom-colors: (
+  "secondary":($secondary, $secondary-invert),
+  "accent":($accent, $accent-invert),
 );
-$headings: map-merge($headings, (
-  'h1': map-merge(
-      map-get($headings, 'h1'),
-      (
-        'size': 72px,
-        'weight': 200,
-        'line-height': 72px,
-        'letter-spacing': -.015625em,
-        'font-family': $heading-font-family
-      )
-  ),
-  'h2': map-merge(
-      map-get($headings, 'h2'),
-      (
-        'size': 60px,
-        'weight': 200,
-        'line-height': 3.75rem,
-        'letter-spacing': -.0083333333em,
-        'font-family': $heading-font-family
-      )
-  ),
-  'h3': map-merge(
-      map-get($headings, 'h3'),
-      (
-        'size': 48px,
-        'weight': 200,
-        'line-height': 3.125rem,
-        'letter-spacing': normal,
-        'font-family': $heading-font-family
-      )
-  ),
-  'h4': map-merge(
-      map-get($headings, 'h4'),
-      (
-        'size': 34px,
-        'weight': 300,
-        'line-height': 2.5rem,
-        'letter-spacing': .0073529412em,
-        'font-family': $heading-font-family
-      )
-  ),
-  'h5': map-merge(
-      map-get($headings, 'h5'),
-      (
-        'size': 24px,
-        'weight': 300,
-        'line-height': 2rem,
-        'letter-spacing': normal,
-        'font-family': $heading-font-family
-      )
-  ),
-  'h6': map-merge(
-      map-get($headings, 'h6'),
-      (
-        'size': 20px,
-        'weight': 300,
-        'line-height': 2rem,
-        'letter-spacing': .0125em,
-        'font-family': $heading-font-family
-      )
-  ),
-  'subtitle-1': map-merge(
-      map-get($headings, 'subtitle-1'),
-      (
-        'size': 1rem,
-        'weight': 400,
-        'line-height': 1.75rem,
-        'letter-spacing': .009375em
-      )
-  ),
-  'subtitle-2': map-merge(
-      map-get($headings, 'subtitle-2'),
-      (
-        'size': .875rem,
-        'weight': 400,
-        'line-height': 1.375rem,
-        'letter-spacing': .0071428571em
-      )
-  ),
-  'body-2': map-merge(
-      map-get($headings, 'body-2'),
-      (
-        'size': .875rem,
-        'weight': 400,
-        'letter-spacing': .0178571429em,
-        'line-height': 1.25rem
-      )
-  ),
-  'body-1': map-merge(
-      map-get($headings, 'body-1'),
-      (
-        'size': 1rem,
-        'weight': 400,
-        'letter-spacing': .03125em,
-        'line-height': 1.5rem
-      )
-  ),
-  'caption': map-merge(
-      map-get($headings, 'caption'),
-      (
-        'size': .75rem,
-        'weight': 400,
-        'letter-spacing': .0333333333em,
-        'line-height': 1.25rem
-      )
-  ),
-  'overline': map-merge(
-      map-get($headings, 'overline'),
-      (
-        'size': .625rem,
-        'weight': 400,
-        'letter-spacing': .1666666667em,
-        'line-height': 1rem
-      )
-  )
-));
+
+//$desktop: 920px;
+
