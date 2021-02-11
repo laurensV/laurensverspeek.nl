@@ -1,9 +1,9 @@
 <template>
   <div>
     <nav-bar/>
-    <div class="container is-max-widescreen content">
+    <section class="section content">
       <Nuxt/>
-    </div>
+    </section>
     <foot/>
   </div>
 </template>
