@@ -1,21 +1,26 @@
 <template>
-  <div class="container is-max-widescreen">
+  <div class="container is-max-desktop">
     <div class="mt-6">
-      <h1 class="has-text-centered">
+      <h1 class="has-text-weight-bold has-text-black">
         Hello World!
       </h1>
-      <h1>Header 1 Title</h1>
-      <h2>Header 2 Title</h2>
-      <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
-      <h3>Test 3</h3>
-      <h4>Test 4</h4>
+      <p>Hey, I am Laurens. A full-stack web developer with a background in Computer Science and love for
+        Blockchain.</p>
+      <p>Co-Founded the technology startup <a href="https://effect.ai" target="_blank">Effect.AI</a>, where we are
+        building the future of work.
+        We are providing work for thousands of people all over the globe by creating a
+        micro-tasking platform to structure data on the blockchain, powered by the digital token <a
+          href="https://effect.ai/token-page/" target="_blank">EFX</a>.</p>
+      <h2 class="has-text-weight-bold has-text-black">
+        Coming Soon(ish)
+      </h2>
+      <p>My personal slice of the web is still under construction and will be live if I can find some time to finish it ;)</p>
     </div>
   </div>
 </template>
 
 <script>
-export default {
-  components: {
+  export default {
+    components: {}
   }
-}
 </script>

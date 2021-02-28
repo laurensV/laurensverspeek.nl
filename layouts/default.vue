@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="app">
     <nav-bar/>
     <section class="section content">
       <Nuxt/>
@@ -7,6 +7,13 @@
     <foot/>
   </div>
 </template>
+
+<style scoped>
+  #app {
+    background: url('~assets/img/grid.png');
+    min-height: 100vh;
+  }
+</style>
 
 <script>
   import NavBar from '@/components/NavBar';
