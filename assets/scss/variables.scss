@@ -11,7 +11,7 @@ $primary: black;
 $secondary: #0C0019;
 $secondary-invert: findColorInvert($secondary) !default;
 $accent: #ffba00;
-$accent-invert: findColorInvert($accent) !default;;
+$accent-invert: findColorInvert($accent) !default;
 
 $custom-colors: (
   "secondary":($secondary, $secondary-invert),

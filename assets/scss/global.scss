@@ -21,3 +21,16 @@ a {
     min-width: 200px;
   }
 }
+a.card-footer-item {
+  color: $text;
+  transition: 0.2s;
+
+  &:hover {
+    background-color: $primary;
+    color: $primary-invert;
+  }
+  &.is-accent:hover {
+    background-color: $accent;
+    color: $accent-invert;
+  }
+}
