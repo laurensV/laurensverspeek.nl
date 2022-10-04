@@ -10,7 +10,7 @@
                 <span class="tag is-default" title="Category"
                 :class="{
                   'is-accent': project.category === 'hobby', 
-                  'is-secondary': project.category === 'school',
+                  'is-secondary': project.category === 'study',
                   'is-primary': project.category === 'work'
                 }">{{ project.category }}</span>
             </div>
@@ -47,6 +47,7 @@
             description: 'The first Blockchain-based framework for the Future-of-Work. Access a global, on-demand, 24x7 scalable WorkForce. EFX is the cryptographic token that fuels the Effect Network',
             category: 'work',
             thumbnail: 'https://effect.network/img/logo/logo.png',
+            thumbnail_hover: 'https://raw.githubusercontent.com/effectai/force-frontend/main/docs/Effect-Force_Select-Screen.gif',
             source: 'https://effect.network/download/effect_whitepaper.pdf',
             url: 'https://effect.network'
           },
@@ -58,6 +59,14 @@
             thumbnail_hover: 'https://raw.githubusercontent.com/laurensV/self-coding-website/main/docs/self-coding-website-snippet.gif',
             source: 'https://github.com/laurensV/self-coding-website',
             url: 'https://laurensv.github.io/self-coding-website/'
+          },
+          {
+            title: 'Nosana',
+            description: 'Decentralized computations for CI/CD pipelines, running on the Solana Blockchain. Also includes a decentralized staking program for the NOS token.',
+            category: 'work',
+            thumbnail: 'https://nosana.io/img/Nosana_Logo_vertical_color_black.png',
+            source: 'https://github.com/nosana-ci',
+            url: 'https://nosana.io'
           },
           {
             title: 'Automated Web Design',
@@ -80,13 +89,14 @@
             description: 'Website to display current age for baby/kids with interactive fireworks on their birthday. Both a boy version an a girl version are available',
             category: 'hobby',
             thumbnail: 'https://raw.githubusercontent.com/laurensV/age/main/docs/screenshot_fireworks.png',
+            thumbnail_hover: 'https://raw.githubusercontent.com/laurensV/age/main/docs/screenshot_fireworks.gif',
             source: 'https://github.com/laurensV/age',
             url: 'https://laurensv.github.io/age/'
           },
           {
             title: 'Hangman Android App',
             description: 'Hangman is an application for Android based on the classic Hangman game for the course Native App Studios - University of Amsterdam',
-            category: 'school',
+            category: 'study',
             thumbnail: 'https://raw.githubusercontent.com/laurensV/Hangman/master/doc/hangman.png',
             source: 'https://github.com/laurensV/Hangman',
             url: 'https://github.com/laurensV/Hangman/blob/master/README.md'
@@ -106,7 +116,7 @@
     background-size: cover;
     background-repeat: none;
     background-position: top center;
-    height: 115px;
+    height: 150px;
     width: 100%;
 }
 .thumbnail-hover {
