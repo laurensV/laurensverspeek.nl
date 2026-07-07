@@ -1,54 +1,31 @@
 <template>
-  <nav class="navbar app-navbar" role="navigation" aria-label="main navigation">
-    <div class="container">
-      <div class="navbar-brand">
-        <NuxtLink class="navbar-item is-family-code has-text-weight-bold" to="/">
-          <span class="has-text-primary-on-scheme">~/</span>laurens-verspeek
-        </NuxtLink>
+  <nav class="app-navbar is-family-code" role="navigation" aria-label="main navigation">
+    <div class="container nav-inner">
+      <NuxtLink
+        to="/"
+        class="nav-brand"
+        @mouseenter="scramble($event.currentTarget as HTMLElement, '~/laurens')"
+      >~/laurens</NuxtLink>
 
-        <a
-          role="button"
-          class="navbar-burger"
-          :class="{ 'is-active': mobileMenu }"
-          aria-label="menu"
-          :aria-expanded="mobileMenu"
-          @click="mobileMenu = !mobileMenu"
-        >
-          <span aria-hidden="true" />
-          <span aria-hidden="true" />
-          <span aria-hidden="true" />
-        </a>
-      </div>
+      <button
+        class="nav-toggle is-hidden-desktop"
+        :aria-expanded="mobileMenu"
+        aria-label="menu"
+        @click="mobileMenu = !mobileMenu"
+      >
+        {{ mobileMenu ? '[close]' : '[menu]' }}
+      </button>
 
-      <div class="navbar-menu" :class="{ 'is-active': mobileMenu }">
-        <div class="navbar-start">
-          <NuxtLink
-            v-for="item in navItems"
-            :key="item.to"
-            class="navbar-item nav-link is-family-code"
-            :to="item.to"
-            exact-active-class="is-active"
-            @click="mobileMenu = false"
-          >
-            <span class="nav-comment">//&nbsp;</span>{{ item.label.toLowerCase() }}
-          </NuxtLink>
-        </div>
-
-        <div class="navbar-end">
-          <div class="navbar-item">
-            <div class="buttons are-small">
-              <button
-                class="button terminal-button is-family-code"
-                title="Open terminal (~)"
-                @click="openTerminal"
-              >
-                <AppIcon name="terminal" :size="16" />
-                <span class="ml-2 is-hidden-touch">terminal</span>
-              </button>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
+      <div class="nav-links" :class="{ 'is-open': mobileMenu }">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.to"
+          class="nav-link"
+          :to="item.to"
+          exact-active-class="is-active"
+          @click="mobileMenu = false"
+          @mouseenter="scramble($event.currentTarget as HTMLElement, item.label)"
+        >{{ item.label }}</NuxtLink>
       </div>
     </div>
   </nav>
@@ -56,20 +33,43 @@
 
 <script setup lang="ts">
 const mobileMenu = ref(false)
-const { open } = useTerminal()
 
 const navItems = [
-  { to: '/', label: 'Home' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/blog', label: 'Blog' },
-  { to: '/about', label: 'About' },
-  { to: '/uses', label: 'Uses' },
-  { to: '/contact', label: 'Contact' }
+  { to: '/', label: 'home' },
+  { to: '/projects', label: 'projects' },
+  { to: '/blog', label: 'blog' },
+  { to: '/about', label: 'about' },
+  { to: '/uses', label: 'uses' },
+  { to: '/contact', label: 'contact' }
 ]
 
-const openTerminal = () => {
-  mobileMenu.value = false
-  open()
+// hover effect: characters cycle through glyphs and "decode" into the label
+const GLYPHS = '!<>-_\\/[]{}—=+*^?#$%&'
+const timers = new WeakMap<HTMLElement, ReturnType<typeof setInterval>>()
+
+const scramble = (el: HTMLElement, text: string) => {
+  const existing = timers.get(el)
+  if (existing) clearInterval(existing)
+
+  let frame = 0
+  const totalFrames = text.length * 2 + 4
+  const timer = setInterval(() => {
+    frame++
+    const settled = Math.floor((frame / totalFrames) * text.length)
+    el.textContent = [...text]
+      .map((ch, i) =>
+        i < settled || ch === ' '
+          ? ch
+          : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
+      )
+      .join('')
+    if (frame >= totalFrames) {
+      el.textContent = text
+      clearInterval(timer)
+      timers.delete(el)
+    }
+  }, 28)
+  timers.set(el, timer)
 }
 </script>
 
@@ -82,57 +82,110 @@ const openTerminal = () => {
     var(--bulma-scheme-h),
     var(--bulma-scheme-s),
     var(--bulma-scheme-main-l),
-    0.75
+    0.72
   );
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--bulma-border-weak);
+}
 
-  .navbar-menu {
-    background: none;
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.25rem;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+}
+
+.nav-brand {
+  color: var(--bulma-text-weak);
+  white-space: pre;
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
   }
+}
+
+.nav-toggle {
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--bulma-text);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+  }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
 
   .nav-link {
     position: relative;
-    font-weight: 500;
-    font-size: 0.9rem;
+    color: var(--bulma-text-weak);
+    white-space: pre;
+    transition: color 0.2s ease;
 
-    .nav-comment {
-      color: var(--bulma-text-weak);
-      opacity: 0.6;
-      transition: color 0.2s ease, opacity 0.2s ease;
-    }
-
-    &:hover .nav-comment,
-    &.is-active .nav-comment {
-      color: var(--bulma-primary-on-scheme);
-      opacity: 1;
-    }
-
+    // blinking cursor after the active page
     &::after {
-      content: '';
+      content: '_';
       position: absolute;
-      left: 0.75rem;
-      bottom: 0.35rem;
-      height: 2px;
-      width: 0;
-      background-color: var(--bulma-primary);
-      transition: width 0.3s ease;
+      color: var(--bulma-primary-on-scheme);
+      opacity: 0;
+    }
+
+    &:hover {
+      color: var(--bulma-text-strong);
     }
 
     &.is-active {
-      // Underline instead of Bulma's default filled background
-      background-color: transparent;
-      color: var(--bulma-text-strong);
-      font-weight: 700;
+      color: var(--bulma-primary-on-scheme);
 
       &::after {
-        width: calc(100% - 1.5rem);
+        opacity: 1;
+        animation: nav-cursor 1.1s steps(2, start) infinite;
       }
     }
   }
+}
 
-  .terminal-button {
+@keyframes nav-cursor {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-links .nav-link.is-active::after {
+    animation: none;
+  }
+}
+
+// mobile: full-width dropdown under the bar
+@media screen and (max-width: 1023px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0;
+    padding: 0.5rem 1rem 1rem;
+    background-color: var(--bulma-scheme-main);
+    border-bottom: 1px solid var(--bulma-border-weak);
+    display: none;
+
+    &.is-open {
+      display: flex;
+    }
+
+    .nav-link {
+      padding: 0.6rem 0;
+      width: 100%;
+    }
   }
 }
 </style>
