@@ -135,6 +135,22 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         out(`Theme set to ${value}.`)
       }
     },
+    colorscheme: {
+      usage: 'colorscheme <name>',
+      description: `Change the accent color (${ctx.accent.names.join(', ')})`,
+      examples: ['colorscheme emerald', 'colorscheme cyan'],
+      argCandidates: () => ctx.accent.names,
+      exec: (args) => {
+        const name = args[0]?.toLowerCase()
+        if (!name) {
+          out(`Current accent: ${ctx.accent.current.value}`)
+          muted(`Available: ${ctx.accent.names.join(', ')}`)
+          return
+        }
+        if (ctx.accent.set(name)) out(`Accent set to ${name}.`)
+        else error(`colorscheme: unknown accent '${args[0]}'. Try: ${ctx.accent.names.join(', ')}`)
+      }
+    },
     neofetch: {
       description: 'System information',
       exec: () => {

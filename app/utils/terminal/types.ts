@@ -50,6 +50,11 @@ export interface TerminalContext {
   close: () => void
   startGame: (create: (callbacks: GameCallbacks) => GameHandle) => void
   colorMode: { preference: string, value: string }
+  accent: {
+    current: Ref<string>
+    names: string[]
+    set: (name: string) => boolean
+  }
   effects: {
     matrix: Ref<boolean>
     desktop: Ref<boolean>

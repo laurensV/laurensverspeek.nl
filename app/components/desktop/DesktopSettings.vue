@@ -12,6 +12,22 @@
         >[{{ option }}]</button>
       </div>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">accent</span>
+      <div class="settings-swatches">
+        <button
+          v-for="a in accents"
+          :key="a.name"
+          class="settings-swatch"
+          :class="{ 'is-active': accent === a.name }"
+          :style="{ backgroundColor: `hsl(${a.h}, ${a.s}%, ${a.l}%)` }"
+          :title="a.name"
+          :aria-label="`Accent: ${a.name}`"
+          :aria-pressed="accent === a.name"
+          @click="setAccent(a.name)"
+        />
+      </div>
+    </div>
     <p class="settings-note">// yes, this changes the real site behind the desktop</p>
 
     <p class="settings-section mt-4"># effects</p>
@@ -52,6 +68,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 const colorMode = useColorMode()
 const { crtActive, matrixActive, desktopActive, toggleCrt } = useSiteEffects()
 const partyActive = useState('fx-party', () => false)
+const { accent, accents, setAccent } = useAccent()
 
 // read the shared window state directly — no need for the manager's listeners
 const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
@@ -104,6 +121,25 @@ const enterMatrix = () => {
     &.is-active {
       color: var(--bulma-primary);
     }
+  }
+}
+
+.settings-swatches {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.settings-swatch {
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+
+  &.is-active {
+    box-shadow: 0 0 0 2px hsl(var(--lv-scheme-hs), 10%), 0 0 0 3px currentColor;
+    outline: none;
   }
 }
 

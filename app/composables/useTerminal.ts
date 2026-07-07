@@ -34,6 +34,7 @@ export function useTerminal() {
   const nuxtApp = useNuxtApp()
   const colorMode = useColorMode()
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
+  const { accent, accents, setAccent } = useAccent()
 
   // command history survives visits (last 100 entries)
   if (import.meta.client && !historyRestored) {
@@ -114,6 +115,11 @@ export function useTerminal() {
     close,
     startGame,
     colorMode,
+    accent: {
+      current: accent,
+      names: accents.map((a) => a.name),
+      set: (name: string) => setAccent(name) !== undefined
+    },
     effects: {
       matrix: matrixActive,
       desktop: desktopActive,
