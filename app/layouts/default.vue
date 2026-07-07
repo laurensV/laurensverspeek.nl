@@ -12,6 +12,7 @@
     <CommandPalette />
     <BootSplash />
     <MatrixRain />
+    <SlTrain />
   </div>
 </template>
 

@@ -2,6 +2,7 @@ import { projects, categories, type ProjectCategory } from '~/data/projects'
 import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { createSnakeGame, createHangmanGame, type GameHandle, type GameCallbacks } from '~/utils/terminalGames'
+import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
 export interface TerminalLine {
   id: number
@@ -47,6 +48,7 @@ export function useTerminal() {
   const router = useRouter()
   const colorMode = useColorMode()
   const { matrixActive, toggleCrt } = useSiteEffects()
+  const trainActive = useState('fx-train', () => false)
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     lines.value.push({ id: lineId++, type, text, html })
@@ -270,6 +272,29 @@ export function useTerminal() {
         }
         colorMode.preference = value
         out(`Theme set to ${value}.`)
+      }
+    },
+    cowsay: {
+      usage: 'cowsay <text>',
+      description: 'A cow says your text',
+      exec: (args) => out(cowsay(args.join(' ')))
+    },
+    figlet: {
+      usage: 'figlet <text>',
+      description: 'Big ASCII banner text',
+      exec: (args) => push('primary', figlet(args.join(' ')))
+    },
+    fortune: {
+      description: 'Words of dubious wisdom',
+      exec: () => out(fortune())
+    },
+    sl: {
+      hidden: true,
+      description: 'You meant ls. Enjoy the ride.',
+      exec: () => {
+        muted(`You typed 'sl' instead of 'ls', didn't you? Enjoy the ride.`)
+        trainActive.value = true
+        setTimeout(close, 600)
       }
     },
     matrix: {
