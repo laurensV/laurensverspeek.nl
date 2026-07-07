@@ -14,11 +14,22 @@
     <BootSplash />
     <MatrixRain />
     <SlTrain />
-    <WebDesktop />
+    <!-- lvOS (incl. its window manager + apps) only loads once someone boots it -->
+    <LazyWebDesktop v-if="desktopEverBooted" />
     <PartyMode />
     <LiveCursors />
   </div>
 </template>
+
+<script setup lang="ts">
+// Keep the desktop out of the initial bundle: mount it the first time the user
+// runs `desktop`, then leave it mounted so window state + boot logic persist.
+const { desktopActive } = useSiteEffects()
+const desktopEverBooted = ref(false)
+watch(desktopActive, (active) => {
+  if (active) desktopEverBooted.value = true
+}, { immediate: true })
+</script>
 
 <style scoped lang="scss">
 .site-shell {

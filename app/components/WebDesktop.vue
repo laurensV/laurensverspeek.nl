@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <DesktopBoot v-if="booting" @done="booting = false" />
+    <LazyDesktopBoot v-if="booting" @done="booting = false" />
     <div v-if="desktopActive && !booting" class="lvos" :style="wallpaperStyle" role="application" aria-label="lvOS desktop">
       <!-- desktop icons -->
       <div class="lvos-icons">
@@ -77,20 +77,21 @@
             </p>
           </template>
 
-          <DesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
-          <DesktopMedia v-else-if="win.id === 'media'" />
-          <DesktopFiles
+          <!-- Lazy: each app is its own chunk, loaded only when first opened -->
+          <LazyDesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
+          <LazyDesktopMedia v-else-if="win.id === 'media'" />
+          <LazyDesktopFiles
             v-else-if="win.id === 'files'"
             @route="openRoute"
             @window="openWindow"
             @post="openBlogPost"
           />
-          <DesktopBrowser v-else-if="win.id === 'browser'" />
-          <DesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
-          <DesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
-          <DesktopSettings v-else-if="win.id === 'settings'" />
-          <DesktopPaint v-else-if="win.id === 'paint'" />
-          <DesktopVisualizer v-else-if="win.id === 'visualizer'" />
+          <LazyDesktopBrowser v-else-if="win.id === 'browser'" />
+          <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
+          <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
+          <LazyDesktopSettings v-else-if="win.id === 'settings'" />
+          <LazyDesktopPaint v-else-if="win.id === 'paint'" />
+          <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
         </div>
 
         <span

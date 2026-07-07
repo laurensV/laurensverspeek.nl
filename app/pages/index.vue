@@ -35,7 +35,8 @@
             </div>
             <div class="column is-4 is-offset-1 is-hidden-mobile">
               <ClientOnly>
-                <HeroScene class="hero-scene-slot" />
+                <!-- Lazy: three.js loads in its own chunk, off the initial path -->
+                <LazyHeroScene class="hero-scene-slot" />
               </ClientOnly>
               <HeroTerminal />
             </div>
