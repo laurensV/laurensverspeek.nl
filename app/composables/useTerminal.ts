@@ -220,6 +220,22 @@ export function useTerminal() {
         }
       }
     },
+    github: {
+      description: 'Live stats from the GitHub API',
+      exec: () => {
+        muted('Fetching from api.github.com ...')
+        $fetch<{ followers: number, public_repos: number }>(
+          `https://api.github.com/users/${GITHUB_USER}`
+        )
+          .then((user) => {
+            push('output', `<span class="term-accent">user</span>       ${GITHUB_USER}`, true)
+            push('output', `<span class="term-accent">repos</span>      ${user.public_repos}`, true)
+            push('output', `<span class="term-accent">followers</span>  ${user.followers}`, true)
+            link(`profile    github.com/${GITHUB_USER}`, `https://github.com/${GITHUB_USER}`)
+          })
+          .catch(() => error('github: API unreachable (rate limit or offline)'))
+      }
+    },
     theme: {
       usage: 'theme <dark|light|system>',
       description: 'Change the color theme',

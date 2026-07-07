@@ -33,10 +33,13 @@
     </NuxtLink>
 
     <div class="card-content">
-      <p class="title is-5 mb-2">
+      <p class="title is-5 mb-2 is-flex is-align-items-center is-justify-content-space-between">
         <NuxtLink :to="`/projects/${project.slug}`" class="project-title-link">
           {{ project.title }}
         </NuxtLink>
+        <span v-if="stars" class="tag star-tag is-family-code" title="GitHub stars">
+          ★ {{ stars }}
+        </span>
       </p>
       <p class="is-size-6 has-text-grey project-description">{{ project.description }}</p>
       <div class="tags mt-3 mb-0">
@@ -79,6 +82,12 @@ const props = defineProps<{ project: Project }>()
 
 const imageLoaded = ref(false)
 const imageFailed = ref(false)
+
+const { data: github } = useGithubStats()
+const stars = computed(() => {
+  const repo = githubRepoFromUrl(props.project.source)
+  return repo ? github.value?.starsByRepo[repo] : undefined
+})
 
 const categoryColor = computed(
   () => categories.find((c) => c.value === props.project.category)?.color ?? 'is-primary'
@@ -194,6 +203,12 @@ const resetTilt = () => {
 
 .tech-tag {
   font-size: 0.7rem;
+}
+
+.star-tag {
+  color: var(--bulma-primary-on-scheme);
+  border: 1px solid var(--bulma-border-weak);
+  background-color: transparent;
 }
 
 .project-link {

@@ -21,6 +21,9 @@
             </p>
           </div>
 
+          <h2 class="title is-4 mt-6 mb-4">GitHub</h2>
+          <GithubStats />
+
           <h2 class="title is-4 mt-6 mb-4">Timeline</h2>
           <ol class="timeline">
             <li v-for="entry in profile.timeline" :key="entry.title" class="timeline-entry">
