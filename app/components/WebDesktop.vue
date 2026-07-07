@@ -15,6 +15,7 @@
         v-show="!win.minimized"
         :key="win.id"
         class="lvos-window"
+        :class="{ 'is-wide': win.id === 'browser' }"
         :style="{ left: `${win.x}px`, top: `${win.y}px`, zIndex: win.z }"
         @pointerdown="focusWindow(win)"
       >
@@ -64,6 +65,15 @@
               © {{ new Date().getFullYear() }} laurensverspeek.nl
             </p>
           </template>
+
+          <DesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
+          <DesktopMedia v-else-if="win.id === 'media'" />
+          <DesktopFiles
+            v-else-if="win.id === 'files'"
+            @route="openRoute"
+            @window="openWindow"
+          />
+          <DesktopBrowser v-else-if="win.id === 'browser'" />
         </div>
       </div>
 
@@ -127,7 +137,11 @@ const clock = computed(() =>
 const WINDOW_TITLES: Record<string, string> = {
   readme: 'readme.md — editor',
   projects: '~/projects — files',
-  'about-os': 'about lvOS'
+  'about-os': 'about lvOS',
+  minesweeper: 'minesweeper.exe',
+  media: 'media player',
+  files: 'file explorer',
+  browser: 'lv browser'
 }
 
 const openWindow = (id: string) => {
@@ -188,6 +202,11 @@ const openProject = (slug: string) => {
   router.push(`/projects/${slug}`)
 }
 
+const openRoute = (path: string) => {
+  desktopActive.value = false
+  router.push(path)
+}
+
 const openCv = () => {
   desktopActive.value = false
   router.push('/cv')
@@ -206,9 +225,12 @@ const logout = () => {
 
 const icons: { id: string, label: string, icon: IconName, action: () => void }[] = [
   { id: 'readme', label: 'readme.md', icon: 'file', action: () => openWindow('readme') },
-  { id: 'projects', label: 'projects/', icon: 'layers', action: () => openWindow('projects') },
+  { id: 'files', label: 'files', icon: 'layers', action: () => openWindow('files') },
+  { id: 'browser', label: 'lv browser', icon: 'globe', action: () => openWindow('browser') },
   { id: 'terminal', label: 'terminal', icon: 'terminal', action: openTerminal },
   { id: 'snake', label: 'snake.exe', icon: 'cpu', action: playSnake },
+  { id: 'minesweeper', label: 'mines.exe', icon: 'cpu', action: () => openWindow('minesweeper') },
+  { id: 'media', label: 'media', icon: 'sun', action: () => openWindow('media') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
@@ -257,9 +279,12 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
+  bottom: 4rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.75rem;
 }
 
 .lvos-icon {
@@ -296,6 +321,10 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 .lvos-window {
   position: absolute;
   width: min(26rem, 88vw);
+
+  &.is-wide {
+    width: min(44rem, 92vw);
+  }
   border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
   border-radius: var(--bulma-radius-large);
   background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 10%, 0.97);
