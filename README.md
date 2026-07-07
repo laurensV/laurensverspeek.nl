@@ -5,10 +5,13 @@ Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com)
 ## Features
 
 - **Terminal mode** — press <kbd>~</kbd> anywhere. `help` lists commands; `secrets` lists the hidden ones.
-- **Mini-games** — `snake` and `hangman`, playable inside the terminal.
+- **lvOS desktop** — run `desktop` (or `startx`) in the terminal for a full OS-style desktop with draggable windows, a taskbar and desktop icons. Inspired by [dustinbrett.com](https://dustinbrett.com).
+- **Blog** — markdown posts via [Nuxt Content](https://content.nuxt.com) with Shiki syntax highlighting (`content/blog/*.md`).
+- **Mini-games** — `snake` and `hangman`, playable inside the terminal (or via `snake.exe` on the lvOS desktop).
 - **Easter eggs** — `matrix`, `crt`, `cowsay`, `figlet`, `fortune`, `sl`, a boot splash, and a note in the browser console.
-- **Command palette** — <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘K</kbd> fuzzy search over pages, projects and actions.
-- **3D hero** — Three.js wireframe icosahedron with mouse parallax, plus a canvas particle network background.
+- **Command palette** — <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘K</kbd> fuzzy search over pages, posts, projects and actions.
+- **Interactive 3D hero** — Three.js wireframe icosahedron: drag it to spin (with momentum), click it for a pulse.
+- **IDE details** — `// comment`-style navigation, a VS Code-style status bar (yes, the Ln/Col moves), and a hand-highlighted `laurens.ts` on the About page.
 - **Live GitHub stats** — stars/repos/followers fetched client-side with skeleton and error states.
 - **CV** — `/cv` is print-optimized (forces light theme when printing).
 - Dark/light theme, scroll reveals, page transitions, filterable projects with detail pages, `/uses`, SEO meta + sitemap.
@@ -33,6 +36,7 @@ Deployed to GitHub Pages automatically on push to `master` (see `.github/workflo
 
 ## Editing content
 
+- Blog posts: `content/blog/*.md` (frontmatter: `title`, `date`, `description`, `tags`)
 - Projects (incl. detail-page stories): `app/data/projects.ts`
 - Bio, skills, timeline, socials: `app/data/profile.ts`
 - Uses page: `app/data/uses.ts`
