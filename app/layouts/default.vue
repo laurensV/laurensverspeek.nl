@@ -9,6 +9,7 @@
       <AppFooter />
     </div>
     <TerminalOverlay />
+    <CommandPalette />
   </div>
 </template>
 
