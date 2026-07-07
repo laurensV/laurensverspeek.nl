@@ -1,0 +1,82 @@
+// Bulma v1 — configured via module system (fonts are loaded in nuxt.config.ts head)
+@use "bulma/sass" with (
+  $family-primary: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  $family-code: '"JetBrains Mono", ui-monospace, monospace',
+  $primary: #ffba00,
+  $link: #ffba00,
+  $radius: 0.5rem,
+  $radius-large: 0.75rem
+);
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--bulma-primary);
+  color: var(--bulma-primary-invert);
+}
+
+// Subtle themed scrollbar
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bulma-border) transparent;
+}
+
+// Monospace overline used above titles on every page
+.overline {
+  font-family: var(--bulma-family-code, monospace);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: lowercase;
+  color: var(--bulma-primary-on-scheme);
+
+  &::before {
+    content: "~/";
+    opacity: 0.6;
+  }
+}
+
+// Gradient text used in page headings
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--bulma-primary) 0%,
+    var(--bulma-primary-70) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--bulma-primary);
+}
+
+// Blinking block cursor (hero typewriter + terminal windows)
+.blink-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 0.15em;
+  vertical-align: text-bottom;
+  background-color: var(--bulma-primary);
+  animation: blink-cursor 1.1s steps(2, start) infinite;
+}
+
+@keyframes blink-cursor {
+  to {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .blink-cursor {
+    animation: none;
+  }
+}

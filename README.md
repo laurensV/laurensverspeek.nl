@@ -1,20 +1,26 @@
 # laurensverspeek.nl
 
-## Build Setup
+Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com), TypeScript and [Bulma 1](https://bulma.io).
+
+Features an interactive terminal mode (press <kbd>~</kbd>), an animated particle-network background, dark/light themes and a filterable project showcase.
+
+## Development
 
 ```bash
-# install dependencies
-$ npm install
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm run build
-$ npm run start
-
-# generate static project
-$ npm run generate
+npm install
+npm run dev        # dev server on http://localhost:3000
 ```
 
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+## Production
+
+```bash
+npm run generate   # static site in .output/public
+npm run preview    # preview the production build
+```
+
+Deployed to GitHub Pages automatically on push to `master` (see `.github/workflows/deploy_gh-pages.yml`).
+
+## Editing content
+
+- Projects: `app/data/projects.ts`
+- Bio, skills, timeline, socials: `app/data/profile.ts`

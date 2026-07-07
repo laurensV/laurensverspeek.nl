@@ -1,0 +1,276 @@
+import { projects, categories, type ProjectCategory } from '~/data/projects'
+import { profile } from '~/data/profile'
+
+export interface TerminalLine {
+  id: number
+  type: 'input' | 'output' | 'error' | 'muted' | 'primary'
+  text: string
+  /** Render as trusted HTML — only ever set for content we author ourselves */
+  html?: boolean
+}
+
+interface TerminalCommand {
+  usage?: string
+  description: string
+  hidden?: boolean
+  exec: (args: string[]) => void
+}
+
+const PAGES = ['home', 'projects', 'about', 'contact'] as const
+
+const ASCII_LOGO = String.raw`
+ _    __      __
+| |   \ \    / /
+| |    \ \  / /
+| |___  \ \/ /
+|_____|  \__/
+`
+
+let lineId = 0
+
+/**
+ * Shared terminal state + command interpreter.
+ * State lives in useState so the navbar, footer and overlay all talk to the same terminal.
+ */
+export function useTerminal() {
+  const isOpen = useState('terminal-open', () => false)
+  const lines = useState<TerminalLine[]>('terminal-lines', () => [])
+  const history = useState<string[]>('terminal-history', () => [])
+
+  const router = useRouter()
+  const colorMode = useColorMode()
+
+  const push = (type: TerminalLine['type'], text: string, html = false) => {
+    lines.value.push({ id: lineId++, type, text, html })
+  }
+  const out = (text: string) => push('output', text)
+  const muted = (text: string) => push('muted', text)
+  const error = (text: string) => push('error', text)
+  const link = (label: string, url: string) =>
+    push('output', `<a href="${url}" target="_blank" rel="noopener">${label}</a>`, true)
+
+  const greet = () => {
+    push('primary', `Welcome to ${profile.domain} v2.0.0`)
+    muted(`Type 'help' to see available commands, 'exit' or Esc to close.`)
+  }
+
+  const open = () => {
+    if (!lines.value.length) greet()
+    isOpen.value = true
+  }
+  const close = () => (isOpen.value = false)
+  const toggle = () => (isOpen.value ? close() : open())
+
+  const navigate = (page: string) => {
+    const target = page === 'home' || page === '~' || page === '/' ? '/' : `/${page}`
+    out(`Navigating to ${target} ...`)
+    router.push(target)
+    setTimeout(close, 400)
+  }
+
+  const listProjects = (category?: ProjectCategory) => {
+    const list = category ? projects.filter((p) => p.category === category) : projects
+    if (!list.length) {
+      muted(`No projects in category '${category}'.`)
+      return
+    }
+    for (const p of list) {
+      push(
+        'output',
+        `<span class="term-accent">${p.slug.padEnd(28, ' ')}</span> [${p.category}] ${p.title}`,
+        true
+      )
+    }
+    muted(`\nUse 'open <name>' to visit a project, e.g. 'open ${list[0]!.slug}'.`)
+  }
+
+  const commands: Record<string, TerminalCommand> = {
+    help: {
+      description: 'List available commands',
+      exec: () => {
+        for (const [name, cmd] of Object.entries(commands)) {
+          if (cmd.hidden) continue
+          push(
+            'output',
+            `<span class="term-accent">${(cmd.usage ?? name).padEnd(24, ' ')}</span> ${cmd.description}`,
+            true
+          )
+        }
+        muted(`\nTip: use ↑/↓ for history and Tab to autocomplete.`)
+      }
+    },
+    about: {
+      description: 'Who is Laurens?',
+      exec: () => profile.bio.forEach(out)
+    },
+    whoami: {
+      description: 'Who are you?',
+      exec: () => {
+        out('visitor')
+        muted(`(I'm ${profile.name} though — try 'about')`)
+      }
+    },
+    projects: {
+      usage: 'projects [category]',
+      description: `List projects (${categories.map((c) => c.value).join(', ')})`,
+      exec: (args) => {
+        const cat = args[0]?.toLowerCase() as ProjectCategory | undefined
+        if (cat && !categories.some((c) => c.value === cat)) {
+          error(`Unknown category '${cat}'. Try: ${categories.map((c) => c.value).join(', ')}`)
+          return
+        }
+        listProjects(cat)
+      }
+    },
+    open: {
+      usage: 'open <project>',
+      description: 'Open a project in a new tab',
+      exec: (args) => {
+        if (!args[0]) {
+          error(`Usage: open <project> — run 'projects' to see the list.`)
+          return
+        }
+        const query = args[0].toLowerCase()
+        const project = projects.find(
+          (p) => p.slug === query || p.title.toLowerCase().includes(query)
+        )
+        if (!project) {
+          error(`Project '${args[0]}' not found. Run 'projects' to see the list.`)
+          return
+        }
+        const url = project.url ?? project.source
+        if (!url) {
+          error(`No link available for ${project.title}.`)
+          return
+        }
+        out(`Opening ${project.title} ...`)
+        window.open(url, '_blank', 'noopener')
+      }
+    },
+    cd: {
+      usage: 'cd <page>',
+      description: `Go to a page (${PAGES.join(', ')})`,
+      exec: (args) => {
+        const page = (args[0] ?? 'home').replace(/^\/|\/$/g, '').toLowerCase() || 'home'
+        if (page !== '~' && !PAGES.includes(page as (typeof PAGES)[number])) {
+          error(`cd: no such page: ${args[0]}`)
+          return
+        }
+        navigate(page)
+      }
+    },
+    ls: {
+      description: 'List pages',
+      exec: () => out(PAGES.map((p) => `${p}/`).join('  '))
+    },
+    contact: {
+      description: 'How to reach me',
+      exec: () => {
+        link(`mail    ${profile.email}`, `mailto:${profile.email}`)
+        for (const social of profile.socials.filter((s) => !s.url.startsWith('mailto:'))) {
+          link(`${social.label.toLowerCase().padEnd(8, ' ')}${social.url}`, social.url)
+        }
+      }
+    },
+    theme: {
+      usage: 'theme <dark|light|system>',
+      description: 'Change the color theme',
+      exec: (args) => {
+        const value = args[0]?.toLowerCase()
+        if (!value || !['dark', 'light', 'system'].includes(value)) {
+          out(`Current theme: ${colorMode.preference}`)
+          muted('Usage: theme <dark|light|system>')
+          return
+        }
+        colorMode.preference = value
+        out(`Theme set to ${value}.`)
+      }
+    },
+    neofetch: {
+      description: 'System information',
+      exec: () => {
+        push('primary', ASCII_LOGO)
+        const info: [string, string][] = [
+          ['host', `visitor@${profile.domain}`],
+          ['os', 'Nuxt 4 (Vue 3) x86_64'],
+          ['shell', 'lvsh 2.0.0'],
+          ['theme', colorMode.value],
+          ['location', profile.location],
+          ['work', 'CTO @ Nosana, co-founder @ Effect.AI'],
+          ['uptime', `${new Date().getFullYear() - 2022} years (site v1 shipped in 2022)`]
+        ]
+        for (const [key, value] of info) {
+          push('output', `<span class="term-accent">${key.padEnd(10, ' ')}</span> ${value}`, true)
+        }
+      }
+    },
+    echo: {
+      usage: 'echo <text>',
+      description: 'Print text',
+      exec: (args) => out(args.join(' '))
+    },
+    date: {
+      description: 'Print the current date',
+      exec: () => out(new Date().toString())
+    },
+    history: {
+      description: 'Show command history',
+      exec: () => history.value.forEach((cmd, i) => out(`${String(i + 1).padStart(3, ' ')}  ${cmd}`))
+    },
+    clear: {
+      description: 'Clear the terminal',
+      exec: () => (lines.value = [])
+    },
+    exit: {
+      description: 'Close the terminal',
+      exec: () => {
+        out('logout')
+        setTimeout(close, 200)
+      }
+    },
+    sudo: {
+      hidden: true,
+      description: 'Absolutely not',
+      exec: () => error('visitor is not in the sudoers file. This incident will be reported. 😏')
+    },
+    rm: {
+      hidden: true,
+      description: 'Please no',
+      exec: (args) =>
+        args.join(' ').includes('-rf')
+          ? error('Nice try. I only just finished this website.')
+          : error('rm: permission denied')
+    },
+    vim: {
+      hidden: true,
+      description: 'Trap',
+      exec: () => muted(`You are now stuck in vim. Just kidding — this is not a real shell. :q!`)
+    }
+  }
+
+  const commandNames = Object.keys(commands).filter((name) => !commands[name]!.hidden)
+
+  const run = (input: string) => {
+    const trimmed = input.trim()
+    push('input', trimmed)
+    if (!trimmed) return
+    history.value.push(trimmed)
+
+    const [name = '', ...args] = trimmed.split(/\s+/)
+    const command = commands[name.toLowerCase()]
+    if (command) {
+      command.exec(args)
+    } else {
+      error(`lvsh: command not found: ${name}`)
+      muted(`Type 'help' for available commands.`)
+    }
+  }
+
+  const complete = (input: string): string | undefined => {
+    const partial = input.trimStart().toLowerCase()
+    if (!partial || partial.includes(' ')) return undefined
+    return commandNames.find((name) => name.startsWith(partial))
+  }
+
+  return { isOpen, lines, history, open, close, toggle, run, complete }
+}

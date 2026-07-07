@@ -1,0 +1,53 @@
+export default defineNuxtConfig({
+  compatibilityDate: '2026-07-07',
+
+  modules: ['@nuxtjs/color-mode', '@vueuse/nuxt'],
+
+  css: ['~/assets/scss/global.scss'],
+
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          // Bulma 1.x still uses a few deprecated Sass features internally
+          quietDeps: true,
+          silenceDeprecations: ['import', 'global-builtin']
+        }
+      }
+    }
+  },
+
+  colorMode: {
+    preference: 'system',
+    fallback: 'dark',
+    // Bulma v1 themes are driven by the `data-theme` attribute on <html>
+    dataValue: 'theme',
+    classSuffix: ''
+  },
+
+  app: {
+    head: {
+      title: 'Laurens Verspeek',
+      htmlAttrs: { lang: 'en' },
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        {
+          name: 'description',
+          content:
+            'Laurens Verspeek — full-stack developer & blockchain engineer. Co-founder of Nosana and Effect.AI.'
+        },
+        { name: 'theme-color', content: '#ffba00' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=JetBrains+Mono:wght@400;600;700&display=swap'
+        }
+      ]
+    }
+  }
+})

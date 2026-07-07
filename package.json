@@ -1,25 +1,26 @@
 {
   "name": "laurensverspeek.nl",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "Laurens Verspeek",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "nuxt",
+    "dev": "nuxt dev",
     "build": "nuxt build",
-    "start": "nuxt start",
-    "generate": "nuxt generate"
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^5.15.2",
-    "bulma": "^0.9.1",
-    "core-js": "^3.8.2",
-    "node-sass": "^7.0.3",
-    "nuxt": "^2.15.8"
+    "bulma": "^1.0.4",
+    "nuxt": "^4.0.0",
+    "vue": "^3.5.0"
   },
   "devDependencies": {
-    "@nuxtjs/color-mode": "^2.0.2",
-    "@nuxtjs/svg": "^0.1.12",
-    "push-dir": "^0.4.1",
-    "sass-loader": "^10.1.1"
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@vueuse/core": "^13.0.0",
+    "@vueuse/nuxt": "^13.0.0",
+    "sass": "^1.89.0",
+    "typescript": "^5.8.0"
   }
 }
