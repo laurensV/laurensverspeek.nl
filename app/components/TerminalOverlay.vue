@@ -27,9 +27,10 @@
               <pre v-else-if="line.html" class="terminal-line" :class="`is-${line.type}`" v-html="line.text" />
               <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
             </template>
+            <pre v-if="activeGame" class="terminal-line game-frame">{{ gameFrame }}</pre>
           </div>
 
-          <div class="terminal-input-row">
+          <div v-if="!activeGame" class="terminal-input-row">
             <label class="term-prompt" for="terminal-input">{{ prompt }}</label>
             <input
               id="terminal-input"
@@ -54,10 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useEventListener } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-const { isOpen, lines, history, run, complete, toggle, close } = useTerminal()
+const { isOpen, lines, history, run, complete, toggle, close, activeGame, gameFrame } = useTerminal()
 
 const prompt = 'visitor@lv:~$'
 const input = ref('')
@@ -98,12 +99,20 @@ const autocomplete = () => {
   if (match) input.value = `${match} `
 }
 
-// Open with ~ or ` when not typing in another field
+// Open with ~ or ` when not typing in another field (and not mid-game)
 onKeyStroke(['`', '~'], (event) => {
+  if (activeGame.value) return
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()
   toggle()
+})
+
+// While a game is running, all keys go to the game
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (!isOpen.value || !activeGame.value) return
+  if (event.ctrlKey || event.metaKey || event.altKey) return
+  if (activeGame.value.onKey(event.key)) event.preventDefault()
 })
 
 watch(isOpen, async (open) => {
@@ -113,14 +122,11 @@ watch(isOpen, async (open) => {
   }
 })
 
-// Keep scrolled to the latest output
-watch(
-  () => lines.value.length,
-  async () => {
-    await nextTick()
-    outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
-  }
-)
+// Keep scrolled to the latest output (and the game frame while playing)
+watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
+  await nextTick()
+  outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
+})
 </script>
 
 <style scoped lang="scss">
@@ -228,6 +234,12 @@ watch(
   :deep(.term-accent) {
     color: var(--bulma-primary);
   }
+}
+
+.game-frame {
+  margin-top: 0.5rem;
+  color: var(--bulma-primary);
+  line-height: 1.35;
 }
 
 .term-prompt {

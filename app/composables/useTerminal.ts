@@ -1,6 +1,7 @@
 import { projects, categories, type ProjectCategory } from '~/data/projects'
 import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
+import { createSnakeGame, createHangmanGame, type GameHandle, type GameCallbacks } from '~/utils/terminalGames'
 
 export interface TerminalLine {
   id: number
@@ -28,6 +29,11 @@ const ASCII_LOGO = String.raw`
 `
 
 let lineId = 0
+
+// Game state lives at module scope: only ever touched client-side,
+// and shared by every useTerminal() caller.
+const activeGame = shallowRef<GameHandle | null>(null)
+const gameFrame = ref('')
 
 /**
  * Shared terminal state + command interpreter.
@@ -59,8 +65,23 @@ export function useTerminal() {
     if (!lines.value.length) greet()
     isOpen.value = true
   }
-  const close = () => (isOpen.value = false)
+  const close = () => {
+    activeGame.value?.stop()
+    activeGame.value = null
+    isOpen.value = false
+  }
   const toggle = () => (isOpen.value ? close() : open())
+
+  const startGame = (create: (callbacks: GameCallbacks) => GameHandle) => {
+    activeGame.value = create({
+      onFrame: (frame) => (gameFrame.value = frame),
+      onEnd: (endLines) => {
+        activeGame.value = null
+        gameFrame.value = ''
+        endLines.forEach(out)
+      }
+    })
+  }
 
   const navigate = (page: string) => {
     const target = page === 'home' || page === '~' || page === '/' ? '/' : `/${page}`
@@ -250,6 +271,20 @@ export function useTerminal() {
         out(`Theme set to ${value}.`)
       }
     },
+    snake: {
+      description: 'Play snake in the terminal',
+      exec: () => {
+        muted('Starting snake... arrows/wasd to move, q to quit.')
+        startGame(createSnakeGame)
+      }
+    },
+    hangman: {
+      description: 'Play hangman (a 2014 classic, remastered)',
+      exec: () => {
+        muted('Starting hangman... type letters to guess, q to quit.')
+        startGame(createHangmanGame)
+      }
+    },
     neofetch: {
       description: 'System information',
       exec: () => {
@@ -336,5 +371,5 @@ export function useTerminal() {
     return commandNames.find((name) => name.startsWith(partial))
   }
 
-  return { isOpen, lines, history, open, close, toggle, run, complete }
+  return { isOpen, lines, history, open, close, toggle, run, complete, activeGame, gameFrame }
 }
