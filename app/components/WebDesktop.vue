@@ -90,6 +90,7 @@
           <DesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
           <DesktopSettings v-else-if="win.id === 'settings'" />
           <DesktopPaint v-else-if="win.id === 'paint'" />
+          <DesktopVisualizer v-else-if="win.id === 'visualizer'" />
         </div>
 
         <span
@@ -177,7 +178,8 @@ const WINDOW_TITLES: Record<string, string> = {
   blog: '~/blog — reader',
   vim: 'vim — ~/notes.txt',
   settings: 'settings',
-  paint: 'lvpaint.exe'
+  paint: 'lvpaint.exe',
+  visualizer: 'visualizer'
 }
 
 const { desktopActive } = useSiteEffects()
@@ -315,6 +317,7 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'paint', label: 'lvpaint', icon: 'pen', action: () => openWindow('paint') },
   { id: 'settings', label: 'settings', icon: 'settings', action: () => openWindow('settings') },
   { id: 'media', label: 'media', icon: 'sun', action: () => openWindow('media') },
+  { id: 'visualizer', label: 'visualizer', icon: 'zap', action: () => openWindow('visualizer') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]

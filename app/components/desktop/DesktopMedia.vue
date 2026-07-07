@@ -1,6 +1,6 @@
 <template>
   <div class="media is-family-code">
-    <p class="media-track">♪ chiptune_dreams.mod</p>
+    <p class="media-track">♪ {{ track }}</p>
     <canvas ref="canvasRef" width="320" height="70" class="media-viz" />
     <div class="media-controls">
       <button @click="toggle">{{ playing ? '⏸ pause' : '▶ play' }}</button>
@@ -10,45 +10,24 @@
 </template>
 
 <script setup lang="ts">
-// A tiny 8-bit "tracker": a square-wave arpeggio synthesized with WebAudio,
-// visualized with an analyser. No audio files were harmed.
+// Compact player over the shared chiptune engine (see useChiptune) — a small
+// bar analyser. The full visualizer app renders the same audio differently.
+
+const { playing, track, toggle, getAnalyser } = useChiptune()
 
 const canvasRef = ref<HTMLCanvasElement>()
-const playing = ref(false)
-
-let ctx: AudioContext | undefined
-let analyser: AnalyserNode | undefined
-let noteTimer: ReturnType<typeof setInterval> | undefined
 let rafId = 0
-let step = 0
-
-// A minor arpeggio ladder — the chiptune classic
-const MELODY = [220, 261.63, 329.63, 440, 329.63, 261.63, 246.94, 293.66, 369.99, 493.88, 369.99, 293.66]
-
-const playNote = () => {
-  if (!ctx || !analyser) return
-  const osc = ctx.createOscillator()
-  const gain = ctx.createGain()
-  osc.type = 'square'
-  osc.frequency.value = MELODY[step % MELODY.length]!
-  gain.gain.setValueAtTime(0.08, ctx.currentTime)
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
-  osc.connect(gain)
-  gain.connect(analyser)
-  analyser.connect(ctx.destination)
-  osc.start()
-  osc.stop(ctx.currentTime + 0.2)
-  step++
-}
 
 const draw = () => {
   rafId = requestAnimationFrame(draw)
   const canvas = canvasRef.value
   const c2d = canvas?.getContext('2d')
-  if (!canvas || !c2d || !analyser) return
+  const analyser = getAnalyser()
+  if (!canvas || !c2d) return
+  c2d.clearRect(0, 0, canvas.width, canvas.height)
+  if (!analyser) return
   const data = new Uint8Array(analyser.frequencyBinCount)
   analyser.getByteFrequencyData(data)
-  c2d.clearRect(0, 0, canvas.width, canvas.height)
   const style = getComputedStyle(document.documentElement)
   c2d.fillStyle = style.getPropertyValue('--bulma-primary').trim() || '#ffba00'
   const bars = 24
@@ -60,31 +39,8 @@ const draw = () => {
   }
 }
 
-const toggle = async () => {
-  if (playing.value) {
-    stop()
-    return
-  }
-  ctx = new AudioContext()
-  analyser = ctx.createAnalyser()
-  analyser.fftSize = 256
-  playing.value = true
-  playNote()
-  noteTimer = setInterval(playNote, 200)
-  draw()
-}
-
-const stop = () => {
-  playing.value = false
-  clearInterval(noteTimer)
-  cancelAnimationFrame(rafId)
-  ctx?.close()
-  ctx = undefined
-  const canvas = canvasRef.value
-  canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
-}
-
-onBeforeUnmount(stop)
+onMounted(() => draw())
+onBeforeUnmount(() => cancelAnimationFrame(rafId))
 </script>
 
 <style scoped lang="scss">
