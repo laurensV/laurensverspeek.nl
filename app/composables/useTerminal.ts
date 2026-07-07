@@ -4,6 +4,7 @@ import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { createSnakeGame, createHangmanGame, type GameHandle, type GameCallbacks } from '~/utils/terminalGames'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
+import { renderMarkdownToTerminal } from '~/utils/terminalMarkdown'
 
 export interface TerminalLine {
   id: number
@@ -47,6 +48,7 @@ export function useTerminal() {
   const history = useState<string[]>('terminal-history', () => [])
 
   const router = useRouter()
+  const nuxtApp = useNuxtApp()
   const colorMode = useColorMode()
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const trainActive = useState('fx-train', () => false)
@@ -94,6 +96,35 @@ export function useTerminal() {
     out(`Navigating to ${target} ...`)
     router.push(target)
     setTimeout(close, 400)
+  }
+
+  // commands run from event handlers, outside the Nuxt instance — wrap
+  // queryCollection so it still finds the app context
+  const fetchPosts = () =>
+    nuxtApp.runWithContext(() => queryCollection('blog').order('date', 'DESC').all())
+
+  const postSlug = (path: string) => path.split('/').pop() ?? path
+
+  const readPost = (query: string, notFound: (query: string) => void) => {
+    const q = query.toLowerCase().replace(/\.md$/, '')
+    fetchPosts()
+      .then((posts) => {
+        const post =
+          posts.find((p) => postSlug(p.path) === q)
+          ?? posts.find((p) => postSlug(p.path).includes(q) || p.title.toLowerCase().includes(q))
+        if (!post) {
+          notFound(query)
+          return
+        }
+        push('primary', `# ${post.title}`)
+        muted(`${post.date}${post.tags?.length ? ` · ${post.tags.map((t) => `#${t}`).join(' ')}` : ''}`)
+        for (const line of renderMarkdownToTerminal(post.body)) {
+          push(line.type, line.text, line.html)
+        }
+        out('')
+        link(`Read in style → ${post.path}`, post.path)
+      })
+      .catch(() => error('blog: failed to load posts'))
   }
 
   const listProjects = (category?: ProjectCategory) => {
@@ -176,11 +207,11 @@ export function useTerminal() {
       }
     },
     cat: {
-      usage: 'cat <project>',
-      description: 'Read all about a project',
+      usage: 'cat <project|post>',
+      description: 'Read all about a project (or a blog post)',
       exec: (args) => {
         if (!args[0]) {
-          error(`Usage: cat <project> — run 'projects' to see the list.`)
+          error(`Usage: cat <name> — run 'projects' or 'blog' to see what's readable.`)
           return
         }
         const query = args[0].toLowerCase().replace(/\.md$/, '')
@@ -188,7 +219,8 @@ export function useTerminal() {
           (p) => p.slug === query || p.title.toLowerCase().includes(query)
         )
         if (!project) {
-          error(`cat: ${args[0]}: No such file or directory`)
+          // not a project — maybe it's a blog post
+          readPost(query, (q) => error(`cat: ${q}: No such file or directory`))
           return
         }
         push('primary', `# ${project.title}`)
@@ -222,8 +254,32 @@ export function useTerminal() {
       exec: () => navigate('cv')
     },
     blog: {
-      description: 'Read the blog',
-      exec: () => navigate('blog')
+      usage: 'blog [post]',
+      description: 'List blog posts — or read one right here',
+      exec: (args) => {
+        if (args[0]) {
+          readPost(args.join(' '), (query) =>
+            error(`blog: post '${query}' not found — run 'blog' for the list.`)
+          )
+          return
+        }
+        fetchPosts()
+          .then((posts) => {
+            if (!posts.length) {
+              muted('ls: blog/: empty directory')
+              return
+            }
+            for (const post of posts) {
+              push(
+                'output',
+                `<span class="term-accent">${postSlug(post.path).padEnd(28, ' ')}</span> ${post.date}  ${post.title}`,
+                true
+              )
+            }
+            muted(`\nUse 'blog <name>' to read a post here, or 'cd blog' for the styled version.`)
+          })
+          .catch(() => error('blog: failed to load posts'))
+      }
     },
     now: {
       description: `What I'm doing these days`,
