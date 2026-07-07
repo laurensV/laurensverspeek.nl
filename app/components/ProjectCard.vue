@@ -1,12 +1,8 @@
 <template>
-  <div
-    ref="cardRef"
-    class="card project-card"
-    :style="tiltStyle"
-    @pointermove="onTilt"
-    @pointerleave="resetTilt"
-  >
-    <NuxtLink :to="`/projects/${project.slug}`" class="card-image project-thumb">
+  <div class="project-card">
+    <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
+
+    <NuxtLink :to="`/projects/${project.slug}`" class="project-thumb">
       <template v-if="project.thumbnail && !imageFailed">
         <div v-show="!imageLoaded" class="skeleton-block project-thumb-skeleton" />
         <!-- hidden via opacity, not display:none — lazy images inside display:none
@@ -31,53 +27,52 @@
       <div v-else class="thumb-fallback is-family-code">
         <span>&lt;{{ project.slug }} /&gt;</span>
       </div>
+      <span class="scanline" aria-hidden="true" />
       <span class="tag category-tag" :class="categoryColor">{{ project.category }}</span>
     </NuxtLink>
 
-    <div class="card-content">
-      <p class="title is-5 mb-2 is-flex is-align-items-center is-justify-content-space-between">
-        <NuxtLink :to="`/projects/${project.slug}`" class="project-title-link">
+    <div class="card-body">
+      <p class="is-family-code is-size-7 card-path">
+        ~/projects/{{ project.slug }}.md
+        <span v-if="stars" class="card-stars" title="GitHub stars">★ {{ stars }}</span>
+      </p>
+      <p class="title is-5 mb-2">
+        <NuxtLink :to="`/projects/${project.slug}`" class="project-title-link" :data-text="project.title">
           {{ project.title }}
         </NuxtLink>
-        <span v-if="stars" class="tag star-tag is-family-code" title="GitHub stars">
-          ★ {{ stars }}
+      </p>
+      <p class="is-size-6 project-description">{{ project.description }}</p>
+      <p class="is-family-code card-tech">
+        <span v-for="(tech, i) in project.tech" :key="tech">
+          <span class="tech-sep">{{ i === 0 ? '[' : ', ' }}</span>{{ tech }}<span v-if="i === project.tech.length - 1" class="tech-sep">]</span>
         </span>
       </p>
-      <p class="is-size-6 has-text-grey project-description">{{ project.description }}</p>
-      <div class="tags mt-3 mb-0">
-        <span v-for="tech in project.tech" :key="tech" class="tag is-small tech-tag is-family-code">
-          {{ tech }}
-        </span>
-      </div>
     </div>
 
-    <footer class="card-footer">
+    <footer class="card-links is-family-code">
       <a
         v-if="project.source"
         :href="project.source"
         target="_blank"
         rel="noopener"
-        class="card-footer-item project-link"
+        class="card-link"
       >
-        <AppIcon name="code" :size="15" />
-        <span class="ml-2">Source</span>
+        <span class="card-link-prompt">$</span> git clone
       </a>
       <a
         v-if="project.url"
         :href="project.url"
         target="_blank"
         rel="noopener"
-        class="card-footer-item project-link"
+        class="card-link"
       >
-        <AppIcon name="external" :size="15" />
-        <span class="ml-2">Visit</span>
+        <span class="card-link-prompt">$</span> ./visit
       </a>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { usePreferredReducedMotion } from '@vueuse/core'
 import { categories, type Project } from '~/data/projects'
 
 const props = defineProps<{ project: Project }>()
@@ -94,55 +89,63 @@ const stars = computed(() => {
 const categoryColor = computed(
   () => categories.find((c) => c.value === props.project.category)?.color ?? 'is-primary'
 )
-
-// Subtle 3D tilt following the cursor
-const cardRef = ref<HTMLElement>()
-const tilt = ref({ x: 0, y: 0 })
-const reducedMotion = usePreferredReducedMotion()
-
-const tiltStyle = computed(() => ({
-  transform: `perspective(800px) rotateX(${tilt.value.x}deg) rotateY(${tilt.value.y}deg)`
-}))
-
-const onTilt = (event: PointerEvent) => {
-  if (reducedMotion.value === 'reduce' || event.pointerType !== 'mouse') return
-  const rect = cardRef.value?.getBoundingClientRect()
-  if (!rect) return
-  const px = (event.clientX - rect.left) / rect.width - 0.5
-  const py = (event.clientY - rect.top) / rect.height - 0.5
-  tilt.value = { x: -py * 5, y: px * 5 }
-}
-
-const resetTilt = () => {
-  tilt.value = { x: 0, y: 0 }
-}
 </script>
 
 <style scoped lang="scss">
 .project-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   border: 1px solid var(--bulma-border-weak);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
-  will-change: transform;
+  border-radius: 2px;
+  background-color: var(--bulma-scheme-main-bis);
+  transition: border-color 0.25s ease;
+
+  // corner brackets: always faintly present, they light up and reach
+  // outward on hover — like a TUI focus frame
+  .corner {
+    position: absolute;
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 0 solid var(--bulma-border);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .is-tl { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  .is-tr { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+  .is-bl { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+  .is-br { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
 
   &:hover {
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.5);
-    box-shadow: 0 8px 32px
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
+    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.45);
+
+    .corner {
+      border-color: var(--bulma-primary);
+    }
+
+    .is-tl { transform: translate(-3px, -3px); }
+    .is-tr { transform: translate(3px, -3px); }
+    .is-bl { transform: translate(-3px, 3px); }
+    .is-br { transform: translate(3px, 3px); }
 
     .thumb-hover {
       opacity: 1;
     }
-  }
-}
 
-.project-title-link {
-  color: inherit;
+    .scanline {
+      animation: card-scan 0.9s ease-out;
+    }
 
-  &:hover {
-    color: var(--bulma-primary-on-scheme);
+    .card-path {
+      color: var(--bulma-primary-on-scheme);
+    }
+
+    .project-title-link {
+      animation: title-glitch 0.35s steps(2, jump-none) 1;
+    }
   }
 }
 
@@ -151,8 +154,7 @@ const resetTilt = () => {
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: var(--bulma-radius-large) var(--bulma-radius-large) 0 0;
-  background-color: var(--bulma-scheme-main-bis);
+  background-color: var(--bulma-scheme-main-ter);
 
   .thumb {
     position: absolute;
@@ -191,6 +193,23 @@ const resetTilt = () => {
     );
   }
 
+  // one bright line sweeps down the image on hover, like a display refresh
+  .scanline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -12%;
+    height: 10%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35),
+      transparent
+    );
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .category-tag {
     position: absolute;
     top: 0.6rem;
@@ -199,31 +218,120 @@ const resetTilt = () => {
   }
 }
 
-.card-content {
+@keyframes card-scan {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(1150%);
+  }
+}
+
+// quick chromatic split on the title, then back to clean
+@keyframes title-glitch {
+  0% {
+    text-shadow: none;
+    transform: none;
+  }
+  25% {
+    text-shadow: -2px 0 #f14668, 2px 0 #3e8ed0;
+    transform: translateX(1px);
+  }
+  60% {
+    text-shadow: 2px 0 #f14668, -2px 0 #3e8ed0;
+    transform: translateX(-1px);
+  }
+  100% {
+    text-shadow: none;
+    transform: none;
+  }
+}
+
+.card-body {
   flex: 1;
+  padding: 1.1rem 1.25rem 0.9rem;
+}
+
+.card-path {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--bulma-text-weak);
+  transition: color 0.25s ease;
+
+  .card-stars {
+    color: var(--bulma-primary-on-scheme);
+    white-space: nowrap;
+  }
+}
+
+.project-title-link {
+  display: inline-block;
+  color: var(--bulma-text-strong);
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+  }
 }
 
 .project-description {
   color: var(--bulma-text-weak);
 }
 
-.tech-tag {
-  font-size: 0.7rem;
+.card-tech {
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--bulma-text);
+
+  .tech-sep {
+    color: var(--bulma-text-weak);
+  }
 }
 
-.star-tag {
-  color: var(--bulma-primary-on-scheme);
-  border: 1px solid var(--bulma-border-weak);
-  background-color: transparent;
+.card-links {
+  display: flex;
+  border-top: 1px solid var(--bulma-border-weak);
+  font-size: 0.78rem;
+
+  .card-link {
+    flex: 1;
+    padding: 0.65rem 1.25rem;
+    color: var(--bulma-text-weak);
+    transition: color 0.2s ease, background-color 0.2s ease;
+
+    .card-link-prompt {
+      opacity: 0.5;
+      transition: opacity 0.2s ease;
+    }
+
+    & + .card-link {
+      border-left: 1px solid var(--bulma-border-weak);
+    }
+
+    &:hover {
+      color: var(--bulma-primary-on-scheme);
+      background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.08);
+
+      .card-link-prompt {
+        opacity: 1;
+      }
+    }
+  }
 }
 
-.project-link {
-  color: var(--bulma-text-weak);
-  transition: color 0.2s, background-color 0.2s;
+@media (prefers-reduced-motion: reduce) {
+  .project-card:hover {
+    .corner {
+      transform: none;
+    }
 
-  &:hover {
-    color: var(--bulma-primary-invert);
-    background-color: var(--bulma-primary);
+    .scanline,
+    .project-title-link {
+      animation: none;
+    }
   }
 }
 </style>
