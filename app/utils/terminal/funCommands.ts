@@ -1,11 +1,12 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame } from '~/utils/terminalGames'
+import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
 // Toys, games, site-wide effects and easter eggs.
 
 export function createFunCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
-  const { push, out, muted, close } = ctx
+  const { push, out, muted, error, close } = ctx
 
   const commands: Record<string, TerminalCommand> = {
     cowsay: {
@@ -48,6 +49,68 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
         ctx.startGame(create2048Game)
+      }
+    },
+    top: {
+      description: 'Live process monitor',
+      exec: () => {
+        muted('Starting top... q to quit.')
+        ctx.startGame(createTopGame)
+      }
+    },
+    htop: {
+      hidden: true,
+      description: 'Alias for top',
+      exec: () => ctx.getCommands().top!.exec([])
+    },
+    ping: {
+      usage: 'ping <host>',
+      description: 'Send ICMP packets to a host',
+      exec: (args) => {
+        const host = args[0] ?? profile.domain
+        muted(`PING ${host} (127.0.0.1): 56 data bytes`)
+        let seq = 0
+        const times: number[] = []
+        const send = () => {
+          if (seq >= 4) {
+            const min = Math.min(...times).toFixed(1)
+            const max = Math.max(...times).toFixed(1)
+            const avg = (times.reduce((s, t) => s + t, 0) / times.length).toFixed(1)
+            out('')
+            out(`--- ${host} ping statistics ---`)
+            out(`4 packets transmitted, 4 received, 0% packet loss`)
+            out(`round-trip min/avg/max = ${min}/${avg}/${max} ms`)
+            return
+          }
+          const time = 8 + Math.random() * 30
+          times.push(time)
+          out(`64 bytes from ${host}: icmp_seq=${seq} ttl=64 time=${time.toFixed(1)} ms`)
+          seq++
+          setTimeout(send, 420)
+        }
+        send()
+      }
+    },
+    curl: {
+      usage: 'curl <url>',
+      description: 'Transfer data from a URL (well, pretend to)',
+      exec: (args) => {
+        const url = args[0]
+        if (!url) {
+          error('curl: try \'curl laurensverspeek.nl\'')
+          return
+        }
+        muted(`* Trying ${url}...`)
+        setTimeout(() => muted('* Connected — TLS handshake OK'), 250)
+        setTimeout(() => {
+          push('primary', 'HTTP/2 200')
+          out('content-type: text/html; charset=utf-8')
+          out('server: nitro')
+          out('x-powered-by: caffeine & curiosity')
+          out('')
+          out('<!doctype html><title>Laurens Verspeek</title>')
+          out('<!-- psst: the real fun is behind the ~ key -->')
+        }, 550)
       }
     },
     desktop: {
