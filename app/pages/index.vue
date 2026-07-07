@@ -70,6 +70,40 @@
       </div>
     </section>
 
+    <section v-if="pendingPosts || latestPosts?.length" class="section">
+      <div class="container">
+        <RevealBlock>
+          <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
+            <div>
+              <p class="overline mb-2">blog $ tail -2</p>
+              <h2 class="title is-3">Latest writing</h2>
+            </div>
+            <NuxtLink to="/blog" class="is-family-code is-size-6 is-hidden-mobile">
+              all posts →
+            </NuxtLink>
+          </div>
+
+          <div v-if="pendingPosts">
+            <p class="is-skeleton mb-2" style="max-width: 30rem">Loading the latest post title...</p>
+            <p class="is-skeleton" style="max-width: 24rem">Loading another post title...</p>
+          </div>
+
+          <div v-else class="latest-posts">
+            <NuxtLink
+              v-for="post in latestPosts"
+              :key="post.path"
+              :to="post.path"
+              class="latest-post"
+            >
+              <span class="is-family-code is-size-7 latest-post-date">{{ formatDate(post.date) }}</span>
+              <span class="latest-post-title">{{ post.title }}</span>
+              <span class="is-family-code latest-post-arrow">-></span>
+            </NuxtLink>
+          </div>
+        </RevealBlock>
+      </div>
+    </section>
+
     <section class="section">
       <div class="container">
         <RevealBlock>
@@ -103,6 +137,14 @@ useHead({ title: 'Laurens Verspeek — Full-stack & Blockchain Developer' })
 
 const { open } = useTerminal()
 const { text: role } = useTypewriter(profile.roles)
+
+// two most recent posts; the section hides itself if the blog is empty or fails
+const { data: latestPosts, pending: pendingPosts } = useLazyAsyncData('latest-posts', () =>
+  queryCollection('blog').order('date', 'DESC').limit(2).all()
+)
+
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
 
 const areas: { icon: IconName; title: string; description: string }[] = [
   {
@@ -187,6 +229,57 @@ const areas: { icon: IconName; title: string; description: string }[] = [
 
 .is-fullheight-reveal {
   height: 100%;
+}
+
+.latest-posts {
+  display: flex;
+  flex-direction: column;
+}
+
+.latest-post {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--bulma-border-weak);
+  color: var(--bulma-text);
+
+  &:first-child {
+    border-top: 1px solid var(--bulma-border-weak);
+  }
+
+  .latest-post-date {
+    flex-shrink: 0;
+    color: var(--bulma-text-weak);
+  }
+
+  .latest-post-title {
+    font-weight: 600;
+  }
+
+  .latest-post-arrow {
+    margin-left: auto;
+    color: var(--bulma-primary-on-scheme);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+
+    .latest-post-arrow {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .latest-post {
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+  }
 }
 
 .focus-area {
