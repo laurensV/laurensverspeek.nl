@@ -1,7 +1,7 @@
 <template>
   <div class="error-page">
     <div class="error-shell is-family-code" @click="focusInput">
-      <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
+      <TuiFrame />
 
       <p class="error-code has-text-primary-on-scheme">{{ error?.statusCode ?? 500 }}</p>
       <p class="error-headline">
@@ -120,19 +120,6 @@ onMounted(focusInput)
   border-radius: 2px;
   background-color: var(--bulma-scheme-main-bis);
   cursor: text;
-
-  .corner {
-    position: absolute;
-    width: 0.7rem;
-    height: 0.7rem;
-    border: 0 solid var(--bulma-primary);
-    pointer-events: none;
-  }
-
-  .is-tl { top: -2px; left: -2px; border-top-width: 2px; border-left-width: 2px; }
-  .is-tr { top: -2px; right: -2px; border-top-width: 2px; border-right-width: 2px; }
-  .is-bl { bottom: -2px; left: -2px; border-bottom-width: 2px; border-left-width: 2px; }
-  .is-br { bottom: -2px; right: -2px; border-bottom-width: 2px; border-right-width: 2px; }
 }
 
 .error-code {

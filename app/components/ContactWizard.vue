@@ -1,6 +1,6 @@
 <template>
   <div class="contact-terminal is-family-code" @click="focusInput">
-    <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
+    <TuiFrame />
     <div class="contact-titlebar">
       <span class="dot dot-r" /><span class="dot dot-y" /><span class="dot dot-g" />
       <span class="contact-title">visitor@{{ profile.domain }}: ~/contact</span>
@@ -173,21 +173,6 @@ onMounted(focusInput)
   box-shadow: 0 0 60px hsla(var(--lv-primary-hsl), 0.1);
   text-align: left;
   cursor: text;
-
-  // TUI focus frame, matching the buttons and project cards
-  .corner {
-    position: absolute;
-    width: 0.6rem;
-    height: 0.6rem;
-    border: 0 solid var(--bulma-primary);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .is-tl { top: -2px; left: -2px; border-top-width: 2px; border-left-width: 2px; }
-  .is-tr { top: -2px; right: -2px; border-top-width: 2px; border-right-width: 2px; }
-  .is-bl { bottom: -2px; left: -2px; border-bottom-width: 2px; border-left-width: 2px; }
-  .is-br { bottom: -2px; right: -2px; border-bottom-width: 2px; border-right-width: 2px; }
 }
 
 .step-count {
