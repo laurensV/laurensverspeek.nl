@@ -24,6 +24,9 @@
         <button @click="logout()">⏻ log out</button>
       </div>
 
+      <!-- idle screensaver -->
+      <LazyDesktopScreensaver v-if="screensaverOn" @wake="wakeScreensaver" />
+
       <!-- toast notifications -->
       <div class="lvos-toasts is-family-code" aria-live="polite">
         <div v-for="toast in toasts" :key="toast.id" class="lvos-toast">
@@ -208,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { useNow, useEventListener } from '@vueuse/core'
+import { useNow, useEventListener, useIdle } from '@vueuse/core'
 import type { IconName } from '~/components/AppIcon.vue'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import { profile } from '~/data/profile'
@@ -265,6 +268,19 @@ const notify = (icon: string, title: string, body?: string) => {
     toasts.value = toasts.value.filter((t) => t.id !== id)
   }, 4200)
 }
+
+// ---- idle screensaver ----
+// after 45s of no input on the desktop, drift into the screensaver
+const { idle } = useIdle(45_000)
+const dismissedIdle = ref(false)
+const screensaverOn = computed(
+  () => desktopActive.value && !booting.value && idle.value && !dismissedIdle.value
+)
+// while idle stays true, one wake dismiss should hold until real activity resets it
+watch(idle, (isIdle) => {
+  if (!isIdle) dismissedIdle.value = false
+})
+const wakeScreensaver = () => (dismissedIdle.value = true)
 
 // ---- right-click context menu ----
 const contextMenu = reactive({ open: false, x: 0, y: 0 })
