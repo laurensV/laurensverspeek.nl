@@ -9,9 +9,11 @@
     <NuxtLink :to="`/projects/${project.slug}`" class="card-image project-thumb">
       <template v-if="project.thumbnail && !imageFailed">
         <div v-show="!imageLoaded" class="skeleton-block project-thumb-skeleton" />
+        <!-- hidden via opacity, not display:none — lazy images inside display:none
+             never intersect the viewport and therefore never load -->
         <img
-          v-show="imageLoaded"
           class="thumb thumb-default"
+          :class="{ 'is-loading': !imageLoaded }"
           :src="project.thumbnail"
           :alt="`${project.title} thumbnail`"
           loading="lazy"
@@ -159,6 +161,10 @@ const resetTilt = () => {
     height: 100%;
     object-fit: cover;
     object-position: top center;
+
+    &.is-loading {
+      opacity: 0;
+    }
   }
 
   .thumb-hover {
