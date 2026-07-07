@@ -1,6 +1,9 @@
 // Mini-games playable inside the terminal overlay.
 // A game receives callbacks to draw frames and report its final output lines;
 // the terminal routes keystrokes to the active game via `onKey`.
+// Shared boilerplate (high scores, tick timers, quit keys) lives in terminalGameKit.
+
+import { finalScoreLines, createTicker, isQuitKey } from '~/utils/terminalGameKit'
 
 export interface GameHandle {
   /** Handle a keydown key; return true when the key was consumed */
@@ -85,15 +88,7 @@ export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
 
   function end(message: string) {
     clearInterval(timer)
-    const best = Number(localStorage.getItem(SNAKE_HIGHSCORE_KEY) ?? 0)
-    const lines = [message, `final score: ${score}`]
-    if (score > best) {
-      localStorage.setItem(SNAKE_HIGHSCORE_KEY, String(score))
-      lines.push(`new high score! previous best: ${best}`)
-    } else {
-      lines.push(`high score: ${best}`)
-    }
-    onEnd(lines)
+    onEnd(finalScoreLines(SNAKE_HIGHSCORE_KEY, score, { headline: message }))
   }
 
   const DIRECTIONS: Record<string, Cell> = {
@@ -113,7 +108,7 @@ export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
   return {
     onKey(key) {
       const lower = key.toLowerCase()
-      if (lower === 'q' || lower === 'escape') {
+      if (isQuitKey(key)) {
         end('snake terminated by user')
         return true
       }
@@ -271,33 +266,29 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
 
   function end(message: string) {
     over = true
-    clearTimeout(timer)
-    const best = Number(localStorage.getItem(TETRIS_HIGHSCORE_KEY) ?? 0)
-    const lines = [message, `final score: ${score} (${clearedTotal} lines)`]
-    if (score > best) {
-      localStorage.setItem(TETRIS_HIGHSCORE_KEY, String(score))
-      lines.push(`new high score! previous best: ${best}`)
-    } else {
-      lines.push(`high score: ${best}`)
-    }
-    onEnd(lines)
+    ticker.stop()
+    onEnd(finalScoreLines(TETRIS_HIGHSCORE_KEY, score, {
+      headline: message,
+      scoreLabel: `final score: ${score} (${clearedTotal} lines)`
+    }))
   }
 
   render()
-  // gravity gets faster as lines clear, so a timeout chain instead of setInterval
-  let timer: ReturnType<typeof setTimeout>
-  const gravity = () => {
-    softDrop()
-    render()
-    timer = setTimeout(gravity, Math.max(160, 450 - clearedTotal * 10))
-  }
-  timer = setTimeout(gravity, 450)
+  // gravity gets faster as lines clear, so the interval is recomputed each tick
+  const ticker = createTicker(
+    () => {
+      softDrop()
+      render()
+    },
+    () => Math.max(160, 450 - clearedTotal * 10)
+  )
+  ticker.start()
 
   return {
     onKey(key) {
       if (over) return false
       const lower = key.toLowerCase()
-      if (lower === 'q' || lower === 'escape') {
+      if (isQuitKey(key)) {
         end('tetris terminated by user')
         return true
       }
@@ -318,7 +309,7 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
       render()
       return true
     },
-    stop: () => clearTimeout(timer)
+    stop: () => ticker.stop()
   }
 }
 
@@ -387,15 +378,7 @@ export function create2048Game({ onFrame, onEnd }: GameCallbacks): GameHandle {
   }
 
   function end(message: string) {
-    const best = Number(localStorage.getItem(G2048_HIGHSCORE_KEY) ?? 0)
-    const lines = [message, `final score: ${score}`]
-    if (score > best) {
-      localStorage.setItem(G2048_HIGHSCORE_KEY, String(score))
-      lines.push(`new high score! previous best: ${best}`)
-    } else {
-      lines.push(`high score: ${best}`)
-    }
-    onEnd(lines)
+    onEnd(finalScoreLines(G2048_HIGHSCORE_KEY, score, { headline: message }))
   }
 
   addTile()
@@ -416,7 +399,7 @@ export function create2048Game({ onFrame, onEnd }: GameCallbacks): GameHandle {
   return {
     onKey(key) {
       const lower = key.toLowerCase()
-      if (lower === 'q' || lower === 'escape') {
+      if (isQuitKey(key)) {
         end('2048 terminated by user')
         return true
       }
@@ -471,7 +454,7 @@ export function createHangmanGame({ onFrame, onEnd }: GameCallbacks): GameHandle
   return {
     onKey(key) {
       const lower = key.toLowerCase()
-      if (lower === 'q' || lower === 'escape') {
+      if (isQuitKey(key)) {
         onEnd([`hangman aborted — the word was '${word}'`])
         return true
       }
