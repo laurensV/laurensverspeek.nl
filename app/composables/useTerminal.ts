@@ -3,6 +3,7 @@ import type { TerminalLine, TerminalCommand, TerminalContext } from '~/utils/ter
 import { createContentCommands } from '~/utils/terminal/contentCommands'
 import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
+import { expandEnv, parseCommandLine, applyFilter } from '~/utils/terminal/pipeline'
 import { profile } from '~/data/profile'
 
 export type { TerminalLine } from '~/utils/terminal/types'
@@ -16,8 +17,6 @@ const gameFrame = ref('')
 
 const HISTORY_KEY = 'lv-terminal-history'
 let historyRestored = false
-
-const stripHtml = (text: string) => text.replace(/<[^>]+>/g, '')
 
 /**
  * Shared terminal state + command interpreter.
@@ -156,43 +155,7 @@ export function useTerminal() {
 
   const { trackEvent } = useAnalytics()
 
-  /** One pipe stage (grep/head/tail/wc) applied to captured output. */
-  const applyFilter = (input: TerminalLine[], stage: string): TerminalLine[] | string => {
-    const [name = '', ...rest] = stage.trim().split(/\s+/)
-    switch (name) {
-      case 'grep': {
-        const invert = rest[0] === '-v'
-        const pattern = (invert ? rest.slice(1) : rest).join(' ')
-        if (!pattern) return 'grep: missing pattern'
-        let matches: (text: string) => boolean
-        try {
-          const re = new RegExp(pattern, 'i')
-          matches = (text) => re.test(text)
-        } catch {
-          matches = (text) => text.toLowerCase().includes(pattern.toLowerCase())
-        }
-        return input.filter((line) => matches(stripHtml(line.text)) !== invert)
-      }
-      case 'head':
-      case 'tail': {
-        const raw = rest[0] === '-n' ? rest[1] : rest[0]
-        const n = Number(raw ?? 10)
-        const count = Number.isFinite(n) && n > 0 ? n : 10
-        return name === 'head' ? input.slice(0, count) : input.slice(-count)
-      }
-      case 'wc':
-        return [{ id: lineId++, type: 'output', text: String(input.length) }]
-      default:
-        return `lvsh: unknown filter: ${name} (pipes support grep, head, tail, wc)`
-    }
-  }
-
-  // expand $VAR / ${VAR} from the shell environment
-  const expandEnv = (text: string) =>
-    text.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, bare) => {
-      const key = braced ?? bare
-      return ctx.env.value[key] ?? match
-    })
+  const makeLine = (text: string): TerminalLine => ({ id: lineId++, type: 'output', text })
 
   const run = (input: string) => {
     const trimmed = input.trim()
@@ -201,13 +164,8 @@ export function useTerminal() {
     history.value.push(trimmed)
     saveHistory()
 
-    const expanded = expandEnv(trimmed)
-    const [rawCommandPart = '', ...pipeStages] = expanded.split('|').map((part) => part.trim())
-    // resolve a leading alias to its target command
-    const [firstWord = '', ...restWords] = rawCommandPart.split(/\s+/)
-    const alias = ctx.aliases.value[firstWord.toLowerCase()]
-    const commandPart = alias ? [alias, ...restWords].join(' ') : rawCommandPart
-    const [name = '', ...args] = commandPart.split(/\s+/)
+    const expanded = expandEnv(trimmed, ctx.env.value)
+    const { name, args, pipeStages } = parseCommandLine(expanded, ctx.aliases.value)
     const command = commands[name.toLowerCase()]
     if (!command) {
       error(`lvsh: command not found: ${name}`)
@@ -229,12 +187,12 @@ export function useTerminal() {
       sink = null
       let result = captured
       for (const stage of pipeStages) {
-        const filtered = applyFilter(result, stage)
-        if (typeof filtered === 'string') {
-          error(filtered)
+        const filtered = applyFilter(result, stage, makeLine)
+        if ('error' in filtered) {
+          error(filtered.error)
           return
         }
-        result = filtered
+        result = filtered.lines
       }
       if (!result.length) muted('(no output)')
       result.forEach((line) => lines.value.push(line))

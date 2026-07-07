@@ -1,0 +1,91 @@
+import { describe, it, expect } from 'vitest'
+import { expandEnv, parseCommandLine, applyFilter, stripHtml } from '~/utils/terminal/pipeline'
+
+const line = (text: string) => ({ text })
+
+describe('expandEnv', () => {
+  const env = { USER: 'visitor', HOME: '~' }
+
+  it('expands $VAR and ${VAR}', () => {
+    expect(expandEnv('hi $USER', env)).toBe('hi visitor')
+    expect(expandEnv('cd ${HOME}/projects', env)).toBe('cd ~/projects')
+  })
+
+  it('leaves unknown variables untouched', () => {
+    expect(expandEnv('echo $NOPE', env)).toBe('echo $NOPE')
+  })
+
+  it('handles multiple variables in one string', () => {
+    expect(expandEnv('$USER lives at $HOME', env)).toBe('visitor lives at ~')
+  })
+})
+
+describe('parseCommandLine', () => {
+  it('splits command, args and pipe stages', () => {
+    const parsed = parseCommandLine('projects work | grep vue | head 3', {})
+    expect(parsed.name).toBe('projects')
+    expect(parsed.args).toEqual(['work'])
+    expect(parsed.pipeStages).toEqual(['grep vue', 'head 3'])
+  })
+
+  it('resolves a leading alias to its target', () => {
+    const parsed = parseCommandLine('g laurens', { g: 'github' })
+    expect(parsed.name).toBe('github')
+    expect(parsed.args).toEqual(['laurens'])
+  })
+
+  it('only resolves the alias in command position', () => {
+    const parsed = parseCommandLine('echo g', { g: 'github' })
+    expect(parsed.name).toBe('echo')
+    expect(parsed.args).toEqual(['g'])
+  })
+
+  it('handles a bare command with no args or pipes', () => {
+    expect(parseCommandLine('help', {})).toEqual({ name: 'help', args: [], pipeStages: [] })
+  })
+})
+
+describe('applyFilter', () => {
+  const lines = ['alpha', 'beta', 'gamma', 'delta'].map(line)
+
+  it('greps case-insensitively', () => {
+    const out = applyFilter([line('Vue'), line('React'), line('vuex')], 'grep vue', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['Vue', 'vuex'])
+  })
+
+  it('supports grep -v to invert', () => {
+    // keep lines without an 'e': alpha and gamma (beta and delta have one)
+    const out = applyFilter(lines, 'grep -v e', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['alpha', 'gamma'])
+  })
+
+  it('strips html before matching', () => {
+    const out = applyFilter([line('<span class="term-accent">snake</span> game')], 'grep snake', line)
+    expect('lines' in out && out.lines.length).toBe(1)
+  })
+
+  it('head and tail slice the list', () => {
+    expect(('lines' in applyFilter(lines, 'head 2', line)) && (applyFilter(lines, 'head 2', line) as { lines: { text: string }[] }).lines.map((l) => l.text)).toEqual(['alpha', 'beta'])
+    expect((applyFilter(lines, 'tail 1', line) as { lines: { text: string }[] }).lines.map((l) => l.text)).toEqual(['delta'])
+  })
+
+  it('wc counts lines into a single new line', () => {
+    const out = applyFilter(lines, 'wc', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['4'])
+  })
+
+  it('errors on a missing grep pattern', () => {
+    expect(applyFilter(lines, 'grep', line)).toEqual({ error: 'grep: missing pattern' })
+  })
+
+  it('errors on an unknown filter', () => {
+    const out = applyFilter(lines, 'sort', line)
+    expect('error' in out && out.error).toContain('unknown filter: sort')
+  })
+})
+
+describe('stripHtml', () => {
+  it('removes tags but keeps text', () => {
+    expect(stripHtml('<a href="x">link</a> and <b>bold</b>')).toBe('link and bold')
+  })
+})

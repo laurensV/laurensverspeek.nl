@@ -50,6 +50,29 @@ describe('renderMarkdownToTerminal', () => {
     expect(lines.every((l) => !l.text.includes('shiki'))).toBe(true)
   })
 
+  it('renders blockquotes and horizontal rules', () => {
+    const lines = renderMarkdownToTerminal(
+      body(['blockquote', {}, ['p', {}, 'a wise quote']], ['hr', {}])
+    )
+    const texts = lines.map((l) => l.text)
+    expect(texts).toContain('> a wise quote')
+    expect(texts).toContain('---')
+  })
+
+  it('renders bold and italic inline markup', () => {
+    const lines = renderMarkdownToTerminal(
+      body(['p', {}, 'this is ', ['strong', {}, 'bold'], ' and ', ['em', {}, 'italic']])
+    )
+    expect(lines[0]!.text).toBe('this is <b>bold</b> and <i>italic</i>')
+  })
+
+  it('numbers ordered list items sequentially', () => {
+    const lines = renderMarkdownToTerminal(
+      body(['ol', {}, ['li', {}, 'first'], ['li', {}, 'second'], ['li', {}, 'third']])
+    )
+    expect(lines.map((l) => l.text)).toEqual(['  1. first', '  2. second', '  3. third'])
+  })
+
   it('handles a missing or malformed body gracefully', () => {
     expect(renderMarkdownToTerminal(undefined)).toEqual([
       { type: 'muted', text: '(post body could not be parsed)' }
