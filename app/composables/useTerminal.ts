@@ -50,6 +50,7 @@ export function useTerminal() {
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const trainActive = useState('fx-train', () => false)
   const bootReplay = useState('boot-replay', () => false)
+  const partyActive = useState('fx-party', () => false)
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     lines.value.push({ id: lineId++, type, text, html })
@@ -430,6 +431,16 @@ export function useTerminal() {
         args.join(' ').includes('-rf')
           ? error('Nice try. I only just finished this website.')
           : error('rm: permission denied')
+    },
+    party: {
+      hidden: true,
+      description: 'As if you typed the Konami code',
+      exec: () => {
+        out('🎉 cheat mode activated')
+        muted('(the classy way in: ↑↑↓↓←→←→BA)')
+        partyActive.value = true
+        setTimeout(close, 400)
+      }
     },
     vim: {
       hidden: true,

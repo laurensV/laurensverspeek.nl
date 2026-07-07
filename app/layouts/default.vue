@@ -15,6 +15,7 @@
     <MatrixRain />
     <SlTrain />
     <WebDesktop />
+    <PartyMode />
   </div>
 </template>
 

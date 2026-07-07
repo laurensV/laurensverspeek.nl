@@ -98,6 +98,23 @@ body {
   opacity: 0;
 }
 
+// Party mode — triggered by the Konami code (or the hidden `party` command)
+html.party-mode .site-shell {
+  animation: party-hue 1.4s linear infinite;
+}
+
+@keyframes party-hue {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.party-mode .site-shell {
+    animation: none;
+  }
+}
+
 // CRT mode — toggled with the `crt` terminal command
 html.crt-mode {
   body::after {
