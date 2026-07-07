@@ -23,15 +23,15 @@
           </div>
 
           <div ref="listRef" class="palette-list">
-            <template v-for="(group, section) in grouped" :key="section">
-              <p class="palette-section is-family-code">{{ section }}</p>
+            <template v-for="group in groups" :key="group.section">
+              <p class="palette-section is-family-code">{{ group.section }}</p>
               <button
-                v-for="item in group"
-                :key="item.id"
+                v-for="item in group.items"
+                :key="`${group.section}-${item.id}`"
                 class="palette-item"
                 :class="{ 'is-active': item.id === activeId }"
                 :data-palette-id="item.id"
-                @click="item.perform()"
+                @click="run(item)"
                 @pointermove="activeId = item.id"
               >
                 <AppIcon :name="item.icon" :size="16" />
@@ -59,7 +59,7 @@
 import { onKeyStroke } from '@vueuse/core'
 import type { PaletteAction } from '~/composables/useCommandPalette'
 
-const { isOpen, close, toggle, actions } = useCommandPalette()
+const { isOpen, close, toggle, actions, recent, recordUse } = useCommandPalette()
 
 const query = ref('')
 const activeId = ref('')
@@ -77,20 +77,50 @@ const results = computed(() => {
   return scored.map((entry) => entry.action)
 })
 
-const grouped = computed(() => {
-  const groups: Record<string, PaletteAction[]> = {}
-  for (const action of results.value) {
-    ;(groups[action.section] ??= []).push(action)
+// Ordered section groups. With no query, a "Recent" section floats the
+// most-used actions to the top; otherwise results are fuzzy-ranked by section.
+const groups = computed<{ section: string, items: PaletteAction[] }[]>(() => {
+  const list = results.value
+  const out: { section: string, items: PaletteAction[] }[] = []
+
+  const recentSet = new Set<string>()
+  if (!query.value && recent.value.length) {
+    const recentItems = recent.value
+      .map((id) => list.find((a) => a.id === id))
+      .filter((a): a is PaletteAction => Boolean(a))
+    if (recentItems.length) {
+      out.push({ section: 'Recent', items: recentItems })
+      recentItems.forEach((a) => recentSet.add(a.id))
+    }
   }
-  return groups
+
+  // don't repeat recent items in their home sections
+  const bySection = new Map<string, PaletteAction[]>()
+  for (const action of list) {
+    if (recentSet.has(action.id)) continue
+    const arr = bySection.get(action.section) ?? []
+    arr.push(action)
+    bySection.set(action.section, arr)
+  }
+  for (const [section, items] of bySection) out.push({ section, items })
+  return out
 })
 
+// flattened order for keyboard navigation (matches visual order incl. Recent)
+const flat = computed(() => groups.value.flatMap((g) => g.items))
+
+const run = (action: PaletteAction) => {
+  recordUse(action.id)
+  action.perform()
+}
+
 const performActive = () => {
-  results.value.find((a) => a.id === activeId.value)?.perform()
+  const action = flat.value.find((a) => a.id === activeId.value)
+  if (action) run(action)
 }
 
 const move = (delta: number) => {
-  const list = results.value
+  const list = flat.value
   if (!list.length) return
   const index = list.findIndex((a) => a.id === activeId.value)
   const next = (index + delta + list.length) % list.length
@@ -112,13 +142,13 @@ onKeyStroke('k', (event) => {
 watch(isOpen, async (open) => {
   if (open) {
     query.value = ''
-    activeId.value = results.value[0]?.id ?? ''
+    activeId.value = flat.value[0]?.id ?? ''
     await nextTick()
     inputRef.value?.focus()
   }
 })
 
-watch(results, (list) => {
+watch(flat, (list) => {
   if (!list.some((a) => a.id === activeId.value)) {
     activeId.value = list[0]?.id ?? ''
   }

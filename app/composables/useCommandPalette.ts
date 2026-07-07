@@ -7,10 +7,13 @@ export interface PaletteAction {
   label: string
   hint?: string
   icon: IconName
-  section: 'Pages' | 'Projects' | 'Actions' | 'Socials'
+  section: 'Pages' | 'Projects' | 'Blog' | 'Theme' | 'Actions' | 'Socials'
   keywords?: string
   perform: () => void
 }
+
+const RECENT_KEY = 'lv-palette-recent'
+const RECENT_MAX = 5
 
 /** Simple subsequence fuzzy match, scores tighter matches higher */
 export function fuzzyScore(query: string, target: string): number {
@@ -37,6 +40,7 @@ export function useCommandPalette() {
   const colorMode = useColorMode()
   const terminal = useTerminal()
   const { desktopActive } = useSiteEffects()
+  const { accents, setAccent } = useAccent()
 
   const open = () => (isOpen.value = true)
   const close = () => (isOpen.value = false)
@@ -46,6 +50,29 @@ export function useCommandPalette() {
     close()
     router.push(path)
   }
+
+  // most-recently-used actions, persisted so the palette can surface them first
+  const recent = useState<string[]>('palette-recent', () => [])
+  if (import.meta.client && !recent.value.length) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as unknown
+      if (Array.isArray(saved)) recent.value = saved.filter((x): x is string => typeof x === 'string')
+    } catch { /* ignore corrupted storage */ }
+  }
+
+  const recordUse = (id: string) => {
+    recent.value = [id, ...recent.value.filter((x) => x !== id)].slice(0, RECENT_MAX)
+    if (import.meta.client) {
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
+      } catch { /* ignore */ }
+    }
+  }
+
+  // blog posts as searchable entries (loaded lazily, empty until resolved)
+  const { data: posts } = useLazyAsyncData('palette-posts', () =>
+    queryCollection('blog').order('date', 'DESC').all()
+  )
 
   const actions = computed<PaletteAction[]>(() => [
     { id: 'home', label: 'Home', icon: 'terminal', section: 'Pages', keywords: 'index start', perform: () => go('/') },
@@ -64,6 +91,27 @@ export function useCommandPalette() {
       section: 'Projects',
       keywords: project.tech.join(' '),
       perform: () => go(`/projects/${project.slug}`)
+    })),
+    ...(posts.value ?? []).map<PaletteAction>((post) => ({
+      id: `post-${post.path}`,
+      label: post.title,
+      hint: 'post',
+      icon: 'file',
+      section: 'Blog',
+      keywords: `${post.tags?.join(' ') ?? ''} ${post.description ?? ''}`,
+      perform: () => go(post.path)
+    })),
+    ...accents.map<PaletteAction>((a) => ({
+      id: `accent-${a.name}`,
+      label: `Accent: ${a.name}`,
+      hint: 'colorscheme',
+      icon: 'sun',
+      section: 'Theme',
+      keywords: 'accent color colorscheme palette',
+      perform: () => {
+        setAccent(a.name)
+        close()
+      }
     })),
     {
       id: 'terminal',
@@ -115,5 +163,5 @@ export function useCommandPalette() {
     }))
   ])
 
-  return { isOpen, open, close, toggle, actions }
+  return { isOpen, open, close, toggle, actions, recent, recordUse }
 }
