@@ -21,19 +21,23 @@
             </p>
           </div>
 
-          <h2 class="title is-4 mt-6 mb-4">GitHub</h2>
-          <GithubStats />
+          <RevealBlock>
+            <h2 class="title is-4 mt-6 mb-4">GitHub</h2>
+            <GithubStats />
+          </RevealBlock>
 
-          <h2 class="title is-4 mt-6 mb-4">Timeline</h2>
-          <ol class="timeline">
-            <li v-for="entry in profile.timeline" :key="entry.title" class="timeline-entry">
-              <p class="is-family-code is-size-7 has-text-primary-on-scheme mb-1">
-                {{ entry.period }}
-              </p>
-              <p class="has-text-weight-semibold mb-1">{{ entry.title }}</p>
-              <p class="is-size-6 has-text-grey">{{ entry.description }}</p>
-            </li>
-          </ol>
+          <RevealBlock>
+            <h2 class="title is-4 mt-6 mb-4">Timeline</h2>
+            <ol class="timeline">
+              <li v-for="entry in profile.timeline" :key="entry.title" class="timeline-entry">
+                <p class="is-family-code is-size-7 has-text-primary-on-scheme mb-1">
+                  {{ entry.period }}
+                </p>
+                <p class="has-text-weight-semibold mb-1">{{ entry.title }}</p>
+                <p class="is-size-6 has-text-grey">{{ entry.description }}</p>
+              </li>
+            </ol>
+          </RevealBlock>
         </div>
 
         <div class="column is-4 is-offset-1">

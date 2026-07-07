@@ -42,16 +42,20 @@
 
     <section id="featured" class="section">
       <div class="container">
-        <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
-          <div>
-            <p class="overline mb-2">featured $</p>
-            <h2 class="title is-3">Featured projects</h2>
+        <RevealBlock>
+          <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
+            <div>
+              <p class="overline mb-2">featured $</p>
+              <h2 class="title is-3">Featured projects</h2>
+            </div>
+            <NuxtLink to="/projects" class="is-family-code is-size-6 is-hidden-mobile">
+              all projects →
+            </NuxtLink>
           </div>
-          <NuxtLink to="/projects" class="is-family-code is-size-6 is-hidden-mobile">
-            all projects →
-          </NuxtLink>
-        </div>
-        <ProjectsGrid :projects="featuredProjects" />
+        </RevealBlock>
+        <RevealBlock :delay="100">
+          <ProjectsGrid :projects="featuredProjects" />
+        </RevealBlock>
         <div class="has-text-centered mt-4 is-hidden-tablet">
           <NuxtLink to="/projects" class="button is-primary is-outlined is-family-code">
             all projects →
@@ -62,17 +66,21 @@
 
     <section class="section">
       <div class="container">
-        <p class="overline mb-2">what-i-do $</p>
-        <h2 class="title is-3 mb-6">What I do</h2>
+        <RevealBlock>
+          <p class="overline mb-2">what-i-do $</p>
+          <h2 class="title is-3 mb-6">What I do</h2>
+        </RevealBlock>
         <div class="columns">
-          <div v-for="area in areas" :key="area.title" class="column">
-            <div class="box focus-area">
-              <span class="icon has-text-primary-on-scheme mb-3">
-                <AppIcon :name="area.icon" :size="28" />
-              </span>
-              <p class="title is-5 mb-2">{{ area.title }}</p>
-              <p class="has-text-grey">{{ area.description }}</p>
-            </div>
+          <div v-for="(area, i) in areas" :key="area.title" class="column">
+            <RevealBlock :delay="i * 120" class="is-fullheight-reveal">
+              <div class="box focus-area">
+                <span class="icon has-text-primary-on-scheme mb-3">
+                  <AppIcon :name="area.icon" :size="28" />
+                </span>
+                <p class="title is-5 mb-2">{{ area.title }}</p>
+                <p class="has-text-grey">{{ area.description }}</p>
+              </div>
+            </RevealBlock>
           </div>
         </div>
       </div>
@@ -152,6 +160,10 @@ const areas: { icon: IconName; title: string; description: string }[] = [
   .scroll-hint {
     animation: none;
   }
+}
+
+.is-fullheight-reveal {
+  height: 100%;
 }
 
 .focus-area {
