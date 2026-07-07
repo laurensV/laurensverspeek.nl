@@ -1,6 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="desktopActive" class="lvos" role="application" aria-label="lvOS desktop">
+    <DesktopBoot v-if="booting" @done="booting = false" />
+    <div v-if="desktopActive && !booting" class="lvos" :style="wallpaperStyle" role="application" aria-label="lvOS desktop">
       <!-- desktop icons -->
       <div class="lvos-icons">
         <button v-for="icon in icons" :key="icon.id" class="lvos-icon is-family-code" @click="icon.action">
@@ -106,7 +107,20 @@
         </button>
         <div v-if="startOpen" class="lvos-start-menu">
           <button @click="openWindow('about-os'); startOpen = false">ℹ about lvOS</button>
+          <button @click="openWindow('settings'); startOpen = false">⚙ settings</button>
           <button @click="openTerminal">>_ terminal</button>
+          <p class="lvos-start-label">wallpaper</p>
+          <div class="lvos-wallpapers">
+            <button
+              v-for="(paper, i) in WALLPAPERS"
+              :key="i"
+              class="lvos-wallpaper-swatch"
+              :class="{ 'is-active': wallpaper === i }"
+              :style="{ background: paper.swatch }"
+              :title="paper.name"
+              @click="wallpaper = i"
+            />
+          </div>
           <button @click="logout">⏻ log out</button>
         </div>
 
@@ -120,7 +134,22 @@
           {{ win.title }}
         </button>
 
-        <span class="lvos-clock">{{ clock }}</span>
+        <button class="lvos-clock" :class="{ 'is-open': calendarOpen }" @click="calendarOpen = !calendarOpen">
+          {{ clock }}
+        </button>
+        <div v-if="calendarOpen" class="lvos-calendar is-family-code">
+          <p class="lvos-calendar-title">{{ monthLabel }}</p>
+          <div class="lvos-calendar-grid">
+            <span v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" class="lvos-cal-dow">{{ d }}</span>
+            <span v-for="blank in leadingBlanks" :key="`b${blank}`" />
+            <span
+              v-for="day in daysInMonth"
+              :key="day"
+              class="lvos-cal-day"
+              :class="{ 'is-today': day === today }"
+            >{{ day }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -167,11 +196,56 @@ const {
 } = useWindowManager(WINDOW_TITLES)
 
 const startOpen = ref(false)
+const calendarOpen = ref(false)
+const booting = ref(false)
 
 const now = useNow({ interval: 1000 })
 const clock = computed(() =>
   now.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 )
+
+// ---- wallpaper (persisted for the session) ----
+const WALLPAPERS = [
+  {
+    name: 'amber void',
+    swatch: 'linear-gradient(135deg, #2a1e00, #0a0a0a)',
+    css:
+      'radial-gradient(60rem 40rem at 70% 20%, hsla(var(--lv-primary-hsl), 0.14), transparent),'
+      + ' linear-gradient(160deg, hsl(var(--lv-scheme-hs), 8%), hsl(var(--bulma-scheme-h), 40%, 4%))'
+  },
+  {
+    name: 'grid',
+    swatch: 'linear-gradient(135deg, #0d0d0d, #1a1a1a)',
+    css:
+      'linear-gradient(hsla(var(--lv-primary-hsl), 0.06) 1px, transparent 1px) 0 0 / 2rem 2rem,'
+      + ' linear-gradient(90deg, hsla(var(--lv-primary-hsl), 0.06) 1px, transparent 1px) 0 0 / 2rem 2rem,'
+      + ' hsl(var(--lv-scheme-hs), 6%)'
+  },
+  {
+    name: 'aurora',
+    swatch: 'linear-gradient(135deg, #001a1a, #1a0033)',
+    css:
+      'radial-gradient(50rem 30rem at 20% 30%, hsla(180, 60%, 30%, 0.25), transparent),'
+      + ' radial-gradient(50rem 30rem at 80% 70%, hsla(280, 60%, 30%, 0.25), transparent),'
+      + ' hsl(var(--lv-scheme-hs), 5%)'
+  }
+]
+const wallpaper = useState('lvos-wallpaper', () => 0)
+const wallpaperStyle = computed(() => ({ background: WALLPAPERS[wallpaper.value]?.css }))
+
+// ---- calendar popover ----
+const today = computed(() => now.value.getDate())
+const monthLabel = computed(() =>
+  now.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+)
+const daysInMonth = computed(() =>
+  new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0).getDate()
+)
+// number of blank cells before day 1, with Monday as the first column
+const leadingBlanks = computed(() => {
+  const firstDay = new Date(now.value.getFullYear(), now.value.getMonth(), 1).getDay()
+  return (firstDay + 6) % 7
+})
 
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
@@ -225,6 +299,7 @@ const playSnake = () => {
 // logging out keeps the window layout — logging back in restores the session
 const logout = () => {
   startOpen.value = false
+  calendarOpen.value = false
   desktopActive.value = false
 }
 
@@ -244,9 +319,13 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
 
-// first boot opens the readme; later boots restore the previous layout
+// booting shows the BIOS/POST screen; a fresh session then opens the readme,
+// while a returning session restores the previous window layout
 watch(desktopActive, (active) => {
-  if (active && !windows.value.length) openWindow('readme')
+  if (!active) return
+  const firstBoot = !windows.value.length
+  booting.value = true
+  if (firstBoot) openWindow('readme')
 })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
@@ -543,8 +622,87 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   }
 }
 
+.lvos-start-label {
+  padding: 0.4rem 0.7rem 0.2rem;
+  color: hsl(var(--lv-scheme-hs), 50%);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.lvos-wallpapers {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.2rem 0.7rem 0.4rem;
+
+  .lvos-wallpaper-swatch {
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
+    border-radius: 2px;
+    cursor: pointer;
+
+    &.is-active {
+      border-color: var(--bulma-primary);
+      box-shadow: 0 0 0 1px var(--bulma-primary);
+    }
+  }
+}
+
 .lvos-clock {
   margin-left: auto;
+  border: none;
+  background: none;
   color: hsl(var(--lv-scheme-hs), 60%);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &:hover,
+  &.is-open {
+    color: var(--bulma-primary);
+  }
+}
+
+.lvos-calendar {
+  position: absolute;
+  bottom: 2.6rem;
+  right: 0.5rem;
+  width: 15rem;
+  padding: 0.75rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+
+  .lvos-calendar-title {
+    margin-bottom: 0.5rem;
+    color: var(--bulma-primary);
+    font-size: 0.78rem;
+  }
+
+  .lvos-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.15rem;
+    text-align: center;
+    font-size: 0.7rem;
+  }
+
+  .lvos-cal-dow {
+    color: hsl(var(--lv-scheme-hs), 50%);
+    padding-bottom: 0.2rem;
+  }
+
+  .lvos-cal-day {
+    padding: 0.2rem 0;
+    color: hsl(var(--lv-scheme-hs), 82%);
+    border-radius: 2px;
+
+    &.is-today {
+      background-color: var(--bulma-primary);
+      color: var(--bulma-primary-invert);
+      font-weight: 700;
+    }
+  }
 }
 </style>
