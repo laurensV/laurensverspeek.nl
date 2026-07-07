@@ -71,6 +71,15 @@ body {
   }
 }
 
+@media print {
+  .app-navbar,
+  .app-footer,
+  .particle-network,
+  .no-print {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

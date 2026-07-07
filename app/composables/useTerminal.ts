@@ -17,7 +17,7 @@ interface TerminalCommand {
   exec: (args: string[]) => void
 }
 
-const PAGES = ['home', 'projects', 'about', 'uses', 'contact'] as const
+const PAGES = ['home', 'projects', 'about', 'uses', 'cv', 'contact'] as const
 
 const ASCII_LOGO = String.raw`
  _    __      __
@@ -189,6 +189,10 @@ export function useTerminal() {
     ls: {
       description: 'List pages',
       exec: () => out(PAGES.map((p) => `${p}/`).join('  '))
+    },
+    cv: {
+      description: 'View my CV (printable)',
+      exec: () => navigate('cv')
     },
     uses: {
       description: 'Gear, software and stack I use',

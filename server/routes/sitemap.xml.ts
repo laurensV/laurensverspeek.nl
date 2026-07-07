@@ -3,7 +3,7 @@ import { projects } from '../../app/data/projects'
 const SITE = 'https://laurensverspeek.nl'
 
 export default defineEventHandler((event) => {
-  const pages = ['/', '/projects', '/about', '/uses', '/contact']
+  const pages = ['/', '/projects', '/about', '/uses', '/cv', '/contact']
   const urls = [...pages, ...projects.map((p) => `/projects/${p.slug}`)]
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
