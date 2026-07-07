@@ -12,21 +12,31 @@
       <!-- windows -->
       <div
         v-for="win in windows"
-        v-show="!win.minimized"
         :key="win.id"
         class="lvos-window"
-        :class="{ 'is-wide': win.id === 'browser' || win.id === 'blog' }"
-        :style="{ left: `${win.x}px`, top: `${win.y}px`, zIndex: win.z }"
+        :class="{
+          'is-wide': win.id === 'browser' || win.id === 'blog',
+          'is-minimized': win.minimized,
+          'is-maximized': win.maximized,
+          'has-size': win.maximized || win.height !== undefined
+        }"
+        :style="windowStyle(win)"
         @pointerdown="focusWindow(win)"
       >
         <header
           class="lvos-window-titlebar is-family-code"
           @pointerdown.prevent="startDrag(win, $event)"
+          @dblclick="toggleMaximize(win)"
         >
           <span class="lvos-window-title">{{ win.title }}</span>
           <span class="lvos-window-actions">
-            <button title="Minimize" @click.stop="win.minimized = true">–</button>
-            <button title="Close" @click.stop="closeWindow(win.id)">×</button>
+            <button title="Minimize" @pointerdown.stop @click.stop="toggleMinimize(win)">–</button>
+            <button
+              :title="win.maximized ? 'Restore' : 'Maximize'"
+              @pointerdown.stop
+              @click.stop="toggleMaximize(win)"
+            >{{ win.maximized ? '❐' : '□' }}</button>
+            <button title="Close" @pointerdown.stop @click.stop="closeWindow(win.id)">×</button>
           </span>
         </header>
 
@@ -77,6 +87,13 @@
           <DesktopBrowser v-else-if="win.id === 'browser'" />
           <DesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
         </div>
+
+        <span
+          v-if="!win.maximized"
+          class="lvos-resize"
+          aria-hidden="true"
+          @pointerdown.prevent.stop="startResize(win, $event)"
+        />
       </div>
 
       <!-- taskbar -->
@@ -109,32 +126,13 @@
 <script setup lang="ts">
 import { useNow, useEventListener } from '@vueuse/core'
 import type { IconName } from '~/components/AppIcon.vue'
+import type { DesktopWindow } from '~/composables/useWindowManager'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
-// lvOS: the operating-system-in-a-browser easter egg. Boot with `desktop` in the terminal.
-
-interface DesktopWindow {
-  id: string
-  title: string
-  x: number
-  y: number
-  z: number
-  minimized: boolean
-}
-
-const { desktopActive } = useSiteEffects()
-const terminal = useTerminal()
-const router = useRouter()
-
-const windows = ref<DesktopWindow[]>([])
-const startOpen = ref(false)
-let zCounter = 10
-
-const now = useNow({ interval: 1000 })
-const clock = computed(() =>
-  now.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-)
+// lvOS: the operating-system-in-a-browser easter egg. Boot with `desktop` in
+// the terminal. Window mechanics live in useWindowManager; this component is
+// the shell: icons, taskbar and the apps inside the windows.
 
 const WINDOW_TITLES: Record<string, string> = {
   readme: 'readme.md — editor',
@@ -147,53 +145,38 @@ const WINDOW_TITLES: Record<string, string> = {
   blog: '~/blog — reader'
 }
 
-const openWindow = (id: string) => {
-  const existing = windows.value.find((w) => w.id === id)
-  if (existing) {
-    existing.minimized = false
-    focusWindow(existing)
-    return
-  }
-  const offset = windows.value.length * 34
-  windows.value.push({
-    id,
-    title: WINDOW_TITLES[id] ?? id,
-    x: Math.min(90 + offset, window.innerWidth / 3),
-    y: 70 + offset,
-    z: ++zCounter,
-    minimized: false
-  })
-}
+const { desktopActive } = useSiteEffects()
+const terminal = useTerminal()
+const router = useRouter()
 
-const closeWindow = (id: string) => {
-  windows.value = windows.value.filter((w) => w.id !== id)
-}
+const {
+  windows,
+  openWindow,
+  closeWindow,
+  focusWindow,
+  toggleMinimize,
+  toggleMaximize,
+  startDrag,
+  startResize
+} = useWindowManager(WINDOW_TITLES)
 
-const focusWindow = (win: DesktopWindow) => {
-  win.z = ++zCounter
-}
+const startOpen = ref(false)
 
-const toggleMinimize = (win: DesktopWindow) => {
-  win.minimized = !win.minimized
-  if (!win.minimized) focusWindow(win)
-}
+const now = useNow({ interval: 1000 })
+const clock = computed(() =>
+  now.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+)
 
-// window dragging
-let dragging: DesktopWindow | null = null
-let dragOffset = { x: 0, y: 0 }
-
-const startDrag = (win: DesktopWindow, event: PointerEvent) => {
-  dragging = win
-  focusWindow(win)
-  dragOffset = { x: event.clientX - win.x, y: event.clientY - win.y }
-}
-
-useEventListener('pointermove', (event: PointerEvent) => {
-  if (!dragging) return
-  dragging.x = Math.max(0, Math.min(event.clientX - dragOffset.x, window.innerWidth - 120))
-  dragging.y = Math.max(0, Math.min(event.clientY - dragOffset.y, window.innerHeight - 80))
-})
-useEventListener('pointerup', () => (dragging = null))
+const windowStyle = (win: DesktopWindow) =>
+  win.maximized
+    ? { zIndex: win.z }
+    : {
+        left: `${win.x}px`,
+        top: `${win.y}px`,
+        zIndex: win.z,
+        width: win.width !== undefined ? `${win.width}px` : undefined,
+        height: win.height !== undefined ? `${win.height}px` : undefined
+      }
 
 const openTerminal = () => {
   startOpen.value = false
@@ -233,9 +216,9 @@ const playSnake = () => {
   terminal.run('snake')
 }
 
+// logging out keeps the window layout — logging back in restores the session
 const logout = () => {
   startOpen.value = false
-  windows.value = []
   desktopActive.value = false
 }
 
@@ -252,12 +235,9 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
 
-// boot with readme open, esc logs out (when the terminal isn't using esc)
+// first boot opens the readme; later boots restore the previous layout
 watch(desktopActive, (active) => {
-  if (active) {
-    windows.value = []
-    openWindow('readme')
-  }
+  if (active && !windows.value.length) openWindow('readme')
 })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
@@ -337,6 +317,8 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
 .lvos-window {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   width: min(26rem, 88vw);
 
   &.is-wide {
@@ -348,6 +330,30 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   box-shadow: 0 18px 50px hsla(var(--lv-scheme-hs), 2%, 0.6);
   color: hsl(var(--lv-scheme-hs), 88%);
   overflow: hidden;
+  animation: lvos-window-open 0.18s ease;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+
+  // minimize keeps the app mounted (game state survives) but sails it
+  // down toward the taskbar
+  &.is-minimized {
+    opacity: 0;
+    transform: translateY(45vh) scale(0.5);
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &.is-maximized {
+    inset: 0 0 2.4rem 0;
+    width: auto;
+    border-radius: 0;
+  }
+}
+
+@keyframes lvos-window-open {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(0.5rem);
+  }
 }
 
 .lvos-window-titlebar {
@@ -366,21 +372,26 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     cursor: grabbing;
   }
 
-  .lvos-window-actions button {
-    width: 1.4rem;
-    border: none;
-    background: none;
-    color: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
+  .lvos-window-actions {
+    display: flex;
 
-    &:hover {
-      color: var(--bulma-primary);
+    button {
+      width: 1.4rem;
+      border: none;
+      background: none;
+      color: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--bulma-primary);
+      }
     }
   }
 }
 
 .lvos-window-body {
+  flex: 1;
   padding: 1rem;
   max-height: 50vh;
   overflow-y: auto;
@@ -389,6 +400,33 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   a {
     color: var(--bulma-primary);
   }
+}
+
+// explicit size (resized, snapped or maximized): let the body fill the window
+.lvos-window.has-size .lvos-window-body {
+  max-height: none;
+}
+
+.lvos-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1rem;
+  height: 1rem;
+  cursor: nwse-resize;
+  touch-action: none;
+  // three diagonal grip lines
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 50%,
+      hsla(var(--lv-primary-hsl), 0.5) 50% 55%,
+      transparent 55% 65%,
+      hsla(var(--lv-primary-hsl), 0.5) 65% 70%,
+      transparent 70% 80%,
+      hsla(var(--lv-primary-hsl), 0.5) 80% 85%,
+      transparent 85%
+    );
 }
 
 .lvos-file {
@@ -401,6 +439,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   border-radius: var(--bulma-radius-small);
   background: none;
   color: inherit;
+  font: inherit;
   font-size: 0.78rem;
   text-align: left;
   cursor: pointer;
@@ -458,6 +497,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
   background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+  z-index: 10000;
 
   button {
     padding: 0.5rem 0.7rem;
