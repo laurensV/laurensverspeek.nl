@@ -27,6 +27,7 @@ import { projects } from '~/data/projects'
 const emit = defineEmits<{
   route: [path: string]
   window: [id: string]
+  post: [path: string]
 }>()
 
 interface FileEntry {
@@ -53,7 +54,7 @@ const tree = computed<Record<string, FileEntry[]>>(() => ({
   })),
   '~/blog': (posts.value ?? []).map((post) => ({
     name: `${post.path.split('/').pop()}.md`,
-    open: () => emit('route', post.path)
+    open: () => emit('post', post.path)
   }))
 }))
 </script>

@@ -15,7 +15,7 @@
         v-show="!win.minimized"
         :key="win.id"
         class="lvos-window"
-        :class="{ 'is-wide': win.id === 'browser' }"
+        :class="{ 'is-wide': win.id === 'browser' || win.id === 'blog' }"
         :style="{ left: `${win.x}px`, top: `${win.y}px`, zIndex: win.z }"
         @pointerdown="focusWindow(win)"
       >
@@ -72,8 +72,10 @@
             v-else-if="win.id === 'files'"
             @route="openRoute"
             @window="openWindow"
+            @post="openBlogPost"
           />
           <DesktopBrowser v-else-if="win.id === 'browser'" />
+          <DesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
         </div>
       </div>
 
@@ -141,7 +143,8 @@ const WINDOW_TITLES: Record<string, string> = {
   minesweeper: 'minesweeper.exe',
   media: 'media player',
   files: 'file explorer',
-  browser: 'lv browser'
+  browser: 'lv browser',
+  blog: '~/blog — reader'
 }
 
 const openWindow = (id: string) => {
@@ -197,6 +200,19 @@ const openTerminal = () => {
   terminal.open()
 }
 
+// which post the blog reader should show (set by the file explorer)
+const blogOpenPath = ref<string | null>(null)
+
+const openBlogPost = (path: string) => {
+  blogOpenPath.value = path
+  openWindow('blog')
+}
+
+const openBlogApp = () => {
+  blogOpenPath.value = null
+  openWindow('blog')
+}
+
 const openProject = (slug: string) => {
   desktopActive.value = false
   router.push(`/projects/${slug}`)
@@ -227,6 +243,7 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'readme', label: 'readme.md', icon: 'file', action: () => openWindow('readme') },
   { id: 'files', label: 'files', icon: 'layers', action: () => openWindow('files') },
   { id: 'browser', label: 'lv browser', icon: 'globe', action: () => openWindow('browser') },
+  { id: 'blog', label: 'blog', icon: 'book', action: openBlogApp },
   { id: 'terminal', label: 'terminal', icon: 'terminal', action: openTerminal },
   { id: 'snake', label: 'snake.exe', icon: 'cpu', action: playSnake },
   { id: 'minesweeper', label: 'mines.exe', icon: 'cpu', action: () => openWindow('minesweeper') },
