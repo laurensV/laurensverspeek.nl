@@ -1,6 +1,11 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
+  experimental: {
+    // native View Transitions API for route changes (falls back to pageTransition)
+    viewTransition: true
+  },
+
   modules: ['@nuxt/content', '@nuxt/eslint', '@nuxtjs/color-mode', '@vueuse/nuxt'],
 
   content: {

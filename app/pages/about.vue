@@ -5,8 +5,8 @@
       <div class="is-flex is-align-items-center is-justify-content-space-between is-flex-wrap-wrap" style="gap: 1rem">
         <h1 class="title is-2 mb-0">About me</h1>
         <div class="is-flex" style="gap: 0.75rem">
-          <NuxtLink to="/now" class="button is-outlined is-primary is-family-code">now</NuxtLink>
-          <NuxtLink to="/cv" class="button is-primary is-outlined">
+          <NuxtLink v-magnetic to="/now" class="button is-outlined is-primary is-family-code">now</NuxtLink>
+          <NuxtLink v-magnetic to="/cv" class="button is-primary is-outlined">
             <span class="icon"><AppIcon name="file" :size="16" /></span>
             <span>View CV</span>
           </NuxtLink>

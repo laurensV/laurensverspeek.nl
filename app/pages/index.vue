@@ -17,11 +17,11 @@
                 {{ profile.bio[0] }}
               </p>
               <div class="buttons">
-                <NuxtLink to="/projects" class="button is-primary is-medium">
+                <NuxtLink v-magnetic to="/projects" class="button is-primary is-medium">
                   <span>View projects</span>
                   <span class="icon"><AppIcon name="arrow-right" :size="18" /></span>
                 </NuxtLink>
-                <button class="button is-medium is-outlined is-primary" @click="open">
+                <button v-magnetic class="button is-medium is-outlined is-primary" @click="open">
                   <span class="icon"><AppIcon name="terminal" :size="18" /></span>
                   <span class="is-family-code">terminal</span>
                 </button>
