@@ -4,8 +4,13 @@
       <NuxtLink
         to="/"
         class="nav-brand"
-        @mouseenter="scramble($event.currentTarget as HTMLElement, '~/laurens')"
-      >~/laurens</NuxtLink>
+        :class="{ 'is-expanded': brandExpanded, 'is-typing': brandTyping }"
+        aria-label="home"
+        @mouseenter="expandBrand(true)"
+        @mouseleave="expandBrand(false)"
+      >
+        <span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(master)</span>
+      </NuxtLink>
 
       <button
         class="nav-toggle is-hidden-desktop"
@@ -33,6 +38,38 @@
 
 <script setup lang="ts">
 const mobileMenu = ref(false)
+
+// Brand: hovering "expands" the ~ into /home, the way a shell would.
+// Frames type /home out character by character (and back again on leave).
+const BRAND_FRAMES = ['~', '/', '/h', '/ho', '/hom', '/home'] as const
+const brandFrame = ref(0)
+const brandTyping = ref(false)
+const brandText = computed(() => `${BRAND_FRAMES[brandFrame.value]}/laurens`)
+const brandExpanded = computed(() => brandFrame.value === BRAND_FRAMES.length - 1)
+
+let brandTimer: ReturnType<typeof setInterval> | undefined
+
+const expandBrand = (expand: boolean) => {
+  if (brandTimer) clearInterval(brandTimer)
+  const target = expand ? BRAND_FRAMES.length - 1 : 0
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    brandFrame.value = target
+    return
+  }
+  if (brandFrame.value === target) return
+  brandTyping.value = true
+  brandTimer = setInterval(() => {
+    brandFrame.value += brandFrame.value < target ? 1 : -1
+    if (brandFrame.value === target) {
+      clearInterval(brandTimer)
+      brandTyping.value = false
+    }
+  }, 55)
+}
+
+onUnmounted(() => {
+  if (brandTimer) clearInterval(brandTimer)
+})
 
 const navItems = [
   { to: '/', label: 'home' },
@@ -108,11 +145,55 @@ const scramble = (el: HTMLElement, text: string) => {
 }
 
 .nav-brand {
+  display: inline-flex;
+  align-items: center;
   color: var(--bulma-text-weak);
   white-space: pre;
 
-  &:hover {
+  .brand-path {
+    transition: color 0.2s ease;
+  }
+
+  // always-on block caret: the brand is a prompt waiting for input
+  .brand-caret {
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 0.18em;
+    background-color: var(--bulma-primary);
+    opacity: 0.75;
+    animation: brand-caret-blink 1.15s steps(2, start) infinite;
+  }
+
+  // oh-my-zsh style branch segment, revealed once ~ has expanded to /home
+  .brand-git {
+    max-width: 0;
+    overflow: hidden;
+    margin-left: 0;
+    color: var(--bulma-text-weak);
+    opacity: 0;
+    transition: max-width 0.3s ease, opacity 0.3s ease, margin-left 0.3s ease;
+  }
+
+  &:hover .brand-path {
     color: var(--bulma-primary-on-scheme);
+  }
+
+  // while typing, the caret is solid instead of blinking (like a busy shell)
+  &.is-typing .brand-caret {
+    animation: none;
+    opacity: 1;
+  }
+
+  &.is-expanded .brand-git {
+    max-width: 8em;
+    margin-left: 0.6em;
+    opacity: 0.75;
+  }
+}
+
+@keyframes brand-caret-blink {
+  to {
+    visibility: hidden;
   }
 }
 
@@ -170,6 +251,10 @@ const scramble = (el: HTMLElement, text: string) => {
 
 @media (prefers-reduced-motion: reduce) {
   .nav-links .nav-link.is-active::after {
+    animation: none;
+  }
+
+  .nav-brand .brand-caret {
     animation: none;
   }
 }
