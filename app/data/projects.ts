@@ -1,7 +1,7 @@
 export type ProjectCategory = 'work' | 'hobby' | 'study' | 'paper'
 
 export interface Project {
-  /** Unique id, also used by the terminal (`open <slug>`) */
+  /** Unique id, also used by the terminal (`open <slug>`) and the /projects/<slug> route */
   slug: string
   title: string
   description: string
@@ -16,6 +16,12 @@ export interface Project {
   url?: string
   /** Featured projects are shown on the home page */
   featured?: boolean
+  /** Years the project was active, e.g. '2021 — now' */
+  year?: string
+  /** My role in the project */
+  role?: string
+  /** Longer write-up shown on the project detail page */
+  story?: string[]
 }
 
 export const categories: { value: ProjectCategory; label: string; color: string }[] = [
@@ -36,7 +42,14 @@ export const projects: Project[] = [
     thumbnail: 'https://nosana.io/img/Nosana_Logo_vertical_color_black.png',
     source: 'https://github.com/nosana-ci',
     url: 'https://nosana.io',
-    featured: true
+    featured: true,
+    year: '2021 — now',
+    role: 'Co-founder & CTO',
+    story: [
+      'Nosana started as a decentralized CI/CD platform: instead of renting build servers from a cloud provider, pipelines would run on a permissionless network of nodes, paid in the NOS token on Solana.',
+      'As the AI wave hit, we pivoted the same infrastructure to something the market needed even more: GPU compute. Today Nosana is a decentralized GPU grid where anyone with a graphics card can earn by running AI inference workloads, and teams can access affordable compute without a big cloud contract.',
+      'As CTO I lead the technical direction: the Solana programs (staking, jobs, rewards), the node software that turns a gaming PC into a compute provider, and the marketplace that ties it all together.'
+    ]
   },
   {
     slug: 'effect-network',
@@ -50,7 +63,14 @@ export const projects: Project[] = [
       'https://raw.githubusercontent.com/effectai/force-frontend/main/docs/Effect-Force_Select-Screen.gif',
     source: 'https://effect.network/download/effect_whitepaper.pdf',
     url: 'https://effect.network',
-    featured: true
+    featured: true,
+    year: '2017 — 2021',
+    role: 'Co-founder',
+    story: [
+      'Effect.AI set out to build "the future of work" on the blockchain: a micro-tasking platform where anyone in the world could earn money by completing small data tasks — labeling images, transcribing audio, moderating content — the fuel that machine learning models run on.',
+      'We grew a global workforce of thousands of workers, processed millions of tasks for AI companies, and built the whole platform on smart contracts (first NEO, later EOS) with the EFX token as its currency.',
+      'Co-founding Effect.AI taught me how to take a whitepaper to a live product with real users and real token economics — and it planted the seed for Nosana.'
+    ]
   },
   {
     slug: 'self-coding-website',
@@ -65,7 +85,14 @@ export const projects: Project[] = [
       'https://raw.githubusercontent.com/laurensV/self-coding-website/main/docs/self-coding-website-snippet.gif',
     source: 'https://github.com/laurensV/self-coding-website',
     url: 'https://laurensv.github.io/self-coding-website/',
-    featured: true
+    featured: true,
+    year: '2021',
+    role: 'Creator',
+    story: [
+      'A tiny experiment with a fun premise: what if a website wrote its own source code, live, in front of you?',
+      'The page displays its own style block and types it out character by character — and because the style block is actually applied to the document, the page styles itself as it "codes". You can even edit the code and watch the page change.',
+      'No frameworks, no build step: one HTML file, a sprinkle of JavaScript, and a CSS trick (`style { display: block }`) doing all the heavy lifting.'
+    ]
   },
   {
     slug: 'portfolio',
@@ -75,7 +102,14 @@ export const projects: Project[] = [
     category: 'hobby',
     tech: ['Nuxt 4', 'TypeScript', 'Bulma'],
     source: 'https://github.com/laurensV/laurensverspeek.nl',
-    url: 'https://laurensverspeek.nl'
+    url: 'https://laurensverspeek.nl',
+    year: '2022 — now',
+    role: 'Creator',
+    story: [
+      'My personal slice of the web. Version 1 was an unfinished Nuxt 2 site that spent four years saying "coming soon(ish)" — version 2 is what you are looking at right now.',
+      'Rebuilt from scratch on Nuxt 4 with TypeScript and Bulma, it doubles as a playground: an interactive terminal (press ~), a particle network background, and more easter eggs than strictly necessary.',
+      'The source is public, so if you are curious how something on this site works — go ahead and peek.'
+    ]
   },
   {
     slug: 'automated-web-design',
@@ -86,7 +120,14 @@ export const projects: Project[] = [
     tech: ['AI', 'Genetic Algorithms', 'Research'],
     thumbnail: 'https://raw.githubusercontent.com/laurensV/amos/master/thumbnail_master-thesis.png',
     source: 'https://github.com/laurensV/amos',
-    url: 'https://github.com/laurensV/amos/blob/master/master_thesis_AMOS_laurens_verspeek.pdf'
+    url: 'https://github.com/laurensV/amos/blob/master/master_thesis_AMOS_laurens_verspeek.pdf',
+    year: '2017',
+    role: 'MSc thesis — University of Amsterdam',
+    story: [
+      'Can a website redesign itself to convert better, without an A/B-testing team? My master thesis explored exactly that: online automated multivariate web design optimization.',
+      'The system (AMOS) treats a page design as a genome — colors, layout, typography as genes — and uses a modified genetic algorithm to evolve the design against live user behavior, converging on higher-performing variants while visitors browse.',
+      'The fun part was fighting the explore/exploit trade-off: showing experimental designs to enough visitors to learn, without hurting the experience for everyone else.'
+    ]
   },
   {
     slug: 'detect-malicious-websites',
@@ -97,7 +138,13 @@ export const projects: Project[] = [
     tech: ['Security', 'Research'],
     thumbnail: 'https://raw.githubusercontent.com/laurensV/TrustingWebsites/master/paper/img/tool.PNG',
     source: 'https://github.com/laurensV/TrustingWebsites',
-    url: 'https://github.com/laurensV/TrustingWebsites/blob/master/trusting-website-using-geographical-consistency_laurens-verspeek.pdf'
+    url: 'https://github.com/laurensV/TrustingWebsites/blob/master/trusting-website-using-geographical-consistency_laurens-verspeek.pdf',
+    year: '2015',
+    role: 'BSc thesis',
+    story: [
+      'Phishing sites often look pixel-perfect — but their infrastructure rarely adds up. My bachelor thesis investigated whether the geographical consistency of a website\'s components (server location, domain registration, content origin) can help users spot malicious sites.',
+      'I built an experiment tool that visualized where each part of a website physically came from, and had participants classify sites as trustworthy or malicious based on that signal.'
+    ]
   },
   {
     slug: 'kids-age',
@@ -109,7 +156,13 @@ export const projects: Project[] = [
     thumbnail: 'https://raw.githubusercontent.com/laurensV/age/main/docs/screenshot_fireworks.png',
     thumbnailHover: 'https://raw.githubusercontent.com/laurensV/age/main/docs/screenshot_fireworks.gif',
     source: 'https://github.com/laurensV/age',
-    url: 'https://laurensv.github.io/age/'
+    url: 'https://laurensv.github.io/age/',
+    year: '2021',
+    role: 'Creator (and dad)',
+    story: [
+      'Built for the most demanding clients I have: kids. The site shows exactly how old a kid is — down to the second — and on their birthday the page erupts in interactive canvas fireworks you can launch by clicking.',
+      'It ships in a boy and a girl theme and makes a surprisingly good "how long until my birthday" countdown for impatient young stakeholders.'
+    ]
   },
   {
     slug: 'hangman',
@@ -120,7 +173,13 @@ export const projects: Project[] = [
     tech: ['Java', 'Android'],
     thumbnail: 'https://raw.githubusercontent.com/laurensV/Hangman/master/doc/hangman.png',
     source: 'https://github.com/laurensV/Hangman',
-    url: 'https://github.com/laurensV/Hangman/blob/master/README.md'
+    url: 'https://github.com/laurensV/Hangman/blob/master/README.md',
+    year: '2014',
+    role: 'Student — University of Amsterdam',
+    story: [
+      'The classic Hangman game as a native Android app, built in Java for the Native App Studios course at the University of Amsterdam.',
+      'It also lives on in this website: open the terminal and type `hangman` to play a word-guessing round against my tech stack.'
+    ]
   }
 ]
 

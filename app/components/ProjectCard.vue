@@ -6,7 +6,7 @@
     @pointermove="onTilt"
     @pointerleave="resetTilt"
   >
-    <div class="card-image project-thumb">
+    <NuxtLink :to="`/projects/${project.slug}`" class="card-image project-thumb">
       <template v-if="project.thumbnail && !imageFailed">
         <div v-show="!imageLoaded" class="skeleton-block project-thumb-skeleton" />
         <img
@@ -30,10 +30,14 @@
         <span>&lt;{{ project.slug }} /&gt;</span>
       </div>
       <span class="tag category-tag" :class="categoryColor">{{ project.category }}</span>
-    </div>
+    </NuxtLink>
 
     <div class="card-content">
-      <p class="title is-5 mb-2">{{ project.title }}</p>
+      <p class="title is-5 mb-2">
+        <NuxtLink :to="`/projects/${project.slug}`" class="project-title-link">
+          {{ project.title }}
+        </NuxtLink>
+      </p>
       <p class="is-size-6 has-text-grey project-description">{{ project.description }}</p>
       <div class="tags mt-3 mb-0">
         <span v-for="tech in project.tech" :key="tech" class="tag is-small tech-tag is-family-code">
@@ -123,7 +127,16 @@ const resetTilt = () => {
   }
 }
 
+.project-title-link {
+  color: inherit;
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+  }
+}
+
 .project-thumb {
+  display: block;
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;

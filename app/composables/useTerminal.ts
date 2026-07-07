@@ -147,6 +147,32 @@ export function useTerminal() {
         window.open(url, '_blank', 'noopener')
       }
     },
+    cat: {
+      usage: 'cat <project>',
+      description: 'Read all about a project',
+      exec: (args) => {
+        if (!args[0]) {
+          error(`Usage: cat <project> — run 'projects' to see the list.`)
+          return
+        }
+        const query = args[0].toLowerCase().replace(/\.md$/, '')
+        const project = projects.find(
+          (p) => p.slug === query || p.title.toLowerCase().includes(query)
+        )
+        if (!project) {
+          error(`cat: ${args[0]}: No such file or directory`)
+          return
+        }
+        push('primary', `# ${project.title}`)
+        muted(`${project.year ?? ''}${project.year && project.role ? ' · ' : ''}${project.role ?? ''}`)
+        for (const paragraph of project.story ?? [project.description]) {
+          out('')
+          out(paragraph)
+        }
+        out('')
+        link(`Read in style → /projects/${project.slug}`, `/projects/${project.slug}`)
+      }
+    },
     cd: {
       usage: 'cd <page>',
       description: `Go to a page (${PAGES.join(', ')})`,
