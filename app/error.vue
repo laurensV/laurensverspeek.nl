@@ -10,7 +10,7 @@
         </template>
         <template v-else>something went wrong on this page</template>
       </p>
-      <button class="button is-primary" @click="handleError">cd ~</button>
+      <CmdButton variant="primary" @click="handleError">cd ~</CmdButton>
     </div>
   </div>
 </template>

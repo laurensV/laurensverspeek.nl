@@ -16,15 +16,15 @@
               <p class="hero-bio has-text-grey mb-5">
                 {{ profile.bio[0] }}
               </p>
-              <div class="buttons">
-                <NuxtLink v-magnetic to="/projects" class="button is-primary is-medium">
-                  <span>View projects</span>
-                  <span class="icon"><AppIcon name="arrow-right" :size="18" /></span>
-                </NuxtLink>
-                <button v-magnetic class="button is-medium is-outlined is-primary" @click="open">
-                  <span class="icon"><AppIcon name="terminal" :size="18" /></span>
-                  <span class="is-family-code">terminal</span>
-                </button>
+              <div class="is-flex is-flex-wrap-wrap mb-4" style="gap: 0.9rem">
+                <CmdButton to="/projects" variant="primary" size="medium">
+                  view projects
+                  <AppIcon name="arrow-right" :size="16" />
+                </CmdButton>
+                <CmdButton size="medium" @click="open">
+                  <AppIcon name="terminal" :size="16" />
+                  terminal
+                </CmdButton>
               </div>
               <p class="is-family-code is-size-7 hero-hint">
                 // psst — try <kbd>~</kbd> for the terminal, <kbd>ctrl</kbd>+<kbd>k</kbd> for the palette
@@ -63,9 +63,7 @@
           <ProjectsGrid :projects="featuredProjects" />
         </RevealBlock>
         <div class="has-text-centered mt-4 is-hidden-tablet">
-          <NuxtLink to="/projects" class="button is-primary is-outlined is-family-code">
-            all projects →
-          </NuxtLink>
+          <CmdButton to="/projects" variant="primary">cd projects/</CmdButton>
         </div>
       </div>
     </section>

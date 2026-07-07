@@ -20,27 +20,15 @@
             <p v-for="(paragraph, i) in story" :key="i">{{ paragraph }}</p>
           </div>
 
-          <div class="buttons mt-5">
-            <a
-              v-if="project.url"
-              :href="project.url"
-              target="_blank"
-              rel="noopener"
-              class="button is-primary"
-            >
-              <span class="icon"><AppIcon name="external" :size="16" /></span>
-              <span>Visit project</span>
-            </a>
-            <a
-              v-if="project.source"
-              :href="project.source"
-              target="_blank"
-              rel="noopener"
-              class="button is-primary is-outlined"
-            >
-              <span class="icon"><AppIcon name="code" :size="16" /></span>
-              <span>Source</span>
-            </a>
+          <div class="is-flex is-flex-wrap-wrap mt-5" style="gap: 0.75rem">
+            <CmdButton v-if="project.url" :href="project.url" variant="primary">
+              <AppIcon name="external" :size="15" />
+              visit project
+            </CmdButton>
+            <CmdButton v-if="project.source" :href="project.source">
+              <AppIcon name="code" :size="15" />
+              git clone
+            </CmdButton>
           </div>
         </div>
 

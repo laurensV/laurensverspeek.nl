@@ -3,10 +3,10 @@
     <div class="container cv-container">
       <div class="is-flex is-justify-content-space-between is-align-items-center mb-5 no-print">
         <p class="overline">cv $ lpr resume.pdf</p>
-        <button class="button is-primary" @click="printCv">
-          <span class="icon"><AppIcon name="file" :size="16" /></span>
-          <span>Print / save as PDF</span>
-        </button>
+        <CmdButton variant="primary" @click="printCv">
+          <AppIcon name="file" :size="15" />
+          lpr resume.pdf
+        </CmdButton>
       </div>
 
       <div class="cv-sheet">
