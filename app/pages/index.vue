@@ -26,6 +26,9 @@
                   <span class="is-family-code">terminal</span>
                 </button>
               </div>
+              <p class="is-family-code is-size-7 hero-hint">
+                // psst — try <kbd>~</kbd> for the terminal, <kbd>ctrl</kbd>+<kbd>k</kbd> for the palette
+              </p>
             </div>
             <div class="column is-4 is-offset-1 is-hidden-mobile">
               <ClientOnly>
@@ -137,6 +140,17 @@ const areas: { icon: IconName; title: string; description: string }[] = [
 .hero-bio {
   max-width: 34rem;
   font-size: 1.1rem;
+}
+
+.hero-hint {
+  color: var(--bulma-text-weak);
+
+  kbd {
+    padding: 0.05em 0.4em;
+    border: 1px solid var(--bulma-border);
+    border-radius: var(--bulma-radius-small);
+    background-color: var(--bulma-scheme-main-bis);
+  }
 }
 
 // Let the 3D block overlap the terminal card slightly

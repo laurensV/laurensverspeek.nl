@@ -41,6 +41,7 @@
         </div>
 
         <div class="column is-4 is-offset-1">
+          <CodeSnippet title="laurens.ts" class="mb-5" :code="laurensSnippet" />
           <h2 class="title is-4 mb-4">Skills</h2>
           <div v-for="group in profile.skills" :key="group.group" class="mb-4">
             <p class="is-family-code is-size-7 has-text-grey mb-2">./{{ group.group.toLowerCase() }}</p>
@@ -60,6 +61,17 @@
 import { profile } from '~/data/profile'
 
 useHead({ title: 'About — Laurens Verspeek' })
+
+const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="tok-type">Developer</span> = {
+  location: <span class="tok-str">'The Netherlands'</span>,
+  roles: [<span class="tok-str">'CTO @ Nosana'</span>,
+          <span class="tok-str">'full-stack dev'</span>],
+  languages: [<span class="tok-str">'TypeScript'</span>,
+              <span class="tok-str">'Rust'</span>],
+  fuel: <span class="tok-str">'coffee'</span>, <span class="tok-comment">// mostly</span>
+  openTo: <span class="tok-str">'interesting problems'</span>,
+  contact: () =&gt; <span class="tok-fn">open</span>(<span class="tok-str">'/contact'</span>)
+}`
 </script>
 
 <style scoped lang="scss">

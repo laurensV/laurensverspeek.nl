@@ -8,6 +8,7 @@
       </main>
       <AppFooter />
     </div>
+    <AppStatusBar />
     <TerminalOverlay />
     <CommandPalette />
     <BootSplash />
@@ -34,6 +35,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  // keep content clear of the fixed status bar
+  padding-bottom: 1.65rem;
 
   main {
     flex: 1;

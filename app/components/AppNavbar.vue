@@ -25,12 +25,12 @@
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
-            class="navbar-item nav-link"
+            class="navbar-item nav-link is-family-code"
             :to="item.to"
             exact-active-class="is-active"
             @click="mobileMenu = false"
           >
-            {{ item.label }}
+            <span class="nav-comment">//&nbsp;</span>{{ item.label.toLowerCase() }}
           </NuxtLink>
         </div>
 
@@ -94,6 +94,19 @@ const openTerminal = () => {
   .nav-link {
     position: relative;
     font-weight: 500;
+    font-size: 0.9rem;
+
+    .nav-comment {
+      color: var(--bulma-text-weak);
+      opacity: 0.6;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+
+    &:hover .nav-comment,
+    &.is-active .nav-comment {
+      color: var(--bulma-primary-on-scheme);
+      opacity: 1;
+    }
 
     &::after {
       content: '';
