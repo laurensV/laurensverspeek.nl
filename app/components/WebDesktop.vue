@@ -1,13 +1,40 @@
 <template>
   <Teleport to="body">
-    <LazyDesktopBoot v-if="booting" @done="booting = false" />
+    <LazyDesktopBoot v-if="booting" @done="onBootDone" />
     <div
       v-if="desktopActive && !booting"
       class="lvos"
       :style="wallpaperStyle"
       role="application"
       aria-label="lvOS desktop — press Escape to log out"
+      @contextmenu.prevent="openContextMenu"
+      @click="contextMenu.open = false"
     >
+      <!-- right-click context menu -->
+      <div
+        v-if="contextMenu.open"
+        class="lvos-context is-family-code"
+        :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+        @click.stop
+      >
+        <button @click="openTerminal(); contextMenu.open = false">&gt;_ new terminal</button>
+        <button @click="cycleWallpaper(); contextMenu.open = false">🖼 next wallpaper</button>
+        <button @click="openWindow('settings'); contextMenu.open = false">⚙ settings</button>
+        <button @click="openWindow('about-os'); contextMenu.open = false">ℹ about lvOS</button>
+        <button @click="logout()">⏻ log out</button>
+      </div>
+
+      <!-- toast notifications -->
+      <div class="lvos-toasts is-family-code" aria-live="polite">
+        <div v-for="toast in toasts" :key="toast.id" class="lvos-toast">
+          <span class="lvos-toast-icon">{{ toast.icon }}</span>
+          <div>
+            <p class="lvos-toast-title">{{ toast.title }}</p>
+            <p v-if="toast.body" class="lvos-toast-body">{{ toast.body }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- desktop icons -->
       <div class="lvos-icons">
         <button v-for="icon in icons" :key="icon.id" class="lvos-icon is-family-code" @click="icon.action">
@@ -227,6 +254,28 @@ const startOpen = ref(false)
 const calendarOpen = ref(false)
 const booting = ref(false)
 
+// ---- toast notifications ----
+interface Toast { id: number, icon: string, title: string, body?: string }
+const toasts = ref<Toast[]>([])
+let toastId = 0
+const notify = (icon: string, title: string, body?: string) => {
+  const id = toastId++
+  toasts.value.push({ id, icon, title, body })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter((t) => t.id !== id)
+  }, 4200)
+}
+
+// ---- right-click context menu ----
+const contextMenu = reactive({ open: false, x: 0, y: 0 })
+const openContextMenu = (event: MouseEvent) => {
+  // only on the desktop background, not on top of a window
+  if ((event.target as HTMLElement).closest('.lvos-window, .lvos-taskbar')) return
+  contextMenu.x = Math.min(event.clientX, window.innerWidth - 200)
+  contextMenu.y = Math.min(event.clientY, window.innerHeight - 220)
+  contextMenu.open = true
+}
+
 const now = useNow({ interval: 1000 })
 const clock = computed(() =>
   now.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -260,6 +309,10 @@ const WALLPAPERS = [
 ]
 const wallpaper = useState('lvos-wallpaper', () => 0)
 const wallpaperStyle = computed(() => ({ background: WALLPAPERS[wallpaper.value]?.css }))
+const cycleWallpaper = () => {
+  wallpaper.value = (wallpaper.value + 1) % WALLPAPERS.length
+  notify('🖼', 'Wallpaper changed', WALLPAPERS[wallpaper.value]!.name)
+}
 
 // ---- calendar popover ----
 const today = computed(() => now.value.getDate())
@@ -285,6 +338,13 @@ const windowStyle = (win: DesktopWindow) =>
         width: win.width !== undefined ? `${win.width}px` : undefined,
         height: win.height !== undefined ? `${win.height}px` : undefined
       }
+
+const onBootDone = () => {
+  booting.value = false
+  notify('⚡', 'Welcome to lvOS 2.0', 'right-click the desktop for a menu')
+  // a playful nudge a moment later
+  setTimeout(() => notify('🔋', 'Battery low', 'plug in your creativity'), 6000)
+}
 
 const openTerminal = () => {
   startOpen.value = false
@@ -363,14 +423,17 @@ watch(desktopActive, (active) => {
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   // defaultPrevented means the terminal already consumed this Escape
-  if (
-    event.key === 'Escape'
-    && !event.defaultPrevented
-    && desktopActive.value
-    && !terminal.isOpen.value
-  ) {
-    logout()
+  if (event.key !== 'Escape' || event.defaultPrevented || !desktopActive.value || terminal.isOpen.value) {
+    return
   }
+  // Escape first dismisses popups, only logging out when nothing is open
+  if (contextMenu.open || startOpen.value || calendarOpen.value) {
+    contextMenu.open = false
+    startOpen.value = false
+    calendarOpen.value = false
+    return
+  }
+  logout()
 })
 </script>
 
@@ -679,6 +742,79 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       border-color: var(--bulma-primary);
       box-shadow: 0 0 0 1px var(--bulma-primary);
     }
+  }
+}
+
+.lvos-context {
+  position: absolute;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  min-width: 11rem;
+  padding: 0.35rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+  box-shadow: 0 12px 30px hsla(var(--lv-scheme-hs), 2%, 0.6);
+
+  button {
+    padding: 0.45rem 0.7rem;
+    border: none;
+    border-radius: var(--bulma-radius-small);
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 88%);
+    font: inherit;
+    font-size: 0.78rem;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
+      color: var(--bulma-primary);
+    }
+  }
+}
+
+.lvos-toasts {
+  position: absolute;
+  right: 1rem;
+  bottom: 3.2rem;
+  z-index: 10002;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 18rem;
+}
+
+.lvos-toast {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 10%, 0.98);
+  box-shadow: 0 10px 26px hsla(var(--lv-scheme-hs), 2%, 0.5);
+  animation: lvos-toast-in 0.25s ease;
+
+  .lvos-toast-icon {
+    font-size: 1.1rem;
+  }
+
+  .lvos-toast-title {
+    color: hsl(var(--lv-scheme-hs), 92%);
+    font-size: 0.8rem;
+  }
+
+  .lvos-toast-body {
+    color: hsl(var(--lv-scheme-hs), 60%);
+    font-size: 0.7rem;
+  }
+}
+
+@keyframes lvos-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
   }
 }
 
