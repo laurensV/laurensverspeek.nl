@@ -15,7 +15,8 @@ export interface TerminalCommand {
   hidden?: boolean
   /** Candidates for tab-completing this command's first argument */
   argCandidates?: () => string[]
-  exec: (args: string[]) => void
+  /** Async commands return their promise so pipes can wait for the output */
+  exec: (args: string[]) => void | Promise<void>
 }
 
 export const PAGES = ['home', 'projects', 'blog', 'about', 'uses', 'now', 'cv', 'contact'] as const

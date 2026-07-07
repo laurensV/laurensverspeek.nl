@@ -45,6 +45,7 @@
               @keydown.up.prevent="historyUp"
               @keydown.down.prevent="historyDown"
               @keydown.tab.prevent="autocomplete"
+              @keydown.ctrl.l.prevent="clearScreen"
               @keydown.esc="close"
             >
           </div>
@@ -96,7 +97,11 @@ const historyDown = () => {
 
 const autocomplete = () => {
   const match = complete(input.value)
-  if (match) input.value = `${match} `
+  if (match) input.value = match
+}
+
+const clearScreen = () => {
+  lines.value = []
 }
 
 // Open with ~ or ` when not typing in another field (and not mid-game)

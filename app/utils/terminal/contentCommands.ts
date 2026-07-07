@@ -11,8 +11,17 @@ const postSlug = (path: string) => path.split('/').pop() ?? path
 
 const projectSlugs = () => projects.map((p) => p.slug)
 
+// filled after the first fetch, so tab completion for post names can be sync
+let cachedPostSlugs: string[] = []
+
 export function createContentCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, link } = ctx
+
+  const fetchPosts = () =>
+    ctx.fetchPosts().then((posts) => {
+      cachedPostSlugs = posts.map((p) => postSlug(p.path))
+      return posts
+    })
 
   const listProjects = (category?: ProjectCategory) => {
     const list = category ? projects.filter((p) => p.category === category) : projects
@@ -32,8 +41,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
 
   const readPost = (query: string, notFound: (query: string) => void) => {
     const q = query.toLowerCase().replace(/\.md$/, '')
-    ctx
-      .fetchPosts()
+    return fetchPosts()
       .then((posts) => {
         const post =
           posts.find((p) => postSlug(p.path) === q)
@@ -107,7 +115,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     cat: {
       usage: 'cat <project|post>',
       description: 'Read all about a project (or a blog post)',
-      argCandidates: projectSlugs,
+      argCandidates: () => [...projectSlugs(), ...cachedPostSlugs],
       exec: (args) => {
         if (!args[0]) {
           error(`Usage: cat <name> — run 'projects' or 'blog' to see what's readable.`)
@@ -119,8 +127,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
         )
         if (!project) {
           // not a project — maybe it's a blog post
-          readPost(query, (q) => error(`cat: ${q}: No such file or directory`))
-          return
+          return readPost(query, (q) => error(`cat: ${q}: No such file or directory`))
         }
         push('primary', `# ${project.title}`)
         muted(`${project.year ?? ''}${project.year && project.role ? ' · ' : ''}${project.role ?? ''}`)
@@ -156,15 +163,14 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     blog: {
       usage: 'blog [post]',
       description: 'List blog posts — or read one right here',
+      argCandidates: () => cachedPostSlugs,
       exec: (args) => {
         if (args[0]) {
-          readPost(args.join(' '), (query) =>
+          return readPost(args.join(' '), (query) =>
             error(`blog: post '${query}' not found — run 'blog' for the list.`)
           )
-          return
         }
-        ctx
-          .fetchPosts()
+        return fetchPosts()
           .then((posts) => {
             if (!posts.length) {
               muted('ls: blog/: empty directory')
@@ -222,7 +228,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       description: 'Live stats from the GitHub API',
       exec: () => {
         muted('Fetching from api.github.com ...')
-        $fetch<{ followers: number, public_repos: number }>(
+        return $fetch<{ followers: number, public_repos: number }>(
           `https://api.github.com/users/${GITHUB_USER}`
         )
           .then((user) => {

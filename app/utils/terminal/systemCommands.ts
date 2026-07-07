@@ -78,7 +78,9 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     },
     clear: {
       description: 'Clear the terminal',
-      exec: () => (ctx.lines.value = [])
+      exec: () => {
+        ctx.lines.value = []
+      }
     },
     reboot: {
       description: 'Replay the boot sequence',
