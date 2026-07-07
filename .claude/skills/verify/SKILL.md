@@ -36,4 +36,9 @@ Flows worth driving:
 - A `pageerror: Transition was aborted because of timeout in DOM update` shows up in
   headless runs — view-transitions noise, pre-existing, not a failure.
 - The error page (`app/error.vue`) can't be exercised through a plain static file server
-  (it serves its own 404) — verify it in dev or trust component reuse.
+  (it serves its own 404). Verify it against the dev server (:3000) instead, and wait for
+  hydration (`waitForSelector('.error-code')` + ~1.5s) before typing into its shell input.
+- lvOS and its apps are lazy-mounted (`LazyWebDesktop v-if` in the layout, `Lazy*` app
+  components). After the terminal `desktop` command there's a ~700ms delay plus async chunk
+  loads before the BIOS `.boot` screen and then `.lvos` appear — poll with `waitForSelector`,
+  don't assert at a fixed early offset.
