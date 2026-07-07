@@ -1,5 +1,6 @@
 import { projects, categories, type ProjectCategory } from '~/data/projects'
 import { profile } from '~/data/profile'
+import { uses as usesData } from '~/data/uses'
 
 export interface TerminalLine {
   id: number
@@ -16,7 +17,7 @@ interface TerminalCommand {
   exec: (args: string[]) => void
 }
 
-const PAGES = ['home', 'projects', 'about', 'contact'] as const
+const PAGES = ['home', 'projects', 'about', 'uses', 'contact'] as const
 
 const ASCII_LOGO = String.raw`
  _    __      __
@@ -188,6 +189,23 @@ export function useTerminal() {
     ls: {
       description: 'List pages',
       exec: () => out(PAGES.map((p) => `${p}/`).join('  '))
+    },
+    uses: {
+      description: 'Gear, software and stack I use',
+      exec: () => {
+        for (const group of usesData) {
+          push('primary', `./${group.group.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)
+          for (const item of group.items) {
+            push(
+              'output',
+              `<span class="term-accent">${item.name.padEnd(24, ' ')}</span> ${item.note ?? ''}`,
+              true
+            )
+          }
+          out('')
+        }
+        muted(`Full list at /uses — or run 'cd uses'.`)
+      }
     },
     contact: {
       description: 'How to reach me',
