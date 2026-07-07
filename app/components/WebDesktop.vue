@@ -345,13 +345,15 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
 ]
 
 // booting shows the BIOS/POST screen; a fresh session then opens the readme,
-// while a returning session restores the previous window layout
+// while a returning session restores the previous window layout.
+// immediate: the component is lazy-mounted *after* desktopActive flips true, so
+// a plain watch would miss that first transition and skip the boot screen.
 watch(desktopActive, (active) => {
   if (!active) return
   const firstBoot = !windows.value.length
   booting.value = true
   if (firstBoot) openWindow('readme')
-})
+}, { immediate: true })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   // defaultPrevented means the terminal already consumed this Escape
