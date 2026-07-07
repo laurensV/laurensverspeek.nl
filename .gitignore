@@ -23,3 +23,8 @@ node_modules
 
 # generated OG images (built by scripts/generate-og.mjs)
 /public/og/
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

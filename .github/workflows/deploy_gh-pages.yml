@@ -23,6 +23,11 @@ jobs:
       - run: npm run test
       - run: npm run generate
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: npm run test:e2e
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
