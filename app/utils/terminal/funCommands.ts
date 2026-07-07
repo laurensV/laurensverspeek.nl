@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game } from '~/utils/terminalGames'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
 // Toys, games, site-wide effects and easter eggs.
@@ -34,6 +34,20 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting hangman... type letters to guess, q to quit.')
         ctx.startGame(createHangmanGame)
+      }
+    },
+    tetris: {
+      description: 'Play tetris in the terminal',
+      exec: () => {
+        muted('Starting tetris... ←→ move, ↑ rotate, ↓ drop, space slams, q quits.')
+        ctx.startGame(createTetrisGame)
+      }
+    },
+    2048: {
+      description: 'Slide the tiles, double the numbers',
+      exec: () => {
+        muted('Starting 2048... arrows/wasd to slide, q to quit.')
+        ctx.startGame(create2048Game)
       }
     },
     desktop: {
