@@ -5,6 +5,7 @@
         v-if="isOpen"
         class="terminal-backdrop"
         role="dialog"
+        aria-modal="true"
         aria-label="Interactive terminal"
         @click.self="close"
       >

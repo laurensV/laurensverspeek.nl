@@ -1,9 +1,10 @@
 <template>
   <div class="site-shell">
+    <a href="#main-content" class="skip-link">skip to content</a>
     <FlowField />
     <div class="site-content">
       <AppNavbar />
-      <main>
+      <main id="main-content" tabindex="-1">
         <slot />
       </main>
       <AppFooter />

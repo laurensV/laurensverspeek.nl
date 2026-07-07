@@ -1,7 +1,13 @@
 <template>
   <Teleport to="body">
     <LazyDesktopBoot v-if="booting" @done="booting = false" />
-    <div v-if="desktopActive && !booting" class="lvos" :style="wallpaperStyle" role="application" aria-label="lvOS desktop">
+    <div
+      v-if="desktopActive && !booting"
+      class="lvos"
+      :style="wallpaperStyle"
+      role="application"
+      aria-label="lvOS desktop — press Escape to log out"
+    >
       <!-- desktop icons -->
       <div class="lvos-icons">
         <button v-for="icon in icons" :key="icon.id" class="lvos-icon is-family-code" @click="icon.action">
@@ -31,13 +37,14 @@
         >
           <span class="lvos-window-title">{{ win.title }}</span>
           <span class="lvos-window-actions">
-            <button title="Minimize" @pointerdown.stop @click.stop="toggleMinimize(win)">–</button>
+            <button :aria-label="`Minimize ${win.title}`" title="Minimize" @pointerdown.stop @click.stop="toggleMinimize(win)">–</button>
             <button
+              :aria-label="`${win.maximized ? 'Restore' : 'Maximize'} ${win.title}`"
               :title="win.maximized ? 'Restore' : 'Maximize'"
               @pointerdown.stop
               @click.stop="toggleMaximize(win)"
             >{{ win.maximized ? '❐' : '□' }}</button>
-            <button title="Close" @pointerdown.stop @click.stop="closeWindow(win.id)">×</button>
+            <button :aria-label="`Close ${win.title}`" title="Close" @pointerdown.stop @click.stop="closeWindow(win.id)">×</button>
           </span>
         </header>
 
@@ -104,7 +111,13 @@
 
       <!-- taskbar -->
       <div class="lvos-taskbar is-family-code">
-        <button class="lvos-start" :class="{ 'is-open': startOpen }" @click="startOpen = !startOpen">
+        <button
+          class="lvos-start"
+          :class="{ 'is-open': startOpen }"
+          :aria-expanded="startOpen"
+          aria-label="Start menu"
+          @click="startOpen = !startOpen"
+        >
           ⚡ lvOS
         </button>
         <div v-if="startOpen" class="lvos-start-menu">
@@ -120,6 +133,8 @@
               :class="{ 'is-active': wallpaper === i }"
               :style="{ background: paper.swatch }"
               :title="paper.name"
+              :aria-label="`Wallpaper: ${paper.name}`"
+              :aria-pressed="wallpaper === i"
               @click="wallpaper = i"
             />
           </div>
@@ -136,13 +151,19 @@
           {{ win.title }}
         </button>
 
-        <button class="lvos-clock" :class="{ 'is-open': calendarOpen }" @click="calendarOpen = !calendarOpen">
+        <button
+          class="lvos-clock"
+          :class="{ 'is-open': calendarOpen }"
+          :aria-expanded="calendarOpen"
+          aria-label="Toggle calendar"
+          @click="calendarOpen = !calendarOpen"
+        >
           {{ clock }}
         </button>
         <div v-if="calendarOpen" class="lvos-calendar is-family-code">
           <p class="lvos-calendar-title">{{ monthLabel }}</p>
           <div class="lvos-calendar-grid">
-            <span v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" class="lvos-cal-dow">{{ d }}</span>
+            <span v-for="(d, di) in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="di" class="lvos-cal-dow">{{ d }}</span>
             <span v-for="blank in leadingBlanks" :key="`b${blank}`" />
             <span
               v-for="day in daysInMonth"

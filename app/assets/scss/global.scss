@@ -24,6 +24,34 @@ body {
   overflow-x: hidden;
 }
 
+// Keyboard focus: a consistent, visible ring everywhere. Mouse clicks don't
+// trigger :focus-visible, so this only shows for keyboard/AT users.
+:focus-visible {
+  outline: 2px solid var(--bulma-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+// Skip link: first tab stop on every page, jumps past the nav to content.
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 200;
+  padding: 0.5rem 0.9rem;
+  border-radius: 2px;
+  background-color: var(--bulma-primary);
+  color: var(--bulma-primary-invert);
+  font-family: var(--bulma-family-code, monospace);
+  font-size: 0.85rem;
+  transform: translateY(-160%);
+  transition: transform 0.15s ease;
+
+  &:focus {
+    transform: none;
+  }
+}
+
 ::selection {
   background-color: var(--bulma-primary);
   color: var(--bulma-primary-invert);
@@ -187,6 +215,18 @@ html.crt-mode {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  // Safety net: neutralize any decorative CSS animation/transition we didn't
+  // gate explicitly. Games and canvas work is JS-driven, so this is CSS-only
+  // and leaves interactivity intact.
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 
   .blink-cursor {

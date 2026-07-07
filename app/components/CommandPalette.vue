@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="palette">
-      <div v-if="isOpen" class="palette-backdrop" role="dialog" aria-label="Command palette" @click.self="close">
+      <div v-if="isOpen" class="palette-backdrop" role="dialog" aria-modal="true" aria-label="Command palette" @click.self="close">
         <div class="palette-window">
           <div class="palette-input-row">
             <AppIcon name="terminal" :size="16" class="palette-input-icon" />
@@ -11,6 +11,7 @@
               class="palette-input"
               type="text"
               placeholder="Search pages, projects, actions..."
+              aria-label="Search pages, projects, actions"
               autocomplete="off"
               spellcheck="false"
               @keydown.down.prevent="move(1)"

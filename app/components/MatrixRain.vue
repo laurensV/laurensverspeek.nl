@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div v-if="matrixActive" class="matrix-overlay" role="presentation" @click="stop">
-      <canvas ref="canvasRef" />
+      <canvas ref="canvasRef" aria-hidden="true" />
       <p class="matrix-hint is-family-code">click or press any key to wake up</p>
     </div>
   </Teleport>
