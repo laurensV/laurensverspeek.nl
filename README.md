@@ -34,6 +34,16 @@ npm run preview    # preview the production build
 
 Deployed to GitHub Pages automatically on push to `master` (see `.github/workflows/deploy_gh-pages.yml`).
 
+## Optional integrations
+
+Both are **off by default** and activate via environment variables at build time:
+
+- **Analytics** (privacy-first, no cookies): create a free [GoatCounter](https://www.goatcounter.com) account and set
+  `NUXT_PUBLIC_GOATCOUNTER=<your-code>`. Page views plus anonymous terminal-command usage events.
+- **Live visitor cursors**: deploy the tiny relay in `realtime/cursors-server.mjs` to any Node host
+  (`node realtime/cursors-server.mjs`, no state, no storage) and set `NUXT_PUBLIC_CURSORS_WS=wss://your-host`.
+  Only anonymous viewport positions are relayed.
+
 ## Editing content
 
 - Blog posts: `content/blog/*.md` (frontmatter: `title`, `date`, `description`, `tags`)

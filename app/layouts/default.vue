@@ -16,6 +16,7 @@
     <SlTrain />
     <WebDesktop />
     <PartyMode />
+    <LiveCursors />
   </div>
 </template>
 

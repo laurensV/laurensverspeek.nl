@@ -1,0 +1,119 @@
+<template>
+  <div v-if="enabled" class="live-cursors" aria-hidden="true">
+    <div
+      v-for="cursor in visibleCursors"
+      :key="cursor.id"
+      class="live-cursor"
+      :style="{
+        left: `${cursor.x * 100}%`,
+        top: `${cursor.y * 100}%`,
+        color: `hsl(${cursor.hue}, 70%, 55%)`
+      }"
+    >
+      <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor">
+        <path d="M0 0 L14 10 L7 11 L4 18 Z" />
+      </svg>
+      <span class="live-cursor-label is-family-code">visitor</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useEventListener, useThrottleFn } from '@vueuse/core'
+
+// Anonymous live cursors of other visitors, relayed through a tiny websocket
+// server (see realtime/cursors-server.mjs). Renders nothing unless
+// NUXT_PUBLIC_CURSORS_WS is configured.
+
+interface RemoteCursor {
+  id: number
+  hue: number
+  x: number
+  y: number
+  page: string
+  seen: number
+}
+
+const { cursorsWs } = useRuntimeConfig().public
+const route = useRoute()
+
+const enabled = computed(() => Boolean(cursorsWs))
+const cursors = ref(new Map<number, RemoteCursor>())
+const tick = ref(0)
+
+let socket: WebSocket | undefined
+let retries = 0
+
+const visibleCursors = computed(() => {
+  void tick.value
+  const now = Date.now()
+  return [...cursors.value.values()].filter(
+    (c) => c.page === route.path && now - c.seen < 6000
+  )
+})
+
+const connect = () => {
+  if (!cursorsWs) return
+  socket = new WebSocket(cursorsWs as string)
+
+  socket.onmessage = (event) => {
+    const msg = JSON.parse(event.data)
+    if (msg.type === 'move') {
+      cursors.value.set(msg.id, { ...msg, seen: Date.now() })
+      cursors.value = new Map(cursors.value)
+    } else if (msg.type === 'leave') {
+      cursors.value.delete(msg.id)
+      cursors.value = new Map(cursors.value)
+    }
+  }
+
+  socket.onclose = () => {
+    if (retries++ < 3) setTimeout(connect, 4000 * retries)
+  }
+}
+
+const send = useThrottleFn((event: PointerEvent) => {
+  if (socket?.readyState !== WebSocket.OPEN) return
+  socket.send(
+    JSON.stringify({
+      x: event.clientX / window.innerWidth,
+      y: event.clientY / window.innerHeight,
+      page: route.path
+    })
+  )
+}, 90)
+
+onMounted(() => {
+  if (!enabled.value) return
+  connect()
+  // prune stale cursors so they fade even without traffic
+  const pruneTimer = setInterval(() => tick.value++, 2000)
+  onBeforeUnmount(() => {
+    clearInterval(pruneTimer)
+    socket?.close()
+  })
+})
+
+useEventListener('pointermove', send, { passive: true })
+</script>
+
+<style scoped lang="scss">
+.live-cursors {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.live-cursor {
+  position: absolute;
+  transition: left 0.09s linear, top 0.09s linear;
+
+  .live-cursor-label {
+    display: block;
+    margin-left: 0.9rem;
+    font-size: 0.6rem;
+    opacity: 0.8;
+  }
+}
+</style>
