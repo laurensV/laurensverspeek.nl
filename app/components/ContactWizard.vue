@@ -1,5 +1,6 @@
 <template>
   <div class="contact-terminal is-family-code" @click="focusInput">
+    <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
     <div class="contact-titlebar">
       <span class="dot dot-r" /><span class="dot dot-y" /><span class="dot dot-g" />
       <span class="contact-title">visitor@{{ profile.domain }}: ~/contact</span>
@@ -15,12 +16,18 @@
       </template>
 
       <template v-if="phase === 'asking'">
-        <p class="line accent">? {{ currentStep.prompt }}</p>
+        <p class="line accent">
+          ? <span class="step-count">[{{ stepIndex + 1 }}/{{ steps.length }}]</span> {{ currentStep.prompt }}
+        </p>
         <p v-if="hint" class="line error">{{ hint }}</p>
       </template>
 
       <template v-else-if="phase === 'confirm'">
-        <p class="line accent">? send it to {{ profile.email }}? [Y/n]</p>
+        <p class="line accent">? send it to {{ profile.email }}?</p>
+        <p class="line">
+          <button class="confirm-button" @click.stop="sendMail">[Y] open mail client</button>
+          <button class="confirm-button is-muted" @click.stop="reset">[n] start over</button>
+        </p>
       </template>
 
       <template v-else>
@@ -159,13 +166,50 @@ onMounted(focusInput)
 
 <style scoped lang="scss">
 .contact-terminal {
+  position: relative;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
-  border-radius: var(--bulma-radius-large);
+  border-radius: 2px;
   background-color: hsla(var(--lv-scheme-hs), 6%, 0.96);
   box-shadow: 0 0 60px hsla(var(--lv-primary-hsl), 0.1);
-  overflow: hidden;
   text-align: left;
   cursor: text;
+
+  // TUI focus frame, matching the buttons and project cards
+  .corner {
+    position: absolute;
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 0 solid var(--bulma-primary);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .is-tl { top: -2px; left: -2px; border-top-width: 2px; border-left-width: 2px; }
+  .is-tr { top: -2px; right: -2px; border-top-width: 2px; border-right-width: 2px; }
+  .is-bl { bottom: -2px; left: -2px; border-bottom-width: 2px; border-left-width: 2px; }
+  .is-br { bottom: -2px; right: -2px; border-bottom-width: 2px; border-right-width: 2px; }
+}
+
+.step-count {
+  opacity: 0.6;
+}
+
+.confirm-button {
+  border: none;
+  background: none;
+  padding: 0;
+  margin-right: 1.25rem;
+  font: inherit;
+  color: var(--bulma-primary);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &.is-muted {
+    color: hsl(var(--lv-scheme-hs), 55%);
+  }
 }
 
 .contact-titlebar {
