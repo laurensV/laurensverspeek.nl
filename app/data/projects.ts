@@ -107,7 +107,7 @@ export const projects: Project[] = [
     role: 'Creator',
     story: [
       'My personal slice of the web. Version 1 was an unfinished Nuxt 2 site that spent four years saying "coming soon(ish)" — version 2 is what you are looking at right now.',
-      'Rebuilt from scratch on Nuxt 4 with TypeScript and Bulma, it doubles as a playground: an interactive terminal (press ~), a particle network background, and more easter eggs than strictly necessary.',
+      'Rebuilt from scratch on Nuxt 4 with TypeScript and Bulma, it doubles as a playground: an interactive terminal (press ~), an animated flow-field background, and more easter eggs than strictly necessary.',
       'The source is public, so if you are curious how something on this site works — go ahead and peek.'
     ]
   },

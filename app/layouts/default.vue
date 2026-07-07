@@ -1,6 +1,6 @@
 <template>
   <div class="site-shell">
-    <ParticleNetwork />
+    <FlowField />
     <div class="site-content">
       <AppNavbar />
       <main>

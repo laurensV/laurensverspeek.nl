@@ -28,7 +28,7 @@ const BOOT_LINES = [
   'BIOS laurensverspeek.nl v2.0.0',
   'loading kernel modules... vue@3 nuxt@4 bulma@1',
   'mounting ~/projects (8 entries)',
-  'starting particle-network.service',
+  'starting flow-field.service',
   'starting terminal.service on tty~',
   'establishing uplink to github.com',
   'easter_eggs.service loaded (try: help)'
