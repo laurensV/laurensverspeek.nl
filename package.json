@@ -16,11 +16,13 @@
   "dependencies": {
     "bulma": "^1.0.4",
     "nuxt": "^4.0.0",
+    "three": "^0.185.1",
     "vue": "^3.5.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.16.0",
     "@nuxtjs/color-mode": "^3.5.2",
+    "@types/three": "^0.185.0",
     "@vueuse/core": "^13.0.0",
     "@vueuse/nuxt": "^13.0.0",
     "eslint": "^10.6.0",

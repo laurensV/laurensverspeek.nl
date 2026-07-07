@@ -28,6 +28,9 @@
               </div>
             </div>
             <div class="column is-4 is-offset-1 is-hidden-mobile">
+              <ClientOnly>
+                <HeroScene class="hero-scene-slot" />
+              </ClientOnly>
               <HeroTerminal />
             </div>
           </div>
@@ -134,6 +137,12 @@ const areas: { icon: IconName; title: string; description: string }[] = [
 .hero-bio {
   max-width: 34rem;
   font-size: 1.1rem;
+}
+
+// Let the 3D block overlap the terminal card slightly
+.hero-scene-slot {
+  margin-top: -5rem;
+  margin-bottom: -2.5rem;
 }
 
 .scroll-hint {
