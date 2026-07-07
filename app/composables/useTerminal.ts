@@ -462,6 +462,8 @@ export function useTerminal() {
 
   const commandNames = Object.keys(commands).filter((name) => !commands[name]!.hidden)
 
+  const { trackEvent } = useAnalytics()
+
   const run = (input: string) => {
     const trimmed = input.trim()
     push('input', trimmed)
@@ -471,6 +473,8 @@ export function useTerminal() {
     const [name = '', ...args] = trimmed.split(/\s+/)
     const command = commands[name.toLowerCase()]
     if (command) {
+      // count which commands get used — names only, never arguments
+      trackEvent(`terminal/${name.toLowerCase()}`)
       command.exec(args)
     } else {
       error(`lvsh: command not found: ${name}`)

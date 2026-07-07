@@ -64,6 +64,15 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    public: {
+      // set NUXT_PUBLIC_GOATCOUNTER to enable privacy-first analytics
+      goatcounter: '',
+      // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
+      cursorsWs: ''
+    }
+  },
+
   nitro: {
     prerender: {
       routes: ['/sitemap.xml', '/rss.xml']
