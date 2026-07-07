@@ -159,10 +159,10 @@ onMounted(focusInput)
 
 <style scoped lang="scss">
 .contact-terminal {
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
   border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 6%, 0.96);
-  box-shadow: 0 0 60px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.1);
+  background-color: hsla(var(--lv-scheme-hs), 6%, 0.96);
+  box-shadow: 0 0 60px hsla(var(--lv-primary-hsl), 0.1);
   overflow: hidden;
   text-align: left;
   cursor: text;
@@ -173,7 +173,7 @@ onMounted(focusInput)
   align-items: center;
   gap: 0.4rem;
   padding: 0.55rem 0.9rem;
-  border-bottom: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.15);
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
 
   .dot {
     width: 0.65rem;
@@ -194,7 +194,7 @@ onMounted(focusInput)
     flex: 1;
     text-align: center;
     font-size: 0.72rem;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 }
 
@@ -207,11 +207,11 @@ onMounted(focusInput)
 }
 
 .line {
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 88%);
+  color: hsl(var(--lv-scheme-hs), 88%);
   word-break: break-word;
 
   &.muted {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
     font-size: 0.78rem;
   }
   &.accent {
@@ -250,11 +250,11 @@ onMounted(focusInput)
   outline: none;
   background: none;
   font-size: 0.9rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 92%);
+  color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
 
   &::placeholder {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 40%);
+    color: hsl(var(--lv-scheme-hs), 40%);
   }
 }
 

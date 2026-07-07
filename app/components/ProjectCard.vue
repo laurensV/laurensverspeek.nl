@@ -120,7 +120,7 @@ const categoryColor = computed(
   .is-br { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
 
   &:hover {
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.45);
+    border-color: hsla(var(--lv-primary-hsl), 0.45);
 
     .corner {
       border-color: var(--bulma-primary);
@@ -188,7 +188,7 @@ const categoryColor = computed(
     color: var(--bulma-primary-on-scheme);
     background: radial-gradient(
       ellipse at center,
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12),
+      hsla(var(--lv-primary-hsl), 0.12),
       transparent 75%
     );
   }
@@ -203,7 +203,7 @@ const categoryColor = computed(
     background: linear-gradient(
       to bottom,
       transparent,
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35),
+      hsla(var(--lv-primary-hsl), 0.35),
       transparent
     );
     opacity: 0;
@@ -313,7 +313,7 @@ const categoryColor = computed(
 
     &:hover {
       color: var(--bulma-primary-on-scheme);
-      background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.08);
+      background-color: hsla(var(--lv-primary-hsl), 0.08);
 
       .card-link-prompt {
         opacity: 1;

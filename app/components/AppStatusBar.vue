@@ -73,10 +73,7 @@ watch(
   height: 1.65rem;
   padding: 0 0.5rem;
   font-size: 0.72rem;
-  background-color: hsla(
-    var(--bulma-scheme-h),
-    var(--bulma-scheme-s),
-    var(--bulma-scheme-main-bis-l),
+  background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-bis-l),
     0.92
   );
   backdrop-filter: blur(8px);
@@ -102,7 +99,7 @@ watch(
 
 a.status-item:hover,
 .status-button:hover {
-  background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+  background-color: hsla(var(--lv-primary-hsl), 0.15);
   color: var(--bulma-text-strong);
 }
 

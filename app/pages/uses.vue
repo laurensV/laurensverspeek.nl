@@ -130,13 +130,13 @@ const totalItems = uses.reduce((sum, group) => sum + group.items.length, 0)
   }
 
   &:hover {
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.5);
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.04);
+    border-color: hsla(var(--lv-primary-hsl), 0.5);
+    background-color: hsla(var(--lv-primary-hsl), 0.04);
 
     .uses-icon {
       color: var(--bulma-primary-on-scheme);
-      border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.5);
-      box-shadow: 0 0 14px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.25);
+      border-color: hsla(var(--lv-primary-hsl), 0.5);
+      box-shadow: 0 0 14px hsla(var(--lv-primary-hsl), 0.25);
     }
 
     .uses-ext {

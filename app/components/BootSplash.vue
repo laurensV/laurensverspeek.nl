@@ -89,8 +89,8 @@ useEventListener(document, 'keydown', () => visible.value && finish())
   flex-direction: column;
   justify-content: space-between;
   padding: 2rem;
-  background-color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 4%);
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 85%);
+  background-color: hsl(var(--lv-scheme-hs), 4%);
+  color: hsl(var(--lv-scheme-hs), 85%);
   cursor: pointer;
 }
 
@@ -110,7 +110,7 @@ useEventListener(document, 'keydown', () => visible.value && finish())
 
 .boot-skip {
   font-size: 0.7rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 45%);
+  color: hsl(var(--lv-scheme-hs), 45%);
   text-align: center;
 }
 

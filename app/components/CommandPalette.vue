@@ -133,7 +133,7 @@ watch(results, (list) => {
   justify-content: center;
   align-items: flex-start;
   padding: 12vh 1rem 1rem;
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 4%, 0.55);
+  background-color: hsla(var(--lv-scheme-hs), 4%, 0.55);
   backdrop-filter: blur(4px);
 }
 
@@ -145,7 +145,7 @@ watch(results, (list) => {
   border: 1px solid var(--bulma-border);
   border-radius: var(--bulma-radius-large);
   background-color: var(--bulma-scheme-main);
-  box-shadow: 0 24px 60px hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.5);
+  box-shadow: 0 24px 60px hsla(var(--lv-scheme-hs), 2%, 0.5);
   overflow: hidden;
 }
 
@@ -209,7 +209,7 @@ watch(results, (list) => {
   cursor: pointer;
 
   &.is-active {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
+    background-color: hsla(var(--lv-primary-hsl), 0.12);
     color: var(--bulma-text-strong);
   }
 

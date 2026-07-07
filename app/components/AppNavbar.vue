@@ -122,10 +122,7 @@ const scramble = (el: HTMLElement, text: string) => {
   position: sticky;
   top: 0;
   z-index: 30;
-  background-color: hsla(
-    var(--bulma-scheme-h),
-    var(--bulma-scheme-s),
-    var(--bulma-scheme-main-l),
+  background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l),
     0.72
   );
   backdrop-filter: blur(12px);

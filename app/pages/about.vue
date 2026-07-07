@@ -105,7 +105,7 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
     border-radius: 50%;
     background-color: var(--bulma-primary);
     box-shadow: 0 0 12px
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.6);
+      hsla(var(--lv-primary-hsl), 0.6);
   }
 }
 

@@ -48,8 +48,8 @@ const linkAttrs = computed(() =>
   border-radius: 2px;
   background:
     linear-gradient(
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.08),
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.08)
+      hsla(var(--lv-primary-hsl), 0.08),
+      hsla(var(--lv-primary-hsl), 0.08)
     )
     no-repeat left / 0% 100%;
   color: var(--bulma-text);
@@ -139,17 +139,17 @@ const linkAttrs = computed(() =>
 
   &.is-primary {
     --cmd-accent: var(--bulma-primary);
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.45);
+    border-color: hsla(var(--lv-primary-hsl), 0.45);
     color: var(--bulma-primary-on-scheme);
 
     .cmd-btn-prompt {
-      color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.6);
+      color: hsla(var(--lv-primary-hsl), 0.6);
     }
 
     &:hover,
     &:focus-visible {
       color: var(--bulma-primary-on-scheme);
-      border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.7);
+      border-color: hsla(var(--lv-primary-hsl), 0.7);
     }
   }
 }

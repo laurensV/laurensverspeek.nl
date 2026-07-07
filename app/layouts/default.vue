@@ -27,7 +27,7 @@
   // Soft brand glow behind the top of every page
   background-image: radial-gradient(
     50rem 30rem at 70% -10%,
-    hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.07),
+    hsla(var(--lv-primary-hsl), 0.07),
     transparent
   );
 }

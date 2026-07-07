@@ -152,7 +152,7 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 4%, 0.6);
+  background-color: hsla(var(--lv-scheme-hs), 4%, 0.6);
   backdrop-filter: blur(6px);
 }
 
@@ -161,12 +161,12 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   flex-direction: column;
   width: min(56rem, 100%);
   height: min(34rem, 85vh);
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
   border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 6%, 0.96);
+  background-color: hsla(var(--lv-scheme-hs), 6%, 0.96);
   box-shadow:
-    0 0 60px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12),
-    0 24px 48px hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.6);
+    0 0 60px hsla(var(--lv-primary-hsl), 0.12),
+    0 24px 48px hsla(var(--lv-scheme-hs), 2%, 0.6);
   overflow: hidden;
 }
 
@@ -175,7 +175,7 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.15);
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
 
   .dot {
     width: 0.75rem;
@@ -197,18 +197,18 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
     flex: 1;
     text-align: center;
     font-size: 0.8rem;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 60%);
+    color: hsl(var(--lv-scheme-hs), 60%);
   }
 
   .terminal-close {
     display: flex;
     border: none;
     background: none;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 60%);
+    color: hsl(var(--lv-scheme-hs), 60%);
     cursor: pointer;
 
     &:hover {
-      color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 90%);
+      color: hsl(var(--lv-scheme-hs), 90%);
     }
   }
 }
@@ -229,13 +229,13 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   font-size: inherit;
   white-space: pre-wrap;
   word-break: break-word;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 88%);
+  color: hsl(var(--lv-scheme-hs), 88%);
 
   &.is-error {
     color: var(--bulma-danger);
   }
   &.is-muted {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
   &.is-primary {
     color: var(--bulma-primary);
@@ -267,7 +267,7 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-top: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.15);
+  border-top: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
 }
 
 .terminal-input {
@@ -276,7 +276,7 @@ watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
   outline: none;
   background: none;
   font-size: 0.9rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 92%);
+  color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
 }
 

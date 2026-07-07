@@ -131,7 +131,7 @@ useSeoMeta({ description: project.description })
     color: var(--bulma-primary-on-scheme);
     background: radial-gradient(
       ellipse at center,
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12),
+      hsla(var(--lv-primary-hsl), 0.12),
       transparent 75%
     );
   }

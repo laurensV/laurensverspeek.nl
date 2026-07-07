@@ -32,7 +32,7 @@ const trainActive = useState('fx-train', () => false)
   font-size: 0.8rem;
   line-height: 1.15;
   color: var(--bulma-text-strong);
-  text-shadow: 0 0 8px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+  text-shadow: 0 0 8px hsla(var(--lv-primary-hsl), 0.4);
   animation: sl-drive 7s linear forwards;
 }
 

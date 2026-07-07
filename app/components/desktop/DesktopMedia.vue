@@ -102,7 +102,7 @@ onBeforeUnmount(stop)
 .media-viz {
   width: 100%;
   height: 70px;
-  border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.2);
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.2);
   border-radius: var(--bulma-radius-small);
 }
 
@@ -113,7 +113,7 @@ onBeforeUnmount(stop)
 
   button {
     padding: 0.25rem 0.8rem;
-    border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+    border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
     border-radius: var(--bulma-radius-small);
     background: none;
     color: var(--bulma-primary);
@@ -124,7 +124,7 @@ onBeforeUnmount(stop)
 
   .media-note {
     font-size: 0.65rem;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 }
 </style>

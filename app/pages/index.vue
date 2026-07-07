@@ -286,7 +286,7 @@ const areas: { icon: IconName; title: string; description: string }[] = [
   transition: border-color 0.25s ease, transform 0.25s ease;
 
   &:hover {
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.5);
+    border-color: hsla(var(--lv-primary-hsl), 0.5);
     transform: translateY(-4px);
   }
 }

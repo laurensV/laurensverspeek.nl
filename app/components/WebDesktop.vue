@@ -282,12 +282,12 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   background:
     radial-gradient(
       60rem 40rem at 70% 20%,
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.14),
+      hsla(var(--lv-primary-hsl), 0.14),
       transparent
     ),
     linear-gradient(
       160deg,
-      hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 8%),
+      hsl(var(--lv-scheme-hs), 8%),
       hsl(var(--bulma-scheme-h), 40%, 4%)
     );
 }
@@ -314,7 +314,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   border: 1px solid transparent;
   border-radius: var(--bulma-radius);
   background: none;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 90%);
+  color: hsl(var(--lv-scheme-hs), 90%);
   font-size: 0.7rem;
   cursor: pointer;
 
@@ -325,13 +325,13 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     width: 3rem;
     height: 3rem;
     border-radius: var(--bulma-radius);
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
     color: var(--bulma-primary);
   }
 
   &:hover {
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.08);
+    border-color: hsla(var(--lv-primary-hsl), 0.4);
+    background-color: hsla(var(--lv-primary-hsl), 0.08);
   }
 }
 
@@ -342,11 +342,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   &.is-wide {
     width: min(44rem, 92vw);
   }
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 10%, 0.97);
-  box-shadow: 0 18px 50px hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.6);
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 88%);
+  background-color: hsla(var(--lv-scheme-hs), 10%, 0.97);
+  box-shadow: 0 18px 50px hsla(var(--lv-scheme-hs), 2%, 0.6);
+  color: hsl(var(--lv-scheme-hs), 88%);
   overflow: hidden;
 }
 
@@ -356,8 +356,8 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   justify-content: space-between;
   padding: 0.45rem 0.8rem;
   font-size: 0.72rem;
-  background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
-  border-bottom: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.25);
+  background-color: hsla(var(--lv-primary-hsl), 0.12);
+  border-bottom: 1px solid hsla(var(--lv-primary-hsl), 0.25);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -407,11 +407,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   .lvos-file-meta {
     margin-left: auto;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 
   &:hover {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 
@@ -425,15 +425,15 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   gap: 0.4rem;
   height: 2.4rem;
   padding: 0 0.6rem;
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 6%, 0.95);
-  border-top: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.3);
+  background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
+  border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
   font-size: 0.75rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 85%);
+  color: hsl(var(--lv-scheme-hs), 85%);
 }
 
 .lvos-start {
   padding: 0.3rem 0.8rem;
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
   background: none;
   color: var(--bulma-primary);
@@ -443,7 +443,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   &:hover,
   &.is-open {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 
@@ -455,22 +455,22 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   flex-direction: column;
   min-width: 11rem;
   padding: 0.35rem;
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 8%, 0.98);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
 
   button {
     padding: 0.5rem 0.7rem;
     border: none;
     border-radius: var(--bulma-radius-small);
     background: none;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 88%);
+    color: hsl(var(--lv-scheme-hs), 88%);
     font: inherit;
     text-align: left;
     cursor: pointer;
 
     &:hover {
-      background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
     }
   }
 }
@@ -483,7 +483,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   white-space: nowrap;
   border: none;
   border-radius: var(--bulma-radius-small);
-  background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
+  background-color: hsla(var(--lv-primary-hsl), 0.12);
   color: inherit;
   font: inherit;
   font-size: 0.7rem;
@@ -496,6 +496,6 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
 .lvos-clock {
   margin-left: auto;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 60%);
+  color: hsl(var(--lv-scheme-hs), 60%);
 }
 </style>

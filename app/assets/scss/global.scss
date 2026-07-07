@@ -8,6 +8,14 @@
   $radius-large: 0.75rem
 );
 
+// Design tokens: raw HSL components of the theme colors, so tints and glows
+// can be written as hsla(var(--lv-primary-hsl), 0.x) instead of repeating the
+// three bulma components everywhere.
+:root {
+  --lv-primary-hsl: var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l);
+  --lv-scheme-hs: var(--bulma-scheme-h), var(--bulma-scheme-s);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -127,18 +135,18 @@ html.crt-mode {
       repeating-linear-gradient(
         0deg,
         transparent 0 2px,
-        hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.18) 2px 4px
+        hsla(var(--lv-scheme-hs), 2%, 0.18) 2px 4px
       ),
       radial-gradient(
         ellipse at center,
         transparent 60%,
-        hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.35) 100%
+        hsla(var(--lv-scheme-hs), 2%, 0.35) 100%
       );
     animation: crt-flicker 4s infinite;
   }
 
   body {
-    text-shadow: 0 0 2px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35);
+    text-shadow: 0 0 2px hsla(var(--lv-primary-hsl), 0.35);
   }
 }
 

@@ -87,13 +87,13 @@ const slugOf = (path: string) => path.split('/').pop() ?? path
   }
 
   .blog-file {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 }
 
 .blog-meta {
   font-size: 0.72rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+  color: hsl(var(--lv-scheme-hs), 55%);
 }
 
 .blog-entry {
@@ -118,7 +118,7 @@ const slugOf = (path: string) => path.split('/').pop() ?? path
 
     .blog-entry-desc {
       font-size: 0.68rem;
-      color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+      color: hsl(var(--lv-scheme-hs), 55%);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -128,24 +128,24 @@ const slugOf = (path: string) => path.split('/').pop() ?? path
   .blog-entry-date {
     margin-left: auto;
     flex-shrink: 0;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 
   &:hover {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 
 // the lvOS window is always dark — pin readable colors regardless of site theme
 .blog-body {
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 85%);
+  color: hsl(var(--lv-scheme-hs), 85%);
 
   :deep(h1),
   :deep(h2),
   :deep(h3),
   :deep(h4),
   :deep(strong) {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 95%);
+    color: hsl(var(--lv-scheme-hs), 95%);
   }
 
   :deep(a) {
@@ -154,15 +154,15 @@ const slugOf = (path: string) => path.split('/').pop() ?? path
 
   :deep(pre) {
     padding: 0.75rem;
-    border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.25);
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
     border-radius: var(--bulma-radius-small);
-    background-color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 6%);
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 85%);
+    background-color: hsl(var(--lv-scheme-hs), 6%);
+    color: hsl(var(--lv-scheme-hs), 85%);
     font-size: 0.72rem;
   }
 
   :deep(code):not(pre code) {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
+    background-color: hsla(var(--lv-primary-hsl), 0.12);
     color: var(--bulma-primary);
   }
 }

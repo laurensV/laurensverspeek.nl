@@ -32,18 +32,18 @@ const { open } = useTerminal()
   text-align: left;
   font-size: 0.85rem;
   cursor: pointer;
-  border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
   border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 6%, 0.9);
+  background-color: hsla(var(--lv-scheme-hs), 6%, 0.9);
   box-shadow: 0 0 50px
-    hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.1);
+    hsla(var(--lv-primary-hsl), 0.1);
   overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 0 70px
-      hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.2);
+      hsla(var(--lv-primary-hsl), 0.2);
   }
 }
 
@@ -52,20 +52,20 @@ const { open } = useTerminal()
   align-items: center;
   gap: 0.4rem;
   padding: 0.55rem 0.8rem;
-  border-bottom: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.15);
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
 
   .dot {
     width: 0.65rem;
     height: 0.65rem;
     border-radius: 50%;
-    background-color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 30%);
+    background-color: hsl(var(--lv-scheme-hs), 30%);
   }
 
   .hero-terminal-title {
     flex: 1;
     text-align: center;
     font-size: 0.72rem;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+    color: hsl(var(--lv-scheme-hs), 55%);
   }
 }
 
@@ -76,7 +76,7 @@ const { open } = useTerminal()
 
   .line {
     display: block;
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 88%);
+    color: hsl(var(--lv-scheme-hs), 88%);
   }
 
   .prompt {
@@ -85,7 +85,7 @@ const { open } = useTerminal()
   }
 
   .output {
-    color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 65%);
+    color: hsl(var(--lv-scheme-hs), 65%);
   }
 
   .hint {

@@ -72,7 +72,7 @@ const tree = computed<Record<string, FileEntry[]>>(() => ({
   flex-direction: column;
   gap: 0.2rem;
   padding-right: 0.75rem;
-  border-right: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.2);
+  border-right: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.2);
 
   button {
     padding: 0.3rem 0.6rem;
@@ -87,7 +87,7 @@ const tree = computed<Record<string, FileEntry[]>>(() => ({
 
     &.is-active,
     &:hover {
-      background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
       color: var(--bulma-primary);
     }
   }
@@ -114,7 +114,7 @@ const tree = computed<Record<string, FileEntry[]>>(() => ({
   cursor: pointer;
 
   &:hover {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.15);
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 </style>

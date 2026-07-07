@@ -34,7 +34,7 @@ const toggle = () => {
 
   &:hover {
     color: var(--bulma-primary-on-scheme);
-    border-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.5);
+    border-color: hsla(var(--lv-primary-hsl), 0.5);
     transform: rotate(40deg);
   }
 

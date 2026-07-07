@@ -41,7 +41,7 @@ const reload = () => frameKey.value++
   gap: 0.5rem;
 
   button {
-    border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.3);
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.3);
     border-radius: var(--bulma-radius-small);
     background: none;
     color: inherit;
@@ -53,9 +53,9 @@ const reload = () => frameKey.value++
   .browser-url {
     flex: 1;
     padding: 0.15rem 0.5rem;
-    border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.3);
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.3);
     border-radius: var(--bulma-radius-small);
-    background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 14%, 0.9);
+    background-color: hsla(var(--lv-scheme-hs), 14%, 0.9);
     color: inherit;
     font: inherit;
     font-size: 0.75rem;
@@ -65,13 +65,13 @@ const reload = () => frameKey.value++
 .browser-frame {
   width: 100%;
   height: 20rem;
-  border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.2);
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.2);
   border-radius: var(--bulma-radius-small);
-  background-color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 10%);
+  background-color: hsl(var(--lv-scheme-hs), 10%);
 }
 
 .browser-note {
   font-size: 0.65rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+  color: hsl(var(--lv-scheme-hs), 55%);
 }
 </style>

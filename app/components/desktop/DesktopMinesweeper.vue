@@ -135,7 +135,7 @@ reset()
 
   .mines-face {
     padding: 0.2rem 0.6rem;
-    border: 1px solid hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.4);
+    border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
     border-radius: var(--bulma-radius-small);
     background: none;
     color: var(--bulma-primary);
@@ -152,19 +152,19 @@ reset()
 .mines-cell {
   width: 1.7rem;
   height: 1.7rem;
-  border: 1px solid hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 50%, 0.25);
-  background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.12);
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
+  background-color: hsla(var(--lv-primary-hsl), 0.12);
   color: inherit;
   font: inherit;
   font-size: 0.75rem;
   cursor: pointer;
 
   &:hover:not(.is-revealed) {
-    background-color: hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.25);
+    background-color: hsla(var(--lv-primary-hsl), 0.25);
   }
 
   &.is-revealed {
-    background-color: hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 16%, 0.9);
+    background-color: hsla(var(--lv-scheme-hs), 16%, 0.9);
     cursor: default;
   }
 
@@ -180,6 +180,6 @@ reset()
 
 .mines-hint {
   font-size: 0.65rem;
-  color: hsl(var(--bulma-scheme-h), var(--bulma-scheme-s), 55%);
+  color: hsl(var(--lv-scheme-hs), 55%);
 }
 </style>

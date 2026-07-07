@@ -135,6 +135,6 @@ onBeforeUnmount(stop)
   text-align: center;
   font-size: 0.85rem;
   color: var(--bulma-primary);
-  text-shadow: 0 0 14px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.7);
+  text-shadow: 0 0 14px hsla(var(--lv-primary-hsl), 0.7);
 }
 </style>
