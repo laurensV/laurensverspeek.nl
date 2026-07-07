@@ -6,7 +6,34 @@ export default defineNuxtConfig({
     viewTransition: true
   },
 
-  modules: ['@nuxt/content', '@nuxt/eslint', '@nuxtjs/color-mode', '@vueuse/nuxt'],
+  modules: ['@nuxt/content', '@nuxt/eslint', '@nuxtjs/color-mode', '@vite-pwa/nuxt', '@vueuse/nuxt'],
+
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'Laurens Verspeek',
+      short_name: 'lv',
+      description: 'Portfolio of Laurens Verspeek — full-stack developer & blockchain engineer.',
+      theme_color: '#101014',
+      background_color: '#101014',
+      icons: [
+        { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' }
+      ]
+    },
+    workbox: {
+      navigateFallback: null,
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,xml}'],
+      // static site: cache pages as visited, serve from cache when offline
+      runtimeCaching: [
+        {
+          urlPattern: ({ request }) => request.mode === 'navigate',
+          handler: 'NetworkFirst',
+          options: { cacheName: 'pages' }
+        }
+      ]
+    }
+  },
 
   content: {
     build: {
