@@ -26,12 +26,103 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
             true
           )
         }
-        muted(`\nTip: use ↑/↓ for history, Tab to autocomplete, and | grep to filter.`)
+        muted(`\nTip: ↑/↓ history · Tab completes · | grep filters · man <cmd> for details.`)
+      }
+    },
+    man: {
+      usage: 'man <command>',
+      description: 'Show the manual page for a command',
+      argCandidates: () => Object.keys(ctx.getCommands()).filter((n) => !ctx.getCommands()[n]!.hidden),
+      exec: (args) => {
+        if (!args[0]) {
+          error('What manual page do you want? (try: man <command>)')
+          return
+        }
+        const name = args[0].toLowerCase()
+        const cmd = ctx.getCommands()[name]
+        if (!cmd) {
+          error(`No manual entry for ${args[0]}`)
+          return
+        }
+        push('primary', `${name.toUpperCase()}(1)`)
+        push('primary', 'NAME')
+        out(`    ${name} — ${cmd.description}`)
+        push('primary', 'SYNOPSIS')
+        out(`    ${cmd.usage ?? name}`)
+        if (cmd.examples?.length) {
+          push('primary', 'EXAMPLES')
+          cmd.examples.forEach((example) => muted(`    ${example}`))
+        }
+      }
+    },
+    alias: {
+      usage: 'alias [name=command]',
+      description: 'List or define command aliases',
+      exec: (args) => {
+        const joined = args.join(' ')
+        if (!joined) {
+          const entries = Object.entries(ctx.aliases.value)
+          if (!entries.length) {
+            muted('no aliases defined — try: alias g=github')
+            return
+          }
+          for (const [name, target] of entries) {
+            push('output', `<span class="term-accent">${name.padEnd(12, ' ')}</span> ${target}`, true)
+          }
+          return
+        }
+        const match = /^(\w+)=(.+)$/.exec(joined)
+        if (!match) {
+          error("alias: usage: alias name=command (e.g. alias g='github')")
+          return
+        }
+        const [, name, target] = match
+        ctx.aliases.value = { ...ctx.aliases.value, [name!.toLowerCase()]: target!.replace(/^['"]|['"]$/g, '') }
+        out(`alias ${name} → ${target}`)
+      }
+    },
+    unalias: {
+      usage: 'unalias <name>',
+      description: 'Remove a command alias',
+      argCandidates: () => Object.keys(ctx.aliases.value),
+      exec: (args) => {
+        const name = args[0]?.toLowerCase()
+        if (!name || !(name in ctx.aliases.value)) {
+          error(`unalias: ${args[0] ?? ''}: not found`)
+          return
+        }
+        ctx.aliases.value = Object.fromEntries(
+          Object.entries(ctx.aliases.value).filter(([key]) => key !== name)
+        )
+        out(`removed alias ${name}`)
+      }
+    },
+    env: {
+      description: 'List environment variables',
+      exec: () => {
+        for (const [key, value] of Object.entries(ctx.env.value)) {
+          push('output', `<span class="term-accent">${key}</span>=${value}`, true)
+        }
+      }
+    },
+    export: {
+      usage: 'export NAME=value',
+      description: 'Set an environment variable',
+      exec: (args) => {
+        const match = /^(\w+)=(.*)$/.exec(args.join(' '))
+        if (!match) {
+          error('export: usage: export NAME=value')
+          return
+        }
+        const [, name, value] = match
+        ctx.env.value = { ...ctx.env.value, [name!]: value!.replace(/^['"]|['"]$/g, '') }
+        out(`${name}=${value}`)
       }
     },
     theme: {
       usage: 'theme <dark|light|system>',
       description: 'Change the color theme',
+      examples: ['theme dark', 'theme system'],
       argCandidates: () => ['dark', 'light', 'system'],
       exec: (args) => {
         const value = args[0]?.toLowerCase()

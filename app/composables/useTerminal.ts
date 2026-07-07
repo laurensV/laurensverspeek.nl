@@ -126,6 +126,17 @@ export function useTerminal() {
     // queryCollection so it still finds the app context
     fetchPosts: () =>
       nuxtApp.runWithContext(() => queryCollection('blog').order('date', 'DESC').all()),
+    env: useState<Record<string, string>>('terminal-env', () => ({
+      USER: 'visitor',
+      HOME: '~',
+      PWD: '~',
+      SHELL: 'lvsh',
+      HOST: profile.domain
+    })),
+    aliases: useState<Record<string, string>>('terminal-aliases', () => ({
+      ll: 'ls',
+      cls: 'clear'
+    })),
     getCommands: () => commands
   }
 
@@ -170,6 +181,13 @@ export function useTerminal() {
     }
   }
 
+  // expand $VAR / ${VAR} from the shell environment
+  const expandEnv = (text: string) =>
+    text.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, bare) => {
+      const key = braced ?? bare
+      return ctx.env.value[key] ?? match
+    })
+
   const run = (input: string) => {
     const trimmed = input.trim()
     push('input', trimmed)
@@ -177,7 +195,12 @@ export function useTerminal() {
     history.value.push(trimmed)
     saveHistory()
 
-    const [commandPart = '', ...pipeStages] = trimmed.split('|').map((part) => part.trim())
+    const expanded = expandEnv(trimmed)
+    const [rawCommandPart = '', ...pipeStages] = expanded.split('|').map((part) => part.trim())
+    // resolve a leading alias to its target command
+    const [firstWord = '', ...restWords] = rawCommandPart.split(/\s+/)
+    const alias = ctx.aliases.value[firstWord.toLowerCase()]
+    const commandPart = alias ? [alias, ...restWords].join(' ') : rawCommandPart
     const [name = '', ...args] = commandPart.split(/\s+/)
     const command = commands[name.toLowerCase()]
     if (!command) {

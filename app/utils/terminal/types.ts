@@ -13,6 +13,8 @@ export interface TerminalCommand {
   usage?: string
   description: string
   hidden?: boolean
+  /** Longer explanation + examples, shown by `man <cmd>` */
+  examples?: string[]
   /** Candidates for tab-completing this command's first argument */
   argCandidates?: () => string[]
   /** Async commands return their promise so pipes can wait for the output */
@@ -57,6 +59,10 @@ export interface TerminalContext {
     toggleCrt: () => boolean
   }
   fetchPosts: () => Promise<TerminalBlogPost[]>
-  /** The full merged registry — for help, secrets and aliases */
+  /** Shell environment variables ($USER, $PWD, …), mutable via `export` */
+  env: Ref<Record<string, string>>
+  /** User-defined command aliases, mutable via `alias name=value` */
+  aliases: Ref<Record<string, string>>
+  /** The full merged registry — for help, secrets, man and aliases */
   getCommands: () => Record<string, TerminalCommand>
 }

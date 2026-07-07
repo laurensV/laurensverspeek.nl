@@ -76,6 +76,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     projects: {
       usage: 'projects [category]',
       description: `List projects (${categories.map((c) => c.value).join(', ')})`,
+      examples: ['projects', 'projects work', 'projects | grep vue'],
       argCandidates: () => categories.map((c) => c.value),
       exec: (args) => {
         const cat = args[0]?.toLowerCase() as ProjectCategory | undefined
@@ -163,6 +164,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     blog: {
       usage: 'blog [post]',
       description: 'List blog posts — or read one right here',
+      examples: ['blog', 'blog snake-in-the-terminal', 'blog | grep terminal'],
       argCandidates: () => cachedPostSlugs,
       exec: (args) => {
         if (args[0]) {
