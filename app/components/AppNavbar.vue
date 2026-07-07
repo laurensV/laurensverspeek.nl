@@ -61,6 +61,7 @@ const { open } = useTerminal()
 const navItems = [
   { to: '/', label: 'Home' },
   { to: '/projects', label: 'Projects' },
+  { to: '/blog', label: 'Blog' },
   { to: '/about', label: 'About' },
   { to: '/uses', label: 'Uses' },
   { to: '/contact', label: 'Contact' }

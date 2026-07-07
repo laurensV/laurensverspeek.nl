@@ -49,6 +49,7 @@ export function useCommandPalette() {
   const actions = computed<PaletteAction[]>(() => [
     { id: 'home', label: 'Home', icon: 'terminal', section: 'Pages', keywords: 'index start', perform: () => go('/') },
     { id: 'projects', label: 'Projects', icon: 'code', section: 'Pages', keywords: 'work portfolio', perform: () => go('/projects') },
+    { id: 'blog', label: 'Blog', icon: 'file', section: 'Pages', keywords: 'posts writing articles', perform: () => go('/blog') },
     { id: 'about', label: 'About', icon: 'globe', section: 'Pages', keywords: 'bio skills timeline', perform: () => go('/about') },
     { id: 'uses', label: 'Uses', icon: 'cpu', section: 'Pages', keywords: 'gear tools stack setup', perform: () => go('/uses') },
     { id: 'cv', label: 'CV / Resume', icon: 'file', section: 'Pages', keywords: 'resume curriculum print pdf', perform: () => go('/cv') },

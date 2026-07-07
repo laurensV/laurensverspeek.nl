@@ -1,7 +1,22 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
-  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', '@vueuse/nuxt'],
+  modules: ['@nuxt/content', '@nuxt/eslint', '@nuxtjs/color-mode', '@vueuse/nuxt'],
+
+  content: {
+    build: {
+      markdown: {
+        highlight: {
+          themes: ['github-light', 'github-dark'],
+          theme: {
+            default: 'github-light',
+            dark: 'github-dark'
+          },
+          langs: ['ts', 'vue', 'bash', 'scss', 'json']
+        }
+      }
+    }
+  },
 
   css: ['~/assets/scss/global.scss'],
 
