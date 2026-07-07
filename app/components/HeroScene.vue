@@ -1,5 +1,15 @@
 <template>
-  <div ref="containerRef" class="hero-scene" aria-hidden="true" />
+  <div
+    ref="containerRef"
+    class="hero-scene"
+    :class="{ 'is-dragging': isDragging }"
+    title="Go ahead, give it a spin"
+    aria-hidden="true"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
+  />
 </template>
 
 <script setup lang="ts">
@@ -32,8 +42,17 @@ let camera: PerspectiveCamera | undefined
 let group: Group | undefined
 let inner: LineSegments | undefined
 let rafId = 0
-const pointer = { x: 0, y: 0 }
 const materials: (LineBasicMaterial | PointsMaterial)[] = []
+
+// drag-to-rotate state
+const isDragging = ref(false)
+let dragMoved = 0
+let lastPointer = { x: 0, y: 0 }
+let spin = { x: 0.0012, y: 0.0035 }
+let pulse = 1
+let pulseTarget = 1
+
+const AUTO_SPIN = { x: 0.0012, y: 0.0035 }
 
 const primaryColor = () => {
   const style = getComputedStyle(document.documentElement)
@@ -89,16 +108,21 @@ const renderFrame = () => {
 
 const animate = () => {
   if (!group || !camera) return
-  group.rotation.y += 0.0035
-  group.rotation.x += 0.0012
+  group.rotation.y += spin.y
+  group.rotation.x += spin.x
+  if (!isDragging.value) {
+    // momentum decays back toward the idle auto-spin
+    spin.x += (AUTO_SPIN.x - spin.x) * 0.02
+    spin.y += (AUTO_SPIN.y - spin.y) * 0.02
+  }
   if (inner) {
     inner.rotation.y -= 0.008
     inner.rotation.z += 0.004
   }
-  // ease the camera toward the pointer for a parallax feel
-  camera.position.x += (pointer.x * 0.7 - camera.position.x) * 0.04
-  camera.position.y += (-pointer.y * 0.5 - camera.position.y) * 0.04
-  camera.lookAt(0, 0, 0)
+  // click pulse: scale bounces up and eases back
+  pulse += (pulseTarget - pulse) * 0.12
+  if (pulseTarget > 1 && pulse > pulseTarget - 0.02) pulseTarget = 1
+  group.scale.setScalar(pulse)
   renderFrame()
   rafId = requestAnimationFrame(animate)
 }
@@ -112,20 +136,43 @@ const start = () => {
   }
 }
 
+const onPointerDown = (event: PointerEvent) => {
+  isDragging.value = true
+  dragMoved = 0
+  lastPointer = { x: event.clientX, y: event.clientY }
+  containerRef.value?.setPointerCapture(event.pointerId)
+}
+
 const onPointerMove = (event: PointerEvent) => {
-  pointer.x = (event.clientX / window.innerWidth - 0.5) * 2
-  pointer.y = (event.clientY / window.innerHeight - 0.5) * 2
+  if (!isDragging.value) return
+  const dx = event.clientX - lastPointer.x
+  const dy = event.clientY - lastPointer.y
+  dragMoved += Math.abs(dx) + Math.abs(dy)
+  lastPointer = { x: event.clientX, y: event.clientY }
+  spin = { x: dy * 0.002, y: dx * 0.002 }
+  if (reducedMotion.value === 'reduce' && group) {
+    group.rotation.y += dx * 0.005
+    group.rotation.x += dy * 0.005
+    renderFrame()
+  }
+}
+
+const onPointerUp = () => {
+  if (isDragging.value && dragMoved < 6) {
+    // it was a click, not a drag: pulse the block
+    pulseTarget = 1.22
+    spin = { x: AUTO_SPIN.x * 6, y: AUTO_SPIN.y * 8 }
+  }
+  isDragging.value = false
 }
 
 onMounted(() => {
   build()
   start()
-  window.addEventListener('pointermove', onPointerMove, { passive: true })
 })
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(rafId)
-  window.removeEventListener('pointermove', onPointerMove)
   renderer?.dispose()
   renderer?.domElement.remove()
 })
@@ -147,6 +194,12 @@ watch(
 .hero-scene {
   display: flex;
   justify-content: center;
-  pointer-events: none;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.hero-scene.is-dragging {
+  cursor: grabbing;
 }
 </style>
