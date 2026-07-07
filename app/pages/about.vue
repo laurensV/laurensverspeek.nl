@@ -30,14 +30,27 @@
           </RevealBlock>
 
           <RevealBlock>
-            <h2 class="title is-4 mt-6 mb-4">Timeline</h2>
-            <ol class="timeline">
-              <li v-for="entry in profile.timeline" :key="entry.title" class="timeline-entry">
-                <p class="is-family-code is-size-7 has-text-primary-on-scheme mb-1">
-                  {{ entry.period }}
-                </p>
-                <p class="has-text-weight-semibold mb-1">{{ entry.title }}</p>
-                <p class="is-size-6 has-text-grey">{{ entry.description }}</p>
+            <h2 class="title is-4 mt-6 mb-2">Timeline</h2>
+            <p class="is-family-code is-size-7 has-text-grey mb-4">$ git log --graph career</p>
+            <ol class="gitlog">
+              <li
+                v-for="(entry, i) in profile.timeline"
+                :key="entry.title"
+                class="gitlog-entry"
+              >
+                <RevealBlock :delay="i * 120">
+                  <p class="gitlog-head is-family-code">
+                    <span class="gitlog-node" aria-hidden="true">*</span>
+                    <span class="gitlog-hash">{{ commitHash(entry.title) }}</span>
+                    <span v-if="i === 0" class="gitlog-ref">(HEAD -&gt; now)</span>
+                    <span v-else-if="i === profile.timeline.length - 1" class="gitlog-ref">(initial commit)</span>
+                    <span class="gitlog-period">{{ entry.period }}</span>
+                  </p>
+                  <div class="gitlog-body">
+                    <p class="has-text-weight-semibold mb-1">{{ entry.title }}</p>
+                    <p class="is-size-6 has-text-grey">{{ entry.description }}</p>
+                  </div>
+                </RevealBlock>
               </li>
             </ol>
           </RevealBlock>
@@ -65,6 +78,13 @@ import { profile } from '~/data/profile'
 
 useHead({ title: 'About — Laurens Verspeek' })
 
+// deterministic fake commit hash per timeline entry
+const commitHash = (input: string) => {
+  let hash = 0
+  for (const char of input) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  return hash.toString(16).padStart(7, '0').slice(0, 7)
+}
+
 const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="tok-type">Developer</span> = {
   location: <span class="tok-str">'The Netherlands'</span>,
   roles: [<span class="tok-str">'CTO @ Nosana'</span>,
@@ -78,34 +98,80 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
 </script>
 
 <style scoped lang="scss">
-.timeline {
-  position: relative;
+// career as git log --graph: commit nodes on a branch line
+.gitlog {
   margin: 0;
-  padding-left: 1.5rem;
   list-style: none;
-  border-left: 2px solid var(--bulma-border);
 }
 
-.timeline-entry {
+.gitlog-entry {
   position: relative;
-  padding-bottom: 2rem;
+  padding: 0 0 1.75rem 1.6rem;
 
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  // Dot on the timeline
+  // the branch line, running through the * nodes
   &::before {
     content: '';
     position: absolute;
-    left: calc(-1.5rem - 6px);
-    top: 0.3rem;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--bulma-primary);
-    box-shadow: 0 0 12px
-      hsla(var(--lv-primary-hsl), 0.6);
+    left: 0.32rem;
+    top: 0.4rem;
+    bottom: -0.4rem;
+    width: 1px;
+    background-color: var(--bulma-border);
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .gitlog-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .gitlog-node {
+    position: absolute;
+    left: 0;
+    color: var(--bulma-primary);
+    font-weight: 700;
+    text-shadow: 0 0 10px hsla(var(--lv-primary-hsl), 0.7);
+  }
+
+  .gitlog-hash {
+    color: var(--bulma-primary-on-scheme);
+  }
+
+  .gitlog-ref {
+    color: var(--bulma-text-weak);
+  }
+
+  .gitlog-period {
+    margin-left: auto;
+    color: var(--bulma-text-weak);
+    font-size: 0.75rem;
+  }
+
+  &:hover .gitlog-node {
+    animation: gitlog-pulse 1s ease infinite;
+  }
+}
+
+@keyframes gitlog-pulse {
+  50% {
+    text-shadow: 0 0 16px hsla(var(--lv-primary-hsl), 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gitlog-entry:hover .gitlog-node {
+    animation: none;
   }
 }
 
