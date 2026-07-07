@@ -8,11 +8,23 @@
         <span class="is-family-code">{{ now.updated }}</span> from {{ now.location }}.
       </p>
 
-      <div v-for="section in now.sections" :key="section.title" class="mb-5">
-        <p class="is-family-code has-text-primary-on-scheme mb-2">./{{ section.title.toLowerCase() }}</p>
-        <ul class="now-list">
-          <li v-for="item in section.items" :key="item">{{ item }}</li>
-        </ul>
+      <div class="ps-table is-family-code">
+        <div class="ps-head">
+          <span>PID</span><span>STAT</span><span>%CPU</span><span class="ps-cmd">COMMAND</span>
+        </div>
+        <template v-for="(section, si) in now.sections" :key="section.title">
+          <p class="ps-group">./{{ section.title.toLowerCase() }}</p>
+          <div
+            v-for="(item, ii) in section.items"
+            :key="item"
+            class="ps-row"
+          >
+            <span class="ps-pid">{{ pid(si, ii) }}</span>
+            <span class="ps-stat" :class="`is-${statusOf(si).cls}`">{{ statusOf(si).label }}</span>
+            <span class="ps-cpu">{{ cpu(section.title, item) }}</span>
+            <span class="ps-cmd">{{ item }}</span>
+          </div>
+        </template>
       </div>
 
       <p class="is-family-code is-size-7 has-text-grey mt-6">
@@ -27,23 +39,96 @@ import { now } from '~/data/now'
 
 useHead({ title: 'Now — Laurens Verspeek' })
 useSeoMeta({ description: 'What Laurens Verspeek is building, learning and tinkering with right now.' })
+
+// a process per "now" item — a running program is what a `now` page really is
+const pid = (section: number, item: number) => 1000 + section * 111 + item * 7
+
+const STATUSES = [
+  { label: 'R', cls: 'run' }, // building → running
+  { label: 'S', cls: 'sleep' }, // learning → interruptible sleep
+  { label: 'D', cls: 'disk' } // tinkering → uninterruptible
+]
+const statusOf = (section: number) => STATUSES[section % STATUSES.length]!
+
+// deterministic plausible %CPU so it's stable per item
+const cpu = (title: string, item: string) => {
+  let hash = 0
+  for (const char of title + item) hash = (hash * 13 + char.charCodeAt(0)) >>> 0
+  return (hash % 900 / 10 + 1).toFixed(1).padStart(4, ' ')
+}
 </script>
 
 <style scoped lang="scss">
 .now-container {
-  max-width: 44rem;
+  max-width: 46rem;
 }
 
-.now-list {
-  li {
-    padding: 0.4rem 0;
-    border-bottom: 1px solid var(--bulma-border-weak);
+.ps-table {
+  font-size: 0.85rem;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: 2px;
+  overflow-x: auto;
+}
 
-    &::before {
-      content: '- ';
-      font-family: var(--bulma-family-code, monospace);
+.ps-head,
+.ps-row {
+  display: grid;
+  grid-template-columns: 3.5rem 3rem 3.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.35rem 1rem;
+  align-items: baseline;
+}
+
+.ps-head {
+  color: var(--bulma-text-weak);
+  border-bottom: 1px solid var(--bulma-border-weak);
+  background-color: var(--bulma-scheme-main-bis);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+.ps-group {
+  padding: 0.6rem 1rem 0.2rem;
+  color: var(--bulma-primary-on-scheme);
+}
+
+.ps-row {
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: hsla(var(--lv-primary-hsl), 0.05);
+  }
+
+  .ps-pid {
+    color: var(--bulma-text-weak);
+  }
+
+  .ps-stat {
+    font-weight: 600;
+
+    &.is-run {
       color: var(--bulma-primary-on-scheme);
     }
+    &.is-sleep {
+      color: var(--bulma-text-weak);
+    }
+    &.is-disk {
+      color: var(--bulma-text);
+    }
   }
+
+  .ps-cpu {
+    color: var(--bulma-text-weak);
+    text-align: right;
+  }
+
+  .ps-cmd {
+    color: var(--bulma-text);
+    word-break: break-word;
+  }
+}
+
+.ps-cmd {
+  min-width: 0;
 }
 </style>

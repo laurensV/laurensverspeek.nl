@@ -1,15 +1,19 @@
 <template>
   <section class="section cv-page">
     <div class="container cv-container">
-      <div class="is-flex is-justify-content-space-between is-align-items-center mb-5 no-print">
-        <p class="overline">cv $ lpr resume.pdf</p>
+      <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 no-print">
+        <p class="overline mb-0">cv $ lpr resume.pdf</p>
         <CmdButton variant="primary" @click="printCv">
           <AppIcon name="file" :size="15" />
           lpr resume.pdf
         </CmdButton>
       </div>
+      <p class="is-family-code is-size-7 has-text-grey mb-4 no-print cv-meta">
+        -rw-r--r-- 1 laurens staff {{ profile.name.split(' ')[0]!.toLowerCase() }}-resume.pdf · print or ⌘P to save as PDF
+      </p>
 
       <div class="cv-sheet">
+        <span class="corner is-tl no-print" aria-hidden="true" /><span class="corner is-tr no-print" aria-hidden="true" /><span class="corner is-bl no-print" aria-hidden="true" /><span class="corner is-br no-print" aria-hidden="true" />
         <header class="cv-header">
           <div>
             <h1 class="title is-2 mb-1">{{ profile.name }}</h1>
@@ -103,10 +107,28 @@ const printCv = () => {
 }
 
 .cv-sheet {
+  position: relative;
   padding: 3rem;
   border: 1px solid var(--bulma-border-weak);
-  border-radius: var(--bulma-radius-large);
+  border-radius: 2px;
   background-color: var(--bulma-scheme-main);
+
+  .corner {
+    position: absolute;
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 0 solid var(--bulma-primary);
+    pointer-events: none;
+  }
+
+  .is-tl { top: -2px; left: -2px; border-top-width: 2px; border-left-width: 2px; }
+  .is-tr { top: -2px; right: -2px; border-top-width: 2px; border-right-width: 2px; }
+  .is-bl { bottom: -2px; left: -2px; border-bottom-width: 2px; border-left-width: 2px; }
+  .is-br { bottom: -2px; right: -2px; border-bottom-width: 2px; border-right-width: 2px; }
+}
+
+.cv-meta {
+  margin-top: -0.25rem;
 }
 
 .cv-header {
