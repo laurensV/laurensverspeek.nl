@@ -43,13 +43,18 @@ const navItems = [
   { to: '/contact', label: 'contact' }
 ]
 
-// hover effect: characters cycle through glyphs and "decode" into the label
-const GLYPHS = '!<>-_\\/[]{}—=+*^?#$%&'
+// hover effect: characters cycle through glyphs and "decode" into the label.
+// ASCII-only set: exotic glyphs can fall back to a non-mono font and shift widths.
+const GLYPHS = '!<>-_\\/[]{}=+*^?#$%&'
 const timers = new WeakMap<HTMLElement, ReturnType<typeof setInterval>>()
 
 const scramble = (el: HTMLElement, text: string) => {
   const existing = timers.get(el)
   if (existing) clearInterval(existing)
+
+  // lock the current width so random glyphs can never shift the layout
+  el.style.width = `${el.getBoundingClientRect().width}px`
+  el.style.display = 'inline-block'
 
   let frame = 0
   const totalFrames = text.length * 2 + 4
@@ -65,6 +70,8 @@ const scramble = (el: HTMLElement, text: string) => {
       .join('')
     if (frame >= totalFrames) {
       el.textContent = text
+      el.style.width = ''
+      el.style.display = ''
       clearInterval(timer)
       timers.delete(el)
     }
@@ -94,6 +101,10 @@ const scramble = (el: HTMLElement, text: string) => {
   min-height: 3.25rem;
   padding: 0 1rem;
   font-size: 0.85rem;
+  // JetBrains Mono ligatures merge pairs like <> and => into single glyphs,
+  // which makes the scramble animation change width — disable them here
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
 }
 
 .nav-brand {
