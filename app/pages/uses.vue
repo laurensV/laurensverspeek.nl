@@ -5,7 +5,6 @@
       <h1 class="title is-2">Uses</h1>
       <p class="subtitle is-5 has-text-grey mb-6">
         The gear, software and stack I use to build things.
-        Inspired by <a href="https://uses.tech" target="_blank" rel="noopener">uses.tech</a>.
       </p>
 
       <div v-for="group in uses" :key="group.group" class="mb-6">

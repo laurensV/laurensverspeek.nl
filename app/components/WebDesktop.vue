@@ -61,9 +61,7 @@
               kernel: nuxt 4 (vue 3)<br>
               memory: unlimited localStorage<br>
               uptime: since you clicked that icon<br><br>
-              © {{ new Date().getFullYear() }} laurensverspeek.nl<br>
-              inspired by the legendary
-              <a href="https://dustinbrett.com" target="_blank" rel="noopener">dustinbrett.com</a>
+              © {{ new Date().getFullYear() }} laurensverspeek.nl
             </p>
           </template>
         </div>

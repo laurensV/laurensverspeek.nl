@@ -5,7 +5,7 @@ Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com)
 ## Features
 
 - **Terminal mode** — press <kbd>~</kbd> anywhere. `help` lists commands; `secrets` lists the hidden ones.
-- **lvOS desktop** — run `desktop` (or `startx`) in the terminal for a full OS-style desktop with draggable windows, a taskbar and desktop icons. Inspired by [dustinbrett.com](https://dustinbrett.com).
+- **lvOS desktop** — run `desktop` (or `startx`) in the terminal for a full OS-style desktop with draggable windows, a taskbar and desktop icons.
 - **Blog** — markdown posts via [Nuxt Content](https://content.nuxt.com) with Shiki syntax highlighting (`content/blog/*.md`).
 - **Mini-games** — `snake` and `hangman`, playable inside the terminal (or via `snake.exe` on the lvOS desktop).
 - **Easter eggs** — `matrix`, `crt`, `cowsay`, `figlet`, `fortune`, `sl`, a boot splash, and a note in the browser console.
