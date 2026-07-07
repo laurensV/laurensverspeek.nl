@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>laurensverspeek.nl — blog</title>
+    <link>https://laurensverspeek.nl/blog</link>
+    <description>Occasional writing about code, blockchain and this website.</description>
+    <language>en</language>
+    <item>
+      <title><![CDATA[putting a playable snake game in a fake terminal]]></title>
+      <link>https://laurensverspeek.nl/blog/snake-in-the-terminal</link>
+      <guid>https://laurensverspeek.nl/blog/snake-in-the-terminal</guid>
+      <pubDate>Tue, 07 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[a game loop, a <pre> tag, and stealing the keyboard from vue — no canvas required.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[rebuilding my portfolio after 4 years of "coming soon(ish)"]]></title>
+      <link>https://laurensverspeek.nl/blog/rebuilding-this-site</link>
+      <guid>https://laurensverspeek.nl/blog/rebuilding-this-site</guid>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[from an unfinished nuxt 2 page to a nuxt 4 site with a terminal, games and too many easter eggs.]]></description>
+    </item>
+  </channel>
+</rss>
