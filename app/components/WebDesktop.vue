@@ -86,6 +86,9 @@
           />
           <DesktopBrowser v-else-if="win.id === 'browser'" />
           <DesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
+          <DesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
+          <DesktopSettings v-else-if="win.id === 'settings'" />
+          <DesktopPaint v-else-if="win.id === 'paint'" />
         </div>
 
         <span
@@ -142,7 +145,10 @@ const WINDOW_TITLES: Record<string, string> = {
   media: 'media player',
   files: 'file explorer',
   browser: 'lv browser',
-  blog: '~/blog — reader'
+  blog: '~/blog — reader',
+  vim: 'vim — ~/notes.txt',
+  settings: 'settings',
+  paint: 'lvpaint.exe'
 }
 
 const { desktopActive } = useSiteEffects()
@@ -230,6 +236,9 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'terminal', label: 'terminal', icon: 'terminal', action: openTerminal },
   { id: 'snake', label: 'snake.exe', icon: 'cpu', action: playSnake },
   { id: 'minesweeper', label: 'mines.exe', icon: 'cpu', action: () => openWindow('minesweeper') },
+  { id: 'vim', label: 'vim', icon: 'braces', action: () => openWindow('vim') },
+  { id: 'paint', label: 'lvpaint', icon: 'pen', action: () => openWindow('paint') },
+  { id: 'settings', label: 'settings', icon: 'settings', action: () => openWindow('settings') },
   { id: 'media', label: 'media', icon: 'sun', action: () => openWindow('media') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }

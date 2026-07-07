@@ -44,6 +44,7 @@ const { data: posts } = useLazyAsyncData('desktop-posts', () =>
 const tree = computed<Record<string, FileEntry[]>>(() => ({
   '~': [
     { name: 'readme.md', open: () => emit('window', 'readme') },
+    { name: 'notes.txt', open: () => emit('window', 'vim') },
     { name: 'uses.txt', open: () => emit('route', '/uses') },
     { name: 'now.txt', open: () => emit('route', '/now') },
     { name: 'resume.pdf', open: () => emit('route', '/cv') }
