@@ -99,6 +99,8 @@
           <LazyDesktopSettings v-else-if="win.id === 'settings'" />
           <LazyDesktopPaint v-else-if="win.id === 'paint'" />
           <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
+          <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
+          <LazyDesktopClock v-else-if="win.id === 'clock'" />
         </div>
 
         <span
@@ -201,7 +203,9 @@ const WINDOW_TITLES: Record<string, string> = {
   vim: 'vim — ~/notes.txt',
   settings: 'settings',
   paint: 'lvpaint.exe',
-  visualizer: 'visualizer'
+  visualizer: 'visualizer',
+  calc: 'calculator',
+  clock: 'clock'
 }
 
 const { desktopActive } = useSiteEffects()
@@ -340,6 +344,8 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'settings', label: 'settings', icon: 'settings', action: () => openWindow('settings') },
   { id: 'media', label: 'media', icon: 'sun', action: () => openWindow('media') },
   { id: 'visualizer', label: 'visualizer', icon: 'zap', action: () => openWindow('visualizer') },
+  { id: 'calc', label: 'calculator', icon: 'hash', action: () => openWindow('calc') },
+  { id: 'clock', label: 'clock', icon: 'sun', action: () => openWindow('clock') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
