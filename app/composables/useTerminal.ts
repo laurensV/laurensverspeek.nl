@@ -371,6 +371,22 @@ export function useTerminal() {
         setTimeout(close, 200)
       }
     },
+    secrets: {
+      hidden: true,
+      description: 'List the hidden commands',
+      exec: () => {
+        push('primary', 'You found the secret list. The hidden commands are:')
+        for (const [name, cmd] of Object.entries(commands)) {
+          if (!cmd.hidden || name === 'secrets') continue
+          push(
+            'output',
+            `<span class="term-accent">${name.padEnd(24, ' ')}</span> ${cmd.description}`,
+            true
+          )
+        }
+        muted(`\n(there might be more... check the browser console 👀)`)
+      }
+    },
     sudo: {
       hidden: true,
       description: 'Absolutely not',
