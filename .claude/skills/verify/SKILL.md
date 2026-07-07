@@ -5,6 +5,21 @@ description: Verify changes to this site at runtime by driving the static build 
 
 # Verifying laurensverspeek.nl changes
 
+## Fastest path: the committed E2E suite
+
+There is now a Playwright suite in `e2e/` covering the terminal, lvOS, the 404
+shell and the pages. To verify most changes, just:
+
+```bash
+npm run generate          # builds .output/public (also generates OG images)
+npm run test:e2e          # playwright serves .output/public and drives it
+```
+
+`scripts/serve-static.mjs` serves the build with a SPA fallback, so the 404
+shell hydrates correctly here (unlike a plain file server). Add or extend a
+spec in `e2e/` for new UI rather than writing throwaway drive scripts. The
+sections below are the manual fallback when a change needs bespoke driving.
+
 ## Build & serve
 
 Don't use `npm run dev` for verification: a dev server is often already running on :3000
