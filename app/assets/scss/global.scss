@@ -98,6 +98,58 @@ body {
   opacity: 0;
 }
 
+// CRT mode — toggled with the `crt` terminal command
+html.crt-mode {
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0 2px,
+        hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.18) 2px 4px
+      ),
+      radial-gradient(
+        ellipse at center,
+        transparent 60%,
+        hsla(var(--bulma-scheme-h), var(--bulma-scheme-s), 2%, 0.35) 100%
+      );
+    animation: crt-flicker 4s infinite;
+  }
+
+  body {
+    text-shadow: 0 0 2px hsla(var(--bulma-primary-h), var(--bulma-primary-s), var(--bulma-primary-l), 0.35);
+  }
+}
+
+@keyframes crt-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0.82;
+  }
+  94% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.crt-mode body::after {
+    animation: none;
+  }
+}
+
 @media print {
   .app-navbar,
   .app-footer,

@@ -46,6 +46,7 @@ export function useTerminal() {
 
   const router = useRouter()
   const colorMode = useColorMode()
+  const { matrixActive, toggleCrt } = useSiteEffects()
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     lines.value.push({ id: lineId++, type, text, html })
@@ -269,6 +270,24 @@ export function useTerminal() {
         }
         colorMode.preference = value
         out(`Theme set to ${value}.`)
+      }
+    },
+    matrix: {
+      description: 'There is no spoon',
+      exec: () => {
+        push('primary', 'Wake up, Neo...')
+        muted('The Matrix has you. Click or press any key to escape.')
+        setTimeout(() => {
+          matrixActive.value = true
+          isOpen.value = false
+        }, 900)
+      }
+    },
+    crt: {
+      description: 'Toggle retro CRT mode',
+      exec: () => {
+        const on = toggleCrt()
+        out(on ? 'CRT mode enabled. Welcome back to 1985.' : 'CRT mode disabled. Back to the future.')
       }
     },
     snake: {

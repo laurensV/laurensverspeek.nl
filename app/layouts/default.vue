@@ -11,6 +11,7 @@
     <TerminalOverlay />
     <CommandPalette />
     <BootSplash />
+    <MatrixRain />
   </div>
 </template>
 
