@@ -9,6 +9,8 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
@@ -17,10 +19,13 @@
     "vue": "^3.5.0"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^1.16.0",
     "@nuxtjs/color-mode": "^3.5.2",
     "@vueuse/core": "^13.0.0",
     "@vueuse/nuxt": "^13.0.0",
+    "eslint": "^10.6.0",
     "sass": "^1.89.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vue-tsc": "^3.3.6"
   }
 }

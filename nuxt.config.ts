@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
-  modules: ['@nuxtjs/color-mode', '@vueuse/nuxt'],
+  modules: ['@nuxt/eslint', '@nuxtjs/color-mode', '@vueuse/nuxt'],
 
   css: ['~/assets/scss/global.scss'],
 
@@ -14,6 +14,12 @@ export default defineNuxtConfig({
           silenceDeprecations: ['import', 'global-builtin']
         }
       }
+    }
+  },
+
+  nitro: {
+    prerender: {
+      routes: ['/sitemap.xml']
     }
   },
 
@@ -37,7 +43,19 @@ export default defineNuxtConfig({
           content:
             'Laurens Verspeek — full-stack developer & blockchain engineer. Co-founder of Nosana and Effect.AI.'
         },
-        { name: 'theme-color', content: '#ffba00' }
+        { name: 'theme-color', content: '#ffba00' },
+        { property: 'og:title', content: 'Laurens Verspeek' },
+        {
+          property: 'og:description',
+          content:
+            'Full-stack developer & blockchain engineer. Co-founder of Nosana and Effect.AI.'
+        },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: 'https://laurensverspeek.nl' },
+        { property: 'og:image', content: 'https://laurensverspeek.nl/og.png' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Laurens Verspeek' },
+        { name: 'twitter:image', content: 'https://laurensverspeek.nl/og.png' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
