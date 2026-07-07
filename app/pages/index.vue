@@ -1,6 +1,9 @@
 <template>
   <div>
-    <section class="hero is-fullheight-with-navbar">
+    <section class="hero is-fullheight-with-navbar hero-root">
+      <ClientOnly>
+        <HeroCrosshair />
+      </ClientOnly>
       <div class="hero-body">
         <div class="container">
           <div class="columns is-vcentered">
@@ -167,6 +170,16 @@ const areas: { icon: IconName; title: string; description: string }[] = [
 </script>
 
 <style scoped lang="scss">
+.hero-root {
+  position: relative;
+}
+
+// keep hero content above the crosshair overlay
+.hero-root .hero-body {
+  position: relative;
+  z-index: 2;
+}
+
 .hero-name {
   font-size: clamp(2.75rem, 7vw, 4.5rem);
   font-weight: 800;
