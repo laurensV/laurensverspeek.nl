@@ -10,6 +10,7 @@
     </div>
     <TerminalOverlay />
     <CommandPalette />
+    <BootSplash />
   </div>
 </template>
 
