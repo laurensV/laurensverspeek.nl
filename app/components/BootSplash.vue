@@ -41,6 +41,9 @@ const shownLines = ref<string[]>([])
 const done = ref(false)
 const reducedMotion = usePreferredReducedMotion()
 
+// `reboot` in the terminal replays the boot sequence on demand
+const replayRequested = useState('boot-replay', () => false)
+
 let timers: ReturnType<typeof setTimeout>[] = []
 
 const finish = () => {
@@ -49,17 +52,29 @@ const finish = () => {
   visible.value = false
 }
 
-onMounted(() => {
-  // once per browser session, never for reduced motion or repeat visitors in-session
-  if (reducedMotion.value === 'reduce' || sessionStorage.getItem(STORAGE_KEY)) return
-  sessionStorage.setItem(STORAGE_KEY, '1')
-
+const play = () => {
+  shownLines.value = []
+  done.value = false
   visible.value = true
   BOOT_LINES.forEach((line, i) => {
     timers.push(setTimeout(() => shownLines.value.push(line), 120 + i * 160))
   })
   timers.push(setTimeout(() => (done.value = true), 120 + BOOT_LINES.length * 160))
   timers.push(setTimeout(finish, 900 + BOOT_LINES.length * 160))
+}
+
+onMounted(() => {
+  // once per browser session, never for reduced motion or repeat visitors in-session
+  if (reducedMotion.value === 'reduce' || sessionStorage.getItem(STORAGE_KEY)) return
+  sessionStorage.setItem(STORAGE_KEY, '1')
+  play()
+})
+
+watch(replayRequested, (requested) => {
+  if (requested) {
+    replayRequested.value = false
+    play()
+  }
 })
 
 useEventListener(document, 'keydown', () => visible.value && finish())

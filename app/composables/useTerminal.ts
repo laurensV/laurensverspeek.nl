@@ -49,6 +49,7 @@ export function useTerminal() {
   const colorMode = useColorMode()
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const trainActive = useState('fx-train', () => false)
+  const bootReplay = useState('boot-replay', () => false)
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     lines.value.push({ id: lineId++, type, text, html })
@@ -299,6 +300,16 @@ export function useTerminal() {
         muted(`You typed 'sl' instead of 'ls', didn't you? Enjoy the ride.`)
         trainActive.value = true
         setTimeout(close, 600)
+      }
+    },
+    reboot: {
+      description: 'Replay the boot sequence',
+      exec: () => {
+        out('Rebooting...')
+        setTimeout(() => {
+          isOpen.value = false
+          bootReplay.value = true
+        }, 400)
       }
     },
     desktop: {
