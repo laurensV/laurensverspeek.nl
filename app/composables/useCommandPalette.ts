@@ -36,6 +36,7 @@ export function useCommandPalette() {
   const router = useRouter()
   const colorMode = useColorMode()
   const terminal = useTerminal()
+  const { desktopActive } = useSiteEffects()
 
   const open = () => (isOpen.value = true)
   const close = () => (isOpen.value = false)
@@ -73,6 +74,18 @@ export function useCommandPalette() {
       perform: () => {
         close()
         terminal.open()
+      }
+    },
+    {
+      id: 'desktop',
+      label: 'Boot lvOS desktop',
+      hint: 'easter egg',
+      icon: 'cpu',
+      section: 'Actions',
+      keywords: 'os desktop windows startx',
+      perform: () => {
+        close()
+        desktopActive.value = true
       }
     },
     {

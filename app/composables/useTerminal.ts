@@ -47,7 +47,7 @@ export function useTerminal() {
 
   const router = useRouter()
   const colorMode = useColorMode()
-  const { matrixActive, toggleCrt } = useSiteEffects()
+  const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const trainActive = useState('fx-train', () => false)
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
@@ -300,6 +300,22 @@ export function useTerminal() {
         trainActive.value = true
         setTimeout(close, 600)
       }
+    },
+    desktop: {
+      description: 'Boot the lvOS desktop environment',
+      exec: () => {
+        push('primary', 'Booting lvOS 2.0 ...')
+        muted('Tip: Esc or the start menu logs you out again.')
+        setTimeout(() => {
+          desktopActive.value = true
+          isOpen.value = false
+        }, 700)
+      }
+    },
+    startx: {
+      hidden: true,
+      description: 'Alias for desktop',
+      exec: () => commands.desktop!.exec([])
     },
     matrix: {
       description: 'There is no spoon',

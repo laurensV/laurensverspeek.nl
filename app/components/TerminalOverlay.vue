@@ -110,9 +110,23 @@ onKeyStroke(['`', '~'], (event) => {
 
 // While a game is running, all keys go to the game
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if (!isOpen.value || !activeGame.value) return
-  if (event.ctrlKey || event.metaKey || event.altKey) return
-  if (activeGame.value.onKey(event.key)) event.preventDefault()
+  if (!isOpen.value) return
+  if (activeGame.value) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+    if (activeGame.value.onKey(event.key)) event.preventDefault()
+  } else if (event.key === 'Escape') {
+    // close from anywhere, even when the input isn't focused
+    event.preventDefault()
+    close()
+  }
+})
+
+// hand focus back to the input when a game ends
+watch(activeGame, async (game) => {
+  if (!game && isOpen.value) {
+    await nextTick()
+    focusInput()
+  }
 })
 
 watch(isOpen, async (open) => {

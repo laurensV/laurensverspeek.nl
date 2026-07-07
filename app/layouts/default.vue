@@ -14,6 +14,7 @@
     <BootSplash />
     <MatrixRain />
     <SlTrain />
+    <WebDesktop />
   </div>
 </template>
 
