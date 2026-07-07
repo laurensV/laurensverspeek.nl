@@ -7,6 +7,7 @@
       </h1>
       <p class="subtitle is-5 has-text-grey mb-6">
         Occasional writing about code, blockchain and this website.
+        <a href="/rss.xml" class="is-family-code is-size-7">[rss]</a>
       </p>
 
       <div v-if="pending" class="blog-list">
