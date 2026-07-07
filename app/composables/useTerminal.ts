@@ -1,6 +1,7 @@
 import { projects, categories, type ProjectCategory } from '~/data/projects'
 import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
+import { now as nowData } from '~/data/now'
 import { createSnakeGame, createHangmanGame, type GameHandle, type GameCallbacks } from '~/utils/terminalGames'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
@@ -19,7 +20,7 @@ interface TerminalCommand {
   exec: (args: string[]) => void
 }
 
-const PAGES = ['home', 'projects', 'blog', 'about', 'uses', 'cv', 'contact'] as const
+const PAGES = ['home', 'projects', 'blog', 'about', 'uses', 'now', 'cv', 'contact'] as const
 
 const ASCII_LOGO = String.raw`
  _    __      __
@@ -223,6 +224,16 @@ export function useTerminal() {
     blog: {
       description: 'Read the blog',
       exec: () => navigate('blog')
+    },
+    now: {
+      description: `What I'm doing these days`,
+      exec: () => {
+        muted(`last updated ${nowData.updated}`)
+        for (const section of nowData.sections) {
+          push('primary', `./${section.title.toLowerCase()}`)
+          section.items.forEach((item) => out(`- ${item}`))
+        }
+      }
     },
     uses: {
       description: 'Gear, software and stack I use',
