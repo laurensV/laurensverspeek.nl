@@ -20,3 +20,6 @@ node_modules
 .idea
 *.iml
 *.swp
+
+# generated OG images (built by scripts/generate-og.mjs)
+/public/og/

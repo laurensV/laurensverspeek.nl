@@ -143,8 +143,29 @@ onKeyStroke('Escape', () => {
   if (lightboxOpen.value) lightboxOpen.value = false
 })
 
+const ogImage = `${SITE_URL}/og/project-${project.slug}.svg`
 useHead({ title: `${project.title} — Laurens Verspeek` })
-useSeoMeta({ description: project.description })
+useSeoMeta({
+  description: project.description,
+  ogTitle: project.title,
+  ogDescription: project.description,
+  ogType: 'article',
+  ogUrl: `${SITE_URL}/projects/${project.slug}`,
+  ogImage,
+  twitterImage: ogImage,
+  twitterTitle: project.title
+})
+
+useJsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: project.title,
+  description: project.description,
+  url: project.url ?? `${SITE_URL}/projects/${project.slug}`,
+  ...(project.source ? { codeRepository: project.source } : {}),
+  keywords: project.tech.join(', '),
+  author: { '@type': 'Person', name: 'Laurens Verspeek', url: SITE_URL }
+})
 </script>
 
 <style scoped lang="scss">

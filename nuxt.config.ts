@@ -69,7 +69,7 @@ export default defineNuxtConfig({
       // set NUXT_PUBLIC_GOATCOUNTER to enable privacy-first analytics
       goatcounter: '',
       // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
-      cursorsWs: ''
+      cursorsWs: 'ws://localhost:8787'
     }
   },
 
@@ -109,10 +109,10 @@ export default defineNuxtConfig({
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: 'https://laurensverspeek.nl' },
-        { property: 'og:image', content: 'https://laurensverspeek.nl/og.png' },
+        { property: 'og:image', content: 'https://laurensverspeek.nl/og/default.svg' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:title', content: 'Laurens Verspeek' },
-        { name: 'twitter:image', content: 'https://laurensverspeek.nl/og.png' }
+        { name: 'twitter:image', content: 'https://laurensverspeek.nl/og/default.svg' }
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },

@@ -64,8 +64,31 @@ const { data: surround } = await useAsyncData(`blog-surround-${route.params.slug
   queryCollectionItemSurroundings('blog', route.path, { fields: ['title'] })
 )
 
+const ogImage = `${SITE_URL}/og/blog-${route.params.slug}.svg`
 useHead({ title: `${post.value.title} — Laurens Verspeek` })
-useSeoMeta({ description: post.value.description })
+useSeoMeta({
+  description: post.value.description,
+  ogTitle: post.value.title,
+  ogDescription: post.value.description,
+  ogType: 'article',
+  ogUrl: `${SITE_URL}${post.value.path}`,
+  ogImage,
+  twitterImage: ogImage,
+  twitterTitle: post.value.title
+})
+
+useJsonLd(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.value?.title,
+  description: post.value?.description,
+  datePublished: post.value?.date,
+  keywords: post.value?.tags?.join(', '),
+  url: `${SITE_URL}${post.value?.path}`,
+  author: { '@type': 'Person', name: 'Laurens Verspeek', url: SITE_URL },
+  publisher: { '@type': 'Person', name: 'Laurens Verspeek' },
+  mainEntityOfPage: `${SITE_URL}${post.value?.path}`
+}))
 
 // rough reading time from the rendered AST (~200 wpm)
 const countWords = (node: unknown): number => {

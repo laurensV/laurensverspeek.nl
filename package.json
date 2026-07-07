@@ -12,6 +12,8 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
+    "og": "node scripts/generate-og.mjs",
+    "pregenerate": "node scripts/generate-og.mjs",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

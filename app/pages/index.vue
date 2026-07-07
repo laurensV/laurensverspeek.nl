@@ -137,6 +137,21 @@ import { profile } from '~/data/profile'
 
 useHead({ title: 'Laurens Verspeek — Full-stack & Blockchain Developer' })
 
+useJsonLd({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: profile.name,
+  url: SITE_URL,
+  jobTitle: 'Full-stack & Blockchain Developer',
+  email: `mailto:${profile.email}`,
+  sameAs: profile.socials.filter((s) => !s.url.startsWith('mailto:')).map((s) => s.url),
+  knowsAbout: profile.skills.flatMap((group) => group.items),
+  worksFor: [
+    { '@type': 'Organization', name: 'Nosana' },
+    { '@type': 'Organization', name: 'Effect.AI' }
+  ]
+})
+
 const { open } = useTerminal()
 const { text: role } = useTypewriter(profile.roles)
 
