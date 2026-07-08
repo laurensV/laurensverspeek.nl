@@ -46,6 +46,22 @@
         </button>
       </div>
 
+      <!-- Aero-style snap preview: a translucent ghost of where a dragged
+           window will land when released against an edge -->
+      <Transition name="lvos-snap">
+        <div
+          v-if="snapPreview"
+          class="lvos-snap-preview"
+          aria-hidden="true"
+          :style="{
+            left: `${snapPreview.x}px`,
+            top: `${snapPreview.y}px`,
+            width: `${snapPreview.width}px`,
+            height: `${snapPreview.height}px`
+          }"
+        />
+      </Transition>
+
       <!-- windows -->
       <div
         v-for="win in windows"
@@ -252,7 +268,9 @@ const {
   toggleMinimize,
   toggleMaximize,
   startDrag,
-  startResize
+  startResize,
+  snapPreview,
+  cycleWindows
 } = useWindowManager(WINDOW_TITLES)
 
 const startOpen = ref(false)
@@ -449,6 +467,14 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   openWindow('terminal')
 })
 
+// Alt+Tab switches between open windows (Shift+Alt+Tab goes backwards). Note the
+// OS may reserve Alt+Tab; the taskbar remains the always-available switcher.
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (event.key !== 'Tab' || !event.altKey || !desktopActive.value) return
+  event.preventDefault()
+  cycleWindows(event.shiftKey ? -1 : 1)
+})
+
 useEventListener('keydown', (event: KeyboardEvent) => {
   // defaultPrevented means the terminal already consumed this Escape
   if (event.key !== 'Escape' || event.defaultPrevented || !desktopActive.value || terminal.isOpen.value) {
@@ -482,6 +508,31 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       hsl(var(--lv-scheme-hs), 8%),
       hsl(var(--bulma-scheme-h), 40%, 4%)
     );
+}
+
+// Aero-style snap preview ghost
+.lvos-snap-preview {
+  position: absolute;
+  z-index: 8;
+  border: 2px solid hsla(var(--lv-primary-hsl), 0.7);
+  border-radius: var(--bulma-radius-large, 0.75rem);
+  background: hsla(var(--lv-primary-hsl), 0.14);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 12px 40px hsla(var(--lv-primary-hsl), 0.22);
+  pointer-events: none;
+  // glide between zones as the pointer moves along an edge
+  transition: left 0.16s ease, top 0.16s ease, width 0.16s ease, height 0.16s ease;
+}
+
+.lvos-snap-enter-active,
+.lvos-snap-leave-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.lvos-snap-enter-from,
+.lvos-snap-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
 }
 
 .lvos-icons {

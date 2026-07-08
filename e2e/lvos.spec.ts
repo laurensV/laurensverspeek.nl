@@ -44,6 +44,36 @@ test('maximizes and restores a window', async ({ page }) => {
   await expect(page.locator('.lvos-window.is-maximized')).toHaveCount(0)
 })
 
+test('dragging a window to an edge shows a snap preview, then snaps', async ({ page }) => {
+  await bootDesktop(page)
+  const bar = page.locator('.lvos-window-titlebar').first()
+  const box = await bar.boundingBox()
+  if (!box) throw new Error('no window to drag')
+  await page.mouse.move(box.x + 60, box.y + 10)
+  await page.mouse.down()
+  await page.mouse.move(6, 320, { steps: 8 })
+  // Aero-style ghost appears while hovering the edge
+  await expect(page.locator('.lvos-snap-preview')).toBeVisible()
+  await page.mouse.up()
+  // preview clears and the window is now sized (snapped to the left half)
+  await expect(page.locator('.lvos-snap-preview')).toHaveCount(0)
+  await expect(page.locator('.lvos-window.has-size').first()).toBeVisible()
+})
+
+test('Alt+Tab cycles focus between open windows', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-icon', { hasText: 'calculator' }).click()
+  await page.locator('.calc').waitFor()
+  const winByTitle = (t: string) =>
+    page.locator('.lvos-window').filter({ has: page.locator('.lvos-window-title', { hasText: t }) })
+  const zOf = (t: string) => winByTitle(t).evaluate((el) => Number(getComputedStyle(el).zIndex))
+  // the just-opened calculator is on top
+  expect(await zOf('calculator')).toBeGreaterThan(await zOf('readme'))
+  await page.keyboard.press('Alt+Tab')
+  // focus wraps back to the readme window
+  await expect.poll(async () => (await zOf('readme')) > (await zOf('calculator'))).toBe(true)
+})
+
 test('shows a right-click context menu on the desktop', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos').click({ button: 'right', position: { x: 600, y: 400 } })
