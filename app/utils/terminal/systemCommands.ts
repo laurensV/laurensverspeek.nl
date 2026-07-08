@@ -24,6 +24,26 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
   // names in the current directory, for tab-completing rm
   const hereEntries = () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((entry) => entry.name)
 
+  // shared cp/mv (files only): copy a node to dest, and for mv drop the source
+  const copyOrMove = (cmd: 'cp' | 'mv', args: string[]) => {
+    const [srcName, dstName] = args
+    if (!srcName || !dstName) return error(`${cmd}: missing file operand`)
+    const src = resolvePath(ctx.fsCwd.value, srcName)
+    const node = ctx.files.value[src]
+    if (!node) return error(`${cmd}: cannot stat '${srcName}': No such file or directory`)
+    if (node.dir) return error(`${cmd}: omitting directory '${srcName}'`)
+    let dst = resolvePath(ctx.fsCwd.value, dstName)
+    // a directory destination keeps the source's filename
+    if (ctx.files.value[dst]?.dir) dst = `${dst}/${src.split('/').pop()}`
+    if (!dst) return error(`${cmd}: cannot write to the home directory`)
+    if (src === dst) return
+    if (!parentExists(dst)) return error(`${cmd}: cannot create '${dstName}': No such file or directory`)
+    const withDest = { ...ctx.files.value, [dst]: { dir: false, content: node.content } }
+    ctx.files.value = cmd === 'mv'
+      ? Object.fromEntries(Object.entries(withDest).filter(([key]) => key !== src))
+      : withDest
+  }
+
   return {
     help: {
       description: 'List available commands',
@@ -333,6 +353,18 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         // if we removed the directory we're standing in, walk back to home
         if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
       }
+    },
+    cp: {
+      usage: 'cp <source> <dest>',
+      description: 'Copy a file',
+      argCandidates: hereEntries,
+      exec: (args) => copyOrMove('cp', args)
+    },
+    mv: {
+      usage: 'mv <source> <dest>',
+      description: 'Move or rename a file',
+      argCandidates: hereEntries,
+      exec: (args) => copyOrMove('mv', args)
     },
     vim: {
       hidden: true,
