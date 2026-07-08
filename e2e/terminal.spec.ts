@@ -72,6 +72,21 @@ test('tab-completes command names and arguments', async ({ page }) => {
   await expect(page.locator('#terminal-input')).toHaveValue('cd about')
 })
 
+test('Tab cycles through multiple completion candidates', async ({ page }) => {
+  await openTerminal(page)
+  const field = page.locator('#terminal-input')
+  await page.fill('#terminal-input', 'co')
+  // "co" matches colorscheme, contact, cowsay (sorted) — Tab rotates through them
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('colorscheme ')
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('contact ')
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('cowsay ')
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('colorscheme ')
+})
+
 test('pwd reflects the current route and prompt shows the cwd', async ({ page }) => {
   await page.goto('/projects')
   await page.locator('.filter-flags').waitFor()

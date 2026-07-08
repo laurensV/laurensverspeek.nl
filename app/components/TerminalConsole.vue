@@ -27,6 +27,7 @@
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
+        @input="resetCompletion"
         @keydown.enter="submit"
         @keydown.up.prevent="historyUp"
         @keydown.down.prevent="historyDown"
@@ -88,9 +89,32 @@ const historyDown = () => {
   }
 }
 
+// Tab completion with zsh-style cycling: the first Tab applies the first match,
+// each further Tab (while the field still holds our suggestion) rotates through
+// the rest. Any real keystroke resets the cycle (see resetCompletion).
+let completionCycle: { list: string[], index: number } | null = null
+
 const autocomplete = () => {
-  const match = complete(input.value)
-  if (match) input.value = match
+  if (
+    completionCycle
+    && completionCycle.list.length > 1
+    && input.value === completionCycle.list[completionCycle.index]
+  ) {
+    completionCycle.index = (completionCycle.index + 1) % completionCycle.list.length
+    input.value = completionCycle.list[completionCycle.index]!
+    return
+  }
+  const list = complete(input.value)
+  if (!list.length) {
+    completionCycle = null
+    return
+  }
+  input.value = list[0]!
+  completionCycle = list.length > 1 ? { list, index: 0 } : null
+}
+
+const resetCompletion = () => {
+  completionCycle = null
 }
 
 const clearScreen = () => {

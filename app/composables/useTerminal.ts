@@ -225,20 +225,28 @@ export function useTerminal() {
     }
   }
 
-  const complete = (input: string): string | undefined => {
+  // Return every completion for the current input (sorted), so the input row can
+  // apply the first and let repeated Tab cycle through the rest — zsh-style menu
+  // completion. Completes command names before a space, then the command's own
+  // argument candidates (pages, accents, aliases, …).
+  const complete = (input: string): string[] => {
     const raw = input.trimStart().toLowerCase()
-    if (!raw) return undefined
+    if (!raw) return []
     // no space yet: complete the command name itself
     if (!raw.includes(' ')) {
-      const match = commandNames.find((name) => name.startsWith(raw))
-      return match ? `${match} ` : undefined
+      return commandNames
+        .filter((name) => name.startsWith(raw))
+        .sort()
+        .map((name) => `${name} `)
     }
-    // complete the first argument from the command's own candidates
+    // complete the current argument from the command's own candidates
     const [name = '', ...rest] = raw.split(/\s+/)
     const partial = rest.join(' ')
     const candidates = commands[name]?.argCandidates?.() ?? []
-    const match = candidates.find((candidate) => candidate.toLowerCase().startsWith(partial))
-    return match ? `${name} ${match}` : undefined
+    return candidates
+      .filter((candidate) => candidate.toLowerCase().startsWith(partial))
+      .sort()
+      .map((candidate) => `${name} ${candidate}`)
   }
 
   return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame }
