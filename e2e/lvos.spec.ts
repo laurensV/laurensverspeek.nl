@@ -88,6 +88,25 @@ test('dragging a window to a corner snaps it to a quadrant', async ({ page }) =>
   expect(rect.height).toBeLessThan(440)
 })
 
+test('windows resize from an edge handle (not just the corner)', async ({ page }) => {
+  await bootDesktop(page)
+  const win = page.locator('.lvos-window').first()
+  const before = await win.boundingBox()
+  if (!before) throw new Error('no window')
+  const handle = win.locator('.lvos-resize.is-e')
+  const hb = await handle.boundingBox()
+  if (!hb) throw new Error('no east handle')
+  await page.mouse.move(hb.x + 2, hb.y + hb.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(hb.x + 100, hb.y + hb.height / 2, { steps: 6 })
+  await page.mouse.up()
+  const after = await win.boundingBox()
+  if (!after) throw new Error('no window after resize')
+  // dragging the east edge widens the window while its left stays put
+  expect(after.width).toBeGreaterThan(before.width + 40)
+  expect(Math.abs(after.x - before.x)).toBeLessThan(6)
+})
+
 test('Alt+Tab cycles focus between open windows', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-icon', { hasText: 'calculator' }).click()

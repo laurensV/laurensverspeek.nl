@@ -139,7 +139,8 @@ export function useWindowManager(titles: Record<string, string> = {}) {
   let dragging: DesktopWindow | null = null
   let dragOffset = { x: 0, y: 0 }
   let resizing: DesktopWindow | null = null
-  let resizeStart = { px: 0, py: 0, w: 0, h: 0 }
+  let resizeDir = ''
+  let resizeStart = { px: 0, py: 0, x: 0, y: 0, w: 0, h: 0 }
 
   // live snap hint while dragging; drives the preview overlay in WebDesktop
   const snapHint = ref<SnapZone | null>(null)
@@ -160,14 +161,18 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     dragOffset = { x: event.clientX - win.x, y: event.clientY - win.y }
   }
 
-  const startResize = (win: DesktopWindow, event: PointerEvent) => {
+  // dir is any combination of n/s/e/w (edges) or two of them (corners)
+  const startResize = (win: DesktopWindow, event: PointerEvent, dir = 'se') => {
     focusWindow(win)
     if (win.maximized) return
     const el = (event.target as HTMLElement).closest('.lvos-window') as HTMLElement | null
     resizing = win
+    resizeDir = dir
     resizeStart = {
       px: event.clientX,
       py: event.clientY,
+      x: win.x,
+      y: win.y,
       w: win.width ?? el?.offsetWidth ?? 400,
       h: win.height ?? el?.offsetHeight ?? 300
     }
@@ -179,8 +184,21 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       dragging.y = Math.max(0, Math.min(event.clientY - dragOffset.y, window.innerHeight - 80))
       snapHint.value = edgeZone(event.clientX, event.clientY)
     } else if (resizing) {
-      resizing.width = Math.max(MIN_W, resizeStart.w + event.clientX - resizeStart.px)
-      resizing.height = Math.max(MIN_H, resizeStart.h + event.clientY - resizeStart.py)
+      const dx = event.clientX - resizeStart.px
+      const dy = event.clientY - resizeStart.py
+      // east/south grow directly; west/north also shift the window's origin
+      if (resizeDir.includes('e')) resizing.width = Math.max(MIN_W, resizeStart.w + dx)
+      if (resizeDir.includes('s')) resizing.height = Math.max(MIN_H, resizeStart.h + dy)
+      if (resizeDir.includes('w')) {
+        const width = Math.max(MIN_W, resizeStart.w - dx)
+        resizing.x = resizeStart.x + (resizeStart.w - width)
+        resizing.width = width
+      }
+      if (resizeDir.includes('n')) {
+        const height = Math.max(MIN_H, resizeStart.h - dy)
+        resizing.y = resizeStart.y + (resizeStart.h - height)
+        resizing.height = height
+      }
       // manual resize means the snap/maximize restore rect is stale
       resizing.restore = undefined
     }

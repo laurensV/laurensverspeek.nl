@@ -145,12 +145,16 @@
           <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         </div>
 
-        <span
-          v-if="!win.maximized"
-          class="lvos-resize"
-          aria-hidden="true"
-          @pointerdown.prevent.stop="startResize(win, $event)"
-        />
+        <template v-if="!win.maximized">
+          <span
+            v-for="dir in RESIZE_DIRS"
+            :key="dir"
+            class="lvos-resize"
+            :class="`is-${dir}`"
+            aria-hidden="true"
+            @pointerdown.prevent.stop="startResize(win, $event, dir)"
+          />
+        </template>
       </div>
 
       <!-- taskbar -->
@@ -199,6 +203,9 @@ const WINDOW_TITLES: Record<string, string> = {
   notes: 'sticky notes',
   terminal: 'lvsh — terminal'
 }
+
+// the eight resize handles (four edges + four corners)
+const RESIZE_DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const
 
 const terminal = useTerminal()
 const router = useRouter()
@@ -530,26 +537,45 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   padding: 0;
 }
 
+// resize handles: thin invisible hit areas on each edge, small squares on the
+// corners. The south-east corner keeps the visible diagonal grip.
 .lvos-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 1rem;
-  height: 1rem;
-  cursor: nwse-resize;
   touch-action: none;
-  // three diagonal grip lines
-  background:
-    linear-gradient(
-      135deg,
-      transparent 0 50%,
-      hsla(var(--lv-primary-hsl), 0.5) 50% 55%,
-      transparent 55% 65%,
-      hsla(var(--lv-primary-hsl), 0.5) 65% 70%,
-      transparent 70% 80%,
-      hsla(var(--lv-primary-hsl), 0.5) 80% 85%,
-      transparent 85%
-    );
+  z-index: 3;
+
+  // edges (kept just inside the window so overflow:hidden doesn't clip them)
+  &.is-n, &.is-s { left: 0.6rem; right: 0.6rem; height: 6px; cursor: ns-resize; }
+  &.is-e, &.is-w { top: 0.6rem; bottom: 0.6rem; width: 6px; cursor: ew-resize; }
+  &.is-n { top: 0; }
+  &.is-s { bottom: 0; }
+  &.is-e { right: 0; }
+  &.is-w { left: 0; }
+
+  // corners sit above the edges
+  &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 14px; height: 14px; z-index: 4; }
+  &.is-ne { top: 0; right: 0; cursor: nesw-resize; }
+  &.is-nw { top: 0; left: 0; cursor: nwse-resize; }
+  &.is-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+  &.is-se {
+    bottom: 0;
+    right: 0;
+    width: 1rem;
+    height: 1rem;
+    cursor: nwse-resize;
+    // three diagonal grip lines
+    background:
+      linear-gradient(
+        135deg,
+        transparent 0 50%,
+        hsla(var(--lv-primary-hsl), 0.5) 50% 55%,
+        transparent 55% 65%,
+        hsla(var(--lv-primary-hsl), 0.5) 65% 70%,
+        transparent 70% 80%,
+        hsla(var(--lv-primary-hsl), 0.5) 80% 85%,
+        transparent 85%
+      );
+  }
 }
 
 .lvos-file {
