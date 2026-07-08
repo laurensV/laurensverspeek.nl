@@ -157,6 +157,43 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       description: 'List pages',
       exec: () => out(PAGES.map((p) => `${p}/`).join('  '))
     },
+    tree: {
+      description: 'Show the whole site as a directory tree',
+      exec: () => {
+        push('primary', '~')
+        // top-level pages, then projects/ and blog/ as expandable branches
+        const topPages = PAGES.filter((p) => p !== 'home' && p !== 'projects' && p !== 'blog')
+        const branches = ['projects', 'blog', ...topPages]
+
+        const projectLines = projects.map((p, i, arr) => {
+          const last = i === arr.length - 1
+          return `│   ${last ? '└──' : '├──'} ${p.slug}.md`
+        })
+        out('├── projects/')
+        projectLines.forEach(out)
+
+        fetchPosts()
+          .then((posts) => {
+            out('├── blog/')
+            posts.forEach((post, i) => {
+              const last = i === posts.length - 1
+              out(`│   ${last ? '└──' : '├──'} ${postSlug(post.path)}.md`)
+            })
+            topPages.forEach((page, i) => {
+              const last = i === topPages.length - 1
+              out(`${last ? '└──' : '├──'} ${page}/`)
+            })
+            const fileCount = projects.length + posts.length
+            muted(`\n${branches.length} directories, ${fileCount} files`)
+          })
+          .catch(() => {
+            topPages.forEach((page, i) => {
+              const last = i === topPages.length - 1
+              out(`${last ? '└──' : '├──'} ${page}/`)
+            })
+          })
+      }
+    },
     cv: {
       description: 'View my CV (printable)',
       exec: () => ctx.navigate('cv')
