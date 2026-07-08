@@ -42,6 +42,18 @@ test('mobile menu stays reachable while open (scroll is locked)', async ({ page 
   await expect(page.locator('body')).not.toHaveCSS('position', 'fixed')
 })
 
+test('Escape closes the mobile menu and restores focus to the toggle', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 780 })
+  await page.goto('/')
+  await page.locator('.nav-toggle').click()
+  const menu = page.locator('.mobile-menu')
+  await expect(menu).toBeVisible()
+  await expect(menu).toHaveAttribute('role', 'dialog')
+  await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+  await expect(page.locator('.nav-toggle')).toBeFocused()
+})
+
 test('mobile menu search opens the palette', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/')

@@ -46,7 +46,15 @@
          doesn't become its containing block and collapse it) -->
     <Teleport to="body">
       <Transition name="mobile-menu">
-        <div v-if="mobileMenu" class="mobile-menu is-hidden-desktop">
+        <div
+          v-if="mobileMenu"
+          ref="menuEl"
+          class="mobile-menu is-hidden-desktop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="site menu"
+          @keydown="onMenuKeydown"
+        >
           <button class="mobile-search" @click="openPalette">
             <AppIcon name="search" :size="16" />
             <span>search everything…</span>
@@ -128,14 +136,47 @@ const unlockScroll = () => {
   style.width = ''
   window.scrollTo(0, lockedScrollY)
 }
-watch(mobileMenu, (open) => {
+// the mobile menu is a modal dialog: freeze the page, move focus into it, and
+// restore focus to the trigger when it closes (so keyboard/AT users aren't
+// stranded). Escape closes it; Tab is trapped inside.
+const menuEl = ref<HTMLElement | null>(null)
+let lastFocused: HTMLElement | null = null
+
+watch(mobileMenu, async (open) => {
   if (!import.meta.client) return
-  if (open) lockScroll()
-  else unlockScroll()
+  if (open) {
+    lastFocused = document.activeElement as HTMLElement | null
+    lockScroll()
+    await nextTick()
+    menuEl.value?.querySelector<HTMLElement>('a, button')?.focus()
+  } else {
+    unlockScroll()
+    lastFocused?.focus()
+  }
 })
 onUnmounted(() => {
   if (import.meta.client && mobileMenu.value) unlockScroll()
 })
+
+const onMenuKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    mobileMenu.value = false
+    return
+  }
+  if (e.key !== 'Tab' || !menuEl.value) return
+  const focusable = [...menuEl.value.querySelectorAll<HTMLElement>('a, button')]
+  if (!focusable.length) return
+  const first = focusable[0]!
+  const last = focusable[focusable.length - 1]!
+  const active = document.activeElement
+  if (e.shiftKey && active === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && active === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
 
 // Brand: hovering "expands" the ~ into /home, the way a shell would.
 // Frames type /home out character by character (and back again on leave).
