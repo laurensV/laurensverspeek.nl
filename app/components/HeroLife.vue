@@ -18,18 +18,15 @@
 </template>
 
 <script setup lang="ts">
-import { usePreferredReducedMotion, useDocumentVisibility, useResizeObserver } from '@vueuse/core'
 import { seedRandom, step as lifeStep, population, type Grid } from '~/utils/gameOfLife'
 
 // Conway's Game of Life as the hero centerpiece: a slow, toroidal cellular
 // automaton drawn as dim amber cells. Drag to seed live cells; a plain click
-// opens the full-page playground at /life. The simulation itself lives in the
-// shared, unit-tested ~/utils/gameOfLife.
+// opens the full-page playground at /life. The simulation lives in the shared,
+// unit-tested ~/utils/gameOfLife; the canvas lifecycle in useCanvasScene.
 
 const containerRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
-const reducedMotion = usePreferredReducedMotion()
-const visibility = useDocumentVisibility()
 const colorMode = useColorMode()
 
 const CELL = 12 // css px per cell
@@ -41,10 +38,7 @@ let cols = 0
 let rows = 0
 let grid: Grid = new Uint8Array(0)
 let next: Grid = new Uint8Array(0)
-let dpr = 1
-let rafId = 0
 let acc = 0
-let last = 0
 
 const painting = ref(false)
 
@@ -63,23 +57,6 @@ const idx = (x: number, y: number) => y * cols + x
 const seed = () => {
   grid = seedRandom(cols, rows, SEED_DENSITY)
   next = new Uint8Array(grid.length)
-}
-
-const resize = () => {
-  const container = containerRef.value
-  const canvas = canvasRef.value
-  if (!container || !canvas) return
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
-  const w = container.clientWidth
-  const h = container.clientHeight
-  cols = Math.max(8, Math.floor(w / CELL))
-  rows = Math.max(8, Math.floor(h / CELL))
-  canvas.width = w * dpr
-  canvas.height = h * dpr
-  ctx = canvas.getContext('2d')
-  ctx?.setTransform(dpr, 0, 0, dpr, 0, 0)
-  seed()
-  draw()
 }
 
 const step = () => {
@@ -101,28 +78,29 @@ const draw = () => {
   }
 }
 
-const loop = (t: number) => {
-  const dt = t - last
-  last = t
-  acc += dt
-  if (acc >= STEP_MS) {
-    acc = 0
-    step()
+const { redraw } = useCanvasScene(canvasRef, containerRef, {
+  onResize: (context, w, h) => {
+    ctx = context
+    const nextCols = Math.max(8, Math.floor(w / CELL))
+    const nextRows = Math.max(8, Math.floor(h / CELL))
+    if (nextCols !== cols || nextRows !== rows) {
+      cols = nextCols
+      rows = nextRows
+      seed()
+    }
+    readColor()
     draw()
+  },
+  onFrame: (context, dt) => {
+    ctx = context
+    acc += dt
+    if (acc >= STEP_MS) {
+      acc = 0
+      step()
+      draw()
+    }
   }
-  rafId = requestAnimationFrame(loop)
-}
-
-const start = () => {
-  cancelAnimationFrame(rafId)
-  if (reducedMotion.value === 'reduce') {
-    draw()
-  } else if (visibility.value === 'visible') {
-    last = performance.now()
-    acc = 0
-    rafId = requestAnimationFrame(loop)
-  }
-}
+})
 
 // paint live cells under the pointer (a small brush), for the interactive part
 const paintAt = (event: PointerEvent) => {
@@ -158,21 +136,12 @@ const onPointerUp = (event: PointerEvent) => {
   if (tapped) openFull()
 }
 
-onMounted(() => {
-  readColor()
-  resize()
-  start()
-})
-onBeforeUnmount(() => cancelAnimationFrame(rafId))
-
-useResizeObserver(containerRef, resize)
-watch([visibility, reducedMotion], start)
+// re-read the accent + repaint when the theme flips (no reseed, dims unchanged)
 watch(
   () => colorMode.value,
   async () => {
     await nextTick()
-    readColor()
-    draw()
+    redraw()
   }
 )
 </script>

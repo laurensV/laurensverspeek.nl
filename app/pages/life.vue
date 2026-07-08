@@ -36,7 +36,6 @@
 </template>
 
 <script setup lang="ts">
-import { useResizeObserver, useRafFn } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
@@ -52,7 +51,6 @@ let cols = 0
 let rows = 0
 let grid: Grid = new Uint8Array(0)
 let next: Grid = new Uint8Array(0)
-let dpr = 1
 
 const running = ref(true)
 const fps = ref(12)
@@ -98,48 +96,41 @@ const advance = () => {
   draw()
 }
 
-const resize = () => {
-  const wrap = wrapRef.value
-  const canvas = canvasRef.value
-  if (!wrap || !canvas) return
-  const oldGrid = grid
-  const oldCols = cols
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
-  const w = wrap.clientWidth
-  const h = wrap.clientHeight
-  cols = Math.max(8, Math.floor(w / CELL))
-  rows = Math.max(8, Math.floor(h / CELL))
-  canvas.width = w * dpr
-  canvas.height = h * dpr
-  ctx = canvas.getContext('2d')
-  ctx?.setTransform(dpr, 0, 0, dpr, 0, 0)
-  if (!oldGrid.length) {
-    grid = seedRandom(cols, rows, 0.18)
-  } else {
-    // preserve the pattern by copying the overlapping region (2D-aware)
-    grid = createGrid(cols, rows)
-    const oldRows = oldGrid.length / oldCols
-    for (let y = 0; y < Math.min(rows, oldRows); y++) {
-      for (let x = 0; x < Math.min(cols, oldCols); x++) {
-        grid[index(cols, x, y)] = oldGrid[y * oldCols + x]!
+// ---- canvas lifecycle + fps-paced run loop ----
+let acc = 0
+const { redraw } = useCanvasScene(canvasRef, wrapRef, {
+  onResize: (context, w, h) => {
+    ctx = context
+    const oldGrid = grid
+    const oldCols = cols
+    cols = Math.max(8, Math.floor(w / CELL))
+    rows = Math.max(8, Math.floor(h / CELL))
+    if (!oldGrid.length) {
+      grid = seedRandom(cols, rows, 0.18)
+    } else {
+      // preserve the pattern by copying the overlapping region (2D-aware)
+      grid = createGrid(cols, rows)
+      const oldRows = oldGrid.length / oldCols
+      for (let y = 0; y < Math.min(rows, oldRows); y++) {
+        for (let x = 0; x < Math.min(cols, oldCols); x++) {
+          grid[index(cols, x, y)] = oldGrid[y * oldCols + x]!
+        }
       }
     }
+    next = createGrid(cols, rows)
+    readColor()
+    draw()
+  },
+  onFrame: (context, dt) => {
+    ctx = context
+    if (!running.value) return
+    acc += dt
+    if (acc >= 1000 / fps.value) {
+      acc = 0
+      advance()
+    }
   }
-  next = createGrid(cols, rows)
-  draw()
-}
-
-// ---- run loop (fps-paced via a rAF accumulator) ----
-let acc = 0
-const { pause, resume } = useRafFn(({ delta }) => {
-  if (!running.value) return
-  acc += delta
-  const stepMs = 1000 / fps.value
-  if (acc >= stepMs) {
-    acc = 0
-    advance()
-  }
-}, { immediate: false })
+})
 
 const toggle = () => (running.value = !running.value)
 const stepOnce = () => advance()
@@ -221,17 +212,10 @@ const place = (preset: Preset) => {
   draw()
 }
 
-onMounted(() => {
-  readColor()
-  resize()
-  resume()
-})
-onBeforeUnmount(pause)
-useResizeObserver(wrapRef, resize)
+// re-read the accent and repaint on theme change (dims unchanged, no reseed)
 watch(useColorMode(), async () => {
   await nextTick()
-  readColor()
-  draw()
+  redraw()
 })
 </script>
 
