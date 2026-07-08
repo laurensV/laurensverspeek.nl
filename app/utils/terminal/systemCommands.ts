@@ -171,7 +171,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     },
     pwd: {
       description: 'Print the working directory',
-      exec: () => out(ctx.cwd.value.replace(/^~/, '/home/visitor'))
+      exec: () => out(ctx.cwd.value.replace(/^~/, ctx.env.value.HOME ?? '/home/visitor'))
     },
     echo: {
       usage: 'echo <text>',

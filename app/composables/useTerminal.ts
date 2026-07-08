@@ -145,8 +145,8 @@ export function useTerminal() {
     fetchPosts: () =>
       nuxtApp.runWithContext(() => queryCollection('blog').order('date', 'DESC').all()),
     env: useState<Record<string, string>>('terminal-env', () => ({
-      USER: 'visitor',
-      HOME: '~',
+      USER: identityName.value,
+      HOME: `/home/${identityName.value}`,
       PWD: '~',
       SHELL: 'lvsh',
       HOST: profile.domain
@@ -157,6 +157,11 @@ export function useTerminal() {
     })),
     getCommands: () => commands
   }
+
+  // keep $USER / $HOME in sync when the visitor renames themselves
+  watch(identityName, (n) => {
+    ctx.env.value = { ...ctx.env.value, USER: n, HOME: `/home/${n}` }
+  })
 
   const commands: Record<string, TerminalCommand> = {
     ...createSystemCommands(ctx),

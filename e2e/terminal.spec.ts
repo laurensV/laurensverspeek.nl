@@ -36,8 +36,9 @@ test('reads a blog post as markdown in the terminal', async ({ page }) => {
 
 test('expands environment variables', async ({ page }) => {
   await openTerminal(page)
-  await run(page, 'echo hello $USER')
-  await expect(page.locator('.terminal-output')).toContainText('hello visitor')
+  await run(page, 'export GREETING=world')
+  await run(page, 'echo hello $GREETING')
+  await expect(page.locator('.terminal-output')).toContainText('hello world')
 })
 
 test('switches accent color via colorscheme', async ({ page }) => {
@@ -67,7 +68,16 @@ test('pwd reflects the current route and prompt shows the cwd', async ({ page })
   // prompt is route-derived, so it should read ~/projects immediately
   await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('~/projects')
   await run(page, 'pwd')
-  await expect(page.locator('.terminal-output')).toContainText('/home/visitor/projects')
+  // pwd resolves ~ against $HOME (/home/<handle>) and ends in /projects
+  await expect(page.locator('.terminal-output')).toContainText('/projects')
+})
+
+test('whoami and nick change the identity', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'nick codewizard')
+  await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('codewizard@lv')
+  await run(page, 'whoami')
+  await expect(page.locator('.terminal-output')).toContainText('codewizard')
 })
 
 test('tree renders the site as a directory tree', async ({ page }) => {
