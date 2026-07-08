@@ -69,8 +69,22 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     whoami: {
       description: 'Who are you?',
       exec: () => {
-        out('visitor')
-        muted(`(I'm ${profile.name} though — try 'about')`)
+        out(ctx.identity.name.value)
+        muted(`(change it with 'nick <name>' — I'm ${profile.name} though, try 'about')`)
+      }
+    },
+    nick: {
+      usage: 'nick <name>',
+      description: 'Set your display name (used in the prompt & live cursors)',
+      exec: (args) => {
+        if (!args[0]) {
+          out(`Your name is '${ctx.identity.name.value}'.`)
+          muted('Usage: nick <name>')
+          return
+        }
+        const applied = ctx.identity.set(args.join(' '))
+        if (applied) out(`Nice to meet you, ${applied}.`)
+        else error('nick: please pick a name with letters or numbers.')
       }
     },
     projects: {

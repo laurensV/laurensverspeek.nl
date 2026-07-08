@@ -156,12 +156,12 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: () => {
         push('primary', ASCII_LOGO)
         const info: [string, string][] = [
-          ['host', `visitor@${profile.domain}`],
+          ['host', `${ctx.identity.name.value}@${profile.domain}`],
           ['os', 'Nuxt 4 (Vue 3) x86_64'],
           ['shell', 'lvsh 2.0.0'],
           ['theme', ctx.colorMode.value],
           ['location', profile.location],
-          ['work', 'CTO @ Nosana, co-founder @ Effect.AI'],
+          ['work', 'Head of Dev @ Nosana, co-founder @ Effect.AI'],
           ['uptime', `${new Date().getFullYear() - 2022} years (site v1 shipped in 2022)`]
         ]
         for (const [key, value] of info) {

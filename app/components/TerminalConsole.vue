@@ -52,8 +52,9 @@ const props = withDefaults(
 const emit = defineEmits<{ escape: [] }>()
 
 const { lines, history, cwd, run, complete, activeGame, gameFrame } = useTerminal()
+const { name } = useIdentity()
 
-const prompt = computed(() => `visitor@lv:${cwd.value}$`)
+const prompt = computed(() => `${name.value}@lv:${cwd.value}$`)
 const input = ref('')
 const inputRef = ref<HTMLInputElement>()
 const outputRef = ref<HTMLElement>()

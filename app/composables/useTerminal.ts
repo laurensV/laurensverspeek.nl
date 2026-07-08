@@ -41,6 +41,7 @@ export function useTerminal() {
   const colorMode = useColorMode()
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const { accent, accents, setAccent } = useAccent()
+  const { name: identityName, setName } = useIdentity()
 
   // command history survives visits (last 100 entries)
   if (import.meta.client && !historyRestored) {
@@ -122,6 +123,10 @@ export function useTerminal() {
     close,
     startGame,
     colorMode,
+    identity: {
+      name: identityName,
+      set: setName
+    },
     accent: {
       current: accent,
       names: accents.map((a) => a.name),

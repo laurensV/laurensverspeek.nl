@@ -13,7 +13,7 @@
       <svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor">
         <path d="M0 0 L14 10 L7 11 L4 18 Z" />
       </svg>
-      <span class="live-cursor-label is-family-code">visitor</span>
+      <span class="live-cursor-label is-family-code">{{ cursor.name || 'visitor' }}</span>
     </div>
   </div>
 </template>
@@ -28,6 +28,7 @@ import { useEventListener, useThrottleFn } from '@vueuse/core'
 interface RemoteCursor {
   id: number
   hue: number
+  name?: string
   x: number
   y: number
   page: string
@@ -36,6 +37,7 @@ interface RemoteCursor {
 
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
+const { name } = useIdentity()
 
 const enabled = computed(() => Boolean(cursorsWs))
 const cursors = ref(new Map<number, RemoteCursor>())
@@ -78,7 +80,8 @@ const send = useThrottleFn((event: PointerEvent) => {
     JSON.stringify({
       x: event.clientX / window.innerWidth,
       y: event.clientY / window.innerHeight,
-      page: route.path
+      page: route.path,
+      name: name.value
     })
   )
 }, 90)

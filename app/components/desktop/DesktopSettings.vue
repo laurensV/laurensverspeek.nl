@@ -1,6 +1,21 @@
 <template>
   <div class="settings is-family-code">
-    <p class="settings-section"># appearance</p>
+    <p class="settings-section"># identity</p>
+    <div class="settings-row">
+      <span class="settings-label">display name</span>
+      <input
+        v-model="nameInput"
+        class="settings-name"
+        maxlength="24"
+        spellcheck="false"
+        aria-label="Display name"
+        @change="applyName"
+        @keydown.enter="applyName"
+      >
+    </div>
+    <p class="settings-note">// shown in the terminal prompt and to other visitors' cursors</p>
+
+    <p class="settings-section mt-4"># appearance</p>
     <div class="settings-row">
       <span class="settings-label">site theme</span>
       <div class="settings-options">
@@ -70,6 +85,15 @@ const { crtActive, matrixActive, desktopActive, toggleCrt } = useSiteEffects()
 const partyActive = useState('fx-party', () => false)
 const { accent, accents, setAccent } = useAccent()
 
+const { name, setName } = useIdentity()
+const nameInput = ref(name.value)
+watch(name, (v) => (nameInput.value = v))
+const applyName = () => {
+  const applied = setName(nameInput.value)
+  if (applied) nameInput.value = applied
+  else nameInput.value = name.value
+}
+
 // read the shared window state directly — no need for the manager's listeners
 const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
 const windowCount = computed(() => windows.value.length)
@@ -121,6 +145,22 @@ const enterMatrix = () => {
     &.is-active {
       color: var(--bulma-primary);
     }
+  }
+}
+
+.settings-name {
+  width: 10rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.3);
+  border-radius: var(--bulma-radius-small);
+  background-color: hsl(var(--lv-scheme-hs), 6%);
+  color: hsl(var(--lv-scheme-hs), 90%);
+  font: inherit;
+  font-size: 0.78rem;
+
+  &:focus {
+    outline: none;
+    border-color: hsla(var(--lv-primary-hsl), 0.6);
   }
 }
 

@@ -32,10 +32,15 @@ wss.on('connection', (socket) => {
       return
     }
     if (typeof msg.x !== 'number' || typeof msg.y !== 'number' || typeof msg.page !== 'string') return
+    // relay the visitor's chosen display name (sanitized, length-capped)
+    const name = typeof msg.name === 'string'
+      ? msg.name.replace(/[^a-z0-9_-]/gi, '').slice(0, 24) || 'visitor'
+      : 'visitor'
     const payload = JSON.stringify({
       type: 'move',
       id,
       hue,
+      name,
       x: Math.min(1, Math.max(0, msg.x)),
       y: Math.min(1, Math.max(0, msg.y)),
       page: String(msg.page).slice(0, 100)
