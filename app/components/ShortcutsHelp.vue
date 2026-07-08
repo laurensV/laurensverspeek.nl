@@ -48,7 +48,9 @@ const GROUPS = [
       { keys: ['~'], label: 'open the interactive terminal' },
       { keys: ['ctrl', 'k'], label: 'open the command palette' },
       { keys: ['?'], label: 'show this help' },
-      { keys: ['esc'], label: 'close any overlay' }
+      { keys: ['esc'], label: 'close any overlay' },
+      { keys: ['j', 'k'], label: 'scroll the page, vim style' },
+      { keys: ['gg', 'G'], label: 'jump to top / bottom' }
     ]
   },
   {

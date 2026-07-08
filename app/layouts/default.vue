@@ -29,6 +29,9 @@
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the
 // terminal, so gate it behind its flag to keep it out of the initial bundle.
 const { matrixActive } = useSiteEffects()
+
+// j/k · gg/G scrolling everywhere except lvOS, which has its own keyboard world
+useVimScroll()
 </script>
 
 <style scoped lang="scss">

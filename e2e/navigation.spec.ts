@@ -156,3 +156,34 @@ test('resume PDF is generated and downloadable', async ({ request }) => {
   expect(res.status()).toBe(200)
   expect(res.headers()['content-type']).toContain('pdf')
 })
+
+test('vim keys scroll the page: j, G and gg', async ({ page }) => {
+  await page.goto('/about')
+  await page.locator('h1').waitFor()
+  expect(await page.evaluate(() => window.scrollY)).toBe(0)
+  await page.keyboard.press('j')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  // G jumps (well) past a single j-step, gg returns to the very top
+  await page.keyboard.press('Shift+G')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
+  await page.keyboard.press('g')
+  await page.keyboard.press('g')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+})
+
+test('vim scrolling stays instant under reduced motion and quiet in inputs', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  // short viewport so the contact page is guaranteed to be scrollable
+  await page.setViewportSize({ width: 900, height: 480 })
+  await page.goto('/contact')
+  await page.locator('h1').waitFor()
+  // typing j into the contact wizard input must NOT scroll the page
+  const input = page.locator('input').first()
+  await input.click()
+  await input.press('j')
+  expect(await page.evaluate(() => window.scrollY)).toBe(0)
+  // pressing j outside the input scrolls immediately (auto behavior)
+  await page.locator('h1').click()
+  await page.keyboard.press('j')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+})
