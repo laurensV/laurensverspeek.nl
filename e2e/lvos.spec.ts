@@ -230,3 +230,26 @@ test('runs the terminal as a real desktop window', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page.locator('.desktop-terminal')).toContainText('hello-from-desktop')
 })
+
+test('files app browses the terminal home filesystem', async ({ page }) => {
+  await bootDesktop(page)
+  // close the readme window that covers the icon column
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  // create a directory + file through the desktop terminal
+  await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'mkdir stuff')
+  await page.keyboard.press('Enter')
+  await page.fill('#desktop-terminal-input', 'echo from the shell > stuff/note.txt')
+  await page.keyboard.press('Enter')
+  // the files app sees the same filesystem
+  await page.locator('.lvos-icon', { hasText: /^files$/ }).click()
+  const files = page.locator('.files')
+  await files.waitFor()
+  await files.locator('.files-file', { hasText: 'stuff/' }).click()
+  await files.locator('.files-file', { hasText: 'note.txt' }).click()
+  await expect(files.locator('.files-preview')).toContainText('from the shell')
+  // .. climbs back up to the curated home files
+  await files.locator('.files-file', { hasText: '..' }).click()
+  await expect(files.locator('.files-file', { hasText: 'readme.md' })).toBeVisible()
+})

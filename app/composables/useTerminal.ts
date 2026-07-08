@@ -236,5 +236,6 @@ export function useTerminal() {
 
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
 
-  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame }
+  // files is shared with the lvOS Files app, which browses the same home fs
+  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, files: ctx.files }
 }
