@@ -11,9 +11,17 @@ There is now a Playwright suite in `e2e/` covering the terminal, lvOS, the 404
 shell and the pages. To verify most changes, just:
 
 ```bash
-npm run generate          # builds .output/public (also generates OG images)
+npm run generate          # builds .output/public; pregenerate writes OG images,
+                          # postgenerate prints /cv to a PDF (needs a chromium —
+                          # non-fatal, warns and skips if the browser is missing)
 npm run test:e2e          # playwright serves .output/public and drives it
 ```
+
+CI installs the Playwright chromium *before* `npm run generate` so the resume
+PDF (postgenerate) is produced; locally, `npx playwright install chromium`
+once is enough. The e2e static server (`scripts/serve-static.mjs`) needs a MIME
+type per asset kind it serves — add to its `TYPES` map when a new file type
+(e.g. `.pdf`) is linked, or the content-type assertions fail.
 
 `scripts/serve-static.mjs` serves the build with a SPA fallback, so the 404
 shell hydrates correctly here (unlike a plain file server). Add or extend a
