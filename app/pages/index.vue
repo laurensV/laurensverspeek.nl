@@ -7,7 +7,7 @@
       <div class="hero-body">
         <div class="container">
           <div class="columns is-vcentered">
-            <div class="column is-7">
+            <div class="column is-7 hero-intro">
               <p class="overline mb-3">hello-world $</p>
               <h1 class="title is-1 hero-name">
                 Laurens <span class="text-gradient">Verspeek</span>
@@ -221,10 +221,37 @@ const areas: { icon: IconName; title: string; description: string }[] = [
   }
 }
 
-// Let the 3D block overlap the terminal card slightly
+// Float the constellation above the terminal card, fading at its edges so it
+// reads as untethered rather than a hard-edged panel.
 .hero-scene-slot {
-  margin-top: -5rem;
-  margin-bottom: -2.5rem;
+  margin-top: -1.5rem;
+  margin-bottom: -1rem;
+  -webkit-mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+}
+
+// staggered entrance for the hero copy on first paint
+.hero-intro > * {
+  animation: hero-in 0.55s ease backwards;
+}
+.hero-intro > *:nth-child(1) { animation-delay: 0.05s; }
+.hero-intro > *:nth-child(2) { animation-delay: 0.12s; }
+.hero-intro > *:nth-child(3) { animation-delay: 0.19s; }
+.hero-intro > *:nth-child(4) { animation-delay: 0.26s; }
+.hero-intro > *:nth-child(5) { animation-delay: 0.33s; }
+.hero-intro > *:nth-child(6) { animation-delay: 0.40s; }
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-intro > * {
+    animation: none;
+  }
 }
 
 .scroll-hint {
