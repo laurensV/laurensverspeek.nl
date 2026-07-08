@@ -15,6 +15,11 @@
           speed
           <input v-model.number="fps" type="range" min="1" max="30" aria-label="Speed">
         </label>
+        <span class="life-zoom">
+          zoom
+          <button class="life-btn" :disabled="cellSize <= 8" aria-label="Zoom out" @click="zoom(-2)">−</button>
+          <button class="life-btn" :disabled="cellSize >= 32" aria-label="Zoom in" @click="zoom(2)">+</button>
+        </span>
         <span class="life-presets">
           <button v-for="pattern in LIFE_PATTERNS" :key="pattern.name" class="life-btn" @click="place(pattern)">{{ pattern.name }}</button>
         </span>
@@ -29,9 +34,10 @@
         @pointermove="onMove"
         @pointerup="painting = false"
         @pointerleave="painting = false"
+        @contextmenu.prevent
       />
       <p class="life-hint is-family-code">
-        <template v-if="reducedMotion === 'reduce'">reduced motion — press ▶ play or ⏭ step · </template>click &amp; drag to draw cells
+        <template v-if="reducedMotion === 'reduce'">reduced motion — press ▶ play or ⏭ step · </template>drag to draw · shift or right-click to erase
       </p>
     </div>
   </section>
@@ -55,7 +61,7 @@ useSeoMeta({
   twitterImage: ogImage
 })
 
-const CELL = 16
+const cellSize = ref(16) // px per cell; the zoom control changes this
 
 const wrapRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
@@ -87,7 +93,7 @@ const readColor = () => {
 
 const draw = () => {
   if (!ctx) return
-  drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l, grid: true })
+  drawGrid(ctx, grid, cols, rows, { cell: cellSize.value, hue: hsl.h, sat: hsl.s, light: hsl.l, grid: true })
   pop.value = population(grid)
 }
 
@@ -105,8 +111,8 @@ const { redraw } = useCanvasScene(canvasRef, wrapRef, {
     ctx = context
     const oldGrid = grid
     const oldCols = cols
-    cols = Math.max(8, Math.floor(w / CELL))
-    rows = Math.max(8, Math.floor(h / CELL))
+    cols = Math.max(8, Math.floor(w / cellSize.value))
+    rows = Math.max(8, Math.floor(h / cellSize.value))
     if (!oldGrid.length) {
       grid = seedRandom(cols, rows, 0.18)
     } else {
@@ -155,23 +161,32 @@ const cellAt = (event: PointerEvent) => {
   const rect = canvasRef.value?.getBoundingClientRect()
   if (!rect) return null
   return {
-    x: Math.floor((event.clientX - rect.left) / CELL),
-    y: Math.floor((event.clientY - rect.top) / CELL)
+    x: Math.floor((event.clientX - rect.left) / cellSize.value),
+    y: Math.floor((event.clientY - rect.top) / cellSize.value)
   }
 }
+// left/normal paints live cells; shift or right-button erases
+let paintValue: 0 | 1 = 1
 const paint = (event: PointerEvent) => {
-  const cell = cellAt(event)
-  if (!cell || cell.x < 0 || cell.x >= cols || cell.y < 0 || cell.y >= rows) return
-  grid[index(cols, cell.x, cell.y)] = 1
+  const pos = cellAt(event)
+  if (!pos || pos.x < 0 || pos.x >= cols || pos.y < 0 || pos.y >= rows) return
+  grid[index(cols, pos.x, pos.y)] = paintValue
   draw()
 }
 const onDown = (event: PointerEvent) => {
   painting.value = true
+  paintValue = event.shiftKey || event.button === 2 ? 0 : 1
   paint(event)
 }
 const onMove = (event: PointerEvent) => {
   if (painting.value) paint(event)
 }
+
+// zoom the cell size; useCanvasScene refits (recomputes the grid) on redraw
+const zoom = (delta: number) => {
+  cellSize.value = Math.min(32, Math.max(8, cellSize.value + delta))
+}
+watch(cellSize, () => redraw())
 
 // ---- patterns (placed centred) ----
 const place = (pattern: LifePattern) => {
@@ -258,6 +273,14 @@ watch(useColorMode(), async () => {
   input {
     accent-color: var(--bulma-primary);
   }
+}
+
+.life-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--bulma-text-weak);
+  font-size: 0.75rem;
 }
 
 .life-presets {

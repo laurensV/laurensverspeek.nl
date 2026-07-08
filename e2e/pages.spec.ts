@@ -84,6 +84,33 @@ test('game of life page pauses, steps, clears and places a preset', async ({ pag
   await expect(stat).not.toContainText('0 cells')
 })
 
+test('game of life page supports draw, shift-erase and zoom', async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 760 })
+  await page.goto('/life')
+  await page.locator('.life-btn.is-primary').click() // pause
+  await page.locator('.life-btn', { hasText: 'clear' }).click()
+  const stat = page.locator('.life-stat')
+  await expect(stat).toContainText('0 cells')
+  // drag draws a few live cells
+  const canvas = page.locator('.life-canvas')
+  await canvas.hover({ position: { x: 200, y: 200 } })
+  await page.mouse.down()
+  await page.mouse.move(260, 200, { steps: 6 })
+  await page.mouse.up()
+  await expect(stat).not.toContainText('0 cells')
+  // shift-drag over the same area erases back to empty
+  await page.keyboard.down('Shift')
+  await canvas.hover({ position: { x: 195, y: 200 } })
+  await page.mouse.down()
+  await page.mouse.move(265, 200, { steps: 10 })
+  await page.mouse.up()
+  await page.keyboard.up('Shift')
+  await expect(stat).toContainText('0 cells')
+  // zoom changes the board without throwing
+  await page.locator('.life-zoom button[aria-label="Zoom in"]').click()
+  await expect(canvas).toBeVisible()
+})
+
 test('/life respects reduced motion: starts paused, step still works', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/life')
