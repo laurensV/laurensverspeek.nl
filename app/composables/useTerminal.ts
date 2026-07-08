@@ -4,6 +4,8 @@ import { createContentCommands } from '~/utils/terminal/contentCommands'
 import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
 import { expandEnv, parseCommandLine, applyFilter } from '~/utils/terminal/pipeline'
+import { completeInput } from '~/utils/terminal/completion'
+import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { profile } from '~/data/profile'
 
 export type { TerminalLine } from '~/utils/terminal/types'
@@ -14,9 +16,6 @@ let lineId = 0
 // and shared by every useTerminal() caller.
 const activeGame = shallowRef<GameHandle | null>(null)
 const gameFrame = ref('')
-
-const HISTORY_KEY = 'lv-terminal-history'
-let historyRestored = false
 
 /**
  * Shared terminal state + command interpreter.
@@ -43,23 +42,9 @@ export function useTerminal() {
   const { accent, accents, setAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
-  // command history survives visits (last 100 entries)
-  if (import.meta.client && !historyRestored) {
-    historyRestored = true
-    try {
-      const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]') as unknown
-      if (Array.isArray(saved)) {
-        history.value = saved.filter((entry): entry is string => typeof entry === 'string')
-      }
-    } catch { /* corrupted storage — start fresh */ }
-  }
-
-  const saveHistory = () => {
-    if (!import.meta.client) return
-    try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value.slice(-100)))
-    } catch { /* storage full or blocked — history stays session-only */ }
-  }
+  // command history survives visits (restored once, then kept in shared state)
+  const restored = loadHistory()
+  if (restored) history.value = restored
 
   // output sink indirection: pipes temporarily capture lines instead of printing
   let sink: ((line: TerminalLine) => void) | null = null
@@ -180,7 +165,7 @@ export function useTerminal() {
     push('input', trimmed)
     if (!trimmed) return
     history.value.push(trimmed)
-    saveHistory()
+    saveHistory(history.value)
 
     const expanded = expandEnv(trimmed, ctx.env.value)
     const { name, args, pipeStages } = parseCommandLine(expanded, ctx.aliases.value)
@@ -225,29 +210,7 @@ export function useTerminal() {
     }
   }
 
-  // Return every completion for the current input (sorted), so the input row can
-  // apply the first and let repeated Tab cycle through the rest — zsh-style menu
-  // completion. Completes command names before a space, then the command's own
-  // argument candidates (pages, accents, aliases, …).
-  const complete = (input: string): string[] => {
-    const raw = input.trimStart().toLowerCase()
-    if (!raw) return []
-    // no space yet: complete the command name itself
-    if (!raw.includes(' ')) {
-      return commandNames
-        .filter((name) => name.startsWith(raw))
-        .sort()
-        .map((name) => `${name} `)
-    }
-    // complete the current argument from the command's own candidates
-    const [name = '', ...rest] = raw.split(/\s+/)
-    const partial = rest.join(' ')
-    const candidates = commands[name]?.argCandidates?.() ?? []
-    return candidates
-      .filter((candidate) => candidate.toLowerCase().startsWith(partial))
-      .sort()
-      .map((candidate) => `${name} ${candidate}`)
-  }
+  const complete = (input: string): string[] => completeInput(input, commandNames, commands)
 
   return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame }
 }
