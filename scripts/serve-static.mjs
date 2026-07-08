@@ -24,6 +24,7 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml',
   '.pdf': 'application/pdf',
+  '.vcf': 'text/vcard; charset=utf-8',
   '.woff2': 'font/woff2'
 }
 

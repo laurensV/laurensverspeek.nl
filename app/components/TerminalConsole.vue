@@ -277,6 +277,17 @@ defineExpose({ focusInput })
   :deep(.term-red) {
     color: var(--bulma-danger);
   }
+  // ascii QR (contact --qr): half blocks only scan when rows tile seamlessly
+  :deep(.term-qr) {
+    display: inline-block;
+    margin: 0.4rem 0;
+    padding: 0.6rem;
+    background-color: #fff;
+    color: #000;
+    line-height: 1;
+    letter-spacing: 0;
+    border-radius: 2px;
+  }
 }
 
 .game-frame {

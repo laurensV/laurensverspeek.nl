@@ -23,6 +23,7 @@
     "@nuxt/content": "^3.15.0",
     "bulma": "^1.0.4",
     "nuxt": "^4.0.0",
+    "qrcode-generator": "^2.0.4",
     "vue": "^3.5.0"
   },
   "devDependencies": {

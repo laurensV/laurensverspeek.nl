@@ -270,3 +270,11 @@ test('search greps across blog content with highlighted snippets', async ({ page
   await run(page, 'search zzzznotaword')
   await expect(out).toContainText("no matches for 'zzzznotaword'")
 })
+
+test('contact --qr prints a scannable ascii contact card', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'contact --qr')
+  const qr = page.locator('.term-qr')
+  await expect(qr).toBeVisible()
+  await expect(page.locator('.terminal-output')).toContainText('contact.vcf')
+})

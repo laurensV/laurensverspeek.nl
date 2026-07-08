@@ -309,3 +309,20 @@ test('blog tags filter the list with a shareable ?tag= url', async ({ page }) =>
   await page.goto('/blog?tag=games')
   await expect.poll(() => entries.count()).toBeLessThan(all)
 })
+
+test('contact page serves a vCard and shows a QR contact card', async ({ page, request }) => {
+  const vcf = await request.get('/contact.vcf')
+  expect(vcf.ok()).toBeTruthy()
+  expect(vcf.headers()['content-type']).toContain('text/vcard')
+  const body = await vcf.text()
+  expect(body).toContain('BEGIN:VCARD')
+  expect(body).toContain('FN:Laurens Verspeek')
+
+  await page.goto('/contact')
+  const box = page.locator('.vcard-box')
+  await box.locator('summary').click()
+  await expect(box.locator('.vcard-download')).toHaveAttribute('href', '/contact.vcf')
+  const qr = box.locator('.vcard-qr')
+  await expect(qr).toBeVisible()
+  expect((await qr.textContent())!.length).toBeGreaterThan(100)
+})

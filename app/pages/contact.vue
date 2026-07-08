@@ -27,15 +27,28 @@
           </a>
         </div>
       </div>
+
+      <details class="vcard-box is-family-code mt-5">
+        <summary>$ cat contact.vcf <span class="vcard-hint">— save my contact card</span></summary>
+        <div class="vcard-body">
+          <a href="/contact.vcf" download class="vcard-download">[download contact.vcf]</a>
+          <p class="vcard-scan">// or point your phone's camera at this:</p>
+          <pre class="vcard-qr" aria-label="QR code linking to the contact card">{{ qr }}</pre>
+        </div>
+      </details>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
+import { qrAsciiLines } from '~/utils/qrAscii'
 
 useHead({ title: 'Contact — Laurens Verspeek' })
 useSeoMeta({ description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.' })
+
+// half-block ascii QR pointing at the prerendered vCard
+const qr = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
 </script>
 
 <style scoped lang="scss">
@@ -52,6 +65,54 @@ useSeoMeta({ description: 'Contact Laurens Verspeek — run the contact.sh wizar
 
   &:hover {
     color: var(--bulma-primary-on-scheme);
+  }
+}
+
+// expandable contact-card box with the ascii QR
+.vcard-box {
+  font-size: 0.8rem;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: 2px;
+  padding: 0.6rem 0.9rem;
+
+  summary {
+    color: var(--bulma-primary-on-scheme);
+    cursor: pointer;
+
+    .vcard-hint {
+      color: var(--bulma-text-weak);
+    }
+  }
+
+  .vcard-body {
+    padding-top: 0.7rem;
+  }
+
+  .vcard-download {
+    color: var(--bulma-primary-on-scheme);
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+
+  .vcard-scan {
+    margin: 0.6rem 0 0.4rem;
+    color: var(--bulma-text-weak);
+    font-size: 0.72rem;
+  }
+
+  // the QR only scans if the half blocks tile seamlessly
+  .vcard-qr {
+    display: inline-block;
+    padding: 0.75rem;
+    background-color: #fff;
+    color: #000;
+    line-height: 1;
+    letter-spacing: 0;
+    font-size: 0.85rem;
+    border-radius: 2px;
   }
 }
 </style>

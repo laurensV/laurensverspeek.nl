@@ -335,12 +335,23 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     contact: {
+      usage: 'contact [--qr]',
       description: 'How to reach me',
-      exec: () => {
+      examples: ['contact', 'contact --qr  (a scannable contact card, right in the terminal)'],
+      exec: (args) => {
+        if (args.includes('--qr')) {
+          // lazy: the QR encoder only loads if someone actually asks for it
+          return import('~/utils/qrAscii').then(({ qrAsciiLines }) => {
+            const lines = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
+            push('output', `<pre class="term-qr">${lines}</pre>`, true)
+            muted('scan to save my contact card (links to /contact.vcf)')
+          })
+        }
         link(`mail    ${profile.email}`, `mailto:${profile.email}`)
         for (const social of profile.socials.filter((s) => !s.url.startsWith('mailto:'))) {
           link(`${social.label.toLowerCase().padEnd(8, ' ')}${social.url}`, social.url)
         }
+        muted(`\nTip: 'contact --qr' prints a scannable contact card.`)
       }
     },
     github: {
