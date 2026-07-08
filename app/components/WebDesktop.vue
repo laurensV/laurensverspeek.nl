@@ -63,7 +63,9 @@
           'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal' || win.id === 'notes',
           'is-minimized': win.minimized,
           'is-maximized': win.maximized,
-          'has-size': win.maximized || win.height !== undefined
+          'has-size': win.maximized || win.height !== undefined,
+          'is-peek': peekedId === win.id,
+          'is-dimmed': peekedId !== null && peekedId !== win.id
         }"
         :style="windowStyle(win)"
         @pointerdown="focusWindow(win)"
@@ -162,6 +164,7 @@
         @terminal="openTerminal"
         @logout="logout"
         @minimize="toggleMinimize"
+        @peek="peekedId = $event"
       />
     </div>
   </Teleport>
@@ -216,6 +219,8 @@ const {
 const startOpen = ref(false)
 const calendarOpen = ref(false)
 const booting = ref(false)
+// which window the taskbar is currently peeking (Aero-peek highlight)
+const peekedId = ref<string | null>(null)
 
 // ---- toast notifications ----
 interface Toast { id: number, icon: string, title: string, body?: string }
@@ -480,6 +485,23 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     inset: 0 0 2.4rem 0;
     width: auto;
     border-radius: 0;
+  }
+
+  // Aero-peek: hovering a taskbar item highlights its window and fades the rest
+  &.is-peek {
+    border-color: var(--bulma-primary);
+    box-shadow: 0 0 0 1px var(--bulma-primary), 0 18px 50px hsla(var(--lv-primary-hsl), 0.3);
+  }
+
+  // a peeked, minimized window ghosts back into view instead of staying hidden
+  &.is-minimized.is-peek {
+    opacity: 0.55;
+    transform: translateY(18vh) scale(0.7);
+    visibility: visible;
+  }
+
+  &.is-dimmed:not(.is-minimized) {
+    opacity: 0.4;
   }
 }
 

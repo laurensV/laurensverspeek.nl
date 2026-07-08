@@ -120,6 +120,15 @@ test('start menu opens an app and switches wallpaper', async ({ page }) => {
   await expect(page.locator('.lvos-window-title', { hasText: 'settings' })).toBeVisible()
 })
 
+test('hovering a taskbar item peeks its window', async ({ page }) => {
+  await bootDesktop(page)
+  await expect(page.locator('.lvos-window.is-peek')).toHaveCount(0)
+  await page.locator('.lvos-task-wrap').first().hover()
+  await expect(page.locator('.lvos-window.is-peek')).toHaveCount(1)
+  await page.mouse.move(400, 300)
+  await expect(page.locator('.lvos-window.is-peek')).toHaveCount(0)
+})
+
 test('shows a right-click context menu on the desktop', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos').click({ button: 'right', position: { x: 600, y: 400 } })

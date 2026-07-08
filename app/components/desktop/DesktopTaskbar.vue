@@ -30,15 +30,23 @@
       <button @click="emit('logout')">⏻ log out</button>
     </div>
 
-    <button
+    <div
       v-for="win in windows"
       :key="win.id"
-      class="lvos-task"
-      :class="{ 'is-minimized': win.minimized }"
-      @click="emit('minimize', win)"
+      class="lvos-task-wrap"
+      @pointerenter="emit('peek', win.id)"
+      @pointerleave="emit('peek', null)"
     >
-      {{ win.title }}
-    </button>
+      <button
+        class="lvos-task"
+        :class="{ 'is-minimized': win.minimized }"
+        @click="emit('minimize', win)"
+      >
+        {{ win.title }}
+      </button>
+      <!-- hover preview: full title, and the desktop peeks the window (see parent) -->
+      <span class="lvos-task-preview is-family-code">{{ win.title }}</span>
+    </div>
 
     <button
       class="lvos-clock"
@@ -77,6 +85,7 @@ const emit = defineEmits<{
   terminal: []
   logout: []
   minimize: [win: DesktopWindow]
+  peek: [id: string | null]
 }>()
 
 // startOpen / calendarOpen are v-models so the parent can dismiss them on Escape
@@ -174,6 +183,10 @@ const leadingBlanks = computed(() => {
   }
 }
 
+.lvos-task-wrap {
+  position: relative;
+}
+
 .lvos-task {
   padding: 0.3rem 0.7rem;
   max-width: 11rem;
@@ -190,6 +203,35 @@ const leadingBlanks = computed(() => {
 
   &.is-minimized {
     opacity: 0.5;
+  }
+}
+
+// hover preview tooltip floating above the taskbar button
+.lvos-task-preview {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(0.25rem);
+  padding: 0.3rem 0.6rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius-small);
+  background-color: hsla(var(--lv-scheme-hs), 10%, 0.98);
+  color: hsl(var(--lv-scheme-hs), 90%);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.lvos-task-wrap:hover .lvos-task-preview {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lvos-task-preview {
+    transition: none;
   }
 }
 
