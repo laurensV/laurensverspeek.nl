@@ -34,7 +34,7 @@ export function parseCommandLine(
 }
 
 /**
- * Apply one pipe stage (grep/head/tail/wc) to captured lines. Returns the new
+ * Apply one pipe stage (grep/head/tail/wc/sort/uniq) to captured lines. Returns the new
  * line list, or an error string for an unknown/invalid stage. `createLine`
  * builds a fresh line (used by `wc`) so this stays generic over line shape.
  */
@@ -67,7 +67,49 @@ export function applyFilter<T extends { text: string }>(
     }
     case 'wc':
       return { lines: [createLine(String(input.length))] }
+    case 'sort': {
+      // -r reverse, -u drop duplicates (keeping original line formatting)
+      const reverse = rest.includes('-r')
+      const unique = rest.includes('-u')
+      let sorted = [...input].sort((a, b) => stripHtml(a.text).localeCompare(stripHtml(b.text)))
+      if (reverse) sorted.reverse()
+      if (unique) {
+        const seen = new Set<string>()
+        sorted = sorted.filter((line) => {
+          const key = stripHtml(line.text)
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+      }
+      return { lines: sorted }
+    }
+    case 'uniq': {
+      // collapse ADJACENT duplicates; -c prefixes each with its run length
+      const count = rest.includes('-c')
+      const out: T[] = []
+      let prevKey: string | null = null
+      let run = 0
+      let firstOfRun: T | null = null
+      const flush = () => {
+        if (firstOfRun === null) return
+        out.push(count ? createLine(`${String(run).padStart(4)} ${stripHtml(firstOfRun.text)}`) : firstOfRun)
+      }
+      for (const line of input) {
+        const key = stripHtml(line.text)
+        if (key === prevKey) {
+          run++
+        } else {
+          flush()
+          prevKey = key
+          run = 1
+          firstOfRun = line
+        }
+      }
+      flush()
+      return { lines: out }
+    }
     default:
-      return { error: `lvsh: unknown filter: ${name} (pipes support grep, head, tail, wc)` }
+      return { error: `lvsh: unknown filter: ${name} (pipes support grep, head, tail, wc, sort, uniq)` }
   }
 }

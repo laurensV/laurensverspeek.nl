@@ -74,13 +74,40 @@ describe('applyFilter', () => {
     expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['4'])
   })
 
+  const texts = (out: ReturnType<typeof applyFilter>) =>
+    'lines' in out ? out.lines.map((l) => l.text) : out
+
+  it('sorts alphabetically, reverses with -r', () => {
+    const shuffled = ['gamma', 'alpha', 'delta', 'beta'].map(line)
+    expect(texts(applyFilter(shuffled, 'sort', line))).toEqual(['alpha', 'beta', 'delta', 'gamma'])
+    expect(texts(applyFilter(shuffled, 'sort -r', line))).toEqual(['gamma', 'delta', 'beta', 'alpha'])
+  })
+
+  it('sort -u drops duplicates', () => {
+    const dupes = ['b', 'a', 'b', 'a', 'c'].map(line)
+    expect(texts(applyFilter(dupes, 'sort -u', line))).toEqual(['a', 'b', 'c'])
+  })
+
+  it('uniq collapses adjacent duplicates, -c counts runs', () => {
+    const runs = ['a', 'a', 'b', 'a'].map(line)
+    expect(texts(applyFilter(runs, 'uniq', line))).toEqual(['a', 'b', 'a'])
+    expect(texts(applyFilter(runs, 'uniq -c', line))).toEqual(['   2 a', '   1 b', '   1 a'])
+  })
+
+  it('sort | uniq -c tallies duplicates', () => {
+    const data = ['x', 'y', 'x', 'x'].map(line)
+    const sorted = applyFilter(data, 'sort', line)
+    const counted = 'lines' in sorted ? applyFilter(sorted.lines, 'uniq -c', line) : sorted
+    expect(texts(counted)).toEqual(['   3 x', '   1 y'])
+  })
+
   it('errors on a missing grep pattern', () => {
     expect(applyFilter(lines, 'grep', line)).toEqual({ error: 'grep: missing pattern' })
   })
 
   it('errors on an unknown filter', () => {
-    const out = applyFilter(lines, 'sort', line)
-    expect('error' in out && out.error).toContain('unknown filter: sort')
+    const out = applyFilter(lines, 'awk', line)
+    expect('error' in out && out.error).toContain('unknown filter: awk')
   })
 })
 

@@ -27,6 +27,15 @@ test('pipes command output through grep', async ({ page }) => {
   await expect(out).not.toContainText('List available commands')
 })
 
+test('pipes chain through sort, uniq and wc', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'help | sort | uniq | wc')
+  const out = page.locator('.terminal-output')
+  await expect(out).not.toContainText('unknown filter')
+  // wc emits a single numeric count line at the end of the chain
+  await expect(out).toContainText(/\b\d+\b/)
+})
+
 test('reads a blog post as markdown in the terminal', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'blog snake-in-the-terminal')
