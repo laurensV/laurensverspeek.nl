@@ -92,6 +92,34 @@ test('sticky notes app creates, edits and persists a note', async ({ page }) => 
   await expect(page.locator('.note-text').first()).toHaveValue('remember to ship the portfolio')
 })
 
+test('taskbar toggles the calendar and minimises a window', async ({ page }) => {
+  await bootDesktop(page)
+  // the clock button toggles the calendar popover
+  await page.locator('.lvos-clock').click()
+  await expect(page.locator('.lvos-calendar')).toBeVisible()
+  await page.locator('.lvos-clock').click()
+  await expect(page.locator('.lvos-calendar')).toHaveCount(0)
+  // the readme task button minimises, then restores its window
+  const task = page.locator('.lvos-task').first()
+  await task.click()
+  await expect(page.locator('.lvos-window.is-minimized')).toHaveCount(1)
+  await task.click()
+  await expect(page.locator('.lvos-window.is-minimized')).toHaveCount(0)
+})
+
+test('start menu opens an app and switches wallpaper', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await expect(page.locator('.lvos-start-menu')).toBeVisible()
+  // pick the second wallpaper swatch
+  await page.locator('.lvos-wallpaper-swatch').nth(1).click()
+  await expect(page.locator('.lvos-wallpaper-swatch.is-active')).toHaveCount(1)
+  // opening settings from the start menu closes the menu
+  await page.locator('.lvos-start-menu button', { hasText: 'settings' }).click()
+  await expect(page.locator('.lvos-start-menu')).toHaveCount(0)
+  await expect(page.locator('.lvos-window-title', { hasText: 'settings' })).toBeVisible()
+})
+
 test('shows a right-click context menu on the desktop', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos').click({ button: 'right', position: { x: 600, y: 400 } })

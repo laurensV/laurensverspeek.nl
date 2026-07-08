@@ -11,18 +11,15 @@
       @click="contextMenu.open = false"
     >
       <!-- right-click context menu -->
-      <div
+      <DesktopContextMenu
         v-if="contextMenu.open"
-        class="lvos-context is-family-code"
-        :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
-        @click.stop
-      >
-        <button @click="openTerminal(); contextMenu.open = false">&gt;_ new terminal</button>
-        <button @click="cycleWallpaper(); contextMenu.open = false">🖼 next wallpaper</button>
-        <button @click="openWindow('settings'); contextMenu.open = false">⚙ settings</button>
-        <button @click="openWindow('about-os'); contextMenu.open = false">ℹ about lvOS</button>
-        <button @click="logout()">⏻ log out</button>
-      </div>
+        :x="contextMenu.x"
+        :y="contextMenu.y"
+        @terminal="openTerminal(); contextMenu.open = false"
+        @wallpaper="cycleWallpaper(); contextMenu.open = false"
+        @open="(id) => { openWindow(id); contextMenu.open = false }"
+        @logout="logout()"
+      />
 
       <!-- idle screensaver -->
       <LazyDesktopScreensaver v-if="screensaverOn" @wake="wakeScreensaver" />
@@ -39,12 +36,7 @@
       </div>
 
       <!-- desktop icons -->
-      <div class="lvos-icons">
-        <button v-for="icon in icons" :key="icon.id" class="lvos-icon is-family-code" @click="icon.action">
-          <span class="lvos-icon-glyph"><AppIcon :name="icon.icon" :size="26" /></span>
-          <span class="lvos-icon-label">{{ icon.label }}</span>
-        </button>
-      </div>
+      <DesktopIcons :icons="icons" />
 
       <!-- Aero-style snap preview: a translucent ghost of where a dragged
            window will land when released against an edge -->
@@ -160,76 +152,23 @@
       </div>
 
       <!-- taskbar -->
-      <div class="lvos-taskbar is-family-code">
-        <button
-          class="lvos-start"
-          :class="{ 'is-open': startOpen }"
-          :aria-expanded="startOpen"
-          aria-label="Start menu"
-          @click="startOpen = !startOpen"
-        >
-          ⚡ lvOS
-        </button>
-        <div v-if="startOpen" class="lvos-start-menu">
-          <button @click="openWindow('about-os'); startOpen = false">ℹ about lvOS</button>
-          <button @click="openWindow('settings'); startOpen = false">⚙ settings</button>
-          <button @click="openTerminal(); startOpen = false">>_ terminal</button>
-          <p class="lvos-start-label">wallpaper</p>
-          <div class="lvos-wallpapers">
-            <button
-              v-for="(paper, i) in WALLPAPERS"
-              :key="i"
-              class="lvos-wallpaper-swatch"
-              :class="{ 'is-active': wallpaper === i }"
-              :style="{ background: paper.swatch }"
-              :title="paper.name"
-              :aria-label="`Wallpaper: ${paper.name}`"
-              :aria-pressed="wallpaper === i"
-              @click="wallpaper = i"
-            />
-          </div>
-          <button @click="logout">⏻ log out</button>
-        </div>
-
-        <button
-          v-for="win in windows"
-          :key="win.id"
-          class="lvos-task"
-          :class="{ 'is-minimized': win.minimized }"
-          @click="toggleMinimize(win)"
-        >
-          {{ win.title }}
-        </button>
-
-        <button
-          class="lvos-clock"
-          :class="{ 'is-open': calendarOpen }"
-          :aria-expanded="calendarOpen"
-          aria-label="Toggle calendar"
-          @click="calendarOpen = !calendarOpen"
-        >
-          {{ clock }}
-        </button>
-        <div v-if="calendarOpen" class="lvos-calendar is-family-code">
-          <p class="lvos-calendar-title">{{ monthLabel }}</p>
-          <div class="lvos-calendar-grid">
-            <span v-for="(d, di) in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="di" class="lvos-cal-dow">{{ d }}</span>
-            <span v-for="blank in leadingBlanks" :key="`b${blank}`" />
-            <span
-              v-for="day in daysInMonth"
-              :key="day"
-              class="lvos-cal-day"
-              :class="{ 'is-today': day === today }"
-            >{{ day }}</span>
-          </div>
-        </div>
-      </div>
+      <DesktopTaskbar
+        v-model:start-open="startOpen"
+        v-model:calendar-open="calendarOpen"
+        v-model:wallpaper="wallpaper"
+        :windows="windows"
+        :wallpapers="WALLPAPERS"
+        @open="openWindow"
+        @terminal="openTerminal"
+        @logout="logout"
+        @minimize="toggleMinimize"
+      />
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { useNow, useEventListener, useIdle } from '@vueuse/core'
+import { useEventListener, useIdle } from '@vueuse/core'
 import type { IconName } from '~/components/AppIcon.vue'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import { profile } from '~/data/profile'
@@ -313,11 +252,6 @@ const openContextMenu = (event: MouseEvent) => {
   contextMenu.open = true
 }
 
-const now = useNow({ interval: 1000 })
-const clock = computed(() =>
-  now.value.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-)
-
 // ---- wallpaper (persisted for the session) ----
 const WALLPAPERS = [
   {
@@ -350,20 +284,6 @@ const cycleWallpaper = () => {
   wallpaper.value = (wallpaper.value + 1) % WALLPAPERS.length
   notify('🖼', 'Wallpaper changed', WALLPAPERS[wallpaper.value]!.name)
 }
-
-// ---- calendar popover ----
-const today = computed(() => now.value.getDate())
-const monthLabel = computed(() =>
-  now.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-)
-const daysInMonth = computed(() =>
-  new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0).getDate()
-)
-// number of blank cells before day 1, with Monday as the first column
-const leadingBlanks = computed(() => {
-  const firstDay = new Date(now.value.getFullYear(), now.value.getMonth(), 1).getDay()
-  return (firstDay + 6) % 7
-})
 
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
@@ -526,48 +446,8 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   transform: scale(0.98);
 }
 
-.lvos-icons {
-  position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  bottom: 4rem;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 0.75rem;
-}
-
-.lvos-icon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  width: 5.5rem;
-  padding: 0.6rem 0.25rem;
-  border: 1px solid transparent;
-  border-radius: var(--bulma-radius);
-  background: none;
-  color: hsl(var(--lv-scheme-hs), 90%);
-  font-size: 0.7rem;
-  cursor: pointer;
-
-  .lvos-icon-glyph {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3rem;
-    height: 3rem;
-    border-radius: var(--bulma-radius);
-    background-color: hsla(var(--lv-primary-hsl), 0.15);
-    color: var(--bulma-primary);
-  }
-
-  &:hover {
-    border-color: hsla(var(--lv-primary-hsl), 0.4);
-    background-color: hsla(var(--lv-primary-hsl), 0.08);
-  }
-}
+// icons, taskbar, context menu and calendar styles live in their own components
+// (DesktopIcons, DesktopTaskbar, DesktopContextMenu)
 
 .lvos-window {
   position: absolute;
@@ -713,143 +593,6 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   }
 }
 
-.lvos-taskbar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 2.4rem;
-  padding: 0 0.6rem;
-  background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
-  border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
-  font-size: 0.75rem;
-  color: hsl(var(--lv-scheme-hs), 85%);
-}
-
-.lvos-start {
-  padding: 0.3rem 0.8rem;
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius);
-  background: none;
-  color: var(--bulma-primary);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover,
-  &.is-open {
-    background-color: hsla(var(--lv-primary-hsl), 0.15);
-  }
-}
-
-.lvos-start-menu {
-  position: absolute;
-  bottom: 2.6rem;
-  left: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 11rem;
-  padding: 0.35rem;
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
-  z-index: 10000;
-
-  button {
-    padding: 0.5rem 0.7rem;
-    border: none;
-    border-radius: var(--bulma-radius-small);
-    background: none;
-    color: hsl(var(--lv-scheme-hs), 88%);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-      background-color: hsla(var(--lv-primary-hsl), 0.15);
-    }
-  }
-}
-
-.lvos-task {
-  padding: 0.3rem 0.7rem;
-  max-width: 11rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border: none;
-  border-radius: var(--bulma-radius-small);
-  background-color: hsla(var(--lv-primary-hsl), 0.12);
-  color: inherit;
-  font: inherit;
-  font-size: 0.7rem;
-  cursor: pointer;
-
-  &.is-minimized {
-    opacity: 0.5;
-  }
-}
-
-.lvos-start-label {
-  padding: 0.4rem 0.7rem 0.2rem;
-  color: hsl(var(--lv-scheme-hs), 50%);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.lvos-wallpapers {
-  display: flex;
-  gap: 0.4rem;
-  padding: 0.2rem 0.7rem 0.4rem;
-
-  .lvos-wallpaper-swatch {
-    width: 1.6rem;
-    height: 1.6rem;
-    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
-    border-radius: 2px;
-    cursor: pointer;
-
-    &.is-active {
-      border-color: var(--bulma-primary);
-      box-shadow: 0 0 0 1px var(--bulma-primary);
-    }
-  }
-}
-
-.lvos-context {
-  position: absolute;
-  z-index: 10001;
-  display: flex;
-  flex-direction: column;
-  min-width: 11rem;
-  padding: 0.35rem;
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
-  box-shadow: 0 12px 30px hsla(var(--lv-scheme-hs), 2%, 0.6);
-
-  button {
-    padding: 0.45rem 0.7rem;
-    border: none;
-    border-radius: var(--bulma-radius-small);
-    background: none;
-    color: hsl(var(--lv-scheme-hs), 88%);
-    font: inherit;
-    font-size: 0.78rem;
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-      background-color: hsla(var(--lv-primary-hsl), 0.15);
-      color: var(--bulma-primary);
-    }
-  }
-}
-
 .lvos-toasts {
   position: absolute;
   right: 1rem;
@@ -893,60 +636,4 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   }
 }
 
-.lvos-clock {
-  margin-left: auto;
-  border: none;
-  background: none;
-  color: hsl(var(--lv-scheme-hs), 60%);
-  font: inherit;
-  font-size: 0.75rem;
-  cursor: pointer;
-
-  &:hover,
-  &.is-open {
-    color: var(--bulma-primary);
-  }
-}
-
-.lvos-calendar {
-  position: absolute;
-  bottom: 2.6rem;
-  right: 0.5rem;
-  width: 15rem;
-  padding: 0.75rem;
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
-
-  .lvos-calendar-title {
-    margin-bottom: 0.5rem;
-    color: var(--bulma-primary);
-    font-size: 0.78rem;
-  }
-
-  .lvos-calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.15rem;
-    text-align: center;
-    font-size: 0.7rem;
-  }
-
-  .lvos-cal-dow {
-    color: hsl(var(--lv-scheme-hs), 50%);
-    padding-bottom: 0.2rem;
-  }
-
-  .lvos-cal-day {
-    padding: 0.2rem 0;
-    color: hsl(var(--lv-scheme-hs), 82%);
-    border-radius: 2px;
-
-    &.is-today {
-      background-color: var(--bulma-primary);
-      color: var(--bulma-primary-invert);
-      font-weight: 700;
-    }
-  }
-}
 </style>
