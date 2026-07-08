@@ -34,8 +34,11 @@ export function useTerminal() {
   const route = useRoute()
   const nuxtApp = useNuxtApp()
 
-  // working directory tracks the current route, in ~-relative form
+  // current directory inside the home filesystem ('' = home). When set, it wins
+  // over the route for the prompt; otherwise the cwd tracks the route.
+  const fsCwd = useState('terminal-fs-cwd', () => '')
   const cwd = computed(() => {
+    if (fsCwd.value) return `~/${fsCwd.value}`
     const path = route.path.replace(/\/+$/, '')
     return path === '' ? '~' : `~${path}`
   })
@@ -142,6 +145,7 @@ export function useTerminal() {
       cls: 'clear'
     })),
     files: useState<Filesystem>('terminal-fs', () => ({})),
+    fsCwd,
     getCommands: () => commands
   }
 

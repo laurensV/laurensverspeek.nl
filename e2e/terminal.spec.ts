@@ -72,6 +72,25 @@ test('virtual filesystem: create, read, list, remove and persist a file', async 
   await expect(page.locator('.terminal-output')).toContainText('No such file or directory')
 })
 
+test('nested directories: mkdir, cd into it, path-aware prompt, and cd back', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  const prompt = page.locator('.terminal-input-row .term-prompt')
+  await run(page, 'mkdir workspace')
+  await run(page, 'cd workspace')
+  await expect(prompt).toContainText('~/workspace')
+  await run(page, 'echo build the thing > todo.txt')
+  await run(page, 'ls')
+  await expect(out).toContainText('todo.txt')
+  await run(page, 'cat todo.txt')
+  await expect(out).toContainText('build the thing')
+  // back up to home, where the directory is listed
+  await run(page, 'cd ..')
+  await expect(prompt).not.toContainText('workspace')
+  await run(page, 'ls')
+  await expect(out).toContainText('workspace/')
+})
+
 test('cal prints the current month, which resolves builtins, uname reports the system', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'cal')

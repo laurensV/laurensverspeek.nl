@@ -4,6 +4,7 @@ import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { renderMarkdownToTerminal } from '~/utils/terminalMarkdown'
+import { resolvePath, dirEntries } from '~/utils/terminal/filesystem'
 
 // Commands about the site's content: pages, projects, blog, profile.
 
@@ -130,14 +131,18 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     cat: {
       usage: 'cat <file|project|post>',
       description: 'Read a file you made (or a project / blog post)',
-      argCandidates: () => [...Object.keys(ctx.files.value), ...projectSlugs(), ...cachedPostSlugs],
+      argCandidates: () => [
+        ...dirEntries(ctx.files.value, ctx.fsCwd.value).map((e) => e.name),
+        ...projectSlugs(),
+        ...cachedPostSlugs
+      ],
       exec: (args) => {
         if (!args[0]) {
           error(`Usage: cat <name> — run 'ls', 'projects' or 'blog' to see what's readable.`)
           return
         }
-        // a file the visitor created in their home takes precedence
-        const node = ctx.files.value[args[0]]
+        // a file the visitor created in their filesystem takes precedence
+        const node = ctx.files.value[resolvePath(ctx.fsCwd.value, args[0])]
         if (node) {
           if (node.dir) error(`cat: ${args[0]}: Is a directory`)
           else if (node.content) node.content.split('\n').forEach(out)
@@ -163,24 +168,48 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cd: {
-      usage: 'cd <page>',
-      description: `Go to a page (${PAGES.join(', ')})`,
-      argCandidates: () => [...PAGES],
+      usage: 'cd <dir|page>',
+      description: `Enter a folder you made, or go to a page (${PAGES.join(', ')})`,
+      argCandidates: () => [
+        ...PAGES,
+        ...dirEntries(ctx.files.value, ctx.fsCwd.value).filter((e) => e.dir).map((e) => e.name)
+      ],
       exec: (args) => {
-        const page = (args[0] ?? 'home').replace(/^\/|\/$/g, '').toLowerCase() || 'home'
-        if (page !== '~' && !PAGES.includes(page as (typeof PAGES)[number])) {
-          error(`cd: no such page: ${args[0]}`)
+        const arg = args[0]
+        // cd / cd ~ : back to the home directory (and the home page)
+        if (!arg || arg === '~' || arg === '/') {
+          ctx.fsCwd.value = ''
+          ctx.navigate('home')
           return
         }
-        ctx.navigate(page)
+        // a known site page → navigate there and leave the filesystem
+        const page = arg.replace(/^\/|\/$/g, '').toLowerCase()
+        if (PAGES.includes(page as (typeof PAGES)[number])) {
+          ctx.fsCwd.value = ''
+          ctx.navigate(page)
+          return
+        }
+        // otherwise resolve inside the home filesystem
+        const target = resolvePath(ctx.fsCwd.value, arg)
+        if (target === '') {
+          ctx.fsCwd.value = ''
+          return
+        }
+        if (ctx.files.value[target]?.dir) {
+          ctx.fsCwd.value = target
+          return
+        }
+        error(`cd: no such file or directory: ${arg}`)
       }
     },
     ls: {
-      description: 'List pages and your files',
+      description: 'List the current directory (pages + your files at home)',
       exec: () => {
-        const pages = PAGES.map((p) => `${p}/`)
-        const files = Object.entries(ctx.files.value).map(([name, node]) => (node.dir ? `${name}/` : name))
-        out([...pages, ...files].join('  '))
+        const entries = dirEntries(ctx.files.value, ctx.fsCwd.value).map((e) => (e.dir ? `${e.name}/` : e.name))
+        // at home the site's pages sit alongside your files
+        const pages = ctx.fsCwd.value ? [] : PAGES.map((p) => `${p}/`)
+        const all = [...pages, ...entries]
+        out(all.length ? all.join('  ') : '(empty)')
       }
     },
     tree: {

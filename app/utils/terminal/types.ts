@@ -76,6 +76,8 @@ export interface TerminalContext {
   aliases: Ref<Record<string, string>>
   /** The visitor's persistent home filesystem (mkdir/touch/echo>/rm/cat) */
   files: Ref<Filesystem>
+  /** Current directory inside the home filesystem ('' = home) */
+  fsCwd: Ref<string>
   /** The full merged registry — for help, secrets, man and aliases */
   getCommands: () => Record<string, TerminalCommand>
 }

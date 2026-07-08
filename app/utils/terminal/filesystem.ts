@@ -37,6 +37,36 @@ export function saveFs(fs: Filesystem): void {
 }
 
 /**
+ * Resolve a path argument against the current directory into a home-relative,
+ * normalized path ('' = home). Handles `.`, `..`, leading `/` (home-absolute)
+ * and `~`. Pure — the terminal's cd/ls/cat all lean on this.
+ */
+export function resolvePath(cwd: string, arg: string): string {
+  const absolute = arg.startsWith('/') || arg === '~' || arg.startsWith('~/')
+  const cleaned = arg.replace(/^~\/?/, '').replace(/^\/+/, '')
+  const stack = absolute ? [] : cwd ? cwd.split('/') : []
+  for (const seg of cleaned ? cleaned.split('/') : []) {
+    if (seg === '' || seg === '.') continue
+    if (seg === '..') stack.pop()
+    else stack.push(seg)
+  }
+  return stack.join('/')
+}
+
+/** The entries directly inside a directory (no deeper descendants). */
+export function dirEntries(fs: Filesystem, dir: string): { name: string, dir: boolean }[] {
+  const prefix = dir ? `${dir}/` : ''
+  const out: { name: string, dir: boolean }[] = []
+  for (const [path, node] of Object.entries(fs)) {
+    if (!path.startsWith(prefix)) continue
+    const rest = path.slice(prefix.length)
+    if (!rest || rest.includes('/')) continue
+    out.push({ name: rest, dir: node.dir })
+  }
+  return out
+}
+
+/**
  * Split `echo` arguments into the text and an optional `> file` redirect.
  * Handles `> file` and `>file`; anything after the `>` is the target name.
  */

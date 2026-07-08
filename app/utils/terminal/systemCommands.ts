@@ -1,6 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
-import { parseRedirect } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
 // Shell housekeeping: help, theme, utilities and other meta commands.
@@ -15,6 +15,14 @@ const ASCII_LOGO = String.raw`
 
 export function createSystemCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error } = ctx
+
+  // a path can only be created if its parent directory already exists
+  const parentExists = (path: string) => {
+    const parent = path.split('/').slice(0, -1).join('/')
+    return parent === '' || ctx.files.value[parent]?.dir === true
+  }
+  // names in the current directory, for tab-completing rm
+  const hereEntries = () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((entry) => entry.name)
 
   return {
     help: {
@@ -181,7 +189,10 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: (args) => {
         const { text, file } = parseRedirect(args)
         if (file) {
-          ctx.files.value = { ...ctx.files.value, [file]: { dir: false, content: text } }
+          const path = resolvePath(ctx.fsCwd.value, file)
+          if (!path) return error('echo: cannot write to the home directory')
+          if (!parentExists(path)) return error(`echo: ${file}: No such file or directory`)
+          ctx.files.value = { ...ctx.files.value, [path]: { dir: false, content: text } }
           return
         }
         out(text)
@@ -189,22 +200,28 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     },
     mkdir: {
       usage: 'mkdir <name>',
-      description: 'Create a directory in your home',
+      description: 'Create a directory',
       exec: (args) => {
         const name = args[0]
         if (!name) return error('mkdir: missing operand')
-        if (ctx.files.value[name]) return error(`mkdir: cannot create '${name}': File exists`)
-        ctx.files.value = { ...ctx.files.value, [name]: { dir: true, content: '' } }
+        const path = resolvePath(ctx.fsCwd.value, name)
+        if (!path) return error('mkdir: cannot create the home directory')
+        if (ctx.files.value[path]) return error(`mkdir: cannot create directory '${name}': File exists`)
+        if (!parentExists(path)) return error(`mkdir: cannot create directory '${name}': No such file or directory`)
+        ctx.files.value = { ...ctx.files.value, [path]: { dir: true, content: '' } }
       }
     },
     touch: {
       usage: 'touch <name>',
-      description: 'Create an empty file in your home',
+      description: 'Create an empty file',
       exec: (args) => {
         const name = args[0]
         if (!name) return error('touch: missing file operand')
-        if (!ctx.files.value[name]) {
-          ctx.files.value = { ...ctx.files.value, [name]: { dir: false, content: '' } }
+        const path = resolvePath(ctx.fsCwd.value, name)
+        if (!path) return error('touch: cannot touch the home directory')
+        if (!parentExists(path)) return error(`touch: cannot touch '${name}': No such file or directory`)
+        if (!ctx.files.value[path]) {
+          ctx.files.value = { ...ctx.files.value, [path]: { dir: false, content: '' } }
         }
       }
     },
@@ -296,8 +313,8 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     },
     rm: {
       usage: 'rm <file>',
-      description: 'Remove a file or directory from your home',
-      argCandidates: () => Object.keys(ctx.files.value),
+      description: 'Remove a file or directory',
+      argCandidates: hereEntries,
       exec: (args) => {
         const name = args.find((arg) => !arg.startsWith('-'))
         // keep the classic joke for the classic mistake
@@ -305,12 +322,16 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
           return error('Nice try. I only just finished this website.')
         }
         if (!name) return error('rm: missing operand')
-        if (!(name in ctx.files.value)) {
+        const path = resolvePath(ctx.fsCwd.value, name)
+        if (!path || !(path in ctx.files.value)) {
           return error(`rm: cannot remove '${name}': No such file or directory`)
         }
+        // remove the entry and, for a directory, everything under it
         ctx.files.value = Object.fromEntries(
-          Object.entries(ctx.files.value).filter(([key]) => key !== name)
+          Object.entries(ctx.files.value).filter(([key]) => key !== path && !key.startsWith(`${path}/`))
         )
+        // if we removed the directory we're standing in, walk back to home
+        if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
       }
     },
     vim: {
