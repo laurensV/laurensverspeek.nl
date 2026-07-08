@@ -64,6 +64,15 @@ test('home shows terminal-style skill cards', async ({ page }) => {
   await expect(page.locator('.skill-file', { hasText: 'blockchain.sol' })).toBeVisible()
 })
 
+test('blog post shows related posts by shared tags', async ({ page }) => {
+  await page.goto('/blog/a-window-manager-in-a-div')
+  await expect(page.locator('.post-related')).toBeVisible()
+  const related = page.locator('.related-link')
+  await expect(related.first()).toBeVisible()
+  // a related post links somewhere in /blog/
+  await expect(related.first()).toHaveAttribute('href', /\/blog\//)
+})
+
 test('blog index lists the newest post and it opens', async ({ page }) => {
   await page.goto('/blog')
   const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })

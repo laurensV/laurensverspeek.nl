@@ -20,6 +20,19 @@
             <ContentRenderer :value="post" />
           </div>
 
+          <section v-if="related.length" class="post-related mt-6 pt-5">
+            <p class="overline mb-4">related $ grep -l --tags</p>
+            <ul class="related-list">
+              <li v-for="item in related" :key="item.path">
+                <NuxtLink :to="item.path" class="related-link">
+                  <span class="related-title">{{ item.title }}</span>
+                  <span class="related-tags is-family-code">{{ (item.tags ?? []).map((t) => `#${t}`).join(' ') }}</span>
+                  <span class="related-arrow is-family-code" aria-hidden="true">-&gt;</span>
+                </NuxtLink>
+              </li>
+            </ul>
+          </section>
+
           <nav class="post-nav is-family-code is-size-7 mt-6 pt-5">
             <NuxtLink v-if="surround?.[0]" :to="surround[0].path" class="post-nav-link">
               &lt;- {{ surround[0].title }}
@@ -64,6 +77,22 @@ if (!post.value) {
 const { data: surround } = await useAsyncData(`blog-surround-${route.params.slug}`, () =>
   queryCollectionItemSurroundings('blog', route.path, { fields: ['title'] })
 )
+
+// related posts: others sharing the most tags with this one (up to 3)
+const { data: allPosts } = await useAsyncData('blog-all-tags', () =>
+  queryCollection('blog').order('date', 'DESC').all()
+)
+const related = computed(() => {
+  const tags = new Set(post.value?.tags ?? [])
+  if (!tags.size) return []
+  return (allPosts.value ?? [])
+    .filter((p) => p.path !== post.value?.path)
+    .map((p) => ({ post: p, shared: (p.tags ?? []).filter((t) => tags.has(t)).length }))
+    .filter((entry) => entry.shared > 0)
+    .sort((a, b) => b.shared - a.shared)
+    .slice(0, 3)
+    .map((entry) => entry.post)
+})
 
 const ogImage = `${SITE_URL}/og/blog-${route.params.slug}.svg`
 useHead({ title: `${post.value.title} — Laurens Verspeek` })
@@ -273,6 +302,51 @@ onMounted(() => {
 .post-toc .toc-title {
   position: sticky;
   top: 3.5rem;
+}
+
+.post-related {
+  border-top: 1px solid var(--bulma-border-weak);
+
+  .related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .related-link {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--bulma-border-weak);
+    color: var(--bulma-text);
+
+    .related-title {
+      font-weight: 600;
+    }
+
+    .related-tags {
+      font-size: 0.72rem;
+      color: var(--bulma-text-weak);
+    }
+
+    .related-arrow {
+      margin-left: auto;
+      color: var(--bulma-primary-on-scheme);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    &:hover {
+      color: var(--bulma-primary-on-scheme);
+
+      .related-arrow {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
 }
 
 .post-nav {
