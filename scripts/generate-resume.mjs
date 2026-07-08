@@ -3,12 +3,14 @@
 // the browser isn't available it warns and exits 0 so it never breaks a build.
 
 import { createServer } from 'node:http'
-import { readFile, stat } from 'node:fs/promises'
+import { readFile, stat, copyFile } from 'node:fs/promises'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../.output/public', import.meta.url))
 const outFile = join(root, 'laurens-verspeek-resume.pdf')
+// also refresh the committed copy in public/ so `npm run dev` serves it too
+const sourceCopy = fileURLToPath(new URL('../public/laurens-verspeek-resume.pdf', import.meta.url))
 const port = 4199
 
 const TYPES = {
@@ -65,6 +67,7 @@ const main = async () => {
     margin: { top: '14mm', bottom: '14mm', left: '12mm', right: '12mm' }
   })
   await browser.close()
+  await copyFile(outFile, sourceCopy)
   console.log('[resume] wrote laurens-verspeek-resume.pdf')
 }
 

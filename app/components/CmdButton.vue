@@ -19,21 +19,26 @@ const props = withDefaults(
   defineProps<{
     to?: string
     href?: string
+    /** When set, download the href as a file (same tab) instead of opening it */
+    download?: string
     variant?: 'ghost' | 'primary'
     size?: 'normal' | 'medium'
   }>(),
-  { to: undefined, href: undefined, variant: 'ghost', size: 'normal' }
+  { to: undefined, href: undefined, download: undefined, variant: 'ghost', size: 'normal' }
 )
 
 const NuxtLink = resolveComponent('NuxtLink')
 const tag = computed(() => (props.to ? NuxtLink : props.href ? 'a' : 'button'))
-const linkAttrs = computed(() =>
-  props.to
-    ? { to: props.to }
-    : props.href
-      ? { href: props.href, target: '_blank', rel: 'noopener' }
-      : { type: 'button' as const }
-)
+const linkAttrs = computed(() => {
+  if (props.to) return { to: props.to }
+  if (props.href) {
+    // downloads stay in the same tab; external links open a new one
+    return props.download
+      ? { href: props.href, download: props.download }
+      : { href: props.href, target: '_blank', rel: 'noopener' }
+  }
+  return { type: 'button' as const }
+})
 </script>
 
 <style scoped lang="scss">

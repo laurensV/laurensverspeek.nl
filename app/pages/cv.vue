@@ -3,16 +3,14 @@
     <div class="container cv-container">
       <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 no-print">
         <p class="overline mb-0">cv $ lpr resume.pdf</p>
-        <div class="is-flex" style="gap: 0.6rem">
-          <CmdButton href="/laurens-verspeek-resume.pdf" download>
-            <AppIcon name="file" :size="15" />
-            download pdf
-          </CmdButton>
-          <CmdButton variant="primary" @click="printCv">
-            <AppIcon name="file" :size="15" />
-            lpr resume.pdf
-          </CmdButton>
-        </div>
+        <CmdButton
+          variant="primary"
+          href="/laurens-verspeek-resume.pdf"
+          download="laurens-verspeek-resume.pdf"
+        >
+          <AppIcon name="file" :size="15" />
+          download résumé (.pdf)
+        </CmdButton>
       </div>
       <p class="is-family-code is-size-7 has-text-grey mb-4 no-print cv-meta">
         -rw-r--r-- 1 laurens staff {{ profile.name.split(' ')[0]!.toLowerCase() }}-resume.pdf · print or ⌘P to save as PDF
@@ -92,6 +90,8 @@ const forceLightForPrint = () => {
   }
 }
 
+// the download button serves the pre-built PDF; native Ctrl+P still works and
+// these keep it in the light, print-optimized theme
 useEventListener('beforeprint', forceLightForPrint)
 useEventListener('afterprint', () => {
   if (themeBeforePrint !== undefined) {
@@ -99,12 +99,6 @@ useEventListener('afterprint', () => {
     themeBeforePrint = undefined
   }
 })
-
-const printCv = () => {
-  forceLightForPrint()
-  // give the theme swap a frame to paint before the print dialog freezes rendering
-  setTimeout(() => window.print(), 60)
-}
 </script>
 
 <style scoped lang="scss">
