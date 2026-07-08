@@ -93,6 +93,26 @@ test('status bar easter eggs cycle presence, line endings and language', async (
   await expect(lang).toHaveText('TypeScript')
 })
 
+test('footer text links use the dotted style; see-all links have an arrow', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  // see-all link on the home page carries its animated arrow
+  await expect(page.locator('.see-all .see-all-arrow').first()).toBeVisible()
+  // footer text link gets the dotted underline (icon social links do not)
+  const footerLink = page.locator('.app-footer .terminal-hint a').first()
+  await footerLink.scrollIntoViewIfNeeded()
+  const styles = await footerLink.evaluate((el) => ({
+    line: getComputedStyle(el).textDecorationLine,
+    dot: getComputedStyle(el, '::after').borderBottomStyle
+  }))
+  expect(styles.line).toBe('none')
+  expect(styles.dot).toBe('dotted')
+  const social = await page.locator('.app-footer .social-link').first().evaluate(
+    (el) => getComputedStyle(el, '::after').borderBottomStyle
+  )
+  expect(social).not.toBe('dotted')
+})
+
 test('? opens the shortcuts cheatsheet', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()

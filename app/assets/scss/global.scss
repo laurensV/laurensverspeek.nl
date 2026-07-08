@@ -66,11 +66,11 @@ html.is-lvos body {
   color: var(--bulma-primary-invert);
 }
 
-// Prose links (blog posts, project stories, the about page): a round dotted
+// Text links (blog posts, project stories, about, the footer): a round dotted
 // underline sitting a little below the text that cross-fades into a solid amber
-// line on hover. Scoped to `.content.is-medium` so nav, buttons, cards and the
-// footer keep their own treatments.
-.content.is-medium a {
+// line on hover. Scoped to `.content` (prose blocks + the footer) and excluding
+// icon/button links, so nav, buttons and cards keep their own treatments.
+.content a:not(.social-link):not(.button) {
   position: relative;
   color: var(--bulma-primary-on-scheme);
   text-decoration: none;
@@ -109,9 +109,30 @@ html.is-lvos body {
   }
 }
 
+// "see all →" links: no underline, the arrow slides forward on hover
+.see-all {
+  color: var(--bulma-text-weak);
+  transition: color 0.2s ease;
+
+  .see-all-arrow {
+    display: inline-block;
+    transition: transform 0.22s ease;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--bulma-primary-on-scheme);
+
+    .see-all-arrow {
+      transform: translateX(0.35rem);
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .content.is-medium a::after,
-  .content.is-medium a::before {
+  .content a::after,
+  .content a::before,
+  .see-all .see-all-arrow {
     transition: none;
   }
 }

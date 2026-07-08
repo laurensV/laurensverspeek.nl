@@ -57,8 +57,8 @@
               <p class="overline mb-2">featured $</p>
               <h2 class="title is-3">Featured projects</h2>
             </div>
-            <NuxtLink to="/projects" class="is-family-code is-size-6 is-hidden-mobile">
-              all projects →
+            <NuxtLink to="/projects" class="see-all is-family-code is-size-6 is-hidden-mobile">
+              all projects <span class="see-all-arrow" aria-hidden="true">→</span>
             </NuxtLink>
           </div>
         </RevealBlock>
@@ -79,8 +79,8 @@
               <p class="overline mb-2">blog $ tail -2</p>
               <h2 class="title is-3">Latest writing</h2>
             </div>
-            <NuxtLink to="/blog" class="is-family-code is-size-6 is-hidden-mobile">
-              all posts →
+            <NuxtLink to="/blog" class="see-all is-family-code is-size-6 is-hidden-mobile">
+              all posts <span class="see-all-arrow" aria-hidden="true">→</span>
             </NuxtLink>
           </div>
 
