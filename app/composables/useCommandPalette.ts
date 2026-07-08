@@ -185,6 +185,15 @@ export function useCommandPalette() {
       perform: () => go('/desktop')
     },
     {
+      id: 'life',
+      label: "Play Conway's Game of Life",
+      hint: 'easter egg',
+      icon: 'zap',
+      section: 'Actions',
+      keywords: 'conway cellular automaton game life simulation play grid',
+      perform: () => go('/life')
+    },
+    {
       id: 'resume',
       label: 'Download resume (PDF)',
       hint: 'pdf',

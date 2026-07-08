@@ -153,6 +153,15 @@ test('command palette opens and filters', async ({ page }) => {
   await expect(page.locator('.palette-item.is-active .palette-match')).toContainText('Uses')
 })
 
+test('command palette opens the game of life', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('Control+k')
+  await page.locator('.palette-input').fill('conway')
+  await page.locator('.palette-item', { hasText: 'Game of Life' }).click()
+  await expect(page).toHaveURL(/\/life/)
+})
+
 test('command palette exposes action commands (CRT toggle)', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
