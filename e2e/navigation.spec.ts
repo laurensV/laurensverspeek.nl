@@ -113,6 +113,13 @@ test('footer text links use the dotted style; see-all links have an arrow', asyn
   expect(social).not.toBe('dotted')
 })
 
+test('navbar shows the >_ brand mark and links the svg favicon', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.nav-brand .brand-mark svg')).toBeAttached()
+  await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute('href', '/favicon.svg')
+})
+
 test('? opens the shortcuts cheatsheet', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()

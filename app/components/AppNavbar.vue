@@ -14,7 +14,7 @@
         @mouseenter="expandBrand(true)"
         @mouseleave="expandBrand(false)"
       >
-        <span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
+        <span class="brand-mark" aria-hidden="true"><AppIcon name="prompt" :size="16" /></span><span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
       </NuxtLink>
 
       <div class="nav-links is-hidden-touch">
@@ -327,6 +327,19 @@ const scramble = (el: HTMLElement, text: string) => {
   align-items: center;
   color: var(--bulma-text-weak);
   white-space: pre;
+
+  // the >_ mark: a small amber prompt glyph that leads the brand
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5em;
+    color: var(--bulma-primary);
+    transition: transform 0.2s ease;
+  }
+
+  &:hover .brand-mark {
+    transform: translateX(1px);
+  }
 
   .brand-path {
     transition: color 0.2s ease;

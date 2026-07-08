@@ -117,6 +117,8 @@ export default defineNuxtConfig({
         { name: 'twitter:image', content: 'https://laurensverspeek.nl/og/default.svg' }
       ],
       link: [
+        // SVG favicon (the >_ mark) for modern browsers; .ico as the fallback
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
