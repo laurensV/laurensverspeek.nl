@@ -100,7 +100,7 @@ const categoryColor = computed(
   border: 1px solid var(--bulma-border-weak);
   border-radius: 2px;
   background-color: var(--bulma-scheme-main-bis);
-  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.25s ease;
 
   // corner brackets: always faintly present, they light up and reach
   // outward on hover — like a TUI focus frame
@@ -121,9 +121,6 @@ const categoryColor = computed(
 
   &:hover {
     border-color: hsla(var(--lv-primary-hsl), 0.45);
-    // a small lift + shadow, matching the home "what I do" boxes
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px hsla(var(--lv-scheme-hs), 4%, 0.32);
 
     .corner {
       border-color: var(--bulma-primary);
@@ -322,22 +319,11 @@ const categoryColor = computed(
         opacity: 1;
       }
     }
-
-    // tactile press feedback
-    &:active {
-      background-color: hsla(var(--lv-primary-hsl), 0.16);
-    }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-card {
-    transition: border-color 0.25s ease;
-  }
-
   .project-card:hover {
-    transform: none;
-
     .corner {
       transform: none;
     }
