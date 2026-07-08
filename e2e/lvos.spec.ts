@@ -139,6 +139,19 @@ test('sticky notes app creates, edits and persists a note', async ({ page }) => 
   await expect(page.locator('.note-text').first()).toHaveValue('remember to ship the portfolio')
 })
 
+test('taskbar notification center collects toasts', async ({ page }) => {
+  await bootDesktop(page)
+  // the boot "Welcome to lvOS" notification lands with an unread badge
+  await expect(page.locator('.lvos-bell-badge')).toBeVisible()
+  await page.locator('.lvos-bell').click()
+  const panel = page.locator('.lvos-notif')
+  await expect(panel).toBeVisible()
+  await expect(panel).toContainText('Welcome to lvOS')
+  // clearing empties the history
+  await panel.locator('.lvos-notif-clear').click()
+  await expect(panel).toContainText('nothing here yet')
+})
+
 test('taskbar exposes a fullscreen toggle', async ({ page }) => {
   await bootDesktop(page)
   const btn = page.locator('.lvos-fullscreen')

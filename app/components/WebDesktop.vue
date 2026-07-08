@@ -161,14 +161,19 @@
       <DesktopTaskbar
         v-model:start-open="startOpen"
         v-model:calendar-open="calendarOpen"
+        v-model:notif-open="notifOpen"
         v-model:wallpaper="wallpaper"
         :windows="windows"
         :wallpapers="wallpapers"
+        :notifications="history"
+        :unread="unread"
         @open="openWindow"
         @terminal="openTerminal"
         @logout="logout"
         @minimize="toggleMinimize"
         @peek="peekedId = $event"
+        @read="markRead"
+        @clear="clearHistory"
       />
     </div>
   </Teleport>
@@ -225,12 +230,13 @@ const {
 
 const startOpen = ref(false)
 const calendarOpen = ref(false)
+const notifOpen = ref(false)
 const booting = ref(false)
 // which window the taskbar is currently peeking (Aero-peek highlight)
 const peekedId = ref<string | null>(null)
 
 // ---- toast notifications ----
-const { toasts, notify } = useDesktopToasts()
+const { toasts, history, unread, notify, markRead, clearHistory } = useDesktopToasts()
 
 // ---- idle screensaver ----
 // after 45s of no input on the desktop, drift into the screensaver
@@ -366,10 +372,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     return
   }
   // Escape first dismisses popups, only logging out when nothing is open
-  if (contextMenu.open || startOpen.value || calendarOpen.value) {
+  if (contextMenu.open || startOpen.value || calendarOpen.value || notifOpen.value) {
     contextMenu.open = false
     startOpen.value = false
     calendarOpen.value = false
+    notifOpen.value = false
     return
   }
   logout()

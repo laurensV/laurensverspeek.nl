@@ -59,6 +59,31 @@
     </button>
 
     <button
+      class="lvos-tray-btn lvos-bell"
+      :class="{ 'is-open': notifOpen }"
+      :aria-expanded="notifOpen"
+      aria-label="Notifications"
+      @click="toggleNotifications"
+    >
+      <AppIcon name="bell" :size="14" />
+      <span v-if="unread > 0" class="lvos-bell-badge">{{ unread > 9 ? '9+' : unread }}</span>
+    </button>
+    <div v-if="notifOpen" class="lvos-notif is-family-code">
+      <div class="lvos-notif-head">
+        <span>notifications</span>
+        <button v-if="notifications.length" class="lvos-notif-clear" @click="emit('clear')">clear</button>
+      </div>
+      <p v-if="!notifications.length" class="lvos-notif-empty">nothing here yet.</p>
+      <div v-for="note in notifications" v-else :key="note.id" class="lvos-notif-item">
+        <span class="lvos-notif-icon">{{ note.icon }}</span>
+        <div>
+          <p class="lvos-notif-title">{{ note.title }}</p>
+          <p v-if="note.body" class="lvos-notif-body">{{ note.body }}</p>
+        </div>
+      </div>
+    </div>
+
+    <button
       class="lvos-clock"
       :class="{ 'is-open': calendarOpen }"
       :aria-expanded="calendarOpen"
@@ -87,20 +112,29 @@
 import { useNow, useFullscreen } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
+import type { Toast } from '~/composables/useDesktopToasts'
 
-defineProps<{ windows: DesktopWindow[], wallpapers: Wallpaper[] }>()
+defineProps<{ windows: DesktopWindow[], wallpapers: Wallpaper[], notifications: Toast[], unread: number }>()
 const emit = defineEmits<{
   open: [id: string]
   terminal: []
   logout: []
   minimize: [win: DesktopWindow]
   peek: [id: string | null]
+  read: []
+  clear: []
 }>()
 
-// startOpen / calendarOpen are v-models so the parent can dismiss them on Escape
+// these are v-models so the parent can dismiss them on Escape
 const startOpen = defineModel<boolean>('startOpen', { default: false })
 const calendarOpen = defineModel<boolean>('calendarOpen', { default: false })
+const notifOpen = defineModel<boolean>('notifOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
+
+const toggleNotifications = () => {
+  notifOpen.value = !notifOpen.value
+  if (notifOpen.value) emit('read') // opening the panel clears the unread badge
+}
 
 // browser fullscreen for the whole desktop page
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
@@ -293,6 +327,94 @@ const leadingBlanks = computed(() => {
 // the first right-aligned element absorbs the free space
 .lvos-fullscreen {
   margin-left: auto;
+}
+
+.lvos-bell {
+  position: relative;
+
+  &.is-open {
+    color: var(--bulma-primary);
+  }
+
+  .lvos-bell-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 0.85rem;
+    height: 0.85rem;
+    padding: 0 0.15rem;
+    border-radius: 0.5rem;
+    background-color: var(--bulma-primary);
+    color: var(--bulma-primary-invert);
+    font-size: 0.55rem;
+    line-height: 0.85rem;
+    text-align: center;
+  }
+}
+
+.lvos-notif {
+  position: absolute;
+  bottom: 2.6rem;
+  right: 0.5rem;
+  width: 17rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+
+  .lvos-notif-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.2rem 0.4rem 0.5rem;
+    color: hsl(var(--lv-scheme-hs), 55%);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+
+    .lvos-notif-clear {
+      border: none;
+      background: none;
+      color: hsl(var(--lv-scheme-hs), 55%);
+      font: inherit;
+      font-size: 0.68rem;
+      text-transform: none;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--bulma-primary);
+      }
+    }
+  }
+
+  .lvos-notif-empty {
+    padding: 0.75rem 0.4rem;
+    color: hsl(var(--lv-scheme-hs), 45%);
+    font-size: 0.75rem;
+  }
+
+  .lvos-notif-item {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0.4rem;
+    border-top: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
+
+    .lvos-notif-icon {
+      font-size: 1rem;
+    }
+
+    .lvos-notif-title {
+      color: hsl(var(--lv-scheme-hs), 90%);
+      font-size: 0.78rem;
+    }
+
+    .lvos-notif-body {
+      color: hsl(var(--lv-scheme-hs), 60%);
+      font-size: 0.7rem;
+    }
+  }
 }
 
 .lvos-clock {
