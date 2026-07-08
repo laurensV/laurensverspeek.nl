@@ -428,7 +428,7 @@ const TOP_PROCESSES = [
   { pid: 256, user: 'visitor', cmd: 'node terminal.js' },
   { pid: 404, user: 'visitor', cmd: 'chrome --renderer' },
   { pid: 512, user: 'visitor', cmd: 'lvsh' },
-  { pid: 666, user: 'visitor', cmd: 'flow-field.wgsl' },
+  { pid: 666, user: 'visitor', cmd: 'dot-grid.css' },
   { pid: 777, user: 'root', cmd: 'crypto-miner (jk)' },
   { pid: 1024, user: 'visitor', cmd: 'vite hmr-server' },
   { pid: 2048, user: 'visitor', cmd: 'hero-constellation' }
