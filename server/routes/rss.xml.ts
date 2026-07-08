@@ -1,6 +1,10 @@
 import { queryCollection } from '@nuxt/content/server'
+import { minimarkToHtml } from '../../app/utils/minimarkHtml'
 
 const SITE = 'https://laurensverspeek.nl'
+
+// CDATA may not contain its own terminator
+const cdata = (text: string) => `<![CDATA[${text.replaceAll(']]>', ']]&gt;')}]]>`
 
 export default defineEventHandler(async (event) => {
   const posts = await queryCollection(event, 'blog').order('date', 'DESC').all()
@@ -8,17 +12,18 @@ export default defineEventHandler(async (event) => {
   const items = posts
     .map(
       (post) => `    <item>
-      <title><![CDATA[${post.title}]]></title>
+      <title>${cdata(post.title)}</title>
       <link>${SITE}${post.path}</link>
       <guid>${SITE}${post.path}</guid>
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <description><![CDATA[${post.description}]]></description>
+      <description>${cdata(post.description)}</description>
+      <content:encoded>${cdata(minimarkToHtml(post.body, SITE))}</content:encoded>
     </item>`
     )
     .join('\n')
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>laurensverspeek.nl — blog</title>
     <link>${SITE}/blog</link>

@@ -339,3 +339,14 @@ test('external prose links carry the arrow marker, internal ones do not', async 
     expect(await internal.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe('none')
   }
 })
+
+test('rss feed ships full post content for readers', async ({ request }) => {
+  const res = await request.get('/rss.xml')
+  expect(res.ok()).toBeTruthy()
+  const body = await res.text()
+  expect(body).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"')
+  expect(body).toContain('<content:encoded><![CDATA[')
+  // whole posts, not just descriptions: headings and code blocks are present
+  expect(body).toContain('<h2>')
+  expect(body).toContain('<pre><code')
+})
