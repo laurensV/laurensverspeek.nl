@@ -8,7 +8,8 @@
 // lvOS lives on its own route now (was an overlay toggled by ?desktop). A bare
 // layout + locked overflow means there's no dead scrollbar behind it, and the
 // URL is shareable.
-definePageMeta({ layout: 'desktop' })
+// no page wipe here — the lvOS BIOS boot sequence is this route's entrance
+definePageMeta({ layout: 'desktop', pageTransition: false })
 
 const ogImage = `${SITE_URL}/og/desktop.svg`
 useHead({
