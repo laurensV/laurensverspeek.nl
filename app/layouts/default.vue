@@ -12,6 +12,7 @@
     <AppStatusBar />
     <TerminalOverlay />
     <CommandPalette />
+    <ShortcutsHelp />
     <BootSplash />
     <MatrixRain />
     <SlTrain />
