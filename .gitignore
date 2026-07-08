@@ -28,3 +28,7 @@ node_modules
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# generated resume PDF (built by scripts/generate-resume.mjs)
+/public/laurens-verspeek-resume.pdf
+.output/public/laurens-verspeek-resume.pdf

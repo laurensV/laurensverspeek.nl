@@ -3,10 +3,16 @@
     <div class="container cv-container">
       <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 no-print">
         <p class="overline mb-0">cv $ lpr resume.pdf</p>
-        <CmdButton variant="primary" @click="printCv">
-          <AppIcon name="file" :size="15" />
-          lpr resume.pdf
-        </CmdButton>
+        <div class="is-flex" style="gap: 0.6rem">
+          <CmdButton href="/laurens-verspeek-resume.pdf" download>
+            <AppIcon name="file" :size="15" />
+            download pdf
+          </CmdButton>
+          <CmdButton variant="primary" @click="printCv">
+            <AppIcon name="file" :size="15" />
+            lpr resume.pdf
+          </CmdButton>
+        </div>
       </div>
       <p class="is-family-code is-size-7 has-text-grey mb-4 no-print cv-meta">
         -rw-r--r-- 1 laurens staff {{ profile.name.split(' ')[0]!.toLowerCase() }}-resume.pdf · print or ⌘P to save as PDF

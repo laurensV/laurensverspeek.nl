@@ -138,6 +138,18 @@ export function useCommandPalette() {
       }
     },
     {
+      id: 'resume',
+      label: 'Download resume (PDF)',
+      hint: 'pdf',
+      icon: 'file',
+      section: 'Actions',
+      keywords: 'cv resume pdf download',
+      perform: () => {
+        close()
+        window.open('/laurens-verspeek-resume.pdf', '_blank', 'noopener')
+      }
+    },
+    {
       id: 'theme',
       label: 'Toggle theme',
       hint: colorMode.value === 'dark' ? 'to light' : 'to dark',
