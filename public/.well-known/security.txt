@@ -1,0 +1,4 @@
+Contact: mailto:contact@laurensverspeek.nl
+Expires: 2027-07-01T00:00:00.000Z
+Preferred-Languages: en, nl
+Canonical: https://laurensverspeek.nl/.well-known/security.txt

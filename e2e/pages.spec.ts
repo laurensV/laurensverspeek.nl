@@ -253,6 +253,17 @@ test('project detail page has a package.json card and og image', async ({ page }
   await expect(og).toHaveAttribute('content', /og\/project-nosana\.svg/)
 })
 
+test('serves humans.txt and .well-known/security.txt', async ({ request }) => {
+  const humans = await request.get('/humans.txt')
+  expect(humans.ok()).toBeTruthy()
+  expect(await humans.text()).toContain('Laurens Verspeek')
+  const security = await request.get('/.well-known/security.txt')
+  expect(security.ok()).toBeTruthy()
+  const body = await security.text()
+  expect(body).toContain('Contact: mailto:')
+  expect(body).toContain('Expires:')
+})
+
 test('command palette opens and filters', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
