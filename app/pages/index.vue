@@ -35,7 +35,7 @@
             </div>
             <div class="column is-4 is-offset-1 is-hidden-mobile">
               <ClientOnly>
-                <HeroConstellation class="hero-scene-slot" />
+                <HeroLife class="hero-scene-slot" />
               </ClientOnly>
               <HeroTerminal />
             </div>
