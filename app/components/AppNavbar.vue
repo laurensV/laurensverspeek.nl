@@ -104,12 +104,37 @@ const openTerminal = () => {
   terminal.open()
 }
 
-// lock body scroll while the full-screen menu is open
+// Lock the page while the full-screen menu is open. Toggling body.overflow
+// alone isn't enough on touch browsers: the page keeps scrolling underneath,
+// dragging the sticky navbar (and its [close] button) out of reach. Freezing
+// the document with position:fixed is the robust cross-browser lock — we stash
+// the scroll offset and restore it on close.
+let lockedScrollY = 0
+const lockScroll = () => {
+  lockedScrollY = window.scrollY
+  const { style } = document.body
+  style.position = 'fixed'
+  style.top = `-${lockedScrollY}px`
+  style.left = '0'
+  style.right = '0'
+  style.width = '100%'
+}
+const unlockScroll = () => {
+  const { style } = document.body
+  style.position = ''
+  style.top = ''
+  style.left = ''
+  style.right = ''
+  style.width = ''
+  window.scrollTo(0, lockedScrollY)
+}
 watch(mobileMenu, (open) => {
-  if (import.meta.client) document.body.style.overflow = open ? 'hidden' : ''
+  if (!import.meta.client) return
+  if (open) lockScroll()
+  else unlockScroll()
 })
 onUnmounted(() => {
-  if (import.meta.client) document.body.style.overflow = ''
+  if (import.meta.client && mobileMenu.value) unlockScroll()
 })
 
 // Brand: hovering "expands" the ~ into /home, the way a shell would.
@@ -375,6 +400,8 @@ const scramble = (el: HTMLElement, text: string) => {
   background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.98);
   backdrop-filter: blur(16px);
   overflow-y: auto;
+  // keep touch scroll inside the menu instead of chaining to the page behind
+  overscroll-behavior: contain;
 }
 
 .mobile-search {

@@ -24,6 +24,24 @@ test('full-screen mobile menu opens and navigates', async ({ page }) => {
   await expect(page).toHaveURL(/\/projects/)
 })
 
+test('mobile menu stays reachable while open (scroll is locked)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 780 })
+  await page.goto('/')
+  await page.locator('.nav-toggle').click()
+  await expect(page.locator('.mobile-menu')).toBeVisible()
+  // the document is frozen while the menu is open
+  await expect(page.locator('body')).toHaveCSS('position', 'fixed')
+  // trying to scroll the page behind must not drag the [close] button away
+  await page.mouse.wheel(0, 800)
+  const toggle = page.locator('.nav-toggle')
+  await expect(toggle).toBeInViewport()
+  await expect(toggle).toHaveText('[close]')
+  // and it still closes, restoring normal scrolling
+  await toggle.click()
+  await expect(page.locator('.mobile-menu')).toHaveCount(0)
+  await expect(page.locator('body')).not.toHaveCSS('position', 'fixed')
+})
+
 test('mobile menu search opens the palette', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/')
