@@ -284,3 +284,26 @@ test('task manager lists windows as processes and kill closes them', async ({ pa
   await mgr.locator('tr', { hasText: 'init' }).locator('.taskmgr-kill').click()
   await expect(mgr).toContainText('not permitted')
 })
+
+test('start menu reboots through the BIOS and shuts down to the site', async ({ page }) => {
+  await bootDesktop(page)
+  // reboot: CRT power-off, then the BIOS replays and lands back on the desktop
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'reboot' }).click()
+  await expect(page.locator('.lvos.is-powering-off')).toBeVisible()
+  await page.locator('.boot').waitFor({ timeout: 10000 })
+  await page.locator('.lvos').waitFor({ timeout: 10000 })
+  // shut down leaves lvOS for the site
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'shut down' }).click()
+  await expect(page).toHaveURL(/\/$/, { timeout: 10000 })
+  await expect(page.locator('.hero-name')).toBeVisible()
+})
+
+test('shutdown under reduced motion skips the animation and just exits', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'shut down' }).click()
+  await expect(page).toHaveURL(/\/$/, { timeout: 5000 })
+})

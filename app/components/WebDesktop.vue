@@ -4,6 +4,7 @@
     <div
       v-if="!booting"
       class="lvos"
+      :class="{ 'is-powering-off': poweringOff }"
       :style="wallpaperStyle"
       role="application"
       aria-label="lvOS desktop — press Escape to log out"
@@ -173,6 +174,8 @@
         @open="openWindow"
         @terminal="openTerminal"
         @logout="logout"
+        @shutdown="shutdown"
+        @reboot="reboot"
         @minimize="toggleMinimize"
         @peek="peekedId = $event"
         @read="markRead"
@@ -347,6 +350,27 @@ const logout = () => {
   router.push('/')
 }
 
+// CRT power-off: collapse the desktop to a bright line, then act. Reduced
+// motion skips straight to the action.
+const poweringOff = ref(false)
+let powerTimer: ReturnType<typeof setTimeout> | undefined
+const powerOff = (after: () => void) => {
+  startOpen.value = false
+  calendarOpen.value = false
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return after()
+  poweringOff.value = true
+  powerTimer = setTimeout(() => {
+    poweringOff.value = false
+    after()
+  }, 950)
+}
+onUnmounted(() => clearTimeout(powerTimer))
+
+const shutdown = () => powerOff(() => router.push('/'))
+const reboot = () => powerOff(() => {
+  booting.value = true
+})
+
 const icons: { id: string, label: string, icon: IconName, action: () => void }[] = [
   { id: 'readme', label: 'readme.md', icon: 'file', action: () => openWindow('readme') },
   { id: 'files', label: 'files', icon: 'layers', action: () => openWindow('files') },
@@ -427,6 +451,31 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       hsl(var(--lv-scheme-hs), 8%),
       hsl(var(--bulma-scheme-h), 40%, 4%)
     );
+}
+
+// CRT power-off: the desktop collapses to a bright horizontal line, then a dot
+.lvos.is-powering-off {
+  animation: lvos-poweroff 0.9s cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
+  pointer-events: none;
+}
+
+@keyframes lvos-poweroff {
+  0% {
+    transform: scaleY(1);
+    filter: brightness(1);
+  }
+  55% {
+    transform: scaleY(0.006);
+    filter: brightness(2.5);
+  }
+  75% {
+    transform: scaleY(0.006) scaleX(0.6);
+    filter: brightness(3.5);
+  }
+  100% {
+    transform: scaleY(0.004) scaleX(0.003);
+    filter: brightness(6);
+  }
 }
 
 // Aero-style snap preview ghost
@@ -516,7 +565,8 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   }
 }
 
-// respect reduced motion: windows appear/minimize without the fly-in or genie
+// respect reduced motion: windows appear/minimize without the fly-in or genie,
+// and the CRT power-off is skipped (the JS side already acts immediately)
 @media (prefers-reduced-motion: reduce) {
   .lvos-window {
     animation: none;
@@ -525,6 +575,10 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     &.is-minimized {
       transform: none;
     }
+  }
+
+  .lvos.is-powering-off {
+    animation: none;
   }
 }
 
