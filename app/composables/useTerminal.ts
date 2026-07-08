@@ -30,7 +30,14 @@ export function useTerminal() {
   const history = useState<string[]>('terminal-history', () => [])
 
   const router = useRouter()
+  const route = useRoute()
   const nuxtApp = useNuxtApp()
+
+  // working directory tracks the current route, in ~-relative form
+  const cwd = computed(() => {
+    const path = route.path.replace(/\/+$/, '')
+    return path === '' ? '~' : `~${path}`
+  })
   const colorMode = useColorMode()
   const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
   const { accent, accents, setAccent } = useAccent()
@@ -105,6 +112,7 @@ export function useTerminal() {
     isOpen,
     lines,
     history,
+    cwd,
     push,
     out,
     muted,
@@ -223,5 +231,5 @@ export function useTerminal() {
     return match ? `${name} ${match}` : undefined
   }
 
-  return { isOpen, lines, history, open, close, toggle, run, complete, activeGame, gameFrame }
+  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame }
 }

@@ -1,0 +1,275 @@
+<template>
+  <div class="terminal-console is-family-code" @click="focusInput">
+    <div ref="outputRef" class="terminal-output">
+      <template v-for="line in lines" :key="line.id">
+        <div v-if="line.type === 'input'" class="terminal-line">
+          <span class="term-prompt">{{ prompt }}</span> {{ line.text }}
+        </div>
+        <pre v-else-if="line.html" class="terminal-line" :class="`is-${line.type}`" v-html="line.text" />
+        <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
+      </template>
+      <pre v-if="activeGame" class="terminal-line game-frame">{{ gameFrame }}</pre>
+    </div>
+
+    <!-- reverse history search (ctrl+r) -->
+    <div v-if="searchMode" class="terminal-input-row terminal-search">
+      <span class="term-prompt">(reverse-i-search)`{{ searchQuery }}':</span>
+      <span class="terminal-search-match">{{ searchMatch || '' }}</span>
+    </div>
+    <div v-else-if="!activeGame" class="terminal-input-row">
+      <label class="term-prompt" :for="inputId">{{ prompt }}</label>
+      <input
+        :id="inputId"
+        ref="inputRef"
+        v-model="input"
+        class="terminal-input is-family-code"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        @keydown.enter="submit"
+        @keydown.up.prevent="historyUp"
+        @keydown.down.prevent="historyDown"
+        @keydown.tab.prevent="autocomplete"
+        @keydown.ctrl.l.prevent="clearScreen"
+        @keydown.ctrl.r.prevent="startSearch"
+        @keydown.esc="onEscape"
+      >
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
+
+// The interactive guts of the terminal: output, input, history, completion,
+// ctrl+r search, and game key routing. Both the centered overlay and the lvOS
+// desktop window wrap this — `active` gates which instance owns the keyboard.
+const props = withDefaults(
+  defineProps<{ active?: boolean, inputId?: string }>(),
+  { active: true, inputId: 'terminal-input' }
+)
+const emit = defineEmits<{ escape: [] }>()
+
+const { lines, history, cwd, run, complete, activeGame, gameFrame } = useTerminal()
+
+const prompt = computed(() => `visitor@lv:${cwd.value}$`)
+const input = ref('')
+const inputRef = ref<HTMLInputElement>()
+const outputRef = ref<HTMLElement>()
+const historyIndex = ref(-1)
+
+const focusInput = () => {
+  if (props.active) inputRef.value?.focus()
+}
+
+const submit = () => {
+  run(input.value)
+  input.value = ''
+  historyIndex.value = -1
+}
+
+const historyUp = () => {
+  if (!history.value.length) return
+  historyIndex.value =
+    historyIndex.value === -1 ? history.value.length - 1 : Math.max(0, historyIndex.value - 1)
+  input.value = history.value[historyIndex.value] ?? ''
+}
+
+const historyDown = () => {
+  if (historyIndex.value === -1) return
+  historyIndex.value++
+  if (historyIndex.value >= history.value.length) {
+    historyIndex.value = -1
+    input.value = ''
+  } else {
+    input.value = history.value[historyIndex.value] ?? ''
+  }
+}
+
+const autocomplete = () => {
+  const match = complete(input.value)
+  if (match) input.value = match
+}
+
+const clearScreen = () => {
+  lines.value = []
+}
+
+const onEscape = () => {
+  if (searchMode.value) {
+    cancelSearch()
+    return
+  }
+  emit('escape')
+}
+
+// ---- reverse history search (ctrl+r) ----
+const searchMode = ref(false)
+const searchQuery = ref('')
+const searchCursor = ref(0)
+
+const searchMatches = computed(() =>
+  searchQuery.value
+    ? history.value.filter((cmd) => cmd.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    : []
+)
+const searchMatch = computed(() => {
+  const list = searchMatches.value
+  if (!list.length) return ''
+  return list[list.length - 1 - (searchCursor.value % list.length)] ?? ''
+})
+
+const startSearch = () => {
+  searchMode.value = true
+  searchQuery.value = ''
+  searchCursor.value = 0
+}
+
+const cancelSearch = () => {
+  searchMode.value = false
+  searchQuery.value = ''
+  nextTick(focusInput)
+}
+
+const acceptSearch = (runIt: boolean) => {
+  const match = searchMatch.value
+  searchMode.value = false
+  if (match) {
+    input.value = match
+    if (runIt) submit()
+  }
+  nextTick(focusInput)
+}
+
+// keyboard for the active console: game keys, and search-mode typing
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (!props.active) return
+
+  if (activeGame.value) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+    if (activeGame.value.onKey(event.key)) event.preventDefault()
+    return
+  }
+
+  if (searchMode.value) {
+    if (event.key === 'Escape') { event.preventDefault(); cancelSearch() }
+    else if (event.key === 'Enter') { event.preventDefault(); acceptSearch(true) }
+    else if (event.key === 'Tab') { event.preventDefault(); acceptSearch(false) }
+    else if ((event.key === 'r' && event.ctrlKey)) { event.preventDefault(); searchCursor.value++ }
+    else if (event.key === 'Backspace') { event.preventDefault(); searchQuery.value = searchQuery.value.slice(0, -1) }
+    else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault()
+      searchQuery.value += event.key
+      searchCursor.value = 0
+    }
+  }
+})
+
+// refocus the input when a game ends
+watch(activeGame, async (game) => {
+  if (!game && props.active) {
+    await nextTick()
+    focusInput()
+  }
+})
+
+watch(
+  () => props.active,
+  async (active) => {
+    if (active) {
+      await nextTick()
+      focusInput()
+    }
+  },
+  { immediate: true }
+)
+
+// keep scrolled to the latest output
+watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
+  await nextTick()
+  outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
+})
+
+defineExpose({ focusInput })
+</script>
+
+<style scoped lang="scss">
+.terminal-console {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.terminal-output {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.terminal-line {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: hsl(var(--lv-scheme-hs), 88%);
+
+  &.is-error {
+    color: var(--bulma-danger);
+  }
+  &.is-muted {
+    color: hsl(var(--lv-scheme-hs), 55%);
+  }
+  &.is-primary {
+    color: var(--bulma-primary);
+  }
+
+  :deep(a) {
+    color: var(--bulma-primary);
+    text-decoration: underline;
+  }
+  :deep(.term-accent) {
+    color: var(--bulma-primary);
+  }
+}
+
+.game-frame {
+  margin-top: 0.5rem;
+  color: var(--bulma-primary);
+  line-height: 1.35;
+}
+
+.term-prompt {
+  color: var(--bulma-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
+}
+
+.terminal-search-match {
+  color: hsl(var(--lv-scheme-hs), 88%);
+}
+
+.terminal-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 0.9rem;
+  color: hsl(var(--lv-scheme-hs), 92%);
+  caret-color: var(--bulma-primary);
+}
+</style>

@@ -52,7 +52,7 @@
         :key="win.id"
         class="lvos-window"
         :class="{
-          'is-wide': win.id === 'browser' || win.id === 'blog',
+          'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal',
           'is-minimized': win.minimized,
           'is-maximized': win.maximized,
           'has-size': win.maximized || win.height !== undefined
@@ -78,7 +78,7 @@
           </span>
         </header>
 
-        <div class="lvos-window-body">
+        <div class="lvos-window-body" :class="{ 'is-flush': win.id === 'terminal' }">
           <template v-if="win.id === 'readme'">
             <p class="is-family-code has-text-primary-on-scheme mb-2"># {{ profile.name }}</p>
             <p v-for="(paragraph, i) in profile.bio" :key="i" class="mb-2 is-size-7">
@@ -131,6 +131,7 @@
           <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
           <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
           <LazyDesktopClock v-else-if="win.id === 'clock'" />
+          <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         </div>
 
         <span
@@ -155,7 +156,7 @@
         <div v-if="startOpen" class="lvos-start-menu">
           <button @click="openWindow('about-os'); startOpen = false">ℹ about lvOS</button>
           <button @click="openWindow('settings'); startOpen = false">⚙ settings</button>
-          <button @click="openTerminal">>_ terminal</button>
+          <button @click="openTerminal(); startOpen = false">>_ terminal</button>
           <p class="lvos-start-label">wallpaper</p>
           <div class="lvos-wallpapers">
             <button
@@ -235,7 +236,8 @@ const WINDOW_TITLES: Record<string, string> = {
   paint: 'lvpaint.exe',
   visualizer: 'visualizer',
   calc: 'calculator',
-  clock: 'clock'
+  clock: 'clock',
+  terminal: 'lvsh — terminal'
 }
 
 const { desktopActive } = useSiteEffects()
@@ -364,8 +366,15 @@ const onBootDone = () => {
 
 const openTerminal = () => {
   startOpen.value = false
-  terminal.open()
+  openWindow('terminal')
 }
+
+// the terminal window owns the keyboard only when it's the top, non-minimized window
+const terminalActive = computed(() => {
+  const term = windows.value.find((w) => w.id === 'terminal' && !w.minimized)
+  if (!term) return false
+  return windows.value.every((w) => w.minimized || w.z <= term.z)
+})
 
 // which post the blog reader should show (set by the file explorer)
 const blogOpenPath = ref<string | null>(null)
@@ -436,6 +445,15 @@ watch(desktopActive, (active) => {
   booting.value = true
   if (firstBoot) openWindow('readme')
 }, { immediate: true })
+
+// inside the desktop, ~ opens/focuses the terminal window (unless typing)
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if ((event.key !== '~' && event.key !== '`') || !desktopActive.value) return
+  const target = event.target as HTMLElement
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
+  event.preventDefault()
+  openWindow('terminal')
+})
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   // defaultPrevented means the terminal already consumed this Escape
@@ -605,6 +623,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 // explicit size (resized, snapped or maximized): let the body fill the window
 .lvos-window.has-size .lvos-window-body {
   max-height: none;
+}
+
+// the terminal app fills its window edge-to-edge
+.lvos-window-body.is-flush {
+  padding: 0;
 }
 
 .lvos-resize {

@@ -41,6 +41,8 @@ export interface TerminalContext {
   isOpen: Ref<boolean>
   lines: Ref<TerminalLine[]>
   history: Ref<string[]>
+  /** Working directory in `~`-relative form, derived from the current route */
+  cwd: Ref<string>
   push: (type: TerminalLine['type'], text: string, html?: boolean) => void
   out: (text: string) => void
   muted: (text: string) => void
