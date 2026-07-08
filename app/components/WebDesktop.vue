@@ -404,11 +404,6 @@ const openCv = () => {
   router.push('/cv')
 }
 
-const playSnake = () => {
-  terminal.open()
-  terminal.run('snake')
-}
-
 // logging out keeps the window layout — logging back in restores the session
 const logout = () => {
   startOpen.value = false
@@ -422,7 +417,6 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'browser', label: 'lv browser', icon: 'globe', action: () => openWindow('browser') },
   { id: 'blog', label: 'blog', icon: 'book', action: openBlogApp },
   { id: 'terminal', label: 'terminal', icon: 'terminal', action: openTerminal },
-  { id: 'snake', label: 'snake.exe', icon: 'cpu', action: playSnake },
   { id: 'minesweeper', label: 'mines.exe', icon: 'cpu', action: () => openWindow('minesweeper') },
   { id: 'vim', label: 'vim', icon: 'braces', action: () => openWindow('vim') },
   { id: 'paint', label: 'lvpaint', icon: 'pen', action: () => openWindow('paint') },
