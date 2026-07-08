@@ -1,5 +1,6 @@
 import { useEventListener } from '@vueuse/core'
 import { edgeZone as computeZone, zoneRect as computeRect, type SnapZone } from '~/utils/snapZones'
+import { nextInCycle, resizeRect, clampDragPosition, spawnPosition } from '~/utils/windowOrder'
 
 // lvOS window manager: state + drag/resize/snap/maximize logic, extracted
 // from WebDesktop.vue so the desktop shell only concerns itself with apps.
@@ -46,12 +47,12 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       focusWindow(existing)
       return
     }
-    const offset = windows.value.length * 34
+    const spawn = spawnPosition(windows.value.length, window.innerWidth)
     windows.value.push({
       id,
       title: titles[id] ?? id,
-      x: Math.min(90 + offset, window.innerWidth / 3),
-      y: 70 + offset,
+      x: spawn.x,
+      y: spawn.y,
       z: ++zCounter,
       minimized: false,
       maximized: false
@@ -147,25 +148,23 @@ export function useWindowManager(titles: Record<string, string> = {}) {
 
   useEventListener('pointermove', (event: PointerEvent) => {
     if (dragging) {
-      dragging.x = Math.max(0, Math.min(event.clientX - dragOffset.x, window.innerWidth - 120))
-      dragging.y = Math.max(0, Math.min(event.clientY - dragOffset.y, window.innerHeight - 80))
+      const pos = clampDragPosition(event.clientX, event.clientY, dragOffset, window.innerWidth, window.innerHeight)
+      dragging.x = pos.x
+      dragging.y = pos.y
       snapHint.value = edgeZone(event.clientX, event.clientY)
     } else if (resizing) {
-      const dx = event.clientX - resizeStart.px
-      const dy = event.clientY - resizeStart.py
-      // east/south grow directly; west/north also shift the window's origin
-      if (resizeDir.includes('e')) resizing.width = Math.max(MIN_W, resizeStart.w + dx)
-      if (resizeDir.includes('s')) resizing.height = Math.max(MIN_H, resizeStart.h + dy)
-      if (resizeDir.includes('w')) {
-        const width = Math.max(MIN_W, resizeStart.w - dx)
-        resizing.x = resizeStart.x + (resizeStart.w - width)
-        resizing.width = width
-      }
-      if (resizeDir.includes('n')) {
-        const height = Math.max(MIN_H, resizeStart.h - dy)
-        resizing.y = resizeStart.y + (resizeStart.h - height)
-        resizing.height = height
-      }
+      const rect = resizeRect(
+        resizeStart,
+        resizeDir,
+        event.clientX - resizeStart.px,
+        event.clientY - resizeStart.py,
+        MIN_W,
+        MIN_H
+      )
+      resizing.x = rect.x
+      resizing.y = rect.y
+      resizing.width = rect.width
+      resizing.height = rect.height
       // manual resize means the snap/maximize restore rect is stale
       resizing.restore = undefined
     }
@@ -187,15 +186,8 @@ export function useWindowManager(titles: Record<string, string> = {}) {
   // Alt+Tab (Shift to reverse) cycles focus through the open windows, newest
   // stacking order first — the same idea as a desktop task switcher.
   const cycleWindows = (dir = 1) => {
-    const open = windows.value.filter((w) => !w.minimized)
-    if (open.length < 2) {
-      if (open.length === 1) focusWindow(open[0]!)
-      return
-    }
-    const byStack = [...open].sort((a, b) => a.z - b.z)
-    const topIndex = byStack.length - 1
-    const next = byStack[(topIndex + dir + byStack.length) % byStack.length]!
-    focusWindow(next)
+    const next = nextInCycle(windows.value, dir)
+    if (next) focusWindow(next)
   }
 
   return {
