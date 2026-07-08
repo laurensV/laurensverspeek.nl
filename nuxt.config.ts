@@ -69,7 +69,7 @@ export default defineNuxtConfig({
       // set NUXT_PUBLIC_GOATCOUNTER to enable privacy-first analytics
       goatcounter: '',
       // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
-      cursorsWs: 'ws://localhost:8787'
+      cursorsWs: ''
     }
   },
 
