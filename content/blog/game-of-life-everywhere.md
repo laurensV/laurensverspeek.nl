@@ -13,7 +13,7 @@ The trick to that isn't cleverness — it's *refusing to mix the rules with the 
 
 The simulation knows nothing about drawing, DOM, or Vue. It's a `Uint8Array` and one function:
 
-```ts
+```ts {8,9}
 export function step(grid: Grid, cols: number, rows: number, next = new Uint8Array(grid.length)): Grid {
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {

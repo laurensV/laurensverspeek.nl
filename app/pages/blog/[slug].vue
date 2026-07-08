@@ -375,6 +375,22 @@ onMounted(() => {
     overflow-x: auto;
   }
 
+  // render the code as a grid so a highlighted line can span the full width
+  // (Shiki keeps the trailing newline inside each .line, which breaks the
+  // simpler inline-block approach)
+  :deep(pre code) {
+    display: grid;
+  }
+
+  // lines called out with a `{2,4-6}` fence directive: an accent band + rail so
+  // it reads without relying on colour alone
+  :deep(.line.highlight) {
+    margin: 0 -1.25rem;
+    padding: 0 1.25rem 0 calc(1.25rem - 3px);
+    border-left: 3px solid var(--bulma-primary);
+    background-color: hsla(var(--lv-primary-hsl), 0.1);
+  }
+
   :deep(.code-lang) {
     position: absolute;
     top: 0.4rem;

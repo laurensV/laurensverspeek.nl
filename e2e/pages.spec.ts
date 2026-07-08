@@ -147,6 +147,15 @@ test('home shows terminal-style skill cards', async ({ page }) => {
   await expect(page.locator('.skill-file', { hasText: 'blockchain.sol' })).toBeVisible()
 })
 
+test('blog code blocks highlight called-out lines', async ({ page }) => {
+  await page.goto('/blog/game-of-life-everywhere')
+  const hl = page.locator('.post-body .line.highlight').first()
+  await expect(hl).toBeVisible()
+  // the highlight reads via a left accent rail, not colour alone
+  const border = await hl.evaluate((el) => parseFloat(getComputedStyle(el).borderLeftWidth))
+  expect(border).toBeGreaterThan(0)
+})
+
 test('blog post shows related posts by shared tags', async ({ page }) => {
   await page.goto('/blog/a-window-manager-in-a-div')
   await expect(page.locator('.post-related')).toBeVisible()
