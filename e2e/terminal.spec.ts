@@ -57,3 +57,33 @@ test('tab-completes command names and arguments', async ({ page }) => {
   await page.keyboard.press('Tab')
   await expect(page.locator('#terminal-input')).toHaveValue('cd about')
 })
+
+test('pwd reflects the current route and prompt shows the cwd', async ({ page }) => {
+  await page.goto('/projects')
+  await page.locator('.filter-flags').waitFor()
+  await expect(page.locator('.project-card').first()).toBeVisible()
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  // prompt is route-derived, so it should read ~/projects immediately
+  await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('~/projects')
+  await run(page, 'pwd')
+  await expect(page.locator('.terminal-output')).toContainText('/home/visitor/projects')
+})
+
+test('tree renders the site as a directory tree', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'tree')
+  const out = page.locator('.terminal-output')
+  await expect(out).toContainText('├── projects/')
+  await expect(out).toContainText('├── blog/')
+  await expect(out).toContainText('directories,')
+})
+
+test('ctrl+r searches command history', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'echo findme-zebra')
+  await page.fill('#terminal-input', '')
+  await page.keyboard.press('Control+r')
+  await page.keyboard.type('zebra')
+  await expect(page.locator('.terminal-search-match')).toContainText('echo findme-zebra')
+})

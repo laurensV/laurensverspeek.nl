@@ -23,6 +23,7 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml',
+  '.pdf': 'application/pdf',
   '.woff2': 'font/woff2'
 }
 

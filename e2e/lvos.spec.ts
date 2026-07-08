@@ -50,3 +50,13 @@ test('shows a right-click context menu on the desktop', async ({ page }) => {
   await expect(page.locator('.lvos-context')).toBeVisible()
   await expect(page.locator('.lvos-context')).toContainText('new terminal')
 })
+
+test('runs the terminal as a real desktop window', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
+  await page.locator('.lvos-window .desktop-terminal').waitFor()
+  await expect(page.locator('.lvos-window-title', { hasText: 'lvsh' })).toBeVisible()
+  await page.fill('#desktop-terminal-input', 'whoami')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.desktop-terminal')).toContainText('visitor')
+})
