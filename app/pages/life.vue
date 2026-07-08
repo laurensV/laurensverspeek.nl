@@ -16,7 +16,7 @@
           <input v-model.number="fps" type="range" min="1" max="30" aria-label="Speed">
         </label>
         <span class="life-presets">
-          <button v-for="preset in PRESETS" :key="preset.name" class="life-btn" @click="place(preset)">{{ preset.name }}</button>
+          <button v-for="pattern in LIFE_PATTERNS" :key="pattern.name" class="life-btn" @click="place(pattern)">{{ pattern.name }}</button>
         </span>
       </div>
     </header>
@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
+import { LIFE_PATTERNS, placePattern, type LifePattern } from '~/utils/lifePatterns'
 
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
 useSeoMeta({ description: "A full-page, playable Conway's Game of Life — draw cells and watch them evolve." })
@@ -172,42 +173,9 @@ const onMove = (event: PointerEvent) => {
 }
 
 // ---- patterns (placed centred) ----
-interface Preset { name: string, cells: [number, number][] }
-const PRESETS: Preset[] = [
-  { name: 'glider', cells: [[1, 0], [2, 1], [0, 2], [1, 2], [2, 2]] },
-  {
-    name: 'pulsar',
-    cells: (() => {
-      const base = [2, 3, 4, 8, 9, 10]
-      const out: [number, number][] = []
-      for (const y of [0, 5, 7, 12]) for (const x of base) out.push([x, y])
-      for (const x of [0, 5, 7, 12]) for (const y of base) out.push([x, y])
-      return out
-    })()
-  },
-  {
-    name: 'gosper gun',
-    cells: [
-      [0, 4], [0, 5], [1, 4], [1, 5],
-      [10, 4], [10, 5], [10, 6], [11, 3], [11, 7], [12, 2], [12, 8], [13, 2], [13, 8], [14, 5],
-      [15, 3], [15, 7], [16, 4], [16, 5], [16, 6], [17, 5],
-      [20, 2], [20, 3], [20, 4], [21, 2], [21, 3], [21, 4], [22, 1], [22, 5], [24, 0], [24, 1], [24, 5], [24, 6],
-      [34, 2], [34, 3], [35, 2], [35, 3]
-    ]
-  }
-]
-const place = (preset: Preset) => {
-  grid = createGrid(cols, rows)
+const place = (pattern: LifePattern) => {
+  grid = placePattern(cols, rows, pattern.cells)
   next = createGrid(cols, rows)
-  const maxX = Math.max(...preset.cells.map((c) => c[0]))
-  const maxY = Math.max(...preset.cells.map((c) => c[1]))
-  const ox = Math.floor((cols - maxX) / 2)
-  const oy = Math.floor((rows - maxY) / 2)
-  for (const [x, y] of preset.cells) {
-    const gx = ox + x
-    const gy = oy + y
-    if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) grid[index(cols, gx, gy)] = 1
-  }
   generation.value = 0
   draw()
 }

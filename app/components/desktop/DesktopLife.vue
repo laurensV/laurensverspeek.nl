@@ -4,6 +4,10 @@
       <button class="dl-btn" :title="running ? 'Pause' : 'Play'" @click="running = !running">{{ running ? '⏸' : '▶' }}</button>
       <button class="dl-btn" title="Randomize" @click="randomize">⚄</button>
       <button class="dl-btn" title="Clear" @click="clearBoard">✕</button>
+      <select class="dl-select" aria-label="Place a pattern" @change="onPattern">
+        <option value="">pattern…</option>
+        <option v-for="pattern in LIFE_PATTERNS" :key="pattern.name" :value="pattern.name">{{ pattern.name }}</option>
+      </select>
       <span class="dl-stat">gen {{ generation }} · {{ pop }}</span>
     </div>
     <div ref="wrapRef" class="dl-stage">
@@ -21,6 +25,7 @@
 
 <script setup lang="ts">
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
+import { LIFE_PATTERNS, placePattern } from '~/utils/lifePatterns'
 
 // A compact Game of Life window for lvOS. Reuses the shared engine and the
 // useCanvasScene canvas lifecycle, so it stays tiny.
@@ -109,6 +114,17 @@ const clearBoard = () => {
   running.value = false
   draw()
 }
+const onPattern = (event: Event) => {
+  const select = event.target as HTMLSelectElement
+  const pattern = LIFE_PATTERNS.find((p) => p.name === select.value)
+  if (pattern) {
+    grid = placePattern(cols, rows, pattern.cells)
+    next = createGrid(cols, rows)
+    generation.value = 0
+    draw()
+  }
+  select.value = ''
+}
 
 const paint = (event: PointerEvent) => {
   const rect = canvasRef.value?.getBoundingClientRect()
@@ -162,6 +178,17 @@ watch(useColorMode(), async () => {
       border-color: hsla(var(--lv-primary-hsl), 0.5);
       color: var(--bulma-primary);
     }
+  }
+
+  .dl-select {
+    padding: 0.15rem 0.3rem;
+    border: 1px solid var(--bulma-border-weak);
+    border-radius: 2px;
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 85%);
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
   }
 
   .dl-stat {
