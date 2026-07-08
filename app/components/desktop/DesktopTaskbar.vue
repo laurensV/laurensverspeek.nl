@@ -76,8 +76,7 @@
 <script setup lang="ts">
 import { useNow } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
-
-export interface Wallpaper { name: string, swatch: string, css: string }
+import type { Wallpaper } from '~/composables/useWallpaper'
 
 defineProps<{ windows: DesktopWindow[], wallpapers: Wallpaper[] }>()
 const emit = defineEmits<{

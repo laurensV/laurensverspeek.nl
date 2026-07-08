@@ -159,7 +159,7 @@
         v-model:calendar-open="calendarOpen"
         v-model:wallpaper="wallpaper"
         :windows="windows"
-        :wallpapers="WALLPAPERS"
+        :wallpapers="wallpapers"
         @open="openWindow"
         @terminal="openTerminal"
         @logout="logout"
@@ -223,16 +223,7 @@ const booting = ref(false)
 const peekedId = ref<string | null>(null)
 
 // ---- toast notifications ----
-interface Toast { id: number, icon: string, title: string, body?: string }
-const toasts = ref<Toast[]>([])
-let toastId = 0
-const notify = (icon: string, title: string, body?: string) => {
-  const id = toastId++
-  toasts.value.push({ id, icon, title, body })
-  setTimeout(() => {
-    toasts.value = toasts.value.filter((t) => t.id !== id)
-  }, 4200)
-}
+const { toasts, notify } = useDesktopToasts()
 
 // ---- idle screensaver ----
 // after 45s of no input on the desktop, drift into the screensaver
@@ -258,37 +249,8 @@ const openContextMenu = (event: MouseEvent) => {
 }
 
 // ---- wallpaper (persisted for the session) ----
-const WALLPAPERS = [
-  {
-    name: 'amber void',
-    swatch: 'linear-gradient(135deg, #2a1e00, #0a0a0a)',
-    css:
-      'radial-gradient(60rem 40rem at 70% 20%, hsla(var(--lv-primary-hsl), 0.14), transparent),'
-      + ' linear-gradient(160deg, hsl(var(--lv-scheme-hs), 8%), hsl(var(--bulma-scheme-h), 40%, 4%))'
-  },
-  {
-    name: 'grid',
-    swatch: 'linear-gradient(135deg, #0d0d0d, #1a1a1a)',
-    css:
-      'linear-gradient(hsla(var(--lv-primary-hsl), 0.06) 1px, transparent 1px) 0 0 / 2rem 2rem,'
-      + ' linear-gradient(90deg, hsla(var(--lv-primary-hsl), 0.06) 1px, transparent 1px) 0 0 / 2rem 2rem,'
-      + ' hsl(var(--lv-scheme-hs), 6%)'
-  },
-  {
-    name: 'aurora',
-    swatch: 'linear-gradient(135deg, #001a1a, #1a0033)',
-    css:
-      'radial-gradient(50rem 30rem at 20% 30%, hsla(180, 60%, 30%, 0.25), transparent),'
-      + ' radial-gradient(50rem 30rem at 80% 70%, hsla(280, 60%, 30%, 0.25), transparent),'
-      + ' hsl(var(--lv-scheme-hs), 5%)'
-  }
-]
-const wallpaper = useState('lvos-wallpaper', () => 0)
-const wallpaperStyle = computed(() => ({ background: WALLPAPERS[wallpaper.value]?.css }))
-const cycleWallpaper = () => {
-  wallpaper.value = (wallpaper.value + 1) % WALLPAPERS.length
-  notify('🖼', 'Wallpaper changed', WALLPAPERS[wallpaper.value]!.name)
-}
+const { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper: nextWallpaper } = useWallpaper()
+const cycleWallpaper = () => notify('🖼', 'Wallpaper changed', nextWallpaper())
 
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
