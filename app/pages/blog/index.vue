@@ -3,7 +3,7 @@
     <div class="container blog-container">
       <p class="overline mb-2">blog $ ls -t</p>
       <h1 class="title is-2">
-        blog<span class="has-text-primary-on-scheme is-family-code">[{{ posts?.length ?? 0 }}]</span>
+        blog<span class="has-text-primary-on-scheme is-family-code">[{{ filtered.length }}]</span>
       </h1>
       <p class="subtitle is-5 has-text-grey mb-4">
         Occasional writing about code, blockchain and this website.
@@ -35,22 +35,40 @@
         <p class="is-size-7 mt-2">// first post coming soon(ish) — and this time I mean it</p>
       </div>
 
-      <div v-else class="blog-list is-loaded">
-        <article v-for="post in posts" :key="post.path" class="blog-entry">
-          <p class="is-family-code is-size-7 has-text-grey mb-1">{{ formatDate(post.date) }}</p>
-          <h2 class="title is-4 mb-1">
-            <NuxtLink :to="post.path" class="blog-link">
-              {{ post.title }} <span class="blog-arrow is-family-code">-></span>
-            </NuxtLink>
-          </h2>
-          <p class="has-text-grey">{{ post.description }}</p>
-          <div v-if="post.tags?.length" class="tags mt-2">
-            <span v-for="tag in post.tags" :key="tag" class="tag is-small is-family-code">
-              #{{ tag }}
-            </span>
-          </div>
-        </article>
-      </div>
+      <template v-else>
+        <div v-if="activeTag" class="tag-filter is-family-code is-size-7 mb-5">
+          <span class="tag-filter-cmd">$ ls -t | grep '#{{ activeTag }}'</span>
+          <button class="tag-clear" @click="setTag('')">[clear]</button>
+        </div>
+
+        <p v-if="!filtered.length" class="is-family-code has-text-grey">
+          grep: no posts tagged #{{ activeTag }}
+        </p>
+
+        <div class="blog-list is-loaded">
+          <article v-for="post in filtered" :key="post.path" class="blog-entry">
+            <p class="is-family-code is-size-7 has-text-grey mb-1">{{ formatDate(post.date) }}</p>
+            <h2 class="title is-4 mb-1">
+              <NuxtLink :to="post.path" class="blog-link">
+                {{ post.title }} <span class="blog-arrow is-family-code">-></span>
+              </NuxtLink>
+            </h2>
+            <p class="has-text-grey">{{ post.description }}</p>
+            <div v-if="post.tags?.length" class="tags mt-2">
+              <button
+                v-for="tag in post.tags"
+                :key="tag"
+                class="tag is-small is-family-code tag-btn"
+                :class="{ 'is-active': tag === activeTag }"
+                :aria-pressed="tag === activeTag"
+                @click="setTag(tag)"
+              >
+                #{{ tag }}
+              </button>
+            </div>
+          </article>
+        </div>
+      </template>
     </div>
   </section>
 </template>
@@ -65,6 +83,19 @@ const { data: posts, pending, error } = await useAsyncData('blog-posts', () =>
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+
+// tag filtering, kept shareable in the URL (?tag=games); clicking the active
+// tag (or [clear]) removes the filter again
+const route = useRoute()
+const router = useRouter()
+const activeTag = computed(() => (typeof route.query.tag === 'string' ? route.query.tag : ''))
+const setTag = (tag: string) => {
+  router.replace({ query: tag && tag !== activeTag.value ? { tag } : {} })
+}
+const filtered = computed(() => {
+  const all = posts.value ?? []
+  return activeTag.value ? all.filter((post) => post.tags?.includes(activeTag.value)) : all
+})
 
 // copy the absolute RSS feed URL to paste into a reader
 const copied = ref(false)
@@ -116,6 +147,48 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
 
   .rss-sep {
     opacity: 0.5;
+  }
+}
+
+// active filter banner, styled as the shell command it pretends to be
+.tag-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+
+  .tag-filter-cmd {
+    color: var(--bulma-primary-on-scheme);
+  }
+
+  .tag-clear {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--bulma-text-weak);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--bulma-primary-on-scheme);
+    }
+  }
+}
+
+.tag-btn {
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+    border-color: hsla(var(--lv-primary-hsl), 0.5);
+  }
+
+  &.is-active {
+    color: var(--bulma-primary-on-scheme);
+    border-color: hsla(var(--lv-primary-hsl), 0.7);
+    background-color: hsla(var(--lv-primary-hsl), 0.12);
   }
 }
 

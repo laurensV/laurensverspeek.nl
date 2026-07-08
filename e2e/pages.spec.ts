@@ -292,3 +292,20 @@ test('command palette exposes action commands (CRT toggle)', async ({ page }) =>
   await page.locator('.palette-item', { hasText: 'Toggle CRT mode' }).click()
   await expect(page.locator('html')).toHaveClass(/crt-mode/)
 })
+
+test('blog tags filter the list with a shareable ?tag= url', async ({ page }) => {
+  await page.goto('/blog')
+  const entries = page.locator('.blog-entry')
+  const all = await entries.count()
+  expect(all).toBeGreaterThan(1)
+  await page.locator('.tag-btn', { hasText: '#games' }).first().click()
+  await expect(page).toHaveURL(/tag=games/)
+  await expect.poll(() => entries.count()).toBeLessThan(all)
+  await expect(page.locator('.tag-filter')).toContainText("grep '#games'")
+  // clearing restores the full list and drops the param
+  await page.locator('.tag-clear').click()
+  await expect.poll(() => entries.count()).toBe(all)
+  // a direct visit with the param starts filtered
+  await page.goto('/blog?tag=games')
+  await expect.poll(() => entries.count()).toBeLessThan(all)
+})
