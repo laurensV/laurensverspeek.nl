@@ -25,6 +25,15 @@ test('blog post shows a table of contents, copy buttons and a reading time', asy
   await expect(page.getByText(/\d+ min read/)).toBeVisible()
 })
 
+test('blog index lists the newest post and it opens', async ({ page }) => {
+  await page.goto('/blog')
+  const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })
+  await expect(link).toBeVisible()
+  await link.click()
+  await expect(page).toHaveURL(/a-window-manager-in-a-div/)
+  await expect(page.locator('h1')).toContainText('a window manager in a div')
+})
+
 test('project filters narrow the grid', async ({ page }) => {
   await page.goto('/projects')
   // leaving cards are display:none during the transition, so count only visible
