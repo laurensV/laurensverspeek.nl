@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="20%" r="70%">
+      <stop offset="0%" stop-color="#ffba00" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffba00" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .title { fill: #f5f5f5; font-family: 'Inter', system-ui, sans-serif; font-size: 62px; font-weight: 800; }
+      .desc { fill: #a5a5a5; font-family: 'Inter', system-ui, sans-serif; font-size: 30px; }
+      .eyebrow { fill: #ffba00; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 26px; letter-spacing: 2px; }
+      .brand { fill: #f5f5f5; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 28px; font-weight: 700; }
+      .domain { fill: #6f6f6f; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 24px; }
+    </style>
+  </defs>
+  <rect width="1200" height="630" fill="#0a0a0b"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="0" y="0" width="10" height="630" fill="#ffba00"/>
+  <text x="80" y="150" class="eyebrow">projects/portfolio</text>
+  <text x="80" y="300" class="title">laurensverspeek.nl</text>
+  <text x="80" y="404" class="desc">This very website. Built with Nuxt 4, TypeScript and</text><text x="80" y="444" class="desc">Bulma,…</text>
+  <text x="80" y="560" class="brand">~/laurens</text>
+  <text x="1120" y="560" text-anchor="end" class="domain">laurensverspeek.nl</text>
+</svg>
