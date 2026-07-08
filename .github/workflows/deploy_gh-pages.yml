@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # full history: the terminal's `git log` is baked from the real repo
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4

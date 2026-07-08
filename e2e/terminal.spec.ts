@@ -238,3 +238,14 @@ test('ctrl+r searches command history', async ({ page }) => {
   // the search shows the match position + count
   await expect(page.locator('.terminal-search-count')).toContainText('[1/1]')
 })
+
+test('git command replays the real repo history', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'git log --oneline')
+  await expect(out).toContainText(/[0-9a-f]{7} /)
+  await run(page, 'git show HEAD')
+  await expect(out).toContainText('files changed')
+  await run(page, 'git status')
+  await expect(out).toContainText('working tree clean')
+})

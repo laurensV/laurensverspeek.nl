@@ -1,7 +1,16 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
 import { parseRedirect, resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
 import { profile } from '~/data/profile'
+
+// the baked commit history (/git-log.json is prerendered at generate time),
+// fetched once and shared by every terminal instance
+let gitHistory: GitCommit[] | null = null
+const loadGitHistory = async (): Promise<GitCommit[]> => {
+  if (!gitHistory) gitHistory = await $fetch<GitCommit[]>('/git-log.json')
+  return gitHistory
+}
 
 // Shell housekeeping: help, theme, utilities and other meta commands.
 
@@ -324,6 +333,61 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
           )
         }
         muted(`\n(there might be more... check the browser console 👀)`)
+      }
+    },
+    git: {
+      usage: 'git <log|show|status>',
+      description: "This site's real commit history",
+      examples: [
+        'git log            recent commits, baked in at build time',
+        'git log --oneline  the compact version (pipes well into grep)',
+        'git log -n 5       only the last five',
+        'git show <hash>    one commit with its file diffstat',
+        'git status         you can guess'
+      ],
+      argCandidates: () => ['log', 'show', 'status', 'blame', 'push'],
+      exec: async (args) => {
+        const [sub, ...rest] = args
+        switch (sub) {
+          case undefined:
+            out('usage: git <log|show|status|blame|push>')
+            muted("this is the real history of this website's repository")
+            return
+          case 'status':
+            out('On branch main')
+            out("Your branch is up to date with 'origin/main'.")
+            out('')
+            out('nothing to commit, working tree clean')
+            muted('(the site you are looking at ships as static files — nothing to commit here)')
+            return
+          case 'blame':
+            out('It was laurens. It is always laurens.')
+            return
+          case 'push':
+            error('remote: Permission denied — nice try though.')
+            return
+          case 'log': {
+            const commits = await loadGitHistory().catch(() => null)
+            if (!commits) return error('git: could not load the commit history')
+            const oneline = rest.includes('--oneline')
+            const flagIndex = rest.indexOf('-n')
+            const limit = oneline
+              ? undefined
+              : flagIndex >= 0 ? (Number(rest[flagIndex + 1]) || 15) : 15
+            for (const line of formatGitLog(commits, { oneline, limit })) push(line.type, line.text, line.html)
+            return
+          }
+          case 'show': {
+            const commits = await loadGitHistory().catch(() => null)
+            if (!commits) return error('git: could not load the commit history')
+            const commit = findCommit(commits, rest[0] ?? '')
+            if (!commit) return error(`fatal: bad revision '${rest[0] ?? ''}'`)
+            for (const line of formatGitShow(commit)) push(line.type, line.text, line.html)
+            return
+          }
+          default:
+            error(`git: '${sub}' is not a git command. See 'man git'.`)
+        }
       }
     },
     sudo: {

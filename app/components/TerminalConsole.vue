@@ -271,6 +271,12 @@ defineExpose({ focusInput })
   :deep(.term-accent) {
     color: var(--bulma-primary);
   }
+  :deep(.term-green) {
+    color: var(--bulma-success);
+  }
+  :deep(.term-red) {
+    color: var(--bulma-danger);
+  }
 }
 
 .game-frame {
