@@ -88,6 +88,18 @@ written.push(writeCard('default', {
   description: 'Full-stack & blockchain developer — building products end to end.'
 }))
 
+// interactive-page cards
+written.push(writeCard('life', {
+  eyebrow: 'conway $ ./life',
+  title: "Conway's Game of Life",
+  description: 'A full-page, playable cellular automaton — draw cells and watch them evolve.'
+}))
+written.push(writeCard('desktop', {
+  eyebrow: 'startx $',
+  title: 'lvOS 2.0 — a desktop in the browser',
+  description: 'Draggable windows, a taskbar, apps and a real terminal — the site’s operating-system easter egg.'
+}))
+
 // per-project cards
 for (const project of projects) {
   written.push(writeCard(`project-${project.slug}`, {

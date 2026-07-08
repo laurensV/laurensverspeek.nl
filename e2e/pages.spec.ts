@@ -61,6 +61,13 @@ test('clicking the hero game of life opens the /life page', async ({ page }) => 
   await expect(page.locator('.life-canvas')).toBeVisible()
 })
 
+test('/life and /desktop carry their own OG images', async ({ page }) => {
+  await page.goto('/life')
+  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/life\.svg/)
+  await page.goto('/desktop')
+  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/desktop\.svg/)
+})
+
 test('game of life page pauses, steps, clears and places a preset', async ({ page }) => {
   await page.goto('/life')
   await expect(page.locator('.life-canvas')).toBeVisible()

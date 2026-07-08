@@ -42,8 +42,17 @@ import { usePreferredReducedMotion } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 import { LIFE_PATTERNS, placePattern, type LifePattern } from '~/utils/lifePatterns'
 
+const ogImage = `${SITE_URL}/og/life.svg`
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
-useSeoMeta({ description: "A full-page, playable Conway's Game of Life — draw cells and watch them evolve." })
+useSeoMeta({
+  description: "A full-page, playable Conway's Game of Life — draw cells and watch them evolve.",
+  ogTitle: "Conway's Game of Life",
+  ogDescription: "A full-page, playable cellular automaton — draw cells and watch them evolve.",
+  ogUrl: `${SITE_URL}/life`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 const CELL = 16
 
