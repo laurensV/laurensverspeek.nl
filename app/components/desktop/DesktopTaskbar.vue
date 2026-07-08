@@ -49,6 +49,16 @@
     </div>
 
     <button
+      class="lvos-tray-btn lvos-fullscreen"
+      :aria-pressed="isFullscreen"
+      :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+      aria-label="Toggle fullscreen"
+      @click="toggleFullscreen"
+    >
+      <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
+    </button>
+
+    <button
       class="lvos-clock"
       :class="{ 'is-open': calendarOpen }"
       :aria-expanded="calendarOpen"
@@ -74,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { useNow } from '@vueuse/core'
+import { useNow, useFullscreen } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
 
@@ -91,6 +101,9 @@ const emit = defineEmits<{
 const startOpen = defineModel<boolean>('startOpen', { default: false })
 const calendarOpen = defineModel<boolean>('calendarOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
+
+// browser fullscreen for the whole desktop page
+const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 
 const openFromStart = (id: string) => {
   emit('open', id)
@@ -261,8 +274,28 @@ const leadingBlanks = computed(() => {
   }
 }
 
-.lvos-clock {
+// tray buttons (fullscreen, …) sit at the right, next to the clock
+.lvos-tray-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  color: hsl(var(--lv-scheme-hs), 60%);
+  cursor: pointer;
+
+  &:hover,
+  &[aria-pressed='true'] {
+    color: var(--bulma-primary);
+  }
+}
+
+// the first right-aligned element absorbs the free space
+.lvos-fullscreen {
   margin-left: auto;
+}
+
+.lvos-clock {
   border: none;
   background: none;
   color: hsl(var(--lv-scheme-hs), 60%);

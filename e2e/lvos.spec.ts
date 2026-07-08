@@ -100,6 +100,16 @@ test('sticky notes app creates, edits and persists a note', async ({ page }) => 
   await expect(page.locator('.note-text').first()).toHaveValue('remember to ship the portfolio')
 })
 
+test('taskbar exposes a fullscreen toggle', async ({ page }) => {
+  await bootDesktop(page)
+  const btn = page.locator('.lvos-fullscreen')
+  await expect(btn).toBeVisible()
+  await expect(btn).toHaveAttribute('aria-label', 'Toggle fullscreen')
+  // starts un-pressed; clicking must not throw (headless can't truly go fullscreen)
+  await expect(btn).toHaveAttribute('aria-pressed', 'false')
+  await btn.click()
+})
+
 test('taskbar toggles the calendar and minimises a window', async ({ page }) => {
   await bootDesktop(page)
   // the clock button toggles the calendar popover
