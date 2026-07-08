@@ -68,7 +68,7 @@
         :key="win.id"
         class="lvos-window"
         :class="{
-          'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal',
+          'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal' || win.id === 'notes',
           'is-minimized': win.minimized,
           'is-maximized': win.maximized,
           'has-size': win.maximized || win.height !== undefined
@@ -147,6 +147,7 @@
           <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
           <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
           <LazyDesktopClock v-else-if="win.id === 'clock'" />
+          <LazyDesktopNotes v-else-if="win.id === 'notes'" />
           <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         </div>
 
@@ -253,6 +254,7 @@ const WINDOW_TITLES: Record<string, string> = {
   visualizer: 'visualizer',
   calc: 'calculator',
   clock: 'clock',
+  notes: 'sticky notes',
   terminal: 'lvsh — terminal'
 }
 
@@ -443,6 +445,7 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'visualizer', label: 'visualizer', icon: 'zap', action: () => openWindow('visualizer') },
   { id: 'calc', label: 'calculator', icon: 'hash', action: () => openWindow('calc') },
   { id: 'clock', label: 'clock', icon: 'sun', action: () => openWindow('clock') },
+  { id: 'notes', label: 'notes', icon: 'type', action: () => openWindow('notes') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]

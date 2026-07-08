@@ -74,6 +74,24 @@ test('Alt+Tab cycles focus between open windows', async ({ page }) => {
   await expect.poll(async () => (await zOf('readme')) > (await zOf('calculator'))).toBe(true)
 })
 
+test('sticky notes app creates, edits and persists a note', async ({ page }) => {
+  await bootDesktop(page)
+  const notesWindow = page.locator('.lvos-window')
+    .filter({ has: page.locator('.lvos-window-title', { hasText: 'sticky notes' }) })
+  // the readme window opens over the icon column on boot — close it first
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^notes$/ }).click()
+  await page.locator('.notes').waitFor()
+  await page.locator('.notes-new').click()
+  await page.locator('.note-text').first().fill('remember to ship the portfolio')
+  await expect(page.locator('.notes-meta')).toContainText('1 note')
+  // reopening after closing the window restores the saved note
+  await notesWindow.locator('.lvos-window-actions button[title="Close"]').click()
+  await expect(notesWindow).toHaveCount(0)
+  await page.locator('.lvos-icon', { hasText: /^notes$/ }).click()
+  await expect(page.locator('.note-text').first()).toHaveValue('remember to ship the portfolio')
+})
+
 test('shows a right-click context menu on the desktop', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos').click({ button: 'right', position: { x: 600, y: 400 } })
