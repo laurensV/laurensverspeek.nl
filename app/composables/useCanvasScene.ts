@@ -13,10 +13,18 @@ export interface CanvasScene {
   onFrame?: (ctx: CanvasRenderingContext2D, dt: number) => void
 }
 
+export interface CanvasSceneOptions {
+  // ambient scenes (the hero) respect prefers-reduced-motion and stay still;
+  // interactive tools (/life, the lvOS app) set this true and gate motion via
+  // their own play/pause, so the loop is user-initiated, not ambient.
+  alwaysAnimate?: boolean
+}
+
 export function useCanvasScene(
   canvasRef: Ref<HTMLCanvasElement | undefined>,
   containerRef: Ref<HTMLElement | undefined>,
-  scene: CanvasScene
+  scene: CanvasScene,
+  options: CanvasSceneOptions = {}
 ) {
   const reducedMotion = usePreferredReducedMotion()
   const visibility = useDocumentVisibility()
@@ -47,7 +55,8 @@ export function useCanvasScene(
 
   const start = () => {
     cancelAnimationFrame(rafId)
-    if (!scene.onFrame || reducedMotion.value === 'reduce' || visibility.value !== 'visible') return
+    if (!scene.onFrame || visibility.value !== 'visible') return
+    if (!options.alwaysAnimate && reducedMotion.value === 'reduce') return
     last = performance.now()
     rafId = requestAnimationFrame(loop)
   }

@@ -24,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePreferredReducedMotion } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 import { LIFE_PATTERNS, placePattern } from '~/utils/lifePatterns'
 
@@ -41,7 +42,8 @@ let grid: Grid = new Uint8Array(0)
 let next: Grid = new Uint8Array(0)
 let acc = 0
 
-const running = ref(true)
+const reducedMotion = usePreferredReducedMotion()
+const running = ref(reducedMotion.value !== 'reduce')
 const generation = ref(0)
 const pop = ref(0)
 const painting = ref(false)
@@ -99,7 +101,7 @@ const { redraw } = useCanvasScene(canvasRef, wrapRef, {
       advance()
     }
   }
-})
+}, { alwaysAnimate: true })
 
 const randomize = () => {
   grid = seedRandom(cols, rows, 0.2)

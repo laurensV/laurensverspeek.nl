@@ -77,6 +77,20 @@ test('game of life page pauses, steps, clears and places a preset', async ({ pag
   await expect(stat).not.toContainText('0 cells')
 })
 
+test('/life respects reduced motion: starts paused, step still works', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/life')
+  await expect(page.locator('.life-canvas')).toBeVisible()
+  // paused by default under reduced motion (button offers play, not pause)
+  await expect(page.locator('.life-btn.is-primary')).toContainText('play')
+  await expect(page.locator('.life-hint')).toContainText('reduced motion')
+  // nothing has advanced on its own
+  await expect(page.locator('.life-stat')).toContainText('gen 0')
+  // but a manual step works
+  await page.locator('.life-btn', { hasText: 'step' }).click()
+  await expect(page.locator('.life-stat')).toContainText('gen 1')
+})
+
 test('hero renders the game-of-life canvas and reacts to the pointer', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 })
   await page.goto('/')

@@ -30,12 +30,15 @@
         @pointerup="painting = false"
         @pointerleave="painting = false"
       />
-      <p class="life-hint is-family-code">click &amp; drag to draw cells</p>
+      <p class="life-hint is-family-code">
+        <template v-if="reducedMotion === 'reduce'">reduced motion — press ▶ play or ⏭ step · </template>click &amp; drag to draw cells
+      </p>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { usePreferredReducedMotion } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 import { LIFE_PATTERNS, placePattern, type LifePattern } from '~/utils/lifePatterns'
 
@@ -53,7 +56,10 @@ let rows = 0
 let grid: Grid = new Uint8Array(0)
 let next: Grid = new Uint8Array(0)
 
-const running = ref(true)
+// respect reduced motion: start paused so nothing moves until the visitor
+// presses play or step (the loop itself is opt-in via alwaysAnimate below)
+const reducedMotion = usePreferredReducedMotion()
+const running = ref(reducedMotion.value !== 'reduce')
 const fps = ref(12)
 const generation = ref(0)
 const pop = ref(0)
@@ -131,7 +137,7 @@ const { redraw } = useCanvasScene(canvasRef, wrapRef, {
       advance()
     }
   }
-})
+}, { alwaysAnimate: true })
 
 const toggle = () => (running.value = !running.value)
 const stepOnce = () => advance()
