@@ -326,3 +326,16 @@ test('contact page serves a vCard and shows a QR contact card', async ({ page, r
   await expect(qr).toBeVisible()
   expect((await qr.textContent())!.length).toBeGreaterThan(100)
 })
+
+test('external prose links carry the arrow marker, internal ones do not', async ({ page }) => {
+  await page.goto('/blog/rebuilding-this-site')
+  const external = page.locator('.post-body a[href^="http"]').first()
+  await expect(external).toBeVisible()
+  const bg = await external.evaluate((el) => getComputedStyle(el).backgroundImage)
+  expect(bg).toContain('svg')
+  // internal links keep a clean background
+  const internal = page.locator('.post-body a[href^="/"]').first()
+  if (await internal.count()) {
+    expect(await internal.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe('none')
+  }
+})

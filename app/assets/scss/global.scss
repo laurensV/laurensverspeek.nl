@@ -109,6 +109,25 @@ html.is-lvos body {
   }
 }
 
+// External links in prose/footer get a small ↗ marker. Both underline pseudos
+// are taken, so the arrow is a background SVG (per theme, since a data URI
+// can't read CSS variables) tucked into right padding.
+@mixin external-arrow($color) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.5 8.5 8.5 3.5M4.75 3.5H8.5v3.75' fill='none' stroke='#{$color}' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.content a[href^='http']:not(.social-link):not(.button) {
+  padding-right: 0.8em;
+  background-repeat: no-repeat;
+  background-position: right 0.05em top 0.3em;
+  background-size: 0.55em 0.55em;
+  @include external-arrow('%23997b33');
+}
+
+[data-theme='dark'] .content a[href^='http']:not(.social-link):not(.button) {
+  @include external-arrow('%23c9a24d');
+}
+
 // "see all →" links: no underline, the arrow slides forward on hover
 .see-all {
   color: var(--bulma-text-weak);
