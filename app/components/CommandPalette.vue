@@ -35,7 +35,10 @@
                 @pointermove="activeId = item.id"
               >
                 <AppIcon :name="item.icon" :size="16" />
-                <span class="palette-label">{{ item.label }}</span>
+                <span class="palette-label"><template
+                  v-for="(seg, si) in highlightLabel(query, item.label)"
+                  :key="si"
+                ><mark v-if="seg.match" class="palette-match">{{ seg.text }}</mark><template v-else>{{ seg.text }}</template></template></span>
                 <span v-if="item.hint" class="palette-hint is-family-code">{{ item.hint }}</span>
               </button>
             </template>
@@ -59,7 +62,7 @@
 import { onKeyStroke } from '@vueuse/core'
 import type { PaletteAction } from '~/composables/useCommandPalette'
 
-const { isOpen, close, toggle, actions, recent, recordUse } = useCommandPalette()
+const { isOpen, close, toggle, actions, recent, counts, recordUse } = useCommandPalette()
 
 const query = ref('')
 const activeId = ref('')
@@ -73,7 +76,12 @@ const results = computed(() => {
       score: fuzzyScore(query.value, `${action.label} ${action.keywords ?? ''}`)
     }))
     .filter((entry) => entry.score > 0)
-  if (query.value) scored.sort((a, b) => b.score - a.score)
+  // rank by fuzzy score, breaking ties toward more frequently-used actions
+  if (query.value) {
+    scored.sort((a, b) =>
+      b.score - a.score
+      || (counts.value[b.action.id] ?? 0) - (counts.value[a.action.id] ?? 0))
+  }
   return scored.map((entry) => entry.action)
 })
 
@@ -246,6 +254,12 @@ watch(flat, (list) => {
 
   .palette-label {
     flex: 1;
+
+    .palette-match {
+      background: none;
+      color: var(--bulma-primary-on-scheme);
+      font-weight: 700;
+    }
   }
 
   .palette-hint {

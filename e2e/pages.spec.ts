@@ -69,4 +69,15 @@ test('command palette opens and filters', async ({ page }) => {
   await expect(page.locator('.palette-window')).toBeVisible()
   await page.locator('.palette-input').fill('uses')
   await expect(page.locator('.palette-item.is-active')).toContainText('Uses')
+  // the matched characters are highlighted in the label
+  await expect(page.locator('.palette-item.is-active .palette-match')).toContainText('Uses')
+})
+
+test('command palette exposes action commands (CRT toggle)', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('Control+k')
+  await page.locator('.palette-input').fill('crt')
+  await page.locator('.palette-item', { hasText: 'Toggle CRT mode' }).click()
+  await expect(page.locator('html')).toHaveClass(/crt-mode/)
 })

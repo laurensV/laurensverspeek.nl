@@ -13,6 +13,7 @@ export interface PaletteAction {
 }
 
 const RECENT_KEY = 'lv-palette-recent'
+const COUNTS_KEY = 'lv-palette-counts'
 const RECENT_MAX = 5
 
 /** Simple subsequence fuzzy match, scores tighter matches higher */
@@ -33,13 +34,51 @@ export function fuzzyScore(query: string, target: string): number {
   return qi === q.length ? score : 0
 }
 
+export interface LabelSegment { text: string, match: boolean }
+
+/**
+ * Split a label into matched/unmatched segments for the query, so the palette
+ * can highlight *why* an item matched. Prefers a contiguous substring; falls
+ * back to a subsequence. Returns a single unmatched segment when the query only
+ * matched the item's keywords (not its visible label).
+ */
+export function highlightLabel(query: string, label: string): LabelSegment[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return [{ text: label, match: false }]
+  const lower = label.toLowerCase()
+  const matched = new Set<number>()
+
+  const idx = lower.indexOf(q)
+  if (idx >= 0) {
+    for (let i = idx; i < idx + q.length; i++) matched.add(i)
+  } else {
+    let qi = 0
+    for (let li = 0; li < label.length && qi < q.length; li++) {
+      if (lower[li] === q[qi]) {
+        matched.add(li)
+        qi++
+      }
+    }
+    if (qi < q.length) return [{ text: label, match: false }]
+  }
+
+  const segments: LabelSegment[] = []
+  for (let i = 0; i < label.length; i++) {
+    const isMatch = matched.has(i)
+    const last = segments[segments.length - 1]
+    if (last && last.match === isMatch) last.text += label[i]
+    else segments.push({ text: label[i]!, match: isMatch })
+  }
+  return segments
+}
+
 export function useCommandPalette() {
   const isOpen = useState('palette-open', () => false)
 
   const router = useRouter()
   const colorMode = useColorMode()
   const terminal = useTerminal()
-  const { desktopActive } = useSiteEffects()
+  const { desktopActive, toggleCrt } = useSiteEffects()
   const { accents, setAccent } = useAccent()
 
   const open = () => (isOpen.value = true)
@@ -60,11 +99,22 @@ export function useCommandPalette() {
     } catch { /* ignore corrupted storage */ }
   }
 
+  // how often each action is chosen, so frequently-used items win ranking ties
+  const counts = useState<Record<string, number>>('palette-counts', () => ({}))
+  if (import.meta.client && !Object.keys(counts.value).length) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(COUNTS_KEY) ?? '{}') as unknown
+      if (saved && typeof saved === 'object') counts.value = saved as Record<string, number>
+    } catch { /* ignore corrupted storage */ }
+  }
+
   const recordUse = (id: string) => {
     recent.value = [id, ...recent.value.filter((x) => x !== id)].slice(0, RECENT_MAX)
+    counts.value = { ...counts.value, [id]: (counts.value[id] ?? 0) + 1 }
     if (import.meta.client) {
       try {
         localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
+        localStorage.setItem(COUNTS_KEY, JSON.stringify(counts.value))
       } catch { /* ignore */ }
     }
   }
@@ -161,6 +211,30 @@ export function useCommandPalette() {
         close()
       }
     },
+    {
+      id: 'crt',
+      label: 'Toggle CRT mode',
+      hint: 'retro',
+      icon: 'monitor',
+      section: 'Actions',
+      keywords: 'crt retro scanlines vintage screen',
+      perform: () => {
+        toggleCrt()
+        close()
+      }
+    },
+    {
+      id: 'copy-link',
+      label: 'Copy link to this page',
+      hint: 'clipboard',
+      icon: 'external',
+      section: 'Actions',
+      keywords: 'share url copy clipboard link',
+      perform: () => {
+        close()
+        if (import.meta.client) navigator.clipboard?.writeText(window.location.href).catch(() => {})
+      }
+    },
     ...profile.socials.map<PaletteAction>((social) => ({
       id: `social-${social.label}`,
       label: social.label,
@@ -175,5 +249,5 @@ export function useCommandPalette() {
     }))
   ])
 
-  return { isOpen, open, close, toggle, actions, recent, recordUse }
+  return { isOpen, open, close, toggle, actions, recent, counts, recordUse }
 }
