@@ -275,18 +275,16 @@ const scramble = (el: HTMLElement, text: string) => {
   top: 0;
   z-index: 30;
   background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l),
-    0.72
+    0.85
   );
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid var(--bulma-border-weak);
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 
-  // hairline + subtle shadow appear once scrolled off the top
-  &.is-scrolled {
-    border-bottom-color: var(--bulma-border-weak);
-    box-shadow: 0 4px 20px hsla(var(--lv-scheme-hs), 4%, 0.28);
-    background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.85);
-  }
+  // subtle shadow appear once scrolled off the top
+  // &.is-scrolled {
+  //   box-shadow: 0 4px 20px hsla(var(--lv-scheme-hs), 4%, 0.28);
+  // }
 }
 
 // reading-progress rail hugging the navbar's bottom edge
