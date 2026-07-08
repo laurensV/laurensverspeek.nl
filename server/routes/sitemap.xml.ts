@@ -13,7 +13,8 @@ export default defineEventHandler((event) => {
     '/blog/rebuilding-this-site',
     '/blog/snake-in-the-terminal',
     '/blog/a-window-manager-in-a-div',
-    '/blog/an-os-on-its-own-route'
+    '/blog/an-os-on-its-own-route',
+    '/blog/game-of-life-everywhere'
   ]
   const urls = [...pages, ...projects.map((p) => `/projects/${p.slug}`), ...posts]
 
