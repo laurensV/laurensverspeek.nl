@@ -2,6 +2,19 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame } from '~/utils/terminalGames'
 import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
+import { formatWeather } from '~/utils/terminal/weather'
+
+interface GeoResult {
+  results?: { name: string, country?: string, latitude: number, longitude: number }[]
+}
+interface ForecastResult {
+  current: {
+    temperature_2m: number
+    weather_code: number
+    wind_speed_10m: number
+    relative_humidity_2m: number
+  }
+}
 
 // Toys, games, site-wide effects and easter eggs.
 
@@ -49,6 +62,38 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
         ctx.startGame(create2048Game)
+      }
+    },
+    weather: {
+      usage: 'weather [city]',
+      description: 'Live weather, wttr.in style (open-meteo)',
+      examples: ['weather', 'weather amsterdam', 'weather tokyo'],
+      exec: async (args) => {
+        const query = args.join(' ').trim() || 'Amsterdam'
+        muted(`Asking open-meteo about ${query} ...`)
+        try {
+          const geo = await $fetch<GeoResult>('https://geocoding-api.open-meteo.com/v1/search', {
+            query: { name: query, count: 1 }
+          })
+          const spot = geo.results?.[0]
+          if (!spot) return error(`weather: unknown place '${query}'`)
+          const forecast = await $fetch<ForecastResult>('https://api.open-meteo.com/v1/forecast', {
+            query: {
+              latitude: spot.latitude,
+              longitude: spot.longitude,
+              current: 'temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m'
+            }
+          })
+          const place = spot.country ? `${spot.name}, ${spot.country}` : spot.name
+          formatWeather(place, {
+            temperature: forecast.current.temperature_2m,
+            wind: forecast.current.wind_speed_10m,
+            humidity: forecast.current.relative_humidity_2m,
+            code: forecast.current.weather_code
+          }).forEach(out)
+        } catch {
+          error('weather: the sky is unreachable right now (network error)')
+        }
       }
     },
     pong: {

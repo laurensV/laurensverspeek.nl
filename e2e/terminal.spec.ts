@@ -304,3 +304,26 @@ test('pong opens a court and responds to paddle keys', async ({ page }) => {
   await page.keyboard.press('q')
   await expect(page.locator('.terminal-output')).toContainText(/aborted|win/)
 })
+
+test('weather renders an ascii report from open-meteo data', async ({ page }) => {
+  // hermetic: intercept both open-meteo endpoints
+  await page.route('**/geocoding-api.open-meteo.com/**', (route) =>
+    route.fulfill({ json: { results: [{ name: 'Amsterdam', country: 'Netherlands', latitude: 52.37, longitude: 4.89 }] } })
+  )
+  await page.route('**/api.open-meteo.com/**', (route) =>
+    route.fulfill({ json: { current: { temperature_2m: 18.4, weather_code: 61, wind_speed_10m: 12, relative_humidity_2m: 78 } } })
+  )
+  await openTerminal(page)
+  await run(page, 'weather amsterdam')
+  const out = page.locator('.terminal-output')
+  await expect(out).toContainText('Amsterdam, Netherlands')
+  await expect(out).toContainText('rain')
+  await expect(out).toContainText('18.4°C')
+})
+
+test('weather reports unknown places and network trouble gracefully', async ({ page }) => {
+  await page.route('**/geocoding-api.open-meteo.com/**', (route) => route.fulfill({ json: { results: [] } }))
+  await openTerminal(page)
+  await run(page, 'weather atlantis-under-the-sea')
+  await expect(page.locator('.terminal-output')).toContainText("unknown place 'atlantis-under-the-sea'")
+})
