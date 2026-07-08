@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { GameHandle, GameCallbacks } from '~/utils/terminalGames'
 import type { Filesystem } from '~/utils/terminal/filesystem'
+import type { SearchableSection } from '~/utils/terminal/search'
 
 export interface TerminalLine {
   id: number
@@ -70,6 +71,8 @@ export interface TerminalContext {
     toggleCrt: () => boolean
   }
   fetchPosts: () => Promise<TerminalBlogPost[]>
+  /** Heading-level sections with plain text content, for full-text search */
+  fetchSearchSections: () => Promise<SearchableSection[]>
   /** Shell environment variables ($USER, $PWD, …), mutable via `export` */
   env: Ref<Record<string, string>>
   /** User-defined command aliases, mutable via `alias name=value` */

@@ -133,6 +133,8 @@ export function useTerminal() {
     // queryCollection so it still finds the app context
     fetchPosts: () =>
       nuxtApp.runWithContext(() => queryCollection('blog').order('date', 'DESC').all()),
+    fetchSearchSections: () =>
+      nuxtApp.runWithContext(() => queryCollectionSearchSections('blog')),
     env: useState<Record<string, string>>('terminal-env', () => ({
       USER: identityName.value,
       HOME: `/home/${identityName.value}`,

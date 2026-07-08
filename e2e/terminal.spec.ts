@@ -260,3 +260,13 @@ test('wpm starts a typing test that reacts to typing and Esc', async ({ page }) 
   await page.keyboard.press('Escape')
   await expect(page.locator('.terminal-output')).toContainText('aborted')
 })
+
+test('search greps across blog content with highlighted snippets', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'search conway')
+  await expect(out.locator('.term-accent', { hasText: 'conway' }).first()).toBeVisible()
+  await expect(out).toContainText(/\d+ match/)
+  await run(page, 'search zzzznotaword')
+  await expect(out).toContainText("no matches for 'zzzznotaword'")
+})

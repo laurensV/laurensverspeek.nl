@@ -5,6 +5,7 @@ import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { renderMarkdownToTerminal } from '~/utils/terminalMarkdown'
 import { resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { searchSections } from '~/utils/terminal/search'
 
 // Commands about the site's content: pages, projects, blog, profile.
 
@@ -280,6 +281,30 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
             muted(`\nUse 'blog <name>' to read a post here, or 'cd blog' for the styled version.`)
           })
           .catch(() => error('blog: failed to load posts'))
+      }
+    },
+    search: {
+      usage: 'search <term>',
+      description: 'Full-text search across the blog',
+      examples: ['search canvas', 'search game of life', `search vue | head -3`],
+      exec: (args) => {
+        const term = args.join(' ').trim()
+        if (!term) return error('search: give me something to look for')
+        muted(`grep -ri '${term}' ~/blog ...`)
+        return ctx.fetchSearchSections()
+          .then((sections) => {
+            const hits = searchSections(sections, term)
+            if (!hits.length) {
+              muted(`no matches for '${term}'`)
+              return
+            }
+            for (const hit of hits) {
+              push('output', `<span class="term-accent">${hit.slug}</span>  ${hit.heading}`, true)
+              push('muted', `  ${hit.snippetHtml}`, true)
+            }
+            muted(`\n${hits.length} match${hits.length === 1 ? '' : 'es'} — read one with 'blog <name>'.`)
+          })
+          .catch(() => error('search: failed to load the blog index'))
       }
     },
     now: {
