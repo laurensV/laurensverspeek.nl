@@ -27,6 +27,7 @@
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 import { LIFE_PATTERNS, placePattern } from '~/utils/lifePatterns'
+import { drawGrid } from '~/utils/drawLife'
 
 // A compact Game of Life window for lvOS. Reuses the shared engine and the
 // useCanvasScene canvas lifecycle, so it stays tiny.
@@ -60,14 +61,7 @@ const readColor = () => {
 
 const draw = () => {
   if (!ctx) return
-  ctx.clearRect(0, 0, cols * CELL, rows * CELL)
-  ctx.fillStyle = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`
-  const size = CELL - 2
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (grid[index(cols, x, y)]) ctx.fillRect(x * CELL + 1, y * CELL + 1, size, size)
-    }
-  }
+  drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l })
   pop.value = population(grid)
 }
 

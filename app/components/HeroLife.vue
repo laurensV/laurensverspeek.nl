@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { seedRandom, step as lifeStep, population, type Grid } from '~/utils/gameOfLife'
+import { drawGrid } from '~/utils/drawLife'
 
 // Conway's Game of Life as the hero centerpiece: a slow, toroidal cellular
 // automaton drawn as dim amber cells. Drag to seed live cells; a plain click
@@ -67,15 +68,7 @@ const step = () => {
 }
 
 const draw = () => {
-  if (!ctx) return
-  ctx.clearRect(0, 0, cols * CELL, rows * CELL)
-  ctx.fillStyle = `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, 0.5)`
-  const size = CELL - 2
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (grid[idx(x, y)]) ctx.fillRect(x * CELL + 1, y * CELL + 1, size, size)
-    }
-  }
+  if (ctx) drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l, alpha: 0.5 })
 }
 
 const { redraw } = useCanvasScene(canvasRef, containerRef, {

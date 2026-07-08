@@ -41,6 +41,7 @@
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
 import { LIFE_PATTERNS, placePattern, type LifePattern } from '~/utils/lifePatterns'
+import { drawGrid } from '~/utils/drawLife'
 
 const ogImage = `${SITE_URL}/og/life.svg`
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
@@ -86,22 +87,7 @@ const readColor = () => {
 
 const draw = () => {
   if (!ctx) return
-  ctx.clearRect(0, 0, cols * CELL, rows * CELL)
-  // faint grid
-  ctx.strokeStyle = `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, 0.06)`
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  for (let x = 0; x <= cols; x++) { ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, rows * CELL) }
-  for (let y = 0; y <= rows; y++) { ctx.moveTo(0, y * CELL); ctx.lineTo(cols * CELL, y * CELL) }
-  ctx.stroke()
-  // live cells
-  ctx.fillStyle = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`
-  const size = CELL - 2
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (grid[index(cols, x, y)]) ctx.fillRect(x * CELL + 1, y * CELL + 1, size, size)
-    }
-  }
+  drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l, grid: true })
   pop.value = population(grid)
 }
 
