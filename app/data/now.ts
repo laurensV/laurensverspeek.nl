@@ -1,28 +1,38 @@
 // What I'm up to right now — shown on /now. Update whenever life changes.
 
 export const now = {
-  updated: '2026-07-07',
+  updated: '2026-07-08',
   location: 'The Netherlands',
   sections: [
     {
       title: 'Building',
       items: [
-        'Scaling Nosana: more GPUs, more inference workloads, fewer 3am pages',
-        'This website — which finally shipped after four years of "coming soon(ish)"'
+        'Scaling Nosana — more GPUs online, more AI inference jobs, fewer 3am pages',
+        'This site’s ever-growing pile of easter eggs: a real terminal, an OS living on /desktop, and a hero that plays Conway’s Game of Life',
+        'Sharper Solana programs — shaving compute units where nobody was looking'
       ]
     },
     {
       title: 'Learning',
       items: [
-        'Squeezing more performance out of Solana programs',
-        'What AI teams actually need from decentralized compute'
+        'What AI teams actually need from decentralized compute (reliability beats hype)',
+        'The sharp edges of the Fullscreen and View Transitions APIs',
+        'Rust patterns that keep on-chain code both fast and readable'
       ]
     },
     {
       title: 'Tinkering',
       items: [
-        'Easter eggs for this site (there are more coming, obviously)',
-        'Home automation that mostly automates my frustration'
+        'A tiny in-browser filesystem for the fake shell on this site — mkdir, touch, cat, the works',
+        'Home automation that mostly automates my own frustration',
+        'Keyboard layouts I’ll probably abandon in three weeks'
+      ]
+    },
+    {
+      title: 'Away from the keyboard',
+      items: [
+        'Long walks that quietly turn into rubber-duck debugging sessions',
+        'Coffee experiments with a worrying failure-to-success ratio'
       ]
     }
   ]

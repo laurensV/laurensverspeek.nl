@@ -82,6 +82,14 @@ test('blog index lists the newest post and it opens', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('a window manager in a div')
 })
 
+test('/uses and /now show the refreshed content', async ({ page }) => {
+  await page.goto('/uses')
+  await expect(page.getByText('./design-docs')).toBeVisible()
+  await expect(page.getByText('Ghostty')).toBeVisible()
+  await page.goto('/now')
+  await expect(page.getByText('./away from the keyboard')).toBeVisible()
+})
+
 test('project filters narrow the grid', async ({ page }) => {
   await page.goto('/projects')
   // leaving cards are display:none during the transition, so count only visible
