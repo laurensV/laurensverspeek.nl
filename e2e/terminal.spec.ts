@@ -293,3 +293,14 @@ test('aliases and exported env vars survive a reload', async ({ page }) => {
   await run(page, 'echo $FAVE')
   await expect(out).toContainText('amber')
 })
+
+test('pong opens a court and responds to paddle keys', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'pong')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toContainText('PONG')
+  await expect(frame).toContainText('●')
+  await page.keyboard.press('w')
+  await page.keyboard.press('q')
+  await expect(page.locator('.terminal-output')).toContainText(/aborted|win/)
+})

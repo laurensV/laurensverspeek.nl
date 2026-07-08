@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createSnakeGame, createTetrisGame, create2048Game, createWpmGame, wpmStats, type GameCallbacks } from '~/utils/terminalGames'
+import { createSnakeGame, createTetrisGame, create2048Game, createWpmGame, createPongGame, wpmStats, type GameCallbacks } from '~/utils/terminalGames'
 
 // the games persist high scores; give them an in-memory localStorage
 const storage = new Map<string, string>()
@@ -166,5 +166,45 @@ describe('wpmStats', () => {
 
   it('is safe before the clock starts', () => {
     expect(wpmStats(0, 0, 0, 0)).toEqual({ wpm: 0, accuracy: 100 })
+  })
+})
+
+describe('createPongGame', () => {
+  it('renders the court with both paddles, the ball and the score', () => {
+    const { frames, callbacks } = makeCallbacks()
+    createPongGame(callbacks)
+    expect(frames[0]).toContain('PONG  you 0')
+    expect(frames[0]).toContain('0 cpu')
+    expect(frames[0]).toContain('●')
+  })
+
+  it('moves the player paddle with w/s and ignores other keys', () => {
+    const { frames, callbacks } = makeCallbacks()
+    const game = createPongGame(callbacks)
+    const paddleRow = () => frames.at(-1)!.split('\n').findIndex((row) => row[1 + 1] === '█')
+    const before = paddleRow()
+    expect(game.onKey('w')).toBe(true)
+    expect(paddleRow()).toBe(before - 1)
+    expect(game.onKey('ArrowDown')).toBe(true)
+    expect(paddleRow()).toBe(before)
+    expect(game.onKey('F5')).toBe(false)
+  })
+
+  it('plays points over time until someone reaches five', () => {
+    const { ended, callbacks } = makeCallbacks()
+    const game = createPongGame(callbacks)
+    // park the player paddle in the top corner so center balls sail past
+    for (let i = 0; i < 12; i++) game.onKey('w')
+    vi.advanceTimersByTime(120_000)
+    expect(ended).toHaveLength(1)
+    expect(ended[0]!.join('\n')).toMatch(/wins|win/)
+    expect(ended[0]!.join('\n')).toContain('rally')
+  })
+
+  it('quits on q with a concession message', () => {
+    const { ended, callbacks } = makeCallbacks()
+    const game = createPongGame(callbacks)
+    game.onKey('q')
+    expect(ended[0]![0]).toContain('aborted')
   })
 })
