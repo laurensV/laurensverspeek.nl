@@ -45,9 +45,7 @@
 
 <script setup lang="ts">
 import { usePreferredReducedMotion } from '@vueuse/core'
-import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
-import { LIFE_PATTERNS, placePattern, type LifePattern } from '~/utils/lifePatterns'
-import { drawGrid } from '~/utils/drawLife'
+import { LIFE_PATTERNS, type LifePattern } from '~/utils/lifePatterns'
 
 const ogImage = `${SITE_URL}/og/life.svg`
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
@@ -66,135 +64,50 @@ const cellSize = ref(16) // px per cell; the zoom control changes this
 const wrapRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
 
-let ctx: CanvasRenderingContext2D | null = null
-let cols = 0
-let rows = 0
-let grid: Grid = new Uint8Array(0)
-let next: Grid = new Uint8Array(0)
-
 // respect reduced motion: start paused so nothing moves until the visitor
-// presses play or step (the loop itself is opt-in via alwaysAnimate below)
+// presses play or step (the loop is opt-in via alwaysAnimate in useLifeBoard)
 const reducedMotion = usePreferredReducedMotion()
 const running = ref(reducedMotion.value !== 'reduce')
 const fps = ref(12)
 const generation = ref(0)
-const pop = ref(0)
 const painting = ref(false)
 
-let hsl = { h: 45, s: 100, l: 50 }
-const readColor = () => {
-  const style = getComputedStyle(document.documentElement)
-  hsl = {
-    h: parseFloat(style.getPropertyValue('--bulma-primary-h')) || 45,
-    s: parseFloat(style.getPropertyValue('--bulma-primary-s')) || 100,
-    l: parseFloat(style.getPropertyValue('--bulma-primary-l')) || 50
-  }
-}
-
-const draw = () => {
-  if (!ctx) return
-  drawGrid(ctx, grid, cols, rows, { cell: cellSize.value, hue: hsl.h, sat: hsl.s, light: hsl.l, grid: true })
-  pop.value = population(grid)
-}
-
-const advance = () => {
-  lifeStep(grid, cols, rows, next)
-  ;[grid, next] = [next, grid]
-  generation.value++
-  draw()
-}
-
-// ---- canvas lifecycle + fps-paced run loop ----
-let acc = 0
-const { redraw } = useCanvasScene(canvasRef, wrapRef, {
-  onResize: (context, w, h) => {
-    ctx = context
-    const oldGrid = grid
-    const oldCols = cols
-    cols = Math.max(8, Math.floor(w / cellSize.value))
-    rows = Math.max(8, Math.floor(h / cellSize.value))
-    if (!oldGrid.length) {
-      grid = seedRandom(cols, rows, 0.18)
-    } else {
-      // preserve the pattern by copying the overlapping region (2D-aware)
-      grid = createGrid(cols, rows)
-      const oldRows = oldGrid.length / oldCols
-      for (let y = 0; y < Math.min(rows, oldRows); y++) {
-        for (let x = 0; x < Math.min(cols, oldCols); x++) {
-          grid[index(cols, x, y)] = oldGrid[y * oldCols + x]!
-        }
-      }
-    }
-    next = createGrid(cols, rows)
-    readColor()
-    draw()
-  },
-  onFrame: (context, dt) => {
-    ctx = context
-    if (!running.value) return
-    acc += dt
-    if (acc >= 1000 / fps.value) {
-      acc = 0
-      advance()
-    }
-  }
-}, { alwaysAnimate: true })
+const { pop, redraw, randomize, clear, place: placeCells, advance, paintAt } = useLifeBoard(canvasRef, wrapRef, {
+  cellSize,
+  stepMs: () => 1000 / fps.value,
+  seedDensity: 0.18,
+  alwaysAnimate: true,
+  running,
+  preserveOnResize: true,
+  draw: { grid: true },
+  onAdvance: () => generation.value++,
+  onReset: () => (generation.value = 0)
+})
 
 const toggle = () => (running.value = !running.value)
 const stepOnce = () => advance()
-const randomize = () => {
-  grid = seedRandom(cols, rows, 0.18)
-  next = createGrid(cols, rows)
-  generation.value = 0
-  draw()
-}
 const clearBoard = () => {
-  grid = createGrid(cols, rows)
-  next = createGrid(cols, rows)
-  generation.value = 0
   running.value = false
-  draw()
+  clear()
 }
+const place = (pattern: LifePattern) => placeCells(pattern.cells)
 
-// ---- painting ----
-const cellAt = (event: PointerEvent) => {
-  const rect = canvasRef.value?.getBoundingClientRect()
-  if (!rect) return null
-  return {
-    x: Math.floor((event.clientX - rect.left) / cellSize.value),
-    y: Math.floor((event.clientY - rect.top) / cellSize.value)
-  }
-}
 // left/normal paints live cells; shift or right-button erases
 let paintValue: 0 | 1 = 1
-const paint = (event: PointerEvent) => {
-  const pos = cellAt(event)
-  if (!pos || pos.x < 0 || pos.x >= cols || pos.y < 0 || pos.y >= rows) return
-  grid[index(cols, pos.x, pos.y)] = paintValue
-  draw()
-}
 const onDown = (event: PointerEvent) => {
   painting.value = true
   paintValue = event.shiftKey || event.button === 2 ? 0 : 1
-  paint(event)
+  paintAt(event, paintValue)
 }
 const onMove = (event: PointerEvent) => {
-  if (painting.value) paint(event)
+  if (painting.value) paintAt(event, paintValue)
 }
 
-// zoom the cell size; useCanvasScene refits (recomputes the grid) on redraw
+// zoom the cell size; useLifeBoard refits (preserving the pattern) on redraw
 const zoom = (delta: number) => {
   cellSize.value = Math.min(32, Math.max(8, cellSize.value + delta))
 }
 watch(cellSize, () => redraw())
-
-// ---- patterns (placed centred) ----
-const place = (pattern: LifePattern) => {
-  grid = placePattern(cols, rows, pattern.cells)
-  next = createGrid(cols, rows)
-  generation.value = 0
-  draw()
-}
 
 // re-read the accent and repaint on theme change (dims unchanged, no reseed)
 watch(useColorMode(), async () => {

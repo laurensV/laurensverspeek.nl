@@ -18,87 +18,32 @@
 </template>
 
 <script setup lang="ts">
-import { seedRandom, step as lifeStep, population, type Grid } from '~/utils/gameOfLife'
-import { drawGrid } from '~/utils/drawLife'
-
 // Conway's Game of Life as the hero centerpiece: a slow, toroidal cellular
 // automaton drawn as dim amber cells. Drag to seed live cells; a plain click
-// opens the full-page playground at /life. The simulation lives in the shared,
-// unit-tested ~/utils/gameOfLife; the canvas lifecycle in useCanvasScene.
+// opens the full-page playground at /life. All the grid/canvas mechanics live
+// in useLifeBoard — here we just add a soft paint brush and the click-to-open.
 
 const containerRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
 const colorMode = useColorMode()
 
 const CELL = 12 // css px per cell
-const STEP_MS = 150 // evolution tick
-const SEED_DENSITY = 0.16
-
-let ctx: CanvasRenderingContext2D | null = null
-let cols = 0
-let rows = 0
-let grid: Grid = new Uint8Array(0)
-let next: Grid = new Uint8Array(0)
-let acc = 0
 
 const painting = ref(false)
 
-let hsl = { h: 45, s: 100, l: 50 }
-const readColor = () => {
-  const style = getComputedStyle(document.documentElement)
-  hsl = {
-    h: parseFloat(style.getPropertyValue('--bulma-primary-h')) || 45,
-    s: parseFloat(style.getPropertyValue('--bulma-primary-s')) || 100,
-    l: parseFloat(style.getPropertyValue('--bulma-primary-l')) || 50
-  }
-}
-
-const idx = (x: number, y: number) => y * cols + x
-
-const seed = () => {
-  grid = seedRandom(cols, rows, SEED_DENSITY)
-  next = new Uint8Array(grid.length)
-}
-
-const step = () => {
-  lifeStep(grid, cols, rows, next)
-  ;[grid, next] = [next, grid]
-  // never let the board die out — reseed a soup if it gets too sparse
-  if (population(grid) < grid.length * 0.02) seed()
-}
-
-const draw = () => {
-  if (ctx) drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l, alpha: 0.5 })
-}
-
-const { redraw } = useCanvasScene(canvasRef, containerRef, {
-  onResize: (context, w, h) => {
-    ctx = context
-    const nextCols = Math.max(8, Math.floor(w / CELL))
-    const nextRows = Math.max(8, Math.floor(h / CELL))
-    if (nextCols !== cols || nextRows !== rows) {
-      cols = nextCols
-      rows = nextRows
-      seed()
-    }
-    readColor()
-    draw()
-  },
-  onFrame: (context, dt) => {
-    ctx = context
-    acc += dt
-    if (acc >= STEP_MS) {
-      acc = 0
-      step()
-      draw()
-    }
-  }
+const { redraw, draw, setCell, dims } = useLifeBoard(canvasRef, containerRef, {
+  cellSize: CELL,
+  stepMs: 150,
+  seedDensity: 0.16,
+  draw: { alpha: 0.5 },
+  autoReseed: true // ambient: never let the board die out
 })
 
-// paint live cells under the pointer (a small brush), for the interactive part
+// paint live cells under the pointer (a soft brush), for the interactive part
 const paintAt = (event: PointerEvent) => {
   const rect = containerRef.value?.getBoundingClientRect()
-  if (!rect || !grid.length) return
+  const { cols, rows } = dims()
+  if (!rect || !cols) return
   const cx = Math.floor((event.clientX - rect.left) / CELL)
   const cy = Math.floor((event.clientY - rect.top) / CELL)
   const r = painting.value ? 2 : 1
@@ -106,7 +51,7 @@ const paintAt = (event: PointerEvent) => {
     for (let dx = -r; dx <= r; dx++) {
       const x = cx + dx
       const y = cy + dy
-      if (x >= 0 && x < cols && y >= 0 && y < rows && Math.random() < 0.7) grid[idx(x, y)] = 1
+      if (x >= 0 && x < cols && y >= 0 && y < rows && Math.random() < 0.7) setCell(x, y, 1)
     }
   }
   draw()

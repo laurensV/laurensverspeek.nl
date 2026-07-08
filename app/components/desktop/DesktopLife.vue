@@ -25,119 +25,48 @@
 
 <script setup lang="ts">
 import { usePreferredReducedMotion } from '@vueuse/core'
-import { createGrid, seedRandom, step as lifeStep, population, index, type Grid } from '~/utils/gameOfLife'
-import { LIFE_PATTERNS, placePattern } from '~/utils/lifePatterns'
-import { drawGrid } from '~/utils/drawLife'
+import { LIFE_PATTERNS } from '~/utils/lifePatterns'
 
-// A compact Game of Life window for lvOS. Reuses the shared engine and the
-// useCanvasScene canvas lifecycle, so it stays tiny.
+// A compact Game of Life window for lvOS. All the grid/canvas mechanics live in
+// useLifeBoard; this just wires the toolbar.
 const CELL = 11
 
 const wrapRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
 
-let ctx: CanvasRenderingContext2D | null = null
-let cols = 0
-let rows = 0
-let grid: Grid = new Uint8Array(0)
-let next: Grid = new Uint8Array(0)
-let acc = 0
-
 const reducedMotion = usePreferredReducedMotion()
 const running = ref(reducedMotion.value !== 'reduce')
 const generation = ref(0)
-const pop = ref(0)
 const painting = ref(false)
 
-let hsl = { h: 45, s: 100, l: 50 }
-const readColor = () => {
-  const style = getComputedStyle(document.documentElement)
-  hsl = {
-    h: parseFloat(style.getPropertyValue('--bulma-primary-h')) || 45,
-    s: parseFloat(style.getPropertyValue('--bulma-primary-s')) || 100,
-    l: parseFloat(style.getPropertyValue('--bulma-primary-l')) || 50
-  }
-}
+const { pop, redraw, randomize, clear, place, paintAt } = useLifeBoard(canvasRef, wrapRef, {
+  cellSize: CELL,
+  stepMs: 130,
+  seedDensity: 0.2,
+  minDim: 6,
+  alwaysAnimate: true,
+  running,
+  onAdvance: () => generation.value++,
+  onReset: () => (generation.value = 0)
+})
 
-const draw = () => {
-  if (!ctx) return
-  drawGrid(ctx, grid, cols, rows, { cell: CELL, hue: hsl.h, sat: hsl.s, light: hsl.l })
-  pop.value = population(grid)
-}
-
-const advance = () => {
-  lifeStep(grid, cols, rows, next)
-  ;[grid, next] = [next, grid]
-  generation.value++
-  draw()
-}
-
-const { redraw } = useCanvasScene(canvasRef, wrapRef, {
-  onResize: (context, w, h) => {
-    ctx = context
-    const nextCols = Math.max(6, Math.floor(w / CELL))
-    const nextRows = Math.max(6, Math.floor(h / CELL))
-    if (nextCols !== cols || nextRows !== rows) {
-      cols = nextCols
-      rows = nextRows
-      grid = seedRandom(cols, rows, 0.2)
-      next = createGrid(cols, rows)
-    }
-    readColor()
-    draw()
-  },
-  onFrame: (context, dt) => {
-    ctx = context
-    if (!running.value) return
-    acc += dt
-    if (acc >= 130) {
-      acc = 0
-      advance()
-    }
-  }
-}, { alwaysAnimate: true })
-
-const randomize = () => {
-  grid = seedRandom(cols, rows, 0.2)
-  next = createGrid(cols, rows)
-  generation.value = 0
-  draw()
-}
 const clearBoard = () => {
-  grid = createGrid(cols, rows)
-  next = createGrid(cols, rows)
-  generation.value = 0
   running.value = false
-  draw()
+  clear()
 }
 const onPattern = (event: Event) => {
   const select = event.target as HTMLSelectElement
   const pattern = LIFE_PATTERNS.find((p) => p.name === select.value)
-  if (pattern) {
-    grid = placePattern(cols, rows, pattern.cells)
-    next = createGrid(cols, rows)
-    generation.value = 0
-    draw()
-  }
+  if (pattern) place(pattern.cells)
   select.value = ''
 }
 
-const paint = (event: PointerEvent) => {
-  const rect = canvasRef.value?.getBoundingClientRect()
-  if (!rect) return
-  const x = Math.floor((event.clientX - rect.left) / CELL)
-  const y = Math.floor((event.clientY - rect.top) / CELL)
-  if (x >= 0 && x < cols && y >= 0 && y < rows) {
-    grid[index(cols, x, y)] = 1
-    draw()
-  }
-}
 const onDown = (event: PointerEvent) => {
   painting.value = true
-  paint(event)
+  paintAt(event)
 }
 const onMove = (event: PointerEvent) => {
-  if (painting.value) paint(event)
+  if (painting.value) paintAt(event)
 }
 
 watch(useColorMode(), async () => {
