@@ -199,4 +199,8 @@ test('subpages show a pwd-style breadcrumb with clickable parents', async ({ pag
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   await expect(page.locator('.crumbs')).toHaveCount(0)
+  // /life opts out: the strip would shrink its full-viewport board
+  await page.goto('/life')
+  await expect(page.locator('.life-canvas')).toBeVisible()
+  await expect(page.locator('.crumbs')).toHaveCount(0)
 })

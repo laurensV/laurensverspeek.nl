@@ -18,10 +18,13 @@
 
 <script setup lang="ts">
 // The current URL rendered as `pwd` output: every parent segment is a link.
-// Hidden on the home page (~ alone is not much of a trail).
+// Hidden on the home page (~ alone is not much of a trail) and on full-height
+// app pages that opt out with `definePageMeta({ breadcrumb: false })` — their
+// viewport-sized layouts can't afford the extra strip.
 const route = useRoute()
 
 const segments = computed(() => {
+  if (route.meta.breadcrumb === false) return []
   const parts = route.path.split('/').filter(Boolean)
   return parts.map((part, i) => ({
     label: part,

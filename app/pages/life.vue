@@ -47,6 +47,9 @@
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { LIFE_PATTERNS, type LifePattern } from '~/utils/lifePatterns'
 
+// full-viewport app page: the pwd breadcrumb strip would eat into the board
+definePageMeta({ breadcrumb: false })
+
 const ogImage = `${SITE_URL}/og/life.svg`
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
 useSeoMeta({
