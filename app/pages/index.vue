@@ -364,4 +364,16 @@ const areas: { icon: IconName; title: string; description: string }[] = [
     transform: translateY(-4px);
   }
 }
+
+// links settle slightly on press for tactile feedback
+.latest-post:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-area:hover,
+  .latest-post:active {
+    transform: none;
+  }
+}
 </style>

@@ -62,6 +62,16 @@ test('blog index lists the newest post and it opens', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('a window manager in a div')
 })
 
+test('project cards lift on hover', async ({ page }) => {
+  await page.goto('/projects')
+  const card = page.locator('.project-card').first()
+  await card.hover()
+  // the hover lift applies a transform (translateY) — proves the interaction is live
+  await expect
+    .poll(() => card.evaluate((el) => getComputedStyle(el).transform))
+    .not.toBe('none')
+})
+
 test('project filters narrow the grid', async ({ page }) => {
   await page.goto('/projects')
   // leaving cards are display:none during the transition, so count only visible
