@@ -199,6 +199,18 @@ test('hovering a taskbar item peeks its window', async ({ page }) => {
   await expect(page.locator('.lvos-window.is-peek')).toHaveCount(0)
 })
 
+test('lvOS Game of Life app opens, runs and clears', async ({ page }) => {
+  await bootDesktop(page)
+  // close the readme window that opens over the icon column on boot
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^life$/ }).click()
+  await page.locator('.desktop-life').waitFor()
+  await expect(page.locator('.dl-canvas')).toBeVisible()
+  // clear resets the generation counter
+  await page.locator('.dl-btn', { hasText: '✕' }).click()
+  await expect(page.locator('.dl-stat')).toContainText('gen 0')
+})
+
 test('shows a right-click context menu on the desktop', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos').click({ button: 'right', position: { x: 600, y: 400 } })

@@ -142,6 +142,7 @@
           <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
           <LazyDesktopClock v-else-if="win.id === 'clock'" />
           <LazyDesktopNotes v-else-if="win.id === 'notes'" />
+          <LazyDesktopLife v-else-if="win.id === 'life'" />
           <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         </div>
 
@@ -206,6 +207,7 @@ const WINDOW_TITLES: Record<string, string> = {
   calc: 'calculator',
   clock: 'clock',
   notes: 'sticky notes',
+  life: 'game of life',
   terminal: 'lvsh — terminal'
 }
 
@@ -337,6 +339,7 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'calc', label: 'calculator', icon: 'hash', action: () => openWindow('calc') },
   { id: 'clock', label: 'clock', icon: 'sun', action: () => openWindow('clock') },
   { id: 'notes', label: 'notes', icon: 'type', action: () => openWindow('notes') },
+  { id: 'life', label: 'life', icon: 'zap', action: () => openWindow('life') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
