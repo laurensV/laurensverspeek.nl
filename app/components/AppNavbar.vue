@@ -95,26 +95,14 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
 const mobileMenu = ref(false)
 const palette = useCommandPalette()
 const terminal = useTerminal()
 
-// scroll-aware divider: the bar grows a hairline + shadow once you leave the
-// top, and drives the reading-progress rail along its bottom edge
-const scrolled = ref(false)
-const progress = ref(0)
-const onScroll = () => {
-  const { scrollY, innerHeight } = window
-  scrolled.value = scrollY > 12
-  const scrollable = document.documentElement.scrollHeight - innerHeight
-  progress.value = scrollable > 0 ? Math.min(scrollY / scrollable, 1) : 0
-}
-useEventListener('scroll', onScroll, { passive: true })
-useEventListener('resize', onScroll, { passive: true })
-onMounted(onScroll)
+// scroll-aware divider + the reading-progress rail along the bottom edge
+const { scrolled, progress } = useScrollProgress()
 
 const openPalette = () => {
   mobileMenu.value = false
@@ -125,71 +113,9 @@ const openTerminal = () => {
   terminal.open()
 }
 
-// Lock the page while the full-screen menu is open. Toggling body.overflow
-// alone isn't enough on touch browsers: the page keeps scrolling underneath,
-// dragging the sticky navbar (and its [close] button) out of reach. Freezing
-// the document with position:fixed is the robust cross-browser lock — we stash
-// the scroll offset and restore it on close.
-let lockedScrollY = 0
-const lockScroll = () => {
-  lockedScrollY = window.scrollY
-  const { style } = document.body
-  style.position = 'fixed'
-  style.top = `-${lockedScrollY}px`
-  style.left = '0'
-  style.right = '0'
-  style.width = '100%'
-}
-const unlockScroll = () => {
-  const { style } = document.body
-  style.position = ''
-  style.top = ''
-  style.left = ''
-  style.right = ''
-  style.width = ''
-  window.scrollTo(0, lockedScrollY)
-}
-// the mobile menu is a modal dialog: freeze the page, move focus into it, and
-// restore focus to the trigger when it closes (so keyboard/AT users aren't
-// stranded). Escape closes it; Tab is trapped inside.
+// the mobile menu behaves as a modal dialog: scroll lock, focus trap, Escape
 const menuEl = ref<HTMLElement | null>(null)
-let lastFocused: HTMLElement | null = null
-
-watch(mobileMenu, async (open) => {
-  if (!import.meta.client) return
-  if (open) {
-    lastFocused = document.activeElement as HTMLElement | null
-    lockScroll()
-    await nextTick()
-    menuEl.value?.querySelector<HTMLElement>('a, button')?.focus()
-  } else {
-    unlockScroll()
-    lastFocused?.focus()
-  }
-})
-onUnmounted(() => {
-  if (import.meta.client && mobileMenu.value) unlockScroll()
-})
-
-const onMenuKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    mobileMenu.value = false
-    return
-  }
-  if (e.key !== 'Tab' || !menuEl.value) return
-  const focusable = [...menuEl.value.querySelectorAll<HTMLElement>('a, button')]
-  if (!focusable.length) return
-  const first = focusable[0]!
-  const last = focusable[focusable.length - 1]!
-  const active = document.activeElement
-  if (e.shiftKey && active === first) {
-    e.preventDefault()
-    last.focus()
-  } else if (!e.shiftKey && active === last) {
-    e.preventDefault()
-    first.focus()
-  }
-}
+const { onKeydown: onMenuKeydown } = useModalMenu(mobileMenu, menuEl)
 
 // Brand: hovering "expands" the ~ into /home, the way a shell would.
 // Frames type /home out character by character (and back again on leave).
@@ -232,41 +158,8 @@ const navItems = [
   { to: '/contact', label: 'contact' }
 ]
 
-// hover effect: characters cycle through glyphs and "decode" into the label.
-// ASCII-only set: exotic glyphs can fall back to a non-mono font and shift widths.
-const GLYPHS = '!<>-_\\/[]{}=+*^?#$%&'
-const timers = new WeakMap<HTMLElement, ReturnType<typeof setInterval>>()
-
-const scramble = (el: HTMLElement, text: string) => {
-  const existing = timers.get(el)
-  if (existing) clearInterval(existing)
-
-  // lock the current width so random glyphs can never shift the layout
-  el.style.width = `${el.getBoundingClientRect().width}px`
-  el.style.display = 'inline-block'
-
-  let frame = 0
-  const totalFrames = text.length * 2 + 4
-  const timer = setInterval(() => {
-    frame++
-    const settled = Math.floor((frame / totalFrames) * text.length)
-    el.textContent = [...text]
-      .map((ch, i) =>
-        i < settled || ch === ' '
-          ? ch
-          : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
-      )
-      .join('')
-    if (frame >= totalFrames) {
-      el.textContent = text
-      el.style.width = ''
-      el.style.display = ''
-      clearInterval(timer)
-      timers.delete(el)
-    }
-  }, 28)
-  timers.set(el, timer)
-}
+// hover effect: nav labels "decode" out of glyph noise
+const { scramble } = useTextScramble()
 </script>
 
 <style scoped lang="scss">
