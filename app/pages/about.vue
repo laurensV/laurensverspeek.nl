@@ -133,7 +133,7 @@ const skillTree = computed<SkillNode[]>(() => {
 
 const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="tok-type">Developer</span> = {
   location: <span class="tok-str">'The Netherlands'</span>,
-  roles: [<span class="tok-str">'CTO @ Nosana'</span>,
+  roles: [<span class="tok-str">'head of dev @ Nosana'</span>,
           <span class="tok-str">'full-stack dev'</span>],
   languages: [<span class="tok-str">'TypeScript'</span>,
               <span class="tok-str">'Rust'</span>],

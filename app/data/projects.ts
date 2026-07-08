@@ -44,11 +44,11 @@ export const projects: Project[] = [
     url: 'https://nosana.io',
     featured: true,
     year: '2021 — now',
-    role: 'Co-founder & CTO',
+    role: 'Head of Development',
     story: [
       'Nosana started as a decentralized CI/CD platform: instead of renting build servers from a cloud provider, pipelines would run on a permissionless network of nodes, paid in the NOS token on Solana.',
       'As the AI wave hit, we pivoted the same infrastructure to something the market needed even more: GPU compute. Today Nosana is a decentralized GPU grid where anyone with a graphics card can earn by running AI inference workloads, and teams can access affordable compute without a big cloud contract.',
-      'As CTO I lead the technical direction: the Solana programs (staking, jobs, rewards), the node software that turns a gaming PC into a compute provider, and the marketplace that ties it all together.'
+      'As Head of Development I lead the technical direction: the Solana programs (staking, jobs, rewards), the node software that turns a gaming PC into a compute provider, and the marketplace that ties it all together.'
     ]
   },
   {

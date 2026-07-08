@@ -8,13 +8,13 @@ export const profile = {
   roles: [
     'full-stack developer',
     'blockchain engineer',
-    'co-founder @ Nosana',
+    'head of development @ Nosana',
     'co-founder @ Effect.AI',
     'computer scientist'
   ],
   bio: [
     'Hey, I am Laurens — a full-stack developer with a background in Computer Science and a love for blockchain.',
-    'I co-founded Effect.AI, a blockchain-powered micro-tasking platform providing work for thousands of people around the globe, and Nosana, a decentralized GPU compute grid on Solana powering AI inference workloads.'
+    'I co-founded Effect.AI, a blockchain-powered micro-tasking platform providing work for thousands of people around the globe. Today I am Head of Development at Nosana, a decentralized GPU compute grid on Solana powering AI inference workloads.'
   ],
   socials: [
     { label: 'GitHub', icon: 'github', url: 'https://github.com/laurensV' },
@@ -43,9 +43,9 @@ export const profile = {
   timeline: [
     {
       period: '2021 — now',
-      title: 'Co-founder & CTO — Nosana',
+      title: 'Head of Development — Nosana',
       description:
-        'Building a decentralized GPU compute grid on Solana: from decentralized CI/CD pipelines to a marketplace for AI inference.'
+        'Leading development of a decentralized GPU compute grid on Solana: from decentralized CI/CD pipelines to a marketplace for AI inference.'
     },
     {
       period: '2017 — 2021',
