@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame } from '~/utils/terminalGames'
 import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
@@ -49,6 +49,13 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
         ctx.startGame(create2048Game)
+      }
+    },
+    wpm: {
+      description: 'Typing test — how fast are you really?',
+      exec: () => {
+        muted('Starting typing test... just start typing, Backspace fixes, Esc quits.')
+        ctx.startGame(createWpmGame)
       }
     },
     top: {

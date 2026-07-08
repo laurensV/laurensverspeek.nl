@@ -249,3 +249,14 @@ test('git command replays the real repo history', async ({ page }) => {
   await run(page, 'git status')
   await expect(out).toContainText('working tree clean')
 })
+
+test('wpm starts a typing test that reacts to typing and Esc', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'wpm')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toContainText('WPM TEST')
+  await page.keyboard.type('abc')
+  await expect(frame).toContainText('% acc')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.terminal-output')).toContainText('aborted')
+})

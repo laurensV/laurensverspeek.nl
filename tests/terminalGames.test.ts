@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createSnakeGame, createTetrisGame, create2048Game, type GameCallbacks } from '~/utils/terminalGames'
+import { createSnakeGame, createTetrisGame, create2048Game, createWpmGame, wpmStats, type GameCallbacks } from '~/utils/terminalGames'
 
 // the games persist high scores; give them an in-memory localStorage
 const storage = new Map<string, string>()
@@ -106,5 +106,65 @@ describe('createSnakeGame', () => {
     const game = createSnakeGame(callbacks)
     game.onKey('q')
     expect(ended[0]![0]).toContain('terminated')
+  })
+})
+
+describe('createWpmGame', () => {
+  it('shows the passage with a cursor marker before any typing', () => {
+    const { frames, callbacks } = makeCallbacks()
+    createWpmGame(callbacks)
+    expect(frames[0]).toContain('WPM TEST')
+    expect(frames[0]).toContain('_')
+  })
+
+  it('marks hits and misses under the passage', () => {
+    const { frames, callbacks } = makeCallbacks()
+    const game = createWpmGame(callbacks)
+    const firstChar = frames[0]!.split('\n')[2]!.trim()[0]!
+    // the passage text itself may contain an x, so only inspect the marker row
+    const markerRow = () => frames.at(-1)!.split('\n')[3]!
+    expect(game.onKey(firstChar)).toBe(true) // correct
+    expect(markerRow()).toContain('·')
+    game.onKey('%') // definitely wrong: passages are lowercase words
+    expect(markerRow()).toContain('x')
+    // backspace erases the miss again
+    game.onKey('Backspace')
+    expect(markerRow()).not.toContain('x')
+  })
+
+  it('ignores non-printable keys and aborts on Escape', () => {
+    const { ended, callbacks } = makeCallbacks()
+    const game = createWpmGame(callbacks)
+    expect(game.onKey('ArrowLeft')).toBe(false)
+    expect(game.onKey('Escape')).toBe(true)
+    expect(ended[0]!.join('\n')).toContain('aborted')
+  })
+
+  it('finishes with wpm, accuracy and a high score line', () => {
+    const { frames, ended, callbacks } = makeCallbacks()
+    const game = createWpmGame(callbacks)
+    // reconstruct the passage from the rendered frame (text/marker rows alternate)
+    const rows = frames[0]!.split('\n').slice(2, -2)
+    const passage = rows.filter((_, i) => i % 2 === 0).map((row) => row.slice(2)).join(' ')
+    for (const ch of passage) {
+      vi.advanceTimersByTime(20) // let the clock move so wpm is finite
+      game.onKey(ch)
+    }
+    expect(ended).toHaveLength(1)
+    const summary = ended[0]!.join('\n')
+    expect(summary).toContain('wpm')
+    expect(summary).toContain('100% accuracy')
+    expect(summary).toContain('high score')
+  })
+})
+
+describe('wpmStats', () => {
+  it('computes words per minute at 5 chars per word', () => {
+    expect(wpmStats(300, 300, 0, 60_000).wpm).toBe(60)
+    expect(wpmStats(150, 160, 10, 30_000)).toEqual({ wpm: 60, accuracy: 94 })
+  })
+
+  it('is safe before the clock starts', () => {
+    expect(wpmStats(0, 0, 0, 0)).toEqual({ wpm: 0, accuracy: 100 })
   })
 })
