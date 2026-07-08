@@ -16,6 +16,14 @@ test('boots through the BIOS screen into the desktop', async ({ page }) => {
   await expect(page.locator('.lvos-taskbar')).toContainText('lvOS')
 })
 
+test('boot logo sits flush on the dark screen (no stray pre panel)', async ({ page }) => {
+  await page.goto('/desktop')
+  const logo = page.locator('.boot-logo')
+  await logo.waitFor({ timeout: 8000 })
+  // Bulma's default <pre> background must be reset, or a pale block shows at top
+  await expect(logo).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+})
+
 test('opens the calculator and evaluates an expression', async ({ page }) => {
   await bootDesktop(page)
   // move the readme window off the icon column first

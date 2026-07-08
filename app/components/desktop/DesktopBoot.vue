@@ -72,7 +72,11 @@ onMounted(() => {
 }
 
 .boot-logo {
+  // reset Bulma's default <pre> chrome (light background + padding) so the logo
+  // sits flush on the dark boot screen instead of inside a pale panel
   margin-bottom: 1.5rem;
+  padding: 0;
+  background: none;
   color: var(--bulma-primary);
   font-size: 0.85rem;
   line-height: 1.2;
