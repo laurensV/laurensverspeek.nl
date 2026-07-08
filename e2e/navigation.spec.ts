@@ -54,6 +54,18 @@ test('Escape closes the mobile menu and restores focus to the toggle', async ({ 
   await expect(page.locator('.nav-toggle')).toBeFocused()
 })
 
+test('scroll-progress rail fills as the page scrolls', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 500 })
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const fill = page.locator('.scroll-rail-fill')
+  const scaleAt = async () =>
+    fill.evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).a)
+  expect(await scaleAt()).toBeCloseTo(0, 1)
+  await page.mouse.wheel(0, 1200)
+  await expect.poll(scaleAt).toBeGreaterThan(0)
+})
+
 test('mobile menu search opens the palette', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 780 })
   await page.goto('/')

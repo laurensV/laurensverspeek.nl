@@ -42,6 +42,11 @@
       </button>
     </div>
 
+    <!-- reading-progress rail along the navbar's bottom edge -->
+    <div class="scroll-rail" aria-hidden="true">
+      <div class="scroll-rail-fill" :style="{ transform: `scaleX(${progress})` }" />
+    </div>
+
     <!-- full-screen mobile menu (teleported so the navbar's backdrop-filter
          doesn't become its containing block and collapse it) -->
     <Teleport to="body">
@@ -97,11 +102,19 @@ const mobileMenu = ref(false)
 const palette = useCommandPalette()
 const terminal = useTerminal()
 
-// scroll-aware divider: the bar grows a hairline + shadow once you leave the top
+// scroll-aware divider: the bar grows a hairline + shadow once you leave the
+// top, and drives the reading-progress rail along its bottom edge
 const scrolled = ref(false)
-useEventListener('scroll', () => {
-  scrolled.value = window.scrollY > 12
-}, { passive: true })
+const progress = ref(0)
+const onScroll = () => {
+  const { scrollY, innerHeight } = window
+  scrolled.value = scrollY > 12
+  const scrollable = document.documentElement.scrollHeight - innerHeight
+  progress.value = scrollable > 0 ? Math.min(scrollY / scrollable, 1) : 0
+}
+useEventListener('scroll', onScroll, { passive: true })
+useEventListener('resize', onScroll, { passive: true })
+onMounted(onScroll)
 
 const openPalette = () => {
   mobileMenu.value = false
@@ -274,6 +287,28 @@ const scramble = (el: HTMLElement, text: string) => {
     box-shadow: 0 4px 20px hsla(var(--lv-scheme-hs), 4%, 0.28);
     background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.85);
   }
+}
+
+// reading-progress rail hugging the navbar's bottom edge
+.scroll-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+}
+
+.scroll-rail-fill {
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(
+    90deg,
+    hsla(var(--lv-primary-hsl), 0.5),
+    var(--bulma-primary)
+  );
+  // no transition: it tracks the scroll position 1:1 (jank-free, motion-safe)
 }
 
 .nav-inner {
