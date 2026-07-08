@@ -147,6 +147,23 @@ test('home shows terminal-style skill cards', async ({ page }) => {
   await expect(page.locator('.skill-file', { hasText: 'blockchain.sol' })).toBeVisible()
 })
 
+test('blog headings expose a copyable deep-link anchor', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/blog/game-of-life-everywhere')
+  // clear the one-time boot splash so it doesn't intercept the click
+  await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
+  const heading = page.locator('.post-body h2[id]').first()
+  const anchor = heading.locator('.heading-anchor')
+  await expect(anchor).toHaveCount(1)
+  // the heading sits under the sticky navbar when scrolled to, so dispatch the
+  // click on the anchor directly — it still fires the copy handler
+  await anchor.evaluate((el) => (el as HTMLElement).click())
+  // click copies the section URL and updates the address bar hash
+  expect(page.url()).toContain('#')
+  const clip = await page.evaluate(() => navigator.clipboard.readText())
+  expect(clip).toContain('#')
+})
+
 test('blog code blocks highlight called-out lines', async ({ page }) => {
   await page.goto('/blog/game-of-life-everywhere')
   const hl = page.locator('.post-body .line.highlight').first()

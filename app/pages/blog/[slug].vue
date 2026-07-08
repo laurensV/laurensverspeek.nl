@@ -220,6 +220,31 @@ onMounted(() => {
     pre.appendChild(button)
   })
 })
+
+// ---- copyable deep-link anchors on section headings ----
+onMounted(() => {
+  const headings = bodyRef.value?.querySelectorAll<HTMLElement>('h2[id], h3[id]')
+  headings?.forEach((heading) => {
+    if (heading.querySelector('.heading-anchor')) return
+    const anchor = document.createElement('a')
+    anchor.className = 'heading-anchor is-family-code'
+    anchor.href = `#${heading.id}`
+    anchor.setAttribute('aria-label', 'Copy a link to this section')
+    anchor.textContent = '#'
+    anchor.addEventListener('click', (event) => {
+      event.preventDefault()
+      history.replaceState(null, '', `#${heading.id}`)
+      navigator.clipboard
+        ?.writeText(`${location.origin}${location.pathname}#${heading.id}`)
+        .then(() => {
+          anchor.classList.add('is-copied')
+          setTimeout(() => anchor.classList.remove('is-copied'), 1200)
+        })
+        .catch(() => {})
+    })
+    heading.appendChild(anchor)
+  })
+})
 </script>
 
 <style scoped lang="scss">
@@ -373,6 +398,36 @@ onMounted(() => {
     padding: 1.25rem;
     font-size: 0.85em;
     overflow-x: auto;
+  }
+
+  // a copyable "#" deep-link that appears on heading hover/focus
+  :deep(h2),
+  :deep(h3) {
+    scroll-margin-top: 5rem;
+  }
+
+  :deep(.heading-anchor) {
+    margin-left: 0.4rem;
+    color: var(--bulma-primary);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  :deep(h2:hover) .heading-anchor,
+  :deep(h3:hover) .heading-anchor,
+  :deep(.heading-anchor:focus-visible) {
+    opacity: 0.75;
+  }
+
+  :deep(.heading-anchor.is-copied) {
+    opacity: 1;
+  }
+
+  :deep(.heading-anchor.is-copied)::after {
+    content: ' link copied';
+    font-size: 0.6em;
+    color: var(--bulma-text-weak);
   }
 
   // render the code as a grid so a highlighted line can span the full width
