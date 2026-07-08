@@ -58,6 +58,12 @@ test('hero renders the game-of-life canvas and reacts to the pointer', async ({ 
   await page.mouse.up()
 })
 
+test('home shows terminal-style skill cards', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.skill-card')).toHaveCount(3)
+  await expect(page.locator('.skill-file', { hasText: 'blockchain.sol' })).toBeVisible()
+})
+
 test('blog index lists the newest post and it opens', async ({ page }) => {
   await page.goto('/blog')
   const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })
