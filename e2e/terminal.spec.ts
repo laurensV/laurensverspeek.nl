@@ -278,3 +278,18 @@ test('contact --qr prints a scannable ascii contact card', async ({ page }) => {
   await expect(qr).toBeVisible()
   await expect(page.locator('.terminal-output')).toContainText('contact.vcf')
 })
+
+test('aliases and exported env vars survive a reload', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'alias hi=echo hello-again')
+  await run(page, 'export FAVE=amber')
+  await page.reload()
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  const out = page.locator('.terminal-output')
+  await run(page, 'hi')
+  await expect(out).toContainText('hello-again')
+  await run(page, 'echo $FAVE')
+  await expect(out).toContainText('amber')
+})

@@ -7,6 +7,7 @@ import { expandEnv, parseCommandLine, applyFilter, splitOutputRedirect, stripHtm
 import { completeInput } from '~/utils/terminal/completion'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
+import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
@@ -155,6 +156,16 @@ export function useTerminal() {
   const savedFs = loadFs()
   if (savedFs && Object.keys(savedFs).length) ctx.files.value = savedFs
   if (import.meta.client) watch(ctx.files, (fs) => saveFs(fs), { deep: true })
+
+  // aliases and exported env vars get the same treatment
+  const savedAliases = loadAliases()
+  if (savedAliases) ctx.aliases.value = savedAliases
+  const savedEnv = loadEnvExtras()
+  if (savedEnv) ctx.env.value = { ...ctx.env.value, ...savedEnv }
+  if (import.meta.client) {
+    watch(ctx.aliases, (aliases) => saveAliases(aliases), { deep: true })
+    watch(ctx.env, (env) => saveEnvExtras(env), { deep: true })
+  }
 
   // keep $USER / $HOME in sync when the visitor renames themselves
   watch(identityName, (n) => {
