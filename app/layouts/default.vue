@@ -5,6 +5,7 @@
     <div class="site-content">
       <AppNavbar />
       <main id="main-content" tabindex="-1">
+        <PathBreadcrumbs />
         <slot />
       </main>
       <AppFooter />

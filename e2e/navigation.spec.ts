@@ -187,3 +187,16 @@ test('vim scrolling stays instant under reduced motion and quiet in inputs', asy
   await page.keyboard.press('j')
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })
+
+test('subpages show a pwd-style breadcrumb with clickable parents', async ({ page }) => {
+  await page.goto('/blog/snake-in-the-terminal')
+  const crumbs = page.locator('.crumbs')
+  await expect(crumbs).toBeVisible()
+  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('snake-in-the-terminal')
+  await crumbs.locator('.crumbs-link', { hasText: 'blog' }).click()
+  await expect(page).toHaveURL(/\/blog\/?$/)
+  // the home page keeps no trail
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.crumbs')).toHaveCount(0)
+})
