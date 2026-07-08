@@ -49,6 +49,19 @@ test('switches accent color via colorscheme', async ({ page }) => {
     .toBe('152deg')
 })
 
+test('cal prints the current month, which resolves builtins, uname reports the system', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'cal')
+  const out = page.locator('.terminal-output')
+  await expect(out).toContainText('Su Mo Tu We Th Fr Sa')
+  await run(page, 'which help')
+  await expect(out).toContainText('help: lvsh builtin')
+  await run(page, 'which nope-not-real')
+  await expect(out).toContainText('which: no nope-not-real in (lvsh builtins)')
+  await run(page, 'uname -a')
+  await expect(out).toContainText('lvsh laurensverspeek.nl 2.0.0')
+})
+
 test('tab-completes command names and arguments', async ({ page }) => {
   await openTerminal(page)
   await page.fill('#terminal-input', 'colorsc')

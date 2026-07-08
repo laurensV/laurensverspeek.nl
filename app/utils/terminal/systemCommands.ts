@@ -1,4 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
+import { renderCalendar } from '~/utils/terminal/calendar'
 import { profile } from '~/data/profile'
 
 // Shell housekeeping: help, theme, utilities and other meta commands.
@@ -181,6 +182,39 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     date: {
       description: 'Print the current date',
       exec: () => out(new Date().toString())
+    },
+    cal: {
+      description: 'Show a calendar of the current month',
+      exec: () => {
+        const lines = renderCalendar(new Date())
+        lines.forEach((line, i) => push(i === 0 ? 'primary' : i === 1 ? 'muted' : 'output', line))
+      }
+    },
+    uname: {
+      usage: 'uname [-a]',
+      description: 'Print system information',
+      argCandidates: () => ['-a'],
+      exec: (args) =>
+        out(args.includes('-a')
+          ? `lvsh ${profile.domain} 2.0.0 #1 SMP Vue3 x86_64 lvOS`
+          : 'lvsh')
+    },
+    which: {
+      usage: 'which <command>',
+      description: 'Locate a command (builtin or alias)',
+      argCandidates: () => Object.keys(ctx.getCommands()).filter((n) => !ctx.getCommands()[n]!.hidden),
+      exec: (args) => {
+        if (!args.length) {
+          error('usage: which <command>')
+          return
+        }
+        for (const arg of args) {
+          const name = arg.toLowerCase()
+          if (name in ctx.aliases.value) out(`${name}: aliased to '${ctx.aliases.value[name]}'`)
+          else if (ctx.getCommands()[name]) out(`${name}: lvsh builtin`)
+          else error(`which: no ${arg} in (lvsh builtins)`)
+        }
+      }
     },
     history: {
       description: 'Show command history',
