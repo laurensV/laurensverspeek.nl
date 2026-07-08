@@ -18,6 +18,7 @@
       <p class="is-family-code is-size-7 has-text-weight-normal terminal-hint">
         press <kbd>~</kbd> or
         <a class="is-family-code" @click.prevent="open">click here</a> for terminal mode
+        · <a class="is-family-code" @click.prevent="bootDesktop">boot lvOS</a>
       </p>
     </div>
   </footer>
@@ -28,6 +29,8 @@ import { profile } from '~/data/profile'
 import type { IconName } from '~/components/AppIcon.vue'
 
 const { open } = useTerminal()
+const { desktopActive } = useSiteEffects()
+const bootDesktop = () => (desktopActive.value = true)
 </script>
 
 <style scoped lang="scss">

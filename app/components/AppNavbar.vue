@@ -1,5 +1,10 @@
 <template>
-  <nav class="app-navbar is-family-code" role="navigation" aria-label="main navigation">
+  <nav
+    class="app-navbar is-family-code"
+    :class="{ 'is-scrolled': scrolled }"
+    role="navigation"
+    aria-label="main navigation"
+  >
     <div class="container nav-inner">
       <NuxtLink
         to="/"
@@ -12,6 +17,21 @@
         <span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(master)</span>
       </NuxtLink>
 
+      <div class="nav-links is-hidden-touch">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.to"
+          class="nav-link"
+          :to="item.to"
+          exact-active-class="is-active"
+          @mouseenter="scramble($event.currentTarget as HTMLElement, item.label)"
+        >{{ item.label }}</NuxtLink>
+        <button class="nav-search" aria-label="Search (Ctrl+K)" title="Search — Ctrl+K" @click="palette.open()">
+          <AppIcon name="search" :size="14" />
+          <span class="nav-search-kbd">⌘K</span>
+        </button>
+      </div>
+
       <button
         class="nav-toggle is-hidden-desktop"
         :aria-expanded="mobileMenu"
@@ -20,24 +40,74 @@
       >
         {{ mobileMenu ? '[close]' : '[menu]' }}
       </button>
+    </div>
 
-      <div class="nav-links" :class="{ 'is-open': mobileMenu }">
+    <!-- full-screen mobile menu -->
+    <Transition name="mobile-menu">
+      <div v-if="mobileMenu" class="mobile-menu is-hidden-desktop">
+        <button class="mobile-search" @click="openPalette">
+          <AppIcon name="search" :size="16" />
+          <span>search everything…</span>
+          <span class="mobile-search-kbd">⌘K</span>
+        </button>
         <NuxtLink
-          v-for="item in navItems"
+          v-for="(item, i) in navItems"
           :key="item.to"
-          class="nav-link"
+          class="mobile-link"
+          :style="{ '--i': i }"
           :to="item.to"
           exact-active-class="is-active"
           @click="mobileMenu = false"
-          @mouseenter="scramble($event.currentTarget as HTMLElement, item.label)"
-        >{{ item.label }}</NuxtLink>
+        >
+          <span class="mobile-link-index">0{{ i + 1 }}</span>
+          {{ item.label }}
+        </NuxtLink>
+        <div class="mobile-footer">
+          <button class="mobile-action" @click="openTerminal">>_ terminal</button>
+          <a
+            v-for="social in profile.socials"
+            :key="social.label"
+            :href="social.url"
+            target="_blank"
+            rel="noopener"
+            class="mobile-action"
+          >{{ social.label.toLowerCase() }}</a>
+        </div>
       </div>
-    </div>
+    </Transition>
   </nav>
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
+import { profile } from '~/data/profile'
+
 const mobileMenu = ref(false)
+const palette = useCommandPalette()
+const terminal = useTerminal()
+
+// scroll-aware divider: the bar grows a hairline + shadow once you leave the top
+const scrolled = ref(false)
+useEventListener('scroll', () => {
+  scrolled.value = window.scrollY > 12
+}, { passive: true })
+
+const openPalette = () => {
+  mobileMenu.value = false
+  palette.open()
+}
+const openTerminal = () => {
+  mobileMenu.value = false
+  terminal.open()
+}
+
+// lock body scroll while the full-screen menu is open
+watch(mobileMenu, (open) => {
+  if (import.meta.client) document.body.style.overflow = open ? 'hidden' : ''
+})
+onUnmounted(() => {
+  if (import.meta.client) document.body.style.overflow = ''
+})
 
 // Brand: hovering "expands" the ~ into /home, the way a shell would.
 // Frames type /home out character by character (and back again on leave).
@@ -126,6 +196,15 @@ const scramble = (el: HTMLElement, text: string) => {
     0.72
   );
   backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+
+  // hairline + subtle shadow appear once scrolled off the top
+  &.is-scrolled {
+    border-bottom-color: var(--bulma-border-weak);
+    box-shadow: 0 4px 20px hsla(var(--lv-scheme-hs), 4%, 0.28);
+    background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.85);
+  }
 }
 
 .nav-inner {
@@ -256,29 +335,130 @@ const scramble = (el: HTMLElement, text: string) => {
   }
 }
 
-// mobile: full-width dropdown under the bar
-@media screen and (max-width: 1023px) {
-  .nav-links {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
-    padding: 0.5rem 1rem 1rem;
-    background-color: var(--bulma-scheme-main);
-    border-bottom: 1px solid var(--bulma-border-weak);
-    display: none;
+// desktop search affordance
+.nav-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: 2px;
+  background: none;
+  color: var(--bulma-text-weak);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
 
-    &.is-open {
-      display: flex;
-    }
+  .nav-search-kbd {
+    font-size: 0.72rem;
+    opacity: 0.7;
+  }
 
-    .nav-link {
-      padding: 0.6rem 0;
-      width: 100%;
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+    border-color: hsla(var(--lv-primary-hsl), 0.5);
+  }
+}
+
+// full-screen mobile menu
+.mobile-menu {
+  position: fixed;
+  inset: 3.25rem 0 0;
+  z-index: 29;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.5rem 2rem;
+  background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.98);
+  backdrop-filter: blur(16px);
+  overflow-y: auto;
+}
+
+.mobile-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: var(--bulma-radius);
+  background-color: var(--bulma-scheme-main-bis);
+  color: var(--bulma-text-weak);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+
+  .mobile-search-kbd {
+    margin-left: auto;
+    font-size: 0.75rem;
+    opacity: 0.6;
+  }
+}
+
+.mobile-link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--bulma-border-weak);
+  color: var(--bulma-text-strong);
+  font-size: 1.5rem;
+  animation: mobile-link-in 0.3s ease backwards;
+  animation-delay: calc(var(--i) * 0.04s + 0.05s);
+
+  .mobile-link-index {
+    color: var(--bulma-primary-on-scheme);
+    font-size: 0.85rem;
+  }
+
+  &.is-active {
+    color: var(--bulma-primary-on-scheme);
+  }
+}
+
+@keyframes mobile-link-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+.mobile-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: auto;
+  padding-top: 2rem;
+
+  .mobile-action {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--bulma-text-weak);
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--bulma-primary-on-scheme);
     }
+  }
+}
+
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-link {
+    animation: none;
   }
 }
 </style>
