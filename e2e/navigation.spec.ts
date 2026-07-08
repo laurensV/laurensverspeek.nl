@@ -74,6 +74,25 @@ test('mobile menu search opens the palette', async ({ page }) => {
   await expect(page.locator('.palette-window')).toBeVisible()
 })
 
+test('status bar easter eggs cycle presence, line endings and language', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const online = page.locator('.status-online')
+  await expect(online).toContainText('online')
+  await online.click()
+  await expect(online).toContainText('away')
+
+  const eol = page.locator('.status-eol')
+  await expect(eol).toHaveText('LF')
+  await eol.click()
+  await expect(eol).toHaveText('CRLF')
+
+  const lang = page.locator('.status-lang')
+  await expect(lang).toHaveText('Vue')
+  await lang.click()
+  await expect(lang).toHaveText('TypeScript')
+})
+
 test('? opens the shortcuts cheatsheet', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()

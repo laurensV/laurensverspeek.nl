@@ -11,16 +11,21 @@
         <AppIcon name="code" :size="11" /> main*
       </a>
       <span class="status-item is-hidden-mobile">v2.0.0</span>
-      <span class="status-item status-online">
-        <span class="online-dot" /> online
-      </span>
+      <button
+        class="status-item status-button status-online"
+        :class="{ 'is-pinging': pinging }"
+        :title="`presence: ${presence.label} — click to change`"
+        @click="cyclePresence"
+      >
+        <span class="online-dot" :style="{ '--dot': presence.color }" /> {{ presence.label }}
+      </button>
     </div>
 
     <div class="status-group">
       <span class="status-item is-hidden-touch">Ln {{ line }}, Col {{ column }}</span>
       <span class="status-item is-hidden-touch">UTF-8</span>
-      <span class="status-item is-hidden-touch">LF</span>
-      <span class="status-item is-hidden-mobile">Vue</span>
+      <button class="status-item status-button status-eol is-hidden-touch" title="Line endings" @click="toggleEol">{{ eol }}</button>
+      <button class="status-item status-button status-lang is-hidden-mobile" title="Language mode" @click="cycleLang">{{ LANGS[lang] }}</button>
       <button class="status-item status-button is-hidden-mobile" title="Command palette" @click="palette.open()">
         ctrl+k
       </button>
@@ -46,6 +51,37 @@ const route = useRoute()
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
+
+// ---- bottom-bar easter eggs ----
+// presence, the Slack/Discord way — click the dot to cycle status
+const PRESENCE = [
+  { label: 'online', color: 'var(--bulma-success)' },
+  { label: 'away', color: 'var(--bulma-warning)' },
+  { label: 'busy', color: 'var(--bulma-danger)' },
+  { label: 'invisible', color: 'var(--bulma-text-weak)' }
+] as const
+const presenceIndex = ref(0)
+const presence = computed(() => PRESENCE[presenceIndex.value]!)
+const pinging = ref(false)
+let pingTimer: ReturnType<typeof setTimeout> | undefined
+const cyclePresence = () => {
+  presenceIndex.value = (presenceIndex.value + 1) % PRESENCE.length
+  // a quick radar ping on every change
+  pinging.value = false
+  requestAnimationFrame(() => (pinging.value = true))
+  clearTimeout(pingTimer)
+  pingTimer = setTimeout(() => (pinging.value = false), 600)
+}
+onBeforeUnmount(() => clearTimeout(pingTimer))
+
+// classic editor toggle: LF ⇄ CRLF
+const eol = ref('LF')
+const toggleEol = () => (eol.value = eol.value === 'LF' ? 'CRLF' : 'LF')
+
+// the language-mode indicator, cycled like clicking it in a real editor
+const LANGS = ['Vue', 'TypeScript', 'SCSS', 'Markdown', 'Rust', 'JSON'] as const
+const lang = ref(0)
+const cycleLang = () => (lang.value = (lang.value + 1) % LANGS.length)
 
 // A cursor position that "moves" as you browse — purely for vibes
 const line = ref(1)
@@ -111,12 +147,42 @@ a.status-item:hover,
 }
 
 .status-online {
+  position: relative;
+
   .online-dot {
+    position: relative;
     width: 0.45rem;
     height: 0.45rem;
     border-radius: 50%;
-    background-color: var(--bulma-success);
-    box-shadow: 0 0 6px var(--bulma-success);
+    background-color: var(--dot, var(--bulma-success));
+    box-shadow: 0 0 6px var(--dot, var(--bulma-success));
+  }
+
+  // radar ping ring that expands and fades on each presence change
+  &.is-pinging .online-dot::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 1px solid var(--dot, var(--bulma-success));
+    animation: status-ping 0.6s ease-out;
+  }
+}
+
+@keyframes status-ping {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-online.is-pinging .online-dot::after {
+    animation: none;
   }
 }
 </style>
