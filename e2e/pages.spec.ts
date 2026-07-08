@@ -51,6 +51,32 @@ test('blog post shows a table of contents, copy buttons and a reading time', asy
   expect(styles.dot).toBe('dotted')
 })
 
+test('clicking the hero game of life opens the /life page', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 })
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  // a click (no drag) on the hero canvas navigates to the full-page playground
+  await page.locator('.hero-life').click({ position: { x: 120, y: 120 } })
+  await expect(page).toHaveURL(/\/life/)
+  await expect(page.locator('.life-canvas')).toBeVisible()
+})
+
+test('game of life page pauses, steps, clears and places a preset', async ({ page }) => {
+  await page.goto('/life')
+  await expect(page.locator('.life-canvas')).toBeVisible()
+  const stat = page.locator('.life-stat')
+  // pause the auto-run, then clear to a known empty state
+  await page.locator('.life-btn.is-primary').click()
+  await page.locator('.life-btn', { hasText: 'clear' }).click()
+  await expect(stat).toContainText('0 cells')
+  // one manual step advances the generation counter
+  await page.locator('.life-btn', { hasText: 'step' }).click()
+  await expect(stat).toContainText('gen 1')
+  // placing a preset seeds live cells
+  await page.locator('.life-btn', { hasText: 'glider' }).click()
+  await expect(stat).not.toContainText('0 cells')
+})
+
 test('hero renders the game-of-life canvas and reacts to the pointer', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 800 })
   await page.goto('/')

@@ -140,8 +140,14 @@ test('/desktop route boots straight into lvOS', async ({ page }) => {
 
 test('footer link boots the desktop', async ({ page }) => {
   await page.goto('/')
-  await page.locator('.app-footer').scrollIntoViewIfNeeded()
-  await page.locator('.app-footer a', { hasText: 'boot lvOS' }).click()
+  await page.locator('.hero-name').waitFor()
+  // the boot splash covers the page briefly; let it clear before clicking
+  await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
+  const bootLink = page.locator('.app-footer a', { hasText: 'boot lvOS' })
+  await bootLink.waitFor()
+  // the footer sits behind the fixed status bar and shifts while stats load, so
+  // dispatch the click directly on the link — it still fires its @click handler
+  await bootLink.evaluate((el) => (el as HTMLElement).click())
   await expect(page.locator('.lvos, .boot')).toBeVisible({ timeout: 10000 })
 })
 

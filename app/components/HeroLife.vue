@@ -2,22 +2,29 @@
   <div
     ref="containerRef"
     class="hero-life"
-    aria-hidden="true"
+    role="button"
+    tabindex="0"
+    aria-label="Open Conway's Game of Life"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"
-    @pointerup="painting = false"
+    @pointerup="onPointerUp"
     @pointerleave="painting = false"
+    @keydown.enter="openFull"
+    @keydown.space.prevent="openFull"
   >
-    <canvas ref="canvasRef" class="hero-life-canvas" />
+    <canvas ref="canvasRef" class="hero-life-canvas" aria-hidden="true" />
+    <span class="hero-life-hint is-family-code" aria-hidden="true">▶ play</span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { usePreferredReducedMotion, useDocumentVisibility, useResizeObserver } from '@vueuse/core'
+import { seedRandom, step as lifeStep, population, type Grid } from '~/utils/gameOfLife'
 
 // Conway's Game of Life as the hero centerpiece: a slow, toroidal cellular
-// automaton drawn as dim amber cells. Move or drag the pointer to seed live
-// cells and watch them evolve. Pure 2D canvas + integer math — no libraries.
+// automaton drawn as dim amber cells. Drag to seed live cells; a plain click
+// opens the full-page playground at /life. The simulation itself lives in the
+// shared, unit-tested ~/utils/gameOfLife.
 
 const containerRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
@@ -32,8 +39,8 @@ const SEED_DENSITY = 0.16
 let ctx: CanvasRenderingContext2D | null = null
 let cols = 0
 let rows = 0
-let grid = new Uint8Array(0)
-let next = new Uint8Array(0)
+let grid: Grid = new Uint8Array(0)
+let next: Grid = new Uint8Array(0)
 let dpr = 1
 let rafId = 0
 let acc = 0
@@ -54,15 +61,8 @@ const readColor = () => {
 const idx = (x: number, y: number) => y * cols + x
 
 const seed = () => {
-  grid = new Uint8Array(cols * rows)
-  next = new Uint8Array(cols * rows)
-  for (let i = 0; i < grid.length; i++) grid[i] = Math.random() < SEED_DENSITY ? 1 : 0
-}
-
-const population = () => {
-  let n = 0
-  for (let i = 0; i < grid.length; i++) n += grid[i]!
-  return n
+  grid = seedRandom(cols, rows, SEED_DENSITY)
+  next = new Uint8Array(grid.length)
 }
 
 const resize = () => {
@@ -82,26 +82,11 @@ const resize = () => {
   draw()
 }
 
-// one Conway step on a toroidal (wrapping) board
 const step = () => {
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      let n = 0
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue
-          const nx = (x + dx + cols) % cols
-          const ny = (y + dy + rows) % rows
-          n += grid[idx(nx, ny)]!
-        }
-      }
-      const alive = grid[idx(x, y)]!
-      next[idx(x, y)] = (alive && (n === 2 || n === 3)) || (!alive && n === 3) ? 1 : 0
-    }
-  }
+  lifeStep(grid, cols, rows, next)
   ;[grid, next] = [next, grid]
   // never let the board die out — reseed a soup if it gets too sparse
-  if (population() < grid.length * 0.02) seed()
+  if (population(grid) < grid.length * 0.02) seed()
 }
 
 const draw = () => {
@@ -156,11 +141,22 @@ const paintAt = (event: PointerEvent) => {
   draw()
 }
 
+// a plain click (little movement) opens the full-page playground; a drag paints
+let downX = 0
+let downY = 0
+const openFull = () => navigateTo('/life')
 const onPointerDown = (event: PointerEvent) => {
   painting.value = true
+  downX = event.clientX
+  downY = event.clientY
   paintAt(event)
 }
 const onPointerMove = (event: PointerEvent) => paintAt(event)
+const onPointerUp = (event: PointerEvent) => {
+  const tapped = Math.abs(event.clientX - downX) + Math.abs(event.clientY - downY) < 8
+  painting.value = false
+  if (tapped) openFull()
+}
 
 onMounted(() => {
   readColor()
@@ -181,13 +177,14 @@ watch(
 )
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .hero-life {
+  position: relative;
   width: 100%;
   height: 22rem;
   max-width: 26rem;
   margin-inline: auto;
-  cursor: crosshair;
+  cursor: pointer;
   touch-action: pan-y;
 }
 
@@ -195,5 +192,32 @@ watch(
   width: 100%;
   height: 100%;
   display: block;
+}
+
+// a quiet "play" hint that fades in on hover/focus
+.hero-life-hint {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.6rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: 2px;
+  background: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.7);
+  color: var(--bulma-primary-on-scheme);
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.hero-life:hover .hero-life-hint,
+.hero-life:focus-visible .hero-life-hint {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-life-hint {
+    transition: none;
+  }
 }
 </style>
