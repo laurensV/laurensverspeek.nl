@@ -176,6 +176,18 @@ test('blog index lists the newest post and it opens', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('a window manager in a div')
 })
 
+test('about timeline commits expand to a stack diff', async ({ page }) => {
+  await page.goto('/about')
+  const details = page.locator('.gitlog-more').first()
+  await details.scrollIntoViewIfNeeded()
+  const firstAdd = details.locator('.diff-add').first()
+  // collapsed by default, then expands on click
+  await expect(firstAdd).toBeHidden()
+  await details.locator('summary').click()
+  await expect(firstAdd).toBeVisible()
+  await expect(firstAdd).toContainText('+')
+})
+
 test('/uses and /now show the refreshed content', async ({ page }) => {
   await page.goto('/uses')
   await expect(page.getByText('./design-docs')).toBeVisible()

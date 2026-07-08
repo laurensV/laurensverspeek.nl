@@ -49,6 +49,13 @@
                   <div class="gitlog-body">
                     <p class="has-text-weight-semibold mb-1">{{ entry.title }}</p>
                     <p class="is-size-6 has-text-grey">{{ entry.description }}</p>
+                    <details v-if="entry.stack" class="gitlog-more is-family-code">
+                      <summary>git show --stat</summary>
+                      <div class="gitlog-diff">
+                        <span class="diff-file">diff --git a/{{ commitHash(entry.title) }} b/{{ commitHash(entry.title) }}</span>
+                        <span v-for="tech in entry.stack" :key="tech" class="diff-add">+ {{ tech }}</span>
+                      </div>
+                    </details>
                   </div>
                 </RevealBlock>
               </li>
@@ -202,6 +209,50 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
     margin-left: auto;
     color: var(--bulma-text-weak);
     font-size: 0.75rem;
+  }
+
+  // expandable git-show-style stack "diff" per commit
+  .gitlog-more {
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+
+    summary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--bulma-text-weak);
+      cursor: pointer;
+      list-style: none;
+      transition: color 0.15s ease;
+
+      &::-webkit-details-marker { display: none; }
+      &::before { content: '▸'; font-size: 0.7em; }
+      &:hover { color: var(--bulma-primary-on-scheme); }
+    }
+
+    &[open] summary {
+      color: var(--bulma-primary-on-scheme);
+      &::before { content: '▾'; }
+    }
+
+    .gitlog-diff {
+      margin-top: 0.4rem;
+      padding: 0.5rem 0.7rem;
+      border-left: 2px solid hsla(var(--lv-primary-hsl), 0.35);
+      background-color: var(--bulma-scheme-main-bis);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .diff-file {
+      display: block;
+      color: var(--bulma-text-weak);
+      margin-bottom: 0.2rem;
+    }
+
+    .diff-add {
+      display: block;
+      color: var(--bulma-success);
+    }
   }
 
   &:hover .gitlog-node {

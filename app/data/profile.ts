@@ -45,25 +45,29 @@ export const profile = {
       period: '2021 — now',
       title: 'Head of Development — Nosana',
       description:
-        'Leading development of a decentralized GPU compute grid on Solana: from decentralized CI/CD pipelines to a marketplace for AI inference.'
+        'Leading development of a decentralized GPU compute grid on Solana: from decentralized CI/CD pipelines to a marketplace for AI inference.',
+      stack: ['Solana', 'Rust', 'TypeScript', 'Vue']
     },
     {
       period: '2017 — 2021',
       title: 'Co-founder — Effect.AI',
       description:
-        'Blockchain-based framework for the future of work. Built a micro-tasking platform for AI data labeling, powered by the EFX token.'
+        'Blockchain-based framework for the future of work. Built a micro-tasking platform for AI data labeling, powered by the EFX token.',
+      stack: ['Blockchain', 'Vue', 'Node.js']
     },
     {
       period: '2015 — 2017',
       title: 'MSc Computer Science — University of Amsterdam',
       description:
-        'Graduated on automated multivariate web design optimization using genetic algorithms.'
+        'Graduated on automated multivariate web design optimization using genetic algorithms.',
+      stack: ['Python', 'Genetic algorithms']
     },
     {
       period: '2011 — 2015',
       title: 'BSc Computer Science',
       description:
-        'Thesis on detecting malicious websites through geographical consistency of website components.'
+        'Thesis on detecting malicious websites through geographical consistency of website components.',
+      stack: ['Algorithms', 'Security']
     }
   ]
 }
