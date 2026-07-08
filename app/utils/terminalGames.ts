@@ -431,7 +431,7 @@ const TOP_PROCESSES = [
   { pid: 666, user: 'visitor', cmd: 'flow-field.wgsl' },
   { pid: 777, user: 'root', cmd: 'crypto-miner (jk)' },
   { pid: 1024, user: 'visitor', cmd: 'vite hmr-server' },
-  { pid: 2048, user: 'visitor', cmd: 'threejs-hero' }
+  { pid: 2048, user: 'visitor', cmd: 'hero-constellation' }
 ]
 
 export function createTopGame({ onFrame, onEnd }: GameCallbacks): GameHandle {

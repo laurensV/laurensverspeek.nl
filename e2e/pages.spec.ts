@@ -25,6 +25,17 @@ test('blog post shows a table of contents, copy buttons and a reading time', asy
   await expect(page.getByText(/\d+ min read/)).toBeVisible()
 })
 
+test('hero renders the constellation canvas', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 })
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const canvas = page.locator('.hero-constellation-canvas')
+  await expect(canvas).toBeAttached()
+  // the canvas is sized to its container (not a zero-area element)
+  const w = await canvas.evaluate((el: HTMLCanvasElement) => el.width)
+  expect(w).toBeGreaterThan(0)
+})
+
 test('blog index lists the newest post and it opens', async ({ page }) => {
   await page.goto('/blog')
   const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })
