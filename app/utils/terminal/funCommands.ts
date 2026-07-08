@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame } from '~/utils/terminalGames'
 import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 
@@ -56,6 +56,13 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting top... q to quit.')
         ctx.startGame(createTopGame)
+      }
+    },
+    life: {
+      description: "Conway's Game of Life, in ASCII",
+      exec: () => {
+        muted('Starting life... space pauses, r reseeds, q quits.')
+        ctx.startGame(createLifeGame)
       }
     },
     htop: {

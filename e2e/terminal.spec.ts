@@ -91,6 +91,17 @@ test('nested directories: mkdir, cd into it, path-aware prompt, and cd back', as
   await expect(out).toContainText('workspace/')
 })
 
+test('life runs an ASCII Game of Life and quits with q', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'life')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toBeVisible()
+  await expect(frame).toContainText("game of life")
+  await page.keyboard.press('q')
+  await expect(page.locator('.terminal-output')).toContainText('exited after')
+  await expect(frame).toHaveCount(0)
+})
+
 test('cal prints the current month, which resolves builtins, uname reports the system', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'cal')
