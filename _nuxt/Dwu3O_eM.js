@@ -1,0 +1,1 @@
+import{_ as r,f as n,g as o,V as s}from"./DeS3__nq.js";const t={};function a(e,c){return n(),o("strong",null,[s(e.$slots,"default")])}const l=Object.assign(r(t,[["render",a]]),{__name:"ProseStrong"});export{l as default};

@@ -6,6 +6,27 @@
     <description>Occasional writing about code, blockchain and this website.</description>
     <language>en</language>
     <item>
+      <title><![CDATA[a window manager in a div]]></title>
+      <link>https://laurensverspeek.nl/blog/a-window-manager-in-a-div</link>
+      <guid>https://laurensverspeek.nl/blog/a-window-manager-in-a-div</guid>
+      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[dragging, snapping and alt-tab for lvOS — the fake desktop hiding in my portfolio — with one pointermove listener and a z-index counter.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[giving my fake OS its own route]]></title>
+      <link>https://laurensverspeek.nl/blog/an-os-on-its-own-route</link>
+      <guid>https://laurensverspeek.nl/blog/an-os-on-its-own-route</guid>
+      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[lvOS was a fixed overlay with a dead scrollbar and no shareable URL. moving it to /desktop fixed both — and taught me where overlays quietly lie.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[one Game of Life, four places]]></title>
+      <link>https://laurensverspeek.nl/blog/game-of-life-everywhere</link>
+      <guid>https://laurensverspeek.nl/blog/game-of-life-everywhere</guid>
+      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[the hero, a full page, an ASCII terminal toy and a desktop window all run the same 30-line Conway engine. a small lesson in keeping the rules pure.]]></description>
+    </item>
+    <item>
       <title><![CDATA[putting a playable snake game in a fake terminal]]></title>
       <link>https://laurensverspeek.nl/blog/snake-in-the-terminal</link>
       <guid>https://laurensverspeek.nl/blog/snake-in-the-terminal</guid>

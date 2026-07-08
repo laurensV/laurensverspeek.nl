@@ -1,0 +1,1 @@
+import{_ as s,f as a,g as r,V as t}from"./DeS3__nq.js";const n={};function o(e,c){return a(),r("thead",null,[t(e.$slots,"default")])}const l=Object.assign(s(n,[["render",o]]),{__name:"ProseThead"});export{l as default};

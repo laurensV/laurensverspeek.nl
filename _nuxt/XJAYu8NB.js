@@ -1,0 +1,1 @@
+import{a as e,s as t,W as a}from"./DeS3__nq.js";function o(s){e({script:[{type:"application/ld+json",innerHTML:t(()=>JSON.stringify(a(s)))}]})}const p="https://laurensverspeek.nl";export{p as S,o as u};

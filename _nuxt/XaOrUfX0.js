@@ -1,0 +1,1 @@
+import{_ as s,f as r,g as t,V as n}from"./DeS3__nq.js";const o={};function a(e,c){return r(),t("td",null,[n(e.$slots,"default")])}const l=Object.assign(s(o,[["render",a]]),{__name:"ProseTd"});export{l as default};
