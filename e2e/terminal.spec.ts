@@ -180,4 +180,6 @@ test('ctrl+r searches command history', async ({ page }) => {
   await page.keyboard.press('Control+r')
   await page.keyboard.type('zebra')
   await expect(page.locator('.terminal-search-match')).toContainText('echo findme-zebra')
+  // the search shows the match position + count
+  await expect(page.locator('.terminal-search-count')).toContainText('[1/1]')
 })

@@ -15,6 +15,10 @@
     <div v-if="searchMode" class="terminal-input-row terminal-search">
       <span class="term-prompt">(reverse-i-search)`{{ searchQuery }}':</span>
       <span class="terminal-search-match">{{ searchMatch || '' }}</span>
+      <span class="terminal-search-count">
+        <template v-if="searchQuery && !searchCount">no matches</template>
+        <template v-else-if="searchCount">[{{ searchPosition }}/{{ searchCount }}] ctrl+r next · ↵ run · tab edit</template>
+      </span>
     </div>
     <div v-else-if="!activeGame" class="terminal-input-row">
       <label class="term-prompt" :for="inputId">{{ prompt }}</label>
@@ -144,6 +148,11 @@ const searchMatch = computed(() => {
   if (!list.length) return ''
   return list[list.length - 1 - (searchCursor.value % list.length)] ?? ''
 })
+// how many commands match, and which one (1-based) is currently shown
+const searchCount = computed(() => searchMatches.value.length)
+const searchPosition = computed(() =>
+  searchCount.value ? (searchCursor.value % searchCount.value) + 1 : 0
+)
 
 const startSearch = () => {
   searchMode.value = true
@@ -286,6 +295,14 @@ defineExpose({ focusInput })
 
 .terminal-search-match {
   color: hsl(var(--lv-scheme-hs), 88%);
+}
+
+.terminal-search-count {
+  margin-left: auto;
+  padding-left: 1rem;
+  color: var(--bulma-text-weak);
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .terminal-input {
