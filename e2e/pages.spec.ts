@@ -40,6 +40,15 @@ test('blog post shows a table of contents, copy buttons and a reading time', asy
   await expect(page.locator('.code-copy').first()).toBeVisible()
   // reading time is computed from the rendered AST, so a value proves the walk works
   await expect(page.getByText(/\d+ min read/)).toBeVisible()
+  // prose links use the custom style: no default underline, a dotted ::after
+  const link = page.locator('.post-body a').first()
+  await expect(link).toBeVisible()
+  const styles = await link.evaluate((el) => ({
+    line: getComputedStyle(el).textDecorationLine,
+    dot: getComputedStyle(el, '::after').borderBottomStyle
+  }))
+  expect(styles.line).toBe('none')
+  expect(styles.dot).toBe('dotted')
 })
 
 test('hero renders the game-of-life canvas and reacts to the pointer', async ({ page }) => {

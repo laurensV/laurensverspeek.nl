@@ -66,6 +66,56 @@ html.is-lvos body {
   color: var(--bulma-primary-invert);
 }
 
+// Prose links (blog posts, project stories, the about page): a round dotted
+// underline sitting a little below the text that cross-fades into a solid amber
+// line on hover. Scoped to `.content.is-medium` so nav, buttons, cards and the
+// footer keep their own treatments.
+.content.is-medium a {
+  position: relative;
+  color: var(--bulma-primary-on-scheme);
+  text-decoration: none;
+
+  &::after,
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.28em;
+    height: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+
+  // resting state: round dim dots (dotted borders render round in most browsers)
+  &::after {
+    border-bottom: 2px dotted hsla(var(--lv-primary-hsl), 0.55);
+  }
+
+  // hover state: a solid amber line at the exact same height, faded in
+  &::before {
+    border-bottom: 2px solid var(--bulma-primary-on-scheme);
+    opacity: 0;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 0;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content.is-medium a::after,
+  .content.is-medium a::before {
+    transition: none;
+  }
+}
+
 // Subtle themed scrollbar
 * {
   scrollbar-width: thin;
