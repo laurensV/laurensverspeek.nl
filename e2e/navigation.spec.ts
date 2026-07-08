@@ -219,3 +219,22 @@ test('footer build stamp opens git show in the terminal', async ({ page }) => {
   await expect(page.locator('.terminal-window')).toBeVisible()
   await expect(page.locator('.terminal-output')).toContainText('commit')
 })
+
+test('vim go-to chords navigate: gb to blog, gh home', async ({ page }) => {
+  await page.goto('/about')
+  await page.locator('h1').waitFor()
+  await page.keyboard.press('g')
+  await page.keyboard.press('b')
+  await expect(page).toHaveURL(/\/blog\/?$/)
+  await page.keyboard.press('g')
+  await page.keyboard.press('h')
+  await expect(page).toHaveURL(/\/$/)
+  // a stale g (chord window expired) must not navigate
+  await page.goto('/about')
+  await page.locator('h1').waitFor()
+  await page.keyboard.press('g')
+  await page.waitForTimeout(700)
+  await page.keyboard.press('p')
+  await page.waitForTimeout(200)
+  await expect(page).toHaveURL(/\/about/)
+})

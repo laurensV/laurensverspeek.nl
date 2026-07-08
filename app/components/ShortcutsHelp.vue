@@ -50,7 +50,8 @@ const GROUPS = [
       { keys: ['?'], label: 'show this help' },
       { keys: ['esc'], label: 'close any overlay' },
       { keys: ['j', 'k'], label: 'scroll the page, vim style' },
-      { keys: ['gg', 'G'], label: 'jump to top / bottom' }
+      { keys: ['gg', 'G'], label: 'jump to top / bottom' },
+      { keys: ['gh', 'gb', 'gp'], label: 'go to home / blog / projects' }
     ]
   },
   {

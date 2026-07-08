@@ -10,8 +10,16 @@ const isTypingTarget = (el: EventTarget | null): boolean => {
   )
 }
 
+// g-chord navigation targets: g then one of these keys jumps to the page
+const GO_TARGETS: Record<string, string> = {
+  h: '/',
+  b: '/blog',
+  p: '/projects'
+}
+
 /**
- * Vim-style page scrolling: j/k scroll, gg jumps to the top, G to the bottom.
+ * Vim-style page scrolling: j/k scroll, gg jumps to the top, G to the bottom,
+ * and go-to chords (gh → home, gb → blog, gp → projects) navigate.
  * Mounted once in the default layout; stays out of the way of form fields and
  * open overlays (terminal, palette, shortcuts — anything aria-modal).
  */
@@ -34,6 +42,8 @@ export function useVimScroll() {
     window.scrollBy({ top: event.key === 'j' ? 90 : -90, behavior: behavior() })
   })
 
+  const router = useRouter()
+
   onKeyStroke('g', (event) => {
     if (!allowed(event)) return
     const now = Date.now()
@@ -44,6 +54,15 @@ export function useVimScroll() {
       return
     }
     lastG = now
+  })
+
+  // go-to chords: a pending g followed by a target key navigates
+  onKeyStroke(Object.keys(GO_TARGETS), (event) => {
+    if (!allowed(event)) return
+    if (Date.now() - lastG >= 500) return
+    event.preventDefault()
+    lastG = 0
+    router.push(GO_TARGETS[event.key]!)
   })
 
   onKeyStroke('G', (event) => {
