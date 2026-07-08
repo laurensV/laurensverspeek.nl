@@ -3,10 +3,10 @@ import type { TerminalLine, TerminalCommand, TerminalContext } from '~/utils/ter
 import { createContentCommands } from '~/utils/terminal/contentCommands'
 import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
-import { expandEnv, parseCommandLine, applyFilter } from '~/utils/terminal/pipeline'
+import { expandEnv, parseCommandLine, applyFilter, splitOutputRedirect, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
-import { loadFs, saveFs } from '~/utils/terminal/filesystem'
+import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
@@ -179,7 +179,8 @@ export function useTerminal() {
     saveHistory(history.value)
 
     const expanded = expandEnv(trimmed, ctx.env.value)
-    const { name, args, pipeStages } = parseCommandLine(expanded, ctx.aliases.value)
+    const { command: cmdLine, file: redirectFile, append } = splitOutputRedirect(expanded)
+    const { name, args, pipeStages } = parseCommandLine(cmdLine, ctx.aliases.value)
     const command = commands[name.toLowerCase()]
     if (!command) {
       error(`lvsh: command not found: ${name}`)
@@ -189,12 +190,12 @@ export function useTerminal() {
     // count which commands get used — names only, never arguments
     trackEvent(`terminal/${name.toLowerCase()}`)
 
-    if (!pipeStages.length) {
+    if (!pipeStages.length && !redirectFile) {
       command.exec(args)
       return
     }
 
-    // piped: capture the command's output, run it through the filters
+    // capture the command's output to run through filters and/or a redirect
     const captured: TerminalLine[] = []
     sink = (line) => captured.push(line)
     const finish = () => {
@@ -207,6 +208,18 @@ export function useTerminal() {
           return
         }
         result = filtered.lines
+      }
+      if (redirectFile) {
+        const written = writeFileAt(
+          ctx.files.value,
+          ctx.fsCwd.value,
+          redirectFile,
+          result.map((line) => stripHtml(line.text)).join('\n'),
+          append
+        )
+        if ('error' in written) return error(`lvsh: ${written.error}`)
+        ctx.files.value = written.files
+        return
       }
       if (!result.length) muted('(no output)')
       result.forEach((line) => lines.value.push(line))

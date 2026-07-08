@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { expandEnv, parseCommandLine, applyFilter, stripHtml } from '~/utils/terminal/pipeline'
+import { expandEnv, parseCommandLine, applyFilter, stripHtml, splitOutputRedirect } from '~/utils/terminal/pipeline'
 
 const line = (text: string) => ({ text })
 
@@ -42,6 +42,24 @@ describe('parseCommandLine', () => {
 
   it('handles a bare command with no args or pipes', () => {
     expect(parseCommandLine('help', {})).toEqual({ name: 'help', args: [], pipeStages: [] })
+  })
+})
+
+describe('splitOutputRedirect', () => {
+  it('splits a trailing > file', () => {
+    expect(splitOutputRedirect('help > cmds.txt')).toEqual({ command: 'help', file: 'cmds.txt', append: false })
+  })
+
+  it('treats >> as append', () => {
+    expect(splitOutputRedirect('echo hi >> log.txt')).toEqual({ command: 'echo hi', file: 'log.txt', append: true })
+  })
+
+  it('keeps pipes in the command part', () => {
+    expect(splitOutputRedirect('help | grep blog > out.txt')).toEqual({ command: 'help | grep blog', file: 'out.txt', append: false })
+  })
+
+  it('returns no redirect when there is none', () => {
+    expect(splitOutputRedirect('ls -la')).toEqual({ command: 'ls -la', file: null, append: false })
   })
 })
 

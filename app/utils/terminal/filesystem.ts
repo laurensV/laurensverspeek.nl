@@ -70,6 +70,28 @@ export function dirEntries(fs: Filesystem, dir: string): { name: string, dir: bo
  * Split `echo` arguments into the text and an optional `> file` redirect.
  * Handles `> file` and `>file`; anything after the `>` is the target name.
  */
+/**
+ * Write `content` to `name` (resolved against `cwd`), returning the new
+ * filesystem or an error. `append` concatenates onto any existing file. Shared
+ * by the `echo` command and shell-level `>`/`>>` output redirection.
+ */
+export function writeFileAt(
+  files: Filesystem,
+  cwd: string,
+  name: string,
+  content: string,
+  append = false
+): { files: Filesystem } | { error: string } {
+  const path = resolvePath(cwd, name)
+  if (!path) return { error: 'cannot write to the home directory' }
+  const parent = path.split('/').slice(0, -1).join('/')
+  if (parent !== '' && files[parent]?.dir !== true) return { error: `${name}: No such file or directory` }
+  if (files[path]?.dir) return { error: `${name}: Is a directory` }
+  const existing = files[path]
+  const nextContent = append && existing ? `${existing.content}\n${content}` : content
+  return { files: { ...files, [path]: { dir: false, content: nextContent } } }
+}
+
 export function parseRedirect(args: string[]): { text: string, file: string | null } {
   const text: string[] = []
   let file: string | null = null

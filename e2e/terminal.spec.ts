@@ -27,6 +27,19 @@ test('pipes command output through grep', async ({ page }) => {
   await expect(out).not.toContainText('List available commands')
 })
 
+test('redirects any command output to a file with > and >>', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  // capture help output to a file, then read it back
+  await run(page, 'help | grep blog > cmds.txt')
+  await run(page, 'cat cmds.txt')
+  await expect(out).toContainText('blog [post]')
+  // >> appends another line
+  await run(page, 'echo --- >> cmds.txt')
+  await run(page, 'cat cmds.txt')
+  await expect(out).toContainText('---')
+})
+
 test('pipes chain through sort, uniq and wc', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'help | sort | uniq | wc')

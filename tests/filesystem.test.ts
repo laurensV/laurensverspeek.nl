@@ -1,6 +1,29 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
+
+describe('writeFileAt', () => {
+  it('writes a new file at the current directory', () => {
+    const res = writeFileAt({}, '', 'notes.txt', 'hello')
+    expect('files' in res && res.files['notes.txt']).toEqual({ dir: false, content: 'hello' })
+  })
+
+  it('overwrites by default and appends with the flag', () => {
+    const base: Filesystem = { log: { dir: false, content: 'a' } }
+    expect((writeFileAt(base, '', 'log', 'b') as { files: Filesystem }).files.log!.content).toBe('b')
+    expect((writeFileAt(base, '', 'log', 'b', true) as { files: Filesystem }).files.log!.content).toBe('a\nb')
+  })
+
+  it('refuses to write over a directory', () => {
+    const res = writeFileAt({ docs: { dir: true, content: '' } }, '', 'docs', 'x')
+    expect('error' in res && res.error).toContain('Is a directory')
+  })
+
+  it('errors when the parent directory is missing', () => {
+    const res = writeFileAt({}, '', 'nope/file.txt', 'x')
+    expect('error' in res && res.error).toContain('No such file or directory')
+  })
+})
 
 describe('parseRedirect', () => {
   it('returns the joined text and no file when there is no redirect', () => {

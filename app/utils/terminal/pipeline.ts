@@ -18,6 +18,21 @@ export interface ParsedCommandLine {
 }
 
 /**
+ * Split a trailing `> file` / `>> file` output redirect off a command line,
+ * leaving the command (and any pipes) intact. Requires whitespace before the
+ * operator so a quoted `>` in an argument isn't mistaken for a redirect.
+ */
+export function splitOutputRedirect(input: string): { command: string, file: string | null, append: boolean } {
+  const match = input.match(/\s(>>?)\s*(\S+)\s*$/)
+  if (!match) return { command: input.trim(), file: null, append: false }
+  return {
+    command: input.slice(0, match.index).trim(),
+    file: match[2]!,
+    append: match[1] === '>>'
+  }
+}
+
+/**
  * Split a command line into command + pipe stages, resolving a leading alias.
  * Assumes env expansion already happened.
  */
