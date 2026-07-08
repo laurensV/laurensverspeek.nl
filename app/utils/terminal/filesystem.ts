@@ -2,38 +2,37 @@
 // files and directories the visitor can create with mkdir/touch/echo>, read
 // with cat, and remove with rm. Persisted to localStorage so it survives visits.
 
+import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
+
 export interface FsNode { dir: boolean, content: string }
 export type Filesystem = Record<string, FsNode>
 
 const FS_KEY = 'lv-terminal-fs'
 let restored = false
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
 /** Restore the saved filesystem once per session (null afterwards / off-client). */
 export function loadFs(): Filesystem | null {
   if (!import.meta.client || restored) return null
   restored = true
-  try {
-    const saved = JSON.parse(localStorage.getItem(FS_KEY) ?? '{}') as unknown
-    if (!saved || typeof saved !== 'object') return {}
-    const fs: Filesystem = {}
-    for (const [name, node] of Object.entries(saved as Record<string, unknown>)) {
-      if (node && typeof node === 'object'
-        && typeof (node as FsNode).dir === 'boolean'
-        && typeof (node as FsNode).content === 'string') {
-        fs[name] = { dir: (node as FsNode).dir, content: (node as FsNode).content }
-      }
+  const saved = storageGetJson(FS_KEY, isRecord)
+  if (!saved) return {}
+  const fs: Filesystem = {}
+  for (const [name, node] of Object.entries(saved)) {
+    if (node && typeof node === 'object'
+      && typeof (node as FsNode).dir === 'boolean'
+      && typeof (node as FsNode).content === 'string') {
+      fs[name] = { dir: (node as FsNode).dir, content: (node as FsNode).content }
     }
-    return fs
-  } catch {
-    return {} // corrupted storage — start empty
   }
+  return fs
 }
 
 export function saveFs(fs: Filesystem): void {
   if (!import.meta.client) return
-  try {
-    localStorage.setItem(FS_KEY, JSON.stringify(fs))
-  } catch { /* storage full or blocked */ }
+  storageSetJson(FS_KEY, fs)
 }
 
 /**

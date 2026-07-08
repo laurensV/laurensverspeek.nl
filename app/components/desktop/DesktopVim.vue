@@ -22,6 +22,8 @@
 // A lovingly reduced vim: i/a/o insert, hjkl motion, x delete, :w :q :wq.
 // The one thing it does better than real vim: you already know how to quit.
 
+import { storageGet, storageSet } from '~/utils/safeStorage'
+
 const emit = defineEmits<{ close: [] }>()
 
 const STORAGE_KEY = 'lvos-vim-buffer'
@@ -47,22 +49,19 @@ const bufferRef = ref<HTMLTextAreaElement>()
 const dirty = computed(() => buffer.value !== savedBuffer.value)
 
 onMounted(() => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved !== null) {
-      buffer.value = saved
-      savedBuffer.value = saved
-    }
-  } catch { /* private mode — default buffer it is */ }
+  const saved = storageGet(STORAGE_KEY)
+  if (saved !== null) {
+    buffer.value = saved
+    savedBuffer.value = saved
+  }
   bufferRef.value?.focus()
 })
 
 const write = () => {
-  try {
-    localStorage.setItem(STORAGE_KEY, buffer.value)
+  if (storageSet(STORAGE_KEY, buffer.value)) {
     savedBuffer.value = buffer.value
     hint.value = `"~/notes.txt" ${buffer.value.split('\n').length}L written`
-  } catch {
+  } else {
     hint.value = 'E212: cannot open file for writing (localStorage blocked)'
   }
 }

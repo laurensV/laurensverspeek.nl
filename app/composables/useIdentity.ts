@@ -2,6 +2,8 @@
 // is "visitor"), changeable and persisted. Used by the terminal prompt, whoami,
 // and the live-cursor labels.
 
+import { storageGet, storageSet } from '~/utils/safeStorage'
+
 const ADJECTIVES = [
   'curious', 'quiet', 'swift', 'clever', 'brave', 'sleepy', 'lucky', 'cosmic',
   'neon', 'retro', 'fuzzy', 'wired', 'silent', 'turbo', 'hyper', 'lofi'
@@ -25,17 +27,12 @@ export function useIdentity() {
 
   // hydrate from storage (or mint a random handle) once on the client
   if (import.meta.client && name.value === 'visitor') {
-    let saved: string | null = null
-    try {
-      saved = localStorage.getItem(STORAGE_KEY)
-    } catch { /* ignore */ }
+    const saved = storageGet(STORAGE_KEY)
     if (saved) {
       name.value = saved
     } else {
       name.value = `${pick(ADJECTIVES)}-${pick(NOUNS)}`
-      try {
-        localStorage.setItem(STORAGE_KEY, name.value)
-      } catch { /* ignore */ }
+      storageSet(STORAGE_KEY, name.value)
     }
   }
 
@@ -44,11 +41,7 @@ export function useIdentity() {
     const clean = sanitizeName(raw)
     if (!clean) return null
     name.value = clean
-    if (import.meta.client) {
-      try {
-        localStorage.setItem(STORAGE_KEY, clean)
-      } catch { /* ignore */ }
-    }
+    if (import.meta.client) storageSet(STORAGE_KEY, clean)
     return clean
   }
 

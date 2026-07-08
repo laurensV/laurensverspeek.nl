@@ -33,32 +33,26 @@
 // survive logging out of lvOS (and closing the tab). State lives in useState so
 // it's shared if the window is reopened during a session.
 
+import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
+
 interface StickyNote { id: number, text: string, updated: number }
 
 const STORAGE_KEY = 'lvos-notes'
 const notes = useState<StickyNote[]>('lvos-notes', () => [])
 
+const isNoteArray = (value: unknown): value is StickyNote[] =>
+  Array.isArray(value) && value.every((n) =>
+    !!n && typeof n === 'object'
+    && typeof (n as StickyNote).id === 'number'
+    && typeof (n as StickyNote).text === 'string'
+    && typeof (n as StickyNote).updated === 'number')
+
 // hydrate from storage the first time the board is opened this session
 if (import.meta.client && !notes.value.length) {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as unknown
-    if (Array.isArray(saved)) {
-      notes.value = saved.filter((n): n is StickyNote =>
-        !!n && typeof n === 'object'
-        && typeof (n as StickyNote).id === 'number'
-        && typeof (n as StickyNote).text === 'string'
-        && typeof (n as StickyNote).updated === 'number')
-    }
-  } catch { /* corrupted storage — start fresh */ }
+  notes.value = storageGetJson(STORAGE_KEY, isNoteArray) ?? []
 }
 
-const persist = () => {
-  if (!import.meta.client) return
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value))
-  } catch { /* storage full or blocked */ }
-}
-watch(notes, persist, { deep: true })
+watch(notes, () => storageSetJson(STORAGE_KEY, notes.value), { deep: true })
 
 // ids only need to be unique within the session; seed past any restored ids
 let seed = Date.now()

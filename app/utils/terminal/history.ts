@@ -2,6 +2,8 @@
 // last 100 entries. The restore-once guard lives here so useTerminal doesn't
 // need a module-global of its own.
 
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+
 const HISTORY_KEY = 'lv-terminal-history'
 const MAX_ENTRIES = 100
 let restored = false
@@ -14,17 +16,10 @@ let restored = false
 export function loadHistory(): string[] | null {
   if (!import.meta.client || restored) return null
   restored = true
-  try {
-    const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]') as unknown
-    return Array.isArray(saved) ? saved.filter((entry): entry is string => typeof entry === 'string') : []
-  } catch {
-    return [] // corrupted storage — start fresh
-  }
+  return storageGetJson(HISTORY_KEY, isStringArray) ?? []
 }
 
 export function saveHistory(entries: string[]): void {
   if (!import.meta.client) return
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(-MAX_ENTRIES)))
-  } catch { /* storage full or blocked — history stays session-only */ }
+  storageSetJson(HISTORY_KEY, entries.slice(-MAX_ENTRIES))
 }

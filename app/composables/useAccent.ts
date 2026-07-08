@@ -3,6 +3,8 @@
 // token references those — so overriding the three HSL components on <html>
 // recolors the whole site (and both themes) live.
 
+import { storageGet, storageSet } from '~/utils/safeStorage'
+
 export interface Accent {
   name: string
   h: number
@@ -46,21 +48,14 @@ export function useAccent() {
     if (!found) return undefined
     accent.value = found.name
     applyVars(found)
-    if (import.meta.client) {
-      try {
-        localStorage.setItem(STORAGE_KEY, found.name)
-      } catch { /* storage blocked — accent stays session-only */ }
-    }
+    if (import.meta.client) storageSet(STORAGE_KEY, found.name)
     return found
   }
 
   /** Restore the persisted accent (called once on client load). */
   const initAccent = () => {
     if (!import.meta.client) return
-    let saved: string | null = null
-    try {
-      saved = localStorage.getItem(STORAGE_KEY)
-    } catch { /* ignore */ }
+    const saved = storageGet(STORAGE_KEY)
     if (saved && saved !== 'amber') setAccent(saved)
   }
 

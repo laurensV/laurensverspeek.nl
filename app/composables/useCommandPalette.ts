@@ -1,6 +1,7 @@
 import type { IconName } from '~/components/AppIcon.vue'
 import { projects } from '~/data/projects'
 import { profile } from '~/data/profile'
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 
 export interface PaletteAction {
   id: string
@@ -93,29 +94,23 @@ export function useCommandPalette() {
   // most-recently-used actions, persisted so the palette can surface them first
   const recent = useState<string[]>('palette-recent', () => [])
   if (import.meta.client && !recent.value.length) {
-    try {
-      const saved = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as unknown
-      if (Array.isArray(saved)) recent.value = saved.filter((x): x is string => typeof x === 'string')
-    } catch { /* ignore corrupted storage */ }
+    recent.value = storageGetJson(RECENT_KEY, isStringArray) ?? []
   }
 
   // how often each action is chosen, so frequently-used items win ranking ties
   const counts = useState<Record<string, number>>('palette-counts', () => ({}))
   if (import.meta.client && !Object.keys(counts.value).length) {
-    try {
-      const saved = JSON.parse(localStorage.getItem(COUNTS_KEY) ?? '{}') as unknown
-      if (saved && typeof saved === 'object') counts.value = saved as Record<string, number>
-    } catch { /* ignore corrupted storage */ }
+    const isCounts = (value: unknown): value is Record<string, number> =>
+      !!value && typeof value === 'object' && !Array.isArray(value)
+    counts.value = storageGetJson(COUNTS_KEY, isCounts) ?? {}
   }
 
   const recordUse = (id: string) => {
     recent.value = [id, ...recent.value.filter((x) => x !== id)].slice(0, RECENT_MAX)
     counts.value = { ...counts.value, [id]: (counts.value[id] ?? 0) + 1 }
     if (import.meta.client) {
-      try {
-        localStorage.setItem(RECENT_KEY, JSON.stringify(recent.value))
-        localStorage.setItem(COUNTS_KEY, JSON.stringify(counts.value))
-      } catch { /* ignore */ }
+      storageSetJson(RECENT_KEY, recent.value)
+      storageSetJson(COUNTS_KEY, counts.value)
     }
   }
 

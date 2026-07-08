@@ -2,23 +2,17 @@
 // render + update logic; the kit removes the boilerplate they all repeated:
 // high-score persistence, the game-over score summary, and the tick timer.
 
+import { storageGet, storageSet } from '~/utils/safeStorage'
+
 /** A high score backed by localStorage under a single key. */
 export function useHighScore(key: string) {
-  const get = () => {
-    try {
-      return Number(localStorage.getItem(key) ?? 0) || 0
-    } catch {
-      return 0
-    }
-  }
+  const get = () => Number(storageGet(key) ?? 0) || 0
 
   /** Record a score; returns whether it was a new best and the best so far. */
   const record = (score: number) => {
     const best = get()
     if (score > best) {
-      try {
-        localStorage.setItem(key, String(score))
-      } catch { /* storage blocked — high score stays session-only */ }
+      storageSet(key, String(score))
       return { isNew: true, best }
     }
     return { isNew: false, best }
