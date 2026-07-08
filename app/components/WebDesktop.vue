@@ -2,7 +2,7 @@
   <Teleport to="body">
     <LazyDesktopBoot v-if="booting" @done="onBootDone" />
     <div
-      v-if="desktopActive && !booting"
+      v-if="!booting"
       class="lvos"
       :style="wallpaperStyle"
       role="application"
@@ -258,7 +258,6 @@ const WINDOW_TITLES: Record<string, string> = {
   terminal: 'lvsh — terminal'
 }
 
-const { desktopActive } = useSiteEffects()
 const terminal = useTerminal()
 const router = useRouter()
 
@@ -296,7 +295,7 @@ const notify = (icon: string, title: string, body?: string) => {
 const { idle } = useIdle(45_000)
 const dismissedIdle = ref(false)
 const screensaverOn = computed(
-  () => desktopActive.value && !booting.value && idle.value && !dismissedIdle.value
+  () => !booting.value && idle.value && !dismissedIdle.value
 )
 // while idle stays true, one wake dismiss should hold until real activity resets it
 watch(idle, (isIdle) => {
@@ -409,26 +408,18 @@ const openBlogApp = () => {
   openWindow('blog')
 }
 
-const openProject = (slug: string) => {
-  desktopActive.value = false
-  router.push(`/projects/${slug}`)
-}
+// leaving the /desktop route unmounts the desktop; the window layout is kept in
+// useState, so returning restores the session (after another quick boot).
+const openProject = (slug: string) => router.push(`/projects/${slug}`)
 
-const openRoute = (path: string) => {
-  desktopActive.value = false
-  router.push(path)
-}
+const openRoute = (path: string) => router.push(path)
 
-const openCv = () => {
-  desktopActive.value = false
-  router.push('/cv')
-}
+const openCv = () => router.push('/cv')
 
-// logging out keeps the window layout — logging back in restores the session
 const logout = () => {
   startOpen.value = false
   calendarOpen.value = false
-  desktopActive.value = false
+  router.push('/')
 }
 
 const icons: { id: string, label: string, icon: IconName, action: () => void }[] = [
@@ -450,20 +441,17 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
 ]
 
-// booting shows the BIOS/POST screen; a fresh session then opens the readme,
-// while a returning session restores the previous window layout.
-// immediate: the component is lazy-mounted *after* desktopActive flips true, so
-// a plain watch would miss that first transition and skip the boot screen.
-watch(desktopActive, (active) => {
-  if (!active) return
+// entering the /desktop page runs the BIOS/POST screen; a fresh session then
+// opens the readme, while a returning session restores its previous windows.
+onMounted(() => {
   const firstBoot = !windows.value.length
   booting.value = true
   if (firstBoot) openWindow('readme')
-}, { immediate: true })
+})
 
 // inside the desktop, ~ opens/focuses the terminal window (unless typing)
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if ((event.key !== '~' && event.key !== '`') || !desktopActive.value) return
+  if (event.key !== '~' && event.key !== '`') return
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()
@@ -473,14 +461,14 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 // Alt+Tab switches between open windows (Shift+Alt+Tab goes backwards). Note the
 // OS may reserve Alt+Tab; the taskbar remains the always-available switcher.
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key !== 'Tab' || !event.altKey || !desktopActive.value) return
+  if (event.key !== 'Tab' || !event.altKey) return
   event.preventDefault()
   cycleWindows(event.shiftKey ? -1 : 1)
 })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   // defaultPrevented means the terminal already consumed this Escape
-  if (event.key !== 'Escape' || event.defaultPrevented || !desktopActive.value || terminal.isOpen.value) {
+  if (event.key !== 'Escape' || event.defaultPrevented || terminal.isOpen.value) {
     return
   }
   // Escape first dismisses popups, only logging out when nothing is open

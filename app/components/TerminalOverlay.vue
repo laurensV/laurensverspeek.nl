@@ -32,12 +32,12 @@ import { onKeyStroke } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
 const { isOpen, toggle, close, activeGame } = useTerminal()
-const { desktopActive } = useSiteEffects()
 
-// Open with ~ or ` when not typing in another field (and not mid-game).
-// Inside the desktop the terminal is its own window, so let lvOS handle it.
+// Open with ~ or ` when not typing in another field (and not mid-game). The
+// overlay lives in the default layout, so it never mounts on the /desktop route
+// (where the terminal is its own window).
 onKeyStroke(['`', '~'], (event) => {
-  if (activeGame.value || desktopActive.value) return
+  if (activeGame.value) return
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()

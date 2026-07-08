@@ -16,21 +16,14 @@
     <BootSplash />
     <MatrixRain />
     <SlTrain />
-    <!-- lvOS (incl. its window manager + apps) only loads once someone boots it -->
-    <LazyWebDesktop v-if="desktopEverBooted" />
     <PartyMode />
     <LiveCursors />
   </div>
 </template>
 
 <script setup lang="ts">
-// Keep the desktop out of the initial bundle: mount it the first time the user
-// runs `desktop`, then leave it mounted so window state + boot logic persist.
-const { desktopActive } = useSiteEffects()
-const desktopEverBooted = ref(false)
-watch(desktopActive, (active) => {
-  if (active) desktopEverBooted.value = true
-}, { immediate: true })
+// lvOS now lives on its own /desktop route (see pages/desktop.vue), so the shell
+// no longer mounts it here.
 </script>
 
 <style scoped lang="scss">

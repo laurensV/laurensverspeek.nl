@@ -81,7 +81,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 // lvOS settings that actually control the real site: theme, CRT, party mode.
 
 const colorMode = useColorMode()
-const { crtActive, matrixActive, desktopActive, toggleCrt } = useSiteEffects()
+const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
 const partyActive = useState('fx-party', () => false)
 const { accent, accents, setAccent } = useAccent()
 
@@ -99,8 +99,8 @@ const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
 const windowCount = computed(() => windows.value.length)
 
 const enterMatrix = () => {
-  desktopActive.value = false
   matrixActive.value = true
+  navigateTo('/')
 }
 </script>
 

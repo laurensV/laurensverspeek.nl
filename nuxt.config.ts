@@ -75,7 +75,9 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ['/sitemap.xml', '/rss.xml']
+      // /desktop is client-only (lvOS), but prerender the shell so a direct hit
+      // to the shareable URL gets a real file instead of only the SPA fallback
+      routes: ['/sitemap.xml', '/rss.xml', '/desktop']
     }
   },
 

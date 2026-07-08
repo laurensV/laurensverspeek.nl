@@ -26,6 +26,13 @@ body {
   overflow-x: clip;
 }
 
+// on the lvOS route the desktop fills the viewport as a fixed overlay — lock
+// scrolling so no dead scrollbar appears behind it
+html.is-lvos,
+html.is-lvos body {
+  overflow: hidden;
+}
+
 // Keyboard focus: a consistent, visible ring everywhere. Mouse clicks don't
 // trigger :focus-visible, so this only shows for keyboard/AT users.
 :focus-visible {

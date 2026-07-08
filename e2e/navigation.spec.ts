@@ -84,11 +84,12 @@ test('? opens the shortcuts cheatsheet', async ({ page }) => {
   await expect(page.locator('.shortcuts-window')).toHaveCount(0)
 })
 
-test('?desktop URL boots straight into lvOS', async ({ page }) => {
-  await page.goto('/?desktop')
-  await page.locator('.hero-name').waitFor()
+test('/desktop route boots straight into lvOS', async ({ page }) => {
+  await page.goto('/desktop')
   // boots through the BIOS screen into the desktop
   await expect(page.locator('.lvos')).toBeVisible({ timeout: 10000 })
+  // the route locks page scroll so no dead scrollbar sits behind the desktop
+  await expect(page.locator('html')).toHaveClass(/is-lvos/)
 })
 
 test('footer link boots the desktop', async ({ page }) => {

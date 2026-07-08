@@ -78,7 +78,7 @@ export function useCommandPalette() {
   const router = useRouter()
   const colorMode = useColorMode()
   const terminal = useTerminal()
-  const { desktopActive, toggleCrt } = useSiteEffects()
+  const { toggleCrt } = useSiteEffects()
   const { accents, setAccent } = useAccent()
 
   const open = () => (isOpen.value = true)
@@ -182,10 +182,7 @@ export function useCommandPalette() {
       icon: 'cpu',
       section: 'Actions',
       keywords: 'os desktop windows startx',
-      perform: () => {
-        close()
-        desktopActive.value = true
-      }
+      perform: () => go('/desktop')
     },
     {
       id: 'resume',

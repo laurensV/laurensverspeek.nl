@@ -63,7 +63,6 @@ export interface TerminalContext {
   }
   effects: {
     matrix: Ref<boolean>
-    desktop: Ref<boolean>
     train: Ref<boolean>
     bootReplay: Ref<boolean>
     party: Ref<boolean>

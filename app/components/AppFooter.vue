@@ -29,8 +29,7 @@ import { profile } from '~/data/profile'
 import type { IconName } from '~/components/AppIcon.vue'
 
 const { open } = useTerminal()
-const { desktopActive } = useSiteEffects()
-const bootDesktop = () => (desktopActive.value = true)
+const bootDesktop = () => navigateTo('/desktop')
 </script>
 
 <style scoped lang="scss">

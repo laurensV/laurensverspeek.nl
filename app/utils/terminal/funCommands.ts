@@ -118,10 +118,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         push('primary', 'Booting lvOS 2.0 ...')
         muted('Tip: Esc or the start menu logs you out again.')
-        setTimeout(() => {
-          ctx.effects.desktop.value = true
-          ctx.isOpen.value = false
-        }, 700)
+        ctx.navigate('desktop')
       }
     },
     startx: {

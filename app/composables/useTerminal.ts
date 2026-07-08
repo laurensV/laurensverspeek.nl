@@ -38,7 +38,7 @@ export function useTerminal() {
     return path === '' ? '~' : `~${path}`
   })
   const colorMode = useColorMode()
-  const { matrixActive, desktopActive, toggleCrt } = useSiteEffects()
+  const { matrixActive, toggleCrt } = useSiteEffects()
   const { accent, accents, setAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
@@ -119,7 +119,6 @@ export function useTerminal() {
     },
     effects: {
       matrix: matrixActive,
-      desktop: desktopActive,
       train: useState('fx-train', () => false),
       bootReplay: useState('boot-replay', () => false),
       party: useState('fx-party', () => false),
