@@ -1,6 +1,8 @@
 <template>
   <Teleport to="body">
-    <div v-if="matrixActive" class="matrix-overlay" role="presentation" @click="stop">
+    <!-- kept in the DOM (v-show) so useCanvasScene can own the canvas; the loop
+         only runs while matrixActive is true -->
+    <div v-show="matrixActive" ref="overlayRef" class="matrix-overlay" role="presentation" @click="stop">
       <canvas ref="canvasRef" aria-hidden="true" />
       <p class="matrix-hint is-family-code">click or press any key to wake up</p>
     </div>
@@ -8,70 +10,60 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener, useWindowSize } from '@vueuse/core'
+import { useEventListener } from '@vueuse/core'
 
 // The classic: falling glyph rain. Started via the `matrix` terminal command.
+// The canvas lifecycle (sizing, dpr, rAF) is handled by useCanvasScene; this
+// component only supplies the setup + per-tick draw and the dismiss behaviour.
 
 const GLYPHS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFXYZ$+-*/=<>'
 
 const { matrixActive } = useSiteEffects()
+const overlayRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
-const { width, height } = useWindowSize()
 
-let rafId = 0
-let lastFrame = 0
 let drops: number[] = []
+let vw = 0
+let vh = 0
+let acc = 0
 
 const stop = () => {
   matrixActive.value = false
 }
 
-const draw = (time: number) => {
-  rafId = requestAnimationFrame(draw)
-  if (time - lastFrame < 50) return
-  lastFrame = time
+const { redraw, start, stop: stopLoop } = useCanvasScene(canvasRef, overlayRef, {
+  onResize: (ctx, w, h) => {
+    vw = w
+    vh = h
+    ctx.fillStyle = 'hsl(0, 0%, 0%)'
+    ctx.fillRect(0, 0, w, h)
+    drops = Array.from({ length: Math.ceil(w / 16) }, () => Math.floor(Math.random() * 40))
+  },
+  onFrame: (ctx, dt) => {
+    acc += dt
+    if (acc < 50) return // ~20fps, the classic cadence
+    acc = 0
+    const glyphColor = getComputedStyle(document.documentElement).getPropertyValue('--bulma-success').trim() || 'hsl(153, 53%, 53%)'
+    ctx.fillStyle = 'hsla(0, 0%, 0%, 0.08)'
+    ctx.fillRect(0, 0, vw, vh)
+    ctx.fillStyle = glyphColor
+    ctx.font = '15px monospace'
+    drops.forEach((y, i) => {
+      ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)]!, i * 16, y * 16)
+      drops[i] = y * 16 > vh && Math.random() > 0.975 ? 0 : y + 1
+    })
+  }
+}, { alwaysAnimate: true, autoStart: false })
 
-  const canvas = canvasRef.value
-  const ctx = canvas?.getContext('2d')
-  if (!canvas || !ctx) return
-
-  const style = getComputedStyle(document.documentElement)
-  const glyphColor = style.getPropertyValue('--bulma-success').trim() || 'hsl(153, 53%, 53%)'
-
-  ctx.fillStyle = 'hsla(0, 0%, 0%, 0.08)'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  ctx.fillStyle = glyphColor
-  ctx.font = '15px monospace'
-
-  drops.forEach((y, i) => {
-    const glyph = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]!
-    ctx.fillText(glyph, i * 16, y * 16)
-    drops[i] = y * 16 > canvas.height && Math.random() > 0.975 ? 0 : y + 1
-  })
-}
-
-const setup = () => {
-  const canvas = canvasRef.value
-  const ctx = canvas?.getContext('2d')
-  if (!canvas || !ctx) return
-  canvas.width = width.value
-  canvas.height = height.value
-  ctx.fillStyle = 'hsl(0, 0%, 0%)'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-  drops = Array.from({ length: Math.ceil(width.value / 16) }, () => Math.floor(Math.random() * 40))
-}
-
+// run the rain only while the overlay is on screen
 watch(matrixActive, async (active) => {
-  cancelAnimationFrame(rafId)
   if (active) {
     await nextTick()
-    setup()
-    rafId = requestAnimationFrame(draw)
+    redraw()
+    start()
+  } else {
+    stopLoop()
   }
-})
-
-watch([width, height], () => {
-  if (matrixActive.value) setup()
 })
 
 useEventListener('keydown', (event) => {
@@ -80,8 +72,6 @@ useEventListener('keydown', (event) => {
     stop()
   }
 })
-
-onBeforeUnmount(() => cancelAnimationFrame(rafId))
 </script>
 
 <style scoped lang="scss">

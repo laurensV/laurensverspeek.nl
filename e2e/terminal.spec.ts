@@ -91,6 +91,15 @@ test('nested directories: mkdir, cd into it, path-aware prompt, and cd back', as
   await expect(out).toContainText('workspace/')
 })
 
+test('matrix command shows the rain and a key dismisses it', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'matrix')
+  const overlay = page.locator('.matrix-overlay')
+  await expect(overlay).toBeVisible({ timeout: 3000 })
+  await page.keyboard.press('Enter')
+  await expect(overlay).toBeHidden()
+})
+
 test('life runs an ASCII Game of Life and quits with q', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'life')

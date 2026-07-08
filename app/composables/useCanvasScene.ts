@@ -18,6 +18,9 @@ export interface CanvasSceneOptions {
   // interactive tools (/life, the lvOS app) set this true and gate motion via
   // their own play/pause, so the loop is user-initiated, not ambient.
   alwaysAnimate?: boolean
+  // false lets the caller drive start()/stop() (e.g. the matrix overlay, which
+  // only animates while it's on screen). Defaults to true.
+  autoStart?: boolean
 }
 
 export function useCanvasScene(
@@ -64,7 +67,7 @@ export function useCanvasScene(
 
   onMounted(() => {
     fit()
-    start()
+    if (options.autoStart !== false) start()
   })
   onBeforeUnmount(stop)
   useResizeObserver(containerRef, fit)
