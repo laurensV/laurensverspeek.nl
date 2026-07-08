@@ -1,11 +1,19 @@
 <template>
   <div>
-    <div v-if="withFilters" class="filter-flags is-family-code mb-5" role="tablist" aria-label="Filter projects">
+    <div
+      v-if="withFilters"
+      ref="filtersEl"
+      class="filter-flags is-family-code mb-5"
+      role="tablist"
+      aria-label="Filter projects"
+      @keydown="onFilterKey"
+    >
       <span class="filter-prompt" aria-hidden="true">$ ls</span>
       <button
         class="filter-flag"
         role="tab"
         :aria-selected="activeCategory === null"
+        :tabindex="activeCategory === null ? 0 : -1"
         :class="{ 'is-active': activeCategory === null }"
         @click="activeCategory = null"
       >--all<span class="flag-count">={{ projects.length }}</span></button>
@@ -15,6 +23,7 @@
         class="filter-flag"
         role="tab"
         :aria-selected="activeCategory === category.value"
+        :tabindex="activeCategory === category.value ? 0 : -1"
         :class="{ 'is-active': activeCategory === category.value }"
         @click="activeCategory = category.value"
       >--{{ category.value }}<span class="flag-count">={{ countFor(category.value) }}</span></button>
@@ -50,6 +59,25 @@ const activeCategory = ref<ProjectCategory | null>(null)
 
 const countFor = (category: ProjectCategory) =>
   props.projects.filter((p) => p.category === category).length
+
+// keyboard support for the filter tablist: ←/→ move (and activate) tabs,
+// Home/End jump to the ends, with a roving tabindex (only the active tab is
+// in the tab order). Activation follows focus, the common tablist pattern.
+const filtersEl = ref<HTMLElement>()
+const tabValues = computed<(ProjectCategory | null)[]>(() => [null, ...categories.map((c) => c.value)])
+const onFilterKey = (event: KeyboardEvent) => {
+  if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return
+  event.preventDefault()
+  const values = tabValues.value
+  const current = values.indexOf(activeCategory.value)
+  const nextIndex
+    = event.key === 'Home' ? 0
+      : event.key === 'End' ? values.length - 1
+        : event.key === 'ArrowRight' ? (current + 1) % values.length
+          : (current - 1 + values.length) % values.length
+  activeCategory.value = values[nextIndex]!
+  nextTick(() => filtersEl.value?.querySelectorAll<HTMLElement>('.filter-flag')[nextIndex]?.focus())
+}
 
 const visibleProjects = computed(() =>
   activeCategory.value

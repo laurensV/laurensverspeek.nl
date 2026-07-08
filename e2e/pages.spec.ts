@@ -173,6 +173,20 @@ test('/uses and /now show the refreshed content', async ({ page }) => {
   await expect(page.getByText('./away from the keyboard')).toBeVisible()
 })
 
+test('project filters support arrow-key navigation', async ({ page }) => {
+  await page.goto('/projects')
+  const all = page.locator('.filter-flag', { hasText: '--all' })
+  await all.focus()
+  await expect(all).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('ArrowRight')
+  const second = page.locator('.filter-flag').nth(1)
+  await expect(second).toHaveAttribute('aria-selected', 'true')
+  await expect(second).toBeFocused()
+  // Home returns to --all
+  await page.keyboard.press('Home')
+  await expect(all).toHaveAttribute('aria-selected', 'true')
+})
+
 test('project filters narrow the grid', async ({ page }) => {
   await page.goto('/projects')
   // leaving cards are display:none during the transition, so count only visible
