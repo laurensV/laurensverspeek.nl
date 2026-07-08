@@ -5,10 +5,18 @@
       <h1 class="title is-2">
         blog<span class="has-text-primary-on-scheme is-family-code">[{{ posts?.length ?? 0 }}]</span>
       </h1>
-      <p class="subtitle is-5 has-text-grey mb-6">
+      <p class="subtitle is-5 has-text-grey mb-4">
         Occasional writing about code, blockchain and this website.
-        <a href="/rss.xml" class="is-family-code is-size-7">[rss]</a>
       </p>
+      <div class="rss-nudge is-family-code is-size-7 mb-6">
+        <AppIcon name="rss" :size="13" />
+        <span>subscribe:</span>
+        <a href="/rss.xml" class="rss-open">open feed</a>
+        <span class="rss-sep">·</span>
+        <button class="rss-copy" :class="{ 'is-copied': copied }" @click="copyFeed">
+          {{ copied ? 'copied ✓' : 'copy rss url' }}
+        </button>
+      </div>
 
       <div v-if="pending" class="blog-list" aria-hidden="true">
         <div v-for="i in 3" :key="i" class="blog-entry">
@@ -57,11 +65,58 @@ const { data: posts, pending, error } = await useAsyncData('blog-posts', () =>
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+
+// copy the absolute RSS feed URL to paste into a reader
+const copied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | undefined
+const copyFeed = () => {
+  if (!import.meta.client) return
+  navigator.clipboard?.writeText(`${SITE_URL}/rss.xml`).then(() => {
+    copied.value = true
+    clearTimeout(copyTimer)
+    copyTimer = setTimeout(() => (copied.value = false), 1800)
+  }).catch(() => {})
+}
+onBeforeUnmount(() => clearTimeout(copyTimer))
 </script>
 
 <style scoped lang="scss">
 .blog-container {
   max-width: 44rem;
+}
+
+// subtle "subscribe via RSS" affordance
+.rss-nudge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: 2px;
+  color: var(--bulma-text-weak);
+
+  .rss-open,
+  .rss-copy {
+    color: var(--bulma-primary-on-scheme);
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+
+  .rss-copy.is-copied {
+    color: var(--bulma-success);
+  }
+
+  .rss-sep {
+    opacity: 0.5;
+  }
 }
 
 .blog-list {

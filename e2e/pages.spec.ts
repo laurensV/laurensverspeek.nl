@@ -156,6 +156,17 @@ test('blog post shows related posts by shared tags', async ({ page }) => {
   await expect(related.first()).toHaveAttribute('href', /\/blog\//)
 })
 
+test('blog has an RSS subscribe affordance that copies the feed url', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/blog')
+  await expect(page.locator('.rss-open')).toHaveAttribute('href', '/rss.xml')
+  const copy = page.locator('.rss-copy')
+  await copy.click()
+  await expect(copy).toContainText('copied')
+  const clip = await page.evaluate(() => navigator.clipboard.readText())
+  expect(clip).toContain('/rss.xml')
+})
+
 test('blog index lists the newest post and it opens', async ({ page }) => {
   await page.goto('/blog')
   const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })
