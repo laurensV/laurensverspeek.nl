@@ -61,8 +61,12 @@ export function applyFilter<T extends { text: string }>(
   const [name = '', ...rest] = stage.trim().split(/\s+/).filter(Boolean)
   switch (name) {
     case 'grep': {
-      const invert = rest[0] === '-v'
-      const pattern = (invert ? rest.slice(1) : rest).join(' ')
+      // flags may be combined (-vn); everything else is the pattern
+      const flags = rest.filter((token) => token.startsWith('-')).join('')
+      const invert = flags.includes('v')
+      const number = flags.includes('n')
+      const countOnly = flags.includes('c')
+      const pattern = rest.filter((token) => !token.startsWith('-')).join(' ')
       if (!pattern) return { error: 'grep: missing pattern' }
       let matches: (text: string) => boolean
       try {
@@ -71,7 +75,13 @@ export function applyFilter<T extends { text: string }>(
       } catch {
         matches = (text) => text.toLowerCase().includes(pattern.toLowerCase())
       }
-      return { lines: input.filter((line) => matches(stripHtml(line.text)) !== invert) }
+      const kept: { line: T, n: number }[] = []
+      input.forEach((line, i) => {
+        if (matches(stripHtml(line.text)) !== invert) kept.push({ line, n: i + 1 })
+      })
+      if (countOnly) return { lines: [createLine(String(kept.length))] }
+      if (number) return { lines: kept.map(({ line, n }) => createLine(`${n}:${stripHtml(line.text)}`)) }
+      return { lines: kept.map(({ line }) => line) }
     }
     case 'head':
     case 'tail': {

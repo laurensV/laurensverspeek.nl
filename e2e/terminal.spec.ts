@@ -27,6 +27,30 @@ test('pipes command output through grep', async ({ page }) => {
   await expect(out).not.toContainText('List available commands')
 })
 
+test('cp and mv copy and rename files in the virtual fs', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo original > a.txt')
+  await run(page, 'cp a.txt b.txt')
+  await run(page, 'cat b.txt')
+  await expect(out).toContainText('original')
+  // mv renames: c.txt appears, b.txt is gone
+  await run(page, 'mv b.txt c.txt')
+  await run(page, 'ls')
+  await expect(out).toContainText('c.txt')
+  await run(page, 'cat b.txt')
+  await expect(out).toContainText('No such file or directory')
+})
+
+test('grep -n numbers matches and -c counts them', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'help | grep -c blog')
+  // -c yields a single numeric count (>= 1, since blog is a command)
+  await run(page, 'help | grep -n blog')
+  await expect(out).toContainText(/\d+:.*blog/)
+})
+
 test('redirects any command output to a file with > and >>', async ({ page }) => {
   await openTerminal(page)
   const out = page.locator('.terminal-output')

@@ -77,6 +77,23 @@ describe('applyFilter', () => {
     expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['alpha', 'gamma'])
   })
 
+  it('grep -n prefixes matches with their input line number', () => {
+    // beta(2) and delta(4) contain an 'e'
+    const out = applyFilter(lines, 'grep -n e', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['2:beta', '4:delta'])
+  })
+
+  it('grep -c counts matching lines into one line', () => {
+    const out = applyFilter(lines, 'grep -c e', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['2'])
+  })
+
+  it('grep combines flags like -vc', () => {
+    // count of lines WITHOUT an 'e': alpha and gamma
+    const out = applyFilter(lines, 'grep -vc e', line)
+    expect('lines' in out && out.lines.map((l) => l.text)).toEqual(['2'])
+  })
+
   it('strips html before matching', () => {
     const out = applyFilter([line('<span class="term-accent">snake</span> game')], 'grep snake', line)
     expect('lines' in out && out.lines.length).toBe(1)
