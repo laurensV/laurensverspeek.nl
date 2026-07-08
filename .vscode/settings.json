@@ -1,0 +1,15 @@
+{
+  // This repo formats via ESLint (the Nuxt stylistic rules in eslint.config.mjs),
+  // not a separate formatter. The built-in Vue/HTML formatter collapses attribute
+  // lists onto one line, which fights rules like vue/first-attribute-linebreak and
+  // produces noisy churn. So: turn the built-in formatter off for .vue on save and
+  // let ESLint autofix tidy files instead.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "eslint.useFlatConfig": true,
+  "[vue]": {
+    "editor.formatOnSave": false
+  }
+}
