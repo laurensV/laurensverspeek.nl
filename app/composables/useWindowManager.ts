@@ -24,16 +24,44 @@ const MIN_H = 140
 const SNAP_MARGIN = 24
 
 /** Where a drag-release would snap the window, if anywhere. */
-export type SnapZone = 'left' | 'right' | 'top'
+export type SnapZone =
+  | 'left' | 'right' | 'top'
+  | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
 let zCounter = 10
 
 // The zone the pointer is hovering while dragging, for the Aero-style preview.
+// At a side edge the vertical thirds pick a quadrant (top/bottom) or a half
+// (middle); the top-center edge maximizes.
 const edgeZone = (x: number, y: number): SnapZone | null => {
-  if (x <= SNAP_MARGIN) return 'left'
-  if (x >= window.innerWidth - SNAP_MARGIN) return 'right'
+  const usableH = window.innerHeight - TASKBAR_PX
+  const nearLeft = x <= SNAP_MARGIN
+  const nearRight = x >= window.innerWidth - SNAP_MARGIN
+  if (nearLeft || nearRight) {
+    const side = nearLeft ? 'left' : 'right'
+    if (y <= usableH / 3) return `top-${side}` as SnapZone
+    if (y >= (usableH * 2) / 3) return `bottom-${side}` as SnapZone
+    return side
+  }
   if (y <= SNAP_MARGIN) return 'top'
   return null
+}
+
+// The screen rect a zone maps to (top = full-screen maximize preview).
+const zoneRect = (zone: SnapZone) => {
+  const w = window.innerWidth
+  const h = window.innerHeight - TASKBAR_PX
+  const halfW = Math.floor(w / 2)
+  const halfH = Math.floor(h / 2)
+  switch (zone) {
+    case 'left': return { x: 0, y: 0, width: halfW, height: h }
+    case 'right': return { x: halfW, y: 0, width: w - halfW, height: h }
+    case 'top-left': return { x: 0, y: 0, width: halfW, height: halfH }
+    case 'top-right': return { x: halfW, y: 0, width: w - halfW, height: halfH }
+    case 'bottom-left': return { x: 0, y: halfH, width: halfW, height: h - halfH }
+    case 'bottom-right': return { x: halfW, y: halfH, width: w - halfW, height: h - halfH }
+    case 'top': return { x: 0, y: 0, width: w, height: h }
+  }
 }
 
 export function useWindowManager(titles: Record<string, string> = {}) {
@@ -96,14 +124,15 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     focusWindow(win)
   }
 
-  const snap = (win: DesktopWindow, side: 'left' | 'right') => {
+  // snap to a half or quadrant (top-center maximizes via toggleMaximize instead)
+  const snap = (win: DesktopWindow, zone: SnapZone) => {
     if (!win.restore) saveRestoreRect(win)
-    const half = Math.floor(window.innerWidth / 2)
     win.maximized = false
-    win.x = side === 'left' ? 0 : half
-    win.y = 0
-    win.width = half
-    win.height = window.innerHeight - TASKBAR_PX
+    const rect = zoneRect(zone)
+    win.x = rect.x
+    win.y = rect.y
+    win.width = rect.width
+    win.height = rect.height
   }
 
   // ---- pointer interactions ----
@@ -114,14 +143,9 @@ export function useWindowManager(titles: Record<string, string> = {}) {
 
   // live snap hint while dragging; drives the preview overlay in WebDesktop
   const snapHint = ref<SnapZone | null>(null)
-  const snapPreview = computed(() => {
-    if (!snapHint.value || !import.meta.client) return null
-    const half = Math.floor(window.innerWidth / 2)
-    const height = window.innerHeight - TASKBAR_PX
-    if (snapHint.value === 'left') return { x: 0, y: 0, width: half, height }
-    if (snapHint.value === 'right') return { x: half, y: 0, width: half, height }
-    return { x: 0, y: 0, width: window.innerWidth, height } // top → maximize
-  })
+  const snapPreview = computed(() =>
+    snapHint.value && import.meta.client ? zoneRect(snapHint.value) : null
+  )
 
   const startDrag = (win: DesktopWindow, event: PointerEvent) => {
     focusWindow(win)
@@ -164,11 +188,11 @@ export function useWindowManager(titles: Record<string, string> = {}) {
 
   useEventListener('pointerup', (event: PointerEvent) => {
     if (dragging) {
-      // release against an edge: snap left/right, maximize at the top
+      // release against an edge: maximize at the top-center, else snap to the
+      // matching half or quadrant
       const zone = edgeZone(event.clientX, event.clientY)
-      if (zone === 'left') snap(dragging, 'left')
-      else if (zone === 'right') snap(dragging, 'right')
-      else if (zone === 'top') toggleMaximize(dragging)
+      if (zone === 'top') toggleMaximize(dragging)
+      else if (zone) snap(dragging, zone)
     }
     dragging = null
     resizing = null

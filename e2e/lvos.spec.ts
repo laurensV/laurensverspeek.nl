@@ -68,6 +68,26 @@ test('dragging a window to an edge shows a snap preview, then snaps', async ({ p
   await expect(page.locator('.lvos-window.has-size').first()).toBeVisible()
 })
 
+test('dragging a window to a corner snaps it to a quadrant', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await bootDesktop(page)
+  const bar = page.locator('.lvos-window-titlebar').first()
+  const box = await bar.boundingBox()
+  if (!box) throw new Error('no window to drag')
+  await page.mouse.move(box.x + 60, box.y + 10)
+  await page.mouse.down()
+  await page.mouse.move(6, 6, { steps: 8 }) // top-left corner
+  await expect(page.locator('.lvos-snap-preview')).toBeVisible()
+  await page.mouse.up()
+  const rect = await page.locator('.lvos-window.has-size').first().boundingBox()
+  if (!rect) throw new Error('window not sized after snap')
+  // top-left quadrant: pinned to the corner, roughly half the width AND height
+  expect(rect.x).toBeLessThan(20)
+  expect(rect.y).toBeLessThan(20)
+  expect(rect.width).toBeLessThan(720)
+  expect(rect.height).toBeLessThan(440)
+})
+
 test('Alt+Tab cycles focus between open windows', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-icon', { hasText: 'calculator' }).click()
