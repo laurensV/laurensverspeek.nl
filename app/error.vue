@@ -15,7 +15,16 @@
 
       <pre class="error-trace" aria-hidden="true">{{ trace }}</pre>
 
+      <p v-if="suggestion" class="error-suggest">
+        did you mean
+        <button class="error-suggest-link" @click="go(suggestion.route)">{{ suggestion.route }}</button>?
+      </p>
+
       <p class="error-help">// this page doesn't exist, but the shell does — type <b>help</b> or <b>cd ~</b></p>
+
+      <nav class="error-links" aria-label="Recovery links">
+        <button v-for="r in QUICK_LINKS" :key="r.path" class="error-link" @click="go(r.path)">{{ r.label }}</button>
+      </nav>
 
       <div class="error-log">
         <template v-for="line in lines" :key="line.id">
@@ -36,6 +45,9 @@
           spellcheck="false"
           aria-label="Recovery shell input"
           @keydown.enter="submit"
+          @keydown.tab.prevent="autocomplete"
+          @keydown.up.prevent="historyUp"
+          @keydown.down.prevent="historyDown"
         >
       </div>
     </div>
@@ -45,12 +57,30 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
-defineProps<{ error?: NuxtError }>()
+const props = defineProps<{ error?: NuxtError }>()
 
 const path = useRoute().path
 const prompt = 'visitor@lv:~$'
 const input = ref('')
 const inputRef = ref<HTMLInputElement>()
+
+// known pages, used for the "did you mean" hint, quick links and completion
+const QUICK_LINKS = [
+  { path: '/', label: 'cd ~' },
+  { path: '/projects', label: '/projects' },
+  { path: '/blog', label: '/blog' },
+  { path: '/about', label: '/about' },
+  { path: '/uses', label: '/uses' },
+  { path: '/contact', label: '/contact' }
+]
+const ROUTES = ['/', '/projects', '/blog', '/about', '/uses', '/now', '/cv', '/contact']
+
+// only guess a nearest page for a genuine 404 (not a 500)
+const suggestion = computed(() =>
+  props.error?.statusCode === 404
+    ? nearestRoute(path, ROUTES.filter((r) => r !== '/'))
+    : null
+)
 
 const trace = computed(() =>
   [
@@ -70,33 +100,74 @@ const focusInput = () => inputRef.value?.focus()
 
 const go = (route: string) => clearError({ redirect: route })
 
-const commands: Record<string, () => void> = {
+const commands: Record<string, (arg?: string) => void> = {
   help: () =>
-    push('output', 'available: <b>ls</b> · <b>cd ~</b> · <b>cd /projects</b> · <b>cd /blog</b> · <b>whoami</b> · <b>clear</b>'),
-  ls: () => push('output', 'home/  projects/  blog/  about/  uses/  contact/'),
+    push('output', 'available: <b>ls</b> · <b>cd &lt;page&gt;</b> · <b>open &lt;page&gt;</b> · <b>whoami</b> · <b>echo</b> · <b>pwd</b> · <b>clear</b> (Tab completes, ↑/↓ history)'),
+  ls: () => push('output', ROUTES.map((r) => (r === '/' ? 'home/' : `${r.slice(1)}/`)).join('  ')),
+  open: (arg) => (arg ? go(arg.startsWith('/') ? arg : `/${arg}`) : push('error', 'usage: open <page>')),
   whoami: () => push('muted', 'a lost visitor — let me get you home: try `cd ~`'),
+  echo: () => push('output', '(echo needs something to say)'),
   clear: () => (lines.value = []),
   pwd: () => push('output', '/dev/null (you are nowhere)'),
   sudo: () => push('error', 'nice try. even root can\'t find this page.')
 }
+
+// completion candidates: the commands plus `cd <page>` targets
+const commandNames = ['cd', ...Object.keys(commands)]
+
+// history for ↑/↓ recall
+const history = ref<string[]>([])
+let historyIndex = -1
 
 const submit = () => {
   const value = input.value.trim()
   input.value = ''
   if (!value) return
   push('input', value)
+  history.value.push(value)
+  historyIndex = history.value.length
 
-  const [name = '', arg] = value.split(/\s+/)
+  const [name = '', ...rest] = value.split(/\s+/)
+  const arg = rest.join(' ')
   const lower = name.toLowerCase()
 
   if (lower === 'cd') {
-    const target = (arg ?? '~').replace(/^\/|\/$/g, '')
+    const target = (arg || '~').replace(/^\/|\/$/g, '')
     if (!arg || arg === '~' || target === '') return go('/')
     return go(`/${target}`)
   }
+  if (lower === 'echo') return push('output', arg || '')
   const command = commands[lower]
-  if (command) command()
+  if (command) command(arg)
   else push('error', `lvsh: command not found: ${name} (try 'help')`)
+}
+
+const autocomplete = () => {
+  const raw = input.value.trimStart()
+  const lower = raw.toLowerCase()
+  if (!lower) return
+  if (!lower.includes(' ')) {
+    const match = commandNames.find((c) => c.startsWith(lower))
+    if (match) input.value = `${match} `
+    return
+  }
+  // complete a `cd`/`open` argument from the known routes
+  const [cmd = '', ...rest] = lower.split(/\s+/)
+  if (cmd !== 'cd' && cmd !== 'open') return
+  const partial = rest.join(' ').replace(/^\//, '')
+  const match = ROUTES.map((r) => r.replace(/^\//, '')).find((r) => r && r.startsWith(partial))
+  if (match) input.value = `${cmd} /${match}`
+}
+
+const historyUp = () => {
+  if (!history.value.length) return
+  historyIndex = Math.max(0, historyIndex - 1)
+  input.value = history.value[historyIndex] ?? ''
+}
+const historyDown = () => {
+  if (!history.value.length) return
+  historyIndex = Math.min(history.value.length, historyIndex + 1)
+  input.value = history.value[historyIndex] ?? ''
 }
 
 onMounted(focusInput)
@@ -143,6 +214,26 @@ onMounted(focusInput)
   overflow-x: auto;
 }
 
+.error-suggest {
+  margin-bottom: 0.75rem;
+  color: var(--bulma-text);
+  font-size: 0.9rem;
+}
+
+.error-suggest-link {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: 2px;
+  background: hsla(var(--lv-primary-hsl), 0.1);
+  color: var(--bulma-primary-on-scheme);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: hsla(var(--lv-primary-hsl), 0.2);
+  }
+}
+
 .error-help {
   margin-bottom: 1rem;
   color: var(--bulma-text-weak);
@@ -150,6 +241,29 @@ onMounted(focusInput)
 
   b {
     color: var(--bulma-primary-on-scheme);
+  }
+}
+
+.error-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+
+  .error-link {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--bulma-border-weak);
+    border-radius: 2px;
+    background: none;
+    color: var(--bulma-text-weak);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+      border-color: hsla(var(--lv-primary-hsl), 0.5);
+      color: var(--bulma-primary-on-scheme);
+    }
   }
 }
 

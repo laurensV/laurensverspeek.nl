@@ -17,6 +17,23 @@ test('404 shell cd navigates home', async ({ page }) => {
   await expect(page).toHaveURL(/\/projects/)
 })
 
+test('404 suggests the nearest page and quick-links navigate', async ({ page }) => {
+  await page.goto('/projcts')
+  const suggest = page.locator('.error-suggest-link')
+  await expect(suggest).toHaveText('/projects')
+  await suggest.click()
+  await expect(page).toHaveURL(/\/projects/)
+})
+
+test('404 shell tab-completes commands', async ({ page }) => {
+  await page.goto('/whoops')
+  const field = page.locator('.error-input')
+  await field.click()
+  await field.fill('who')
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('whoami ')
+})
+
 test('blog post shows a table of contents, copy buttons and a reading time', async ({ page }) => {
   await page.goto('/blog/snake-in-the-terminal')
   await expect(page.locator('.post-toc')).toBeVisible()
