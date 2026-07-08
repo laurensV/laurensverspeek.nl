@@ -8,8 +8,10 @@ export interface TermMdLine {
   html?: boolean
 }
 
-type MinimarkElement = [string, Record<string, unknown>, ...MinimarkNode[]]
-type MinimarkNode = string | MinimarkElement
+export type MinimarkElement = [string, Record<string, unknown>, ...MinimarkNode[]]
+export type MinimarkNode = string | MinimarkElement
+/** The root of a rendered Nuxt Content body: `{ value: [...nodes] }`. */
+export interface MinimarkRoot { value?: MinimarkNode[] }
 
 const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -49,7 +51,7 @@ const renderInline = (nodes: MinimarkNode[]): string =>
 
 /** Block-level markdown → terminal lines. */
 export function renderMarkdownToTerminal(body: unknown): TermMdLine[] {
-  const value = (body as { value?: MinimarkNode[] } | undefined)?.value
+  const value = (body as MinimarkRoot | undefined)?.value
   if (!Array.isArray(value)) return [{ type: 'muted', text: '(post body could not be parsed)' }]
 
   const lines: TermMdLine[] = []

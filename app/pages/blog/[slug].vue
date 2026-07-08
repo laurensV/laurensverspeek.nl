@@ -49,6 +49,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
+import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
 
 const route = useRoute()
 
@@ -90,19 +91,18 @@ useJsonLd(() => ({
   mainEntityOfPage: `${SITE_URL}${post.value?.path}`
 }))
 
-// rough reading time from the rendered AST (~200 wpm)
-const countWords = (node: unknown): number => {
-  if (typeof node === 'string') return node.split(/\s+/).filter(Boolean).length
-  if (Array.isArray(node)) return node.reduce<number>((sum, child) => sum + countWords(child), 0)
-  if (node && typeof node === 'object' && 'value' in node) {
-    return countWords((node as { value: unknown }).value)
-  }
-  if (node && typeof node === 'object' && 'children' in node) {
-    return countWords((node as { children: unknown }).children)
-  }
-  return 0
-}
-const readingTime = computed(() => Math.max(1, Math.round(countWords(post.value?.body) / 200)))
+// rough reading time from the rendered minimark AST (~200 wpm). A node is either
+// a text string or an element tuple [tag, props, ...children].
+const countWords = (nodes: MinimarkNode[]): number =>
+  nodes.reduce((sum, node) =>
+    typeof node === 'string'
+      ? sum + node.split(/\s+/).filter(Boolean).length
+      : sum + countWords(node.slice(2) as MinimarkNode[]), 0)
+
+const readingTime = computed(() => {
+  const body = post.value?.body as MinimarkRoot | undefined
+  return Math.max(1, Math.round(countWords(body?.value ?? []) / 200))
+})
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })

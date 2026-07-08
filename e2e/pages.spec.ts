@@ -17,10 +17,12 @@ test('404 shell cd navigates home', async ({ page }) => {
   await expect(page).toHaveURL(/\/projects/)
 })
 
-test('blog post shows a table of contents and copy buttons', async ({ page }) => {
+test('blog post shows a table of contents, copy buttons and a reading time', async ({ page }) => {
   await page.goto('/blog/snake-in-the-terminal')
   await expect(page.locator('.post-toc')).toBeVisible()
   await expect(page.locator('.code-copy').first()).toBeVisible()
+  // reading time is computed from the rendered AST, so a value proves the walk works
+  await expect(page.getByText(/\d+ min read/)).toBeVisible()
 })
 
 test('project filters narrow the grid', async ({ page }) => {
