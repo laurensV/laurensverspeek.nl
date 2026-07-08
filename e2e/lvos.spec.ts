@@ -253,3 +253,34 @@ test('files app browses the terminal home filesystem', async ({ page }) => {
   await files.locator('.files-file', { hasText: '..' }).click()
   await expect(files.locator('.files-file', { hasText: 'readme.md' })).toBeVisible()
 })
+
+test('task manager lists windows as processes and kill closes them', async ({ page }) => {
+  await bootDesktop(page)
+  // close the readme window that covers the icon column
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^taskmgr$/ }).click()
+  const mgr = page.locator('.taskmgr')
+  await mgr.waitFor()
+  // drag the manager off the icon column so the calculator icon stays clickable
+  const bar = page.locator('.lvos-window-titlebar').first()
+  const box = await bar.boundingBox()
+  if (box) {
+    await page.mouse.move(box.x + 60, box.y + 10)
+    await page.mouse.down()
+    await page.mouse.move(760, 420, { steps: 6 })
+    await page.mouse.up()
+  }
+  await page.locator('.lvos-icon', { hasText: /^calculator$/ }).click()
+  await page.locator('.calc').waitFor()
+  // real windows and system daemons both appear
+  const calcRow = mgr.locator('tr', { hasText: 'calculator' })
+  await expect(calcRow).toHaveCount(1)
+  await expect(mgr.locator('tr', { hasText: 'init' })).toHaveCount(1)
+  // killing the calculator really closes its window
+  await calcRow.locator('.taskmgr-kill').click()
+  await expect(page.locator('.calc')).toHaveCount(0)
+  await expect(mgr.locator('tr', { hasText: 'calculator' })).toHaveCount(0)
+  // system processes refuse to die
+  await mgr.locator('tr', { hasText: 'init' }).locator('.taskmgr-kill').click()
+  await expect(mgr).toContainText('not permitted')
+})
