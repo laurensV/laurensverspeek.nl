@@ -1,8 +1,6 @@
 <template>
   <Teleport to="body">
-    <!-- kept in the DOM (v-show) so useCanvasScene can own the canvas; the loop
-         only runs while matrixActive is true -->
-    <div v-show="matrixActive" ref="overlayRef" class="matrix-overlay" role="presentation" @click="stop">
+    <div ref="overlayRef" class="matrix-overlay" role="presentation" @click="stop">
       <canvas ref="canvasRef" aria-hidden="true" />
       <p class="matrix-hint is-family-code">click or press any key to wake up</p>
     </div>
@@ -12,9 +10,10 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 
-// The classic: falling glyph rain. Started via the `matrix` terminal command.
-// The canvas lifecycle (sizing, dpr, rAF) is handled by useCanvasScene; this
-// component only supplies the setup + per-tick draw and the dismiss behaviour.
+// The classic: falling glyph rain. Started via the `matrix` terminal command,
+// which flips matrixActive — the layout only mounts this component while that's
+// true, so useCanvasScene runs from mount to dismiss. This component supplies
+// the setup + per-tick draw and the dismiss behaviour.
 
 const GLYPHS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFXYZ$+-*/=<>'
 
@@ -31,7 +30,9 @@ const stop = () => {
   matrixActive.value = false
 }
 
-const { redraw, start, stop: stopLoop } = useCanvasScene(canvasRef, overlayRef, {
+// alwaysAnimate: this is a deliberately-triggered effect, so it runs even under
+// reduced motion. The default autoStart is fine — we only mount while active.
+useCanvasScene(canvasRef, overlayRef, {
   onResize: (ctx, w, h) => {
     vw = w
     vh = h
@@ -53,24 +54,11 @@ const { redraw, start, stop: stopLoop } = useCanvasScene(canvasRef, overlayRef, 
       drops[i] = y * 16 > vh && Math.random() > 0.975 ? 0 : y + 1
     })
   }
-}, { alwaysAnimate: true, autoStart: false })
-
-// run the rain only while the overlay is on screen
-watch(matrixActive, async (active) => {
-  if (active) {
-    await nextTick()
-    redraw()
-    start()
-  } else {
-    stopLoop()
-  }
-})
+}, { alwaysAnimate: true })
 
 useEventListener('keydown', (event) => {
-  if (matrixActive.value) {
-    event.preventDefault()
-    stop()
-  }
+  event.preventDefault()
+  stop()
 })
 </script>
 

@@ -14,7 +14,8 @@
     <CommandPalette />
     <ShortcutsHelp />
     <BootSplash />
-    <MatrixRain />
+    <!-- terminal-only easter egg: load its canvas code only once triggered -->
+    <LazyMatrixRain v-if="matrixActive" />
     <SlTrain />
     <PartyMode />
     <LiveCursors />
@@ -24,6 +25,10 @@
 <script setup lang="ts">
 // lvOS now lives on its own /desktop route (see pages/desktop.vue), so the shell
 // no longer mounts it here.
+
+// MatrixRain is a fairly heavy canvas component but only ever triggered from the
+// terminal, so gate it behind its flag to keep it out of the initial bundle.
+const { matrixActive } = useSiteEffects()
 </script>
 
 <style scoped lang="scss">
