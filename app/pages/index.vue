@@ -84,12 +84,14 @@
             </NuxtLink>
           </div>
 
-          <div v-if="pendingPosts">
-            <p class="is-skeleton mb-2" style="max-width: 30rem">Loading the latest post title...</p>
-            <p class="is-skeleton" style="max-width: 24rem">Loading another post title...</p>
+          <div v-if="pendingPosts" class="latest-posts" aria-hidden="true">
+            <div v-for="i in 2" :key="i" class="latest-post is-loading">
+              <span class="is-skeleton is-size-7 latest-post-date">2026 Jan 01</span>
+              <span class="is-skeleton latest-post-title">Loading a recent post title</span>
+            </div>
           </div>
 
-          <div v-else class="latest-posts">
+          <div v-else class="latest-posts is-loaded">
             <NuxtLink
               v-for="post in latestPosts"
               :key="post.path"
@@ -287,6 +289,23 @@ const areas: { icon: IconName; title: string; description: string }[] = [
 .latest-posts {
   display: flex;
   flex-direction: column;
+
+  // fade the resolved list in so it doesn't pop after the skeleton
+  &.is-loaded {
+    animation: list-fade-in 0.35s ease;
+  }
+}
+
+@keyframes list-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .latest-posts.is-loaded {
+    animation: none;
+  }
 }
 
 .latest-post {

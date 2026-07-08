@@ -10,10 +10,11 @@
         <a href="/rss.xml" class="is-family-code is-size-7">[rss]</a>
       </p>
 
-      <div v-if="pending" class="blog-list">
-        <div v-for="i in 2" :key="i" class="blog-entry">
-          <p class="is-skeleton mb-2">Loading a post title...</p>
-          <p class="is-skeleton is-size-6">Loading a description for the post...</p>
+      <div v-if="pending" class="blog-list" aria-hidden="true">
+        <div v-for="i in 3" :key="i" class="blog-entry">
+          <p class="is-skeleton is-size-7 mb-1" style="max-width: 7rem">2026 Jan 01</p>
+          <p class="is-skeleton title is-4 mb-1" style="max-width: 22rem">Loading a post title here</p>
+          <p class="is-skeleton" style="max-width: 32rem">Loading a short description for this post</p>
         </div>
       </div>
 
@@ -26,7 +27,7 @@
         <p class="is-size-7 mt-2">// first post coming soon(ish) — and this time I mean it</p>
       </div>
 
-      <div v-else class="blog-list">
+      <div v-else class="blog-list is-loaded">
         <article v-for="post in posts" :key="post.path" class="blog-entry">
           <p class="is-family-code is-size-7 has-text-grey mb-1">{{ formatDate(post.date) }}</p>
           <h2 class="title is-4 mb-1">
@@ -67,6 +68,23 @@ const formatDate = (date: string) =>
   display: flex;
   flex-direction: column;
   gap: 2.25rem;
+
+  // fade the resolved list in so it doesn't pop after the skeleton
+  &.is-loaded {
+    animation: blog-list-in 0.35s ease;
+  }
+}
+
+@keyframes blog-list-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-list.is-loaded {
+    animation: none;
+  }
 }
 
 .blog-link {
