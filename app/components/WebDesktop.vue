@@ -58,6 +58,7 @@
       <div
         v-for="win in windows"
         :key="win.id"
+        :data-win="win.id"
         class="lvos-window"
         :class="{
           'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal' || win.id === 'notes',
@@ -222,13 +223,32 @@ const {
   openWindow,
   closeWindow,
   focusWindow,
-  toggleMinimize,
+  toggleMinimize: wmToggleMinimize,
   toggleMaximize,
   startDrag,
   startResize,
   snapPreview,
   cycleWindows
 } = useWindowManager(WINDOW_TITLES)
+
+// genie effect: aim each window's minimize at its own taskbar button rather
+// than a generic point, by measuring the two rects at minimize time
+const genie = reactive<Record<string, Record<string, string>>>({})
+const toggleMinimize = (win: DesktopWindow) => {
+  if (!win.minimized) {
+    const btn = document.querySelector<HTMLElement>(`.lvos-task[data-win="${win.id}"]`)
+    const winEl = document.querySelector<HTMLElement>(`.lvos-window[data-win="${win.id}"]`)
+    if (btn && winEl) {
+      const b = btn.getBoundingClientRect()
+      const w = winEl.getBoundingClientRect()
+      genie[win.id] = {
+        '--gx': `${Math.round(b.left + b.width / 2 - (w.left + w.width / 2))}px`,
+        '--gy': `${Math.round(b.top + b.height / 2 - (w.top + w.height / 2))}px`
+      }
+    }
+  }
+  wmToggleMinimize(win)
+}
 
 const startOpen = ref(false)
 const calendarOpen = ref(false)
@@ -269,13 +289,14 @@ const cycleWallpaper = () => notify('🖼', 'Wallpaper changed', nextWallpaper()
 
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
-    ? { zIndex: win.z }
+    ? { zIndex: win.z, ...genie[win.id] }
     : {
         left: `${win.x}px`,
         top: `${win.y}px`,
         zIndex: win.z,
         width: win.width !== undefined ? `${win.width}px` : undefined,
-        height: win.height !== undefined ? `${win.height}px` : undefined
+        height: win.height !== undefined ? `${win.height}px` : undefined,
+        ...genie[win.id]
       }
 
 const onBootDone = () => {
@@ -451,11 +472,12 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   animation: lvos-window-open 0.18s ease;
   transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
 
-  // minimize keeps the app mounted (game state survives) but sails it
-  // down toward the taskbar
+  // minimize keeps the app mounted (game state survives) but genies it toward
+  // its own taskbar button (--gx/--gy measured at minimize time; fall back to a
+  // generic downward sail)
   &.is-minimized {
     opacity: 0;
-    transform: translateY(45vh) scale(0.5);
+    transform: translate(var(--gx, 0), var(--gy, 45vh)) scale(0.08);
     visibility: hidden;
     pointer-events: none;
   }
@@ -488,6 +510,18 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   from {
     opacity: 0;
     transform: scale(0.94) translateY(0.5rem);
+  }
+}
+
+// respect reduced motion: windows appear/minimize without the fly-in or genie
+@media (prefers-reduced-motion: reduce) {
+  .lvos-window {
+    animation: none;
+    transition: opacity 0.12s ease, visibility 0.12s;
+
+    &.is-minimized {
+      transform: none;
+    }
   }
 }
 

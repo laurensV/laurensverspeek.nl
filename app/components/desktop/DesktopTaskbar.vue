@@ -40,6 +40,7 @@
       <button
         class="lvos-task"
         :class="{ 'is-minimized': win.minimized }"
+        :data-win="win.id"
         @click="emit('minimize', win)"
       >
         {{ win.title }}

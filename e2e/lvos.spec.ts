@@ -172,7 +172,10 @@ test('taskbar toggles the calendar and minimises a window', async ({ page }) => 
   // the readme task button minimises, then restores its window
   const task = page.locator('.lvos-task').first()
   await task.click()
-  await expect(page.locator('.lvos-window.is-minimized')).toHaveCount(1)
+  const minimized = page.locator('.lvos-window.is-minimized')
+  await expect(minimized).toHaveCount(1)
+  // the genie effect aimed the minimize at the taskbar button (a --gy var is set)
+  expect(await minimized.first().evaluate((el) => (el as HTMLElement).style.getPropertyValue('--gy'))).not.toBe('')
   await task.click()
   await expect(page.locator('.lvos-window.is-minimized')).toHaveCount(0)
 })
