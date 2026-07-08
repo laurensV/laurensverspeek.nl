@@ -21,7 +21,9 @@ html {
 }
 
 body {
-  overflow-x: hidden;
+  // `clip` (not `hidden`) prevents horizontal overflow without turning the body
+  // into a scroll container — which would break the sticky navbar.
+  overflow-x: clip;
 }
 
 // Keyboard focus: a consistent, visible ring everywhere. Mouse clicks don't

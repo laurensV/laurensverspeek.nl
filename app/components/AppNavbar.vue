@@ -14,7 +14,7 @@
         @mouseenter="expandBrand(true)"
         @mouseleave="expandBrand(false)"
       >
-        <span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(master)</span>
+        <span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
       </NuxtLink>
 
       <div class="nav-links is-hidden-touch">
@@ -42,39 +42,42 @@
       </button>
     </div>
 
-    <!-- full-screen mobile menu -->
-    <Transition name="mobile-menu">
-      <div v-if="mobileMenu" class="mobile-menu is-hidden-desktop">
-        <button class="mobile-search" @click="openPalette">
-          <AppIcon name="search" :size="16" />
-          <span>search everything…</span>
-          <span class="mobile-search-kbd">⌘K</span>
-        </button>
-        <NuxtLink
-          v-for="(item, i) in navItems"
-          :key="item.to"
-          class="mobile-link"
-          :style="{ '--i': i }"
-          :to="item.to"
-          exact-active-class="is-active"
-          @click="mobileMenu = false"
-        >
-          <span class="mobile-link-index">0{{ i + 1 }}</span>
-          {{ item.label }}
-        </NuxtLink>
-        <div class="mobile-footer">
-          <button class="mobile-action" @click="openTerminal">>_ terminal</button>
-          <a
-            v-for="social in profile.socials"
-            :key="social.label"
-            :href="social.url"
-            target="_blank"
-            rel="noopener"
-            class="mobile-action"
-          >{{ social.label.toLowerCase() }}</a>
+    <!-- full-screen mobile menu (teleported so the navbar's backdrop-filter
+         doesn't become its containing block and collapse it) -->
+    <Teleport to="body">
+      <Transition name="mobile-menu">
+        <div v-if="mobileMenu" class="mobile-menu is-hidden-desktop">
+          <button class="mobile-search" @click="openPalette">
+            <AppIcon name="search" :size="16" />
+            <span>search everything…</span>
+            <span class="mobile-search-kbd">⌘K</span>
+          </button>
+          <NuxtLink
+            v-for="(item, i) in navItems"
+            :key="item.to"
+            class="mobile-link"
+            :style="{ '--i': i }"
+            :to="item.to"
+            exact-active-class="is-active"
+            @click="mobileMenu = false"
+          >
+            <span class="mobile-link-index">0{{ i + 1 }}</span>
+            {{ item.label }}
+          </NuxtLink>
+          <div class="mobile-footer">
+            <button class="mobile-action" @click="openTerminal">>_ terminal</button>
+            <a
+              v-for="social in profile.socials"
+              :key="social.label"
+              :href="social.url"
+              target="_blank"
+              rel="noopener"
+              class="mobile-action"
+            >{{ social.label.toLowerCase() }}</a>
+          </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </nav>
 </template>
 

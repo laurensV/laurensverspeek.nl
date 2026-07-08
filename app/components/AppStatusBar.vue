@@ -8,7 +8,7 @@
         rel="noopener"
         title="View source on GitHub"
       >
-        <AppIcon name="code" :size="11" /> master*
+        <AppIcon name="code" :size="11" /> main*
       </a>
       <span class="status-item is-hidden-mobile">v2.0.0</span>
       <span class="status-item status-online">
