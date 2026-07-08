@@ -49,6 +49,29 @@ test('switches accent color via colorscheme', async ({ page }) => {
     .toBe('152deg')
 })
 
+test('virtual filesystem: create, read, list, remove and persist a file', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo hello from the fs > notes.txt')
+  await run(page, 'cat notes.txt')
+  await expect(out).toContainText('hello from the fs')
+  await run(page, 'ls')
+  await expect(out).toContainText('notes.txt')
+
+  // survives a full reload (persisted to localStorage)
+  await page.reload()
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await run(page, 'cat notes.txt')
+  await expect(page.locator('.terminal-output')).toContainText('hello from the fs')
+
+  // and rm removes it
+  await run(page, 'rm notes.txt')
+  await run(page, 'cat notes.txt')
+  await expect(page.locator('.terminal-output')).toContainText('No such file or directory')
+})
+
 test('cal prints the current month, which resolves builtins, uname reports the system', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'cal')

@@ -6,6 +6,8 @@ import { createFunCommands } from '~/utils/terminal/funCommands'
 import { expandEnv, parseCommandLine, applyFilter } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
+import { loadFs, saveFs } from '~/utils/terminal/filesystem'
+import type { Filesystem } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
 export type { TerminalLine } from '~/utils/terminal/types'
@@ -139,8 +141,14 @@ export function useTerminal() {
       ll: 'ls',
       cls: 'clear'
     })),
+    files: useState<Filesystem>('terminal-fs', () => ({})),
     getCommands: () => commands
   }
+
+  // restore the saved home filesystem once, then persist changes across visits
+  const savedFs = loadFs()
+  if (savedFs && Object.keys(savedFs).length) ctx.files.value = savedFs
+  if (import.meta.client) watch(ctx.files, (fs) => saveFs(fs), { deep: true })
 
   // keep $USER / $HOME in sync when the visitor renames themselves
   watch(identityName, (n) => {

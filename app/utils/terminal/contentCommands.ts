@@ -128,12 +128,20 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cat: {
-      usage: 'cat <project|post>',
-      description: 'Read all about a project (or a blog post)',
-      argCandidates: () => [...projectSlugs(), ...cachedPostSlugs],
+      usage: 'cat <file|project|post>',
+      description: 'Read a file you made (or a project / blog post)',
+      argCandidates: () => [...Object.keys(ctx.files.value), ...projectSlugs(), ...cachedPostSlugs],
       exec: (args) => {
         if (!args[0]) {
-          error(`Usage: cat <name> — run 'projects' or 'blog' to see what's readable.`)
+          error(`Usage: cat <name> — run 'ls', 'projects' or 'blog' to see what's readable.`)
+          return
+        }
+        // a file the visitor created in their home takes precedence
+        const node = ctx.files.value[args[0]]
+        if (node) {
+          if (node.dir) error(`cat: ${args[0]}: Is a directory`)
+          else if (node.content) node.content.split('\n').forEach(out)
+          else muted('(empty file)')
           return
         }
         const query = args[0].toLowerCase().replace(/\.md$/, '')
@@ -168,8 +176,12 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     ls: {
-      description: 'List pages',
-      exec: () => out(PAGES.map((p) => `${p}/`).join('  '))
+      description: 'List pages and your files',
+      exec: () => {
+        const pages = PAGES.map((p) => `${p}/`)
+        const files = Object.entries(ctx.files.value).map(([name, node]) => (node.dir ? `${name}/` : name))
+        out([...pages, ...files].join('  '))
+      }
     },
     tree: {
       description: 'Show the whole site as a directory tree',

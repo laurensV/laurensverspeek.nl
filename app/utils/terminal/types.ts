@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import type { GameHandle, GameCallbacks } from '~/utils/terminalGames'
+import type { Filesystem } from '~/utils/terminal/filesystem'
 
 export interface TerminalLine {
   id: number
@@ -73,6 +74,8 @@ export interface TerminalContext {
   env: Ref<Record<string, string>>
   /** User-defined command aliases, mutable via `alias name=value` */
   aliases: Ref<Record<string, string>>
+  /** The visitor's persistent home filesystem (mkdir/touch/echo>/rm/cat) */
+  files: Ref<Filesystem>
   /** The full merged registry — for help, secrets, man and aliases */
   getCommands: () => Record<string, TerminalCommand>
 }

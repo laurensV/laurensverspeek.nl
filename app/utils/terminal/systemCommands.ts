@@ -1,5 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
+import { parseRedirect } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
 // Shell housekeeping: help, theme, utilities and other meta commands.
@@ -175,9 +176,37 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: () => out(ctx.cwd.value.replace(/^~/, ctx.env.value.HOME ?? '/home/visitor'))
     },
     echo: {
-      usage: 'echo <text>',
-      description: 'Print text',
-      exec: (args) => out(args.join(' '))
+      usage: 'echo <text> [> file]',
+      description: 'Print text — or write it to a file with >',
+      exec: (args) => {
+        const { text, file } = parseRedirect(args)
+        if (file) {
+          ctx.files.value = { ...ctx.files.value, [file]: { dir: false, content: text } }
+          return
+        }
+        out(text)
+      }
+    },
+    mkdir: {
+      usage: 'mkdir <name>',
+      description: 'Create a directory in your home',
+      exec: (args) => {
+        const name = args[0]
+        if (!name) return error('mkdir: missing operand')
+        if (ctx.files.value[name]) return error(`mkdir: cannot create '${name}': File exists`)
+        ctx.files.value = { ...ctx.files.value, [name]: { dir: true, content: '' } }
+      }
+    },
+    touch: {
+      usage: 'touch <name>',
+      description: 'Create an empty file in your home',
+      exec: (args) => {
+        const name = args[0]
+        if (!name) return error('touch: missing file operand')
+        if (!ctx.files.value[name]) {
+          ctx.files.value = { ...ctx.files.value, [name]: { dir: false, content: '' } }
+        }
+      }
     },
     date: {
       description: 'Print the current date',
@@ -266,12 +295,23 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: () => error('visitor is not in the sudoers file. This incident will be reported. 😏')
     },
     rm: {
-      hidden: true,
-      description: 'Please no',
-      exec: (args) =>
-        args.join(' ').includes('-rf')
-          ? error('Nice try. I only just finished this website.')
-          : error('rm: permission denied')
+      usage: 'rm <file>',
+      description: 'Remove a file or directory from your home',
+      argCandidates: () => Object.keys(ctx.files.value),
+      exec: (args) => {
+        const name = args.find((arg) => !arg.startsWith('-'))
+        // keep the classic joke for the classic mistake
+        if (args.join(' ').includes('-rf') && /^[~/*]/.test(name ?? '')) {
+          return error('Nice try. I only just finished this website.')
+        }
+        if (!name) return error('rm: missing operand')
+        if (!(name in ctx.files.value)) {
+          return error(`rm: cannot remove '${name}': No such file or directory`)
+        }
+        ctx.files.value = Object.fromEntries(
+          Object.entries(ctx.files.value).filter(([key]) => key !== name)
+        )
+      }
     },
     vim: {
       hidden: true,
