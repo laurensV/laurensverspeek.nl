@@ -204,3 +204,18 @@ test('subpages show a pwd-style breadcrumb with clickable parents', async ({ pag
   await expect(page.locator('.life-canvas')).toBeVisible()
   await expect(page.locator('.crumbs')).toHaveCount(0)
 })
+
+test('footer build stamp opens git show in the terminal', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
+  const stamp = page.locator('.build-stamp')
+  await stamp.scrollIntoViewIfNeeded()
+  await expect(stamp).toContainText(/built \d{4}-\d{2}-\d{2}/)
+  const hash = page.locator('.build-hash')
+  await expect(hash).toHaveText(/^[0-9a-f]{7,}$/)
+  // clicking the hash opens the terminal on that commit
+  await hash.evaluate((el) => (el as HTMLElement).click())
+  await expect(page.locator('.terminal-window')).toBeVisible()
+  await expect(page.locator('.terminal-output')).toContainText('commit')
+})

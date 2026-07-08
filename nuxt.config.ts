@@ -1,3 +1,14 @@
+import { execSync } from 'node:child_process'
+
+// baked into the footer's build stamp; the hash links into the terminal's git command
+const buildHash = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    return 'dev'
+  }
+})()
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
@@ -69,7 +80,9 @@ export default defineNuxtConfig({
       // set NUXT_PUBLIC_GOATCOUNTER to enable privacy-first analytics
       goatcounter: '',
       // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
-      cursorsWs: ''
+      cursorsWs: '',
+      buildHash,
+      buildDate: new Date().toISOString().slice(0, 10)
     }
   },
 

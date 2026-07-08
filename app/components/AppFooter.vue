@@ -20,6 +20,12 @@
         <a class="is-family-code" @click.prevent="open">click here</a> for terminal mode
         · <a class="is-family-code" @click.prevent="bootDesktop">boot lvOS</a>
       </p>
+      <p class="is-family-code is-size-7 build-stamp">
+        built {{ config.public.buildDate }} ·
+        <button class="build-hash" :title="`git show ${config.public.buildHash}`" @click="showBuild">
+          {{ config.public.buildHash }}
+        </button>
+      </p>
     </div>
   </footer>
 </template>
@@ -28,8 +34,15 @@
 import { profile } from '~/data/profile'
 import type { IconName } from '~/components/AppIcon.vue'
 
-const { open } = useTerminal()
+const { open, run } = useTerminal()
 const bootDesktop = () => navigateTo('/desktop')
+
+const config = useRuntimeConfig()
+// the build stamp doubles as a door into the terminal's git command
+const showBuild = () => {
+  open()
+  run(`git show ${config.public.buildHash}`)
+}
 </script>
 
 <style scoped lang="scss">
@@ -49,6 +62,27 @@ const bootDesktop = () => navigateTo('/desktop')
 
   .terminal-hint {
     color: var(--bulma-text-weak);
+  }
+
+  .build-stamp {
+    margin-top: 0.35rem;
+    color: var(--bulma-text-weak);
+    opacity: 0.75;
+
+    .build-hash {
+      border: none;
+      background: none;
+      padding: 0;
+      color: var(--bulma-primary-on-scheme);
+      font: inherit;
+      cursor: pointer;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+      }
+    }
   }
 
   kbd {
