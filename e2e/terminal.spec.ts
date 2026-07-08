@@ -146,6 +146,9 @@ test('whoami and nick change the identity', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'nick codewizard')
   await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('codewizard@lv')
+  // the window title bar uses the identity too, not a hardcoded "visitor"
+  await expect(page.locator('.terminal-title')).toContainText('codewizard@')
+  await expect(page.locator('.terminal-title')).not.toContainText('visitor@')
   await run(page, 'whoami')
   await expect(page.locator('.terminal-output')).toContainText('codewizard')
 })

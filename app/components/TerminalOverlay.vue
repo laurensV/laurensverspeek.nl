@@ -14,7 +14,7 @@
             <span class="dot dot-close" role="button" title="Close" @click="close" />
             <span class="dot dot-min" />
             <span class="dot dot-max" />
-            <span class="terminal-title">visitor@{{ profile.domain }}: ~</span>
+            <span class="terminal-title">{{ name }}@{{ profile.domain }}: ~</span>
             <button class="terminal-close" aria-label="Close terminal" @click="close">
               <AppIcon name="close" :size="16" />
             </button>
@@ -32,6 +32,7 @@ import { onKeyStroke } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
 const { isOpen, toggle, close, activeGame } = useTerminal()
+const { name } = useIdentity()
 
 // Open with ~ or ` when not typing in another field (and not mid-game). The
 // overlay lives in the default layout, so it never mounts on the /desktop route

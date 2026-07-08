@@ -3,7 +3,7 @@
     <TuiFrame />
     <div class="contact-titlebar">
       <span class="dot dot-r" /><span class="dot dot-y" /><span class="dot dot-g" />
-      <span class="contact-title">visitor@{{ profile.domain }}: ~/contact</span>
+      <span class="contact-title">{{ name }}@{{ profile.domain }}: ~/contact</span>
     </div>
 
     <div ref="bodyRef" class="contact-body">
@@ -63,6 +63,8 @@
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
+
+const { name } = useIdentity()
 
 // A terminal-style contact wizard. Composes a mailto: locally — no backend, no tracking.
 
