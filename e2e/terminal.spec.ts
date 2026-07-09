@@ -690,3 +690,18 @@ test('man renders a registry-generated page with SEE ALSO', async ({ page }) => 
   await expect(out).toContainText('SEE ALSO')
   await expect(out).toContainText('cat(1)')
 })
+
+test('telnet only knows the towel host and plays the asciimation', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'telnet example.com')
+  await expect(out).toContainText('could not resolve')
+  await run(page, 'telnet towel.blinkenlights.nl')
+  await expect(out).toContainText('Connected to towel.blinkenlights.nl')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toContainText('A long time ago')
+  // scenes advance on their own
+  await expect(frame).toContainText(/W\s+A\s+R\s+S/, { timeout: 6000 })
+  await page.keyboard.press('q')
+  await expect(out).toContainText('Connection closed.')
+})

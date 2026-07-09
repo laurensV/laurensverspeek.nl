@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { createSnakeGame, createTetrisGame, create2048Game, createWpmGame, createPongGame, wpmStats, type GameCallbacks } from '~/utils/terminalGames'
+import { createSnakeGame, createTetrisGame, create2048Game, createWpmGame, createPongGame, createStarwarsGame, wpmStats, type GameCallbacks } from '~/utils/terminalGames'
 
 // the games persist high scores; give them an in-memory localStorage
 const storage = new Map<string, string>()
@@ -218,5 +218,30 @@ describe('createPongGame', () => {
     const game = createPongGame(callbacks)
     game.onKey('q')
     expect(ended[0]![0]).toContain('aborted')
+  })
+})
+
+describe('createStarwarsGame', () => {
+  it('plays scenes in order and closes the connection at the end', () => {
+    const { frames, ended, callbacks } = makeCallbacks()
+    const game = createStarwarsGame(callbacks)
+    expect(frames[0]).toContain('A long time ago')
+    expect(frames[0]).toContain('towel.blinkenlights.nl · 1/')
+    vi.advanceTimersByTime(2400)
+    expect(frames.at(-1)).toContain('W   A   R   S')
+    // run the whole homage out
+    vi.advanceTimersByTime(60_000)
+    expect(frames.at(-1)).toContain('asciimation.co.nz')
+    expect(ended).toEqual([['Connection closed by foreign host.']])
+    game.stop()
+  })
+
+  it('q hangs up early', () => {
+    const { ended, callbacks } = makeCallbacks()
+    const game = createStarwarsGame(callbacks)
+    expect(game.onKey('q')).toBe(true)
+    expect(ended[0]).toEqual(['^]', 'Connection closed.'])
+    vi.advanceTimersByTime(60_000)
+    expect(ended).toHaveLength(1)
   })
 })

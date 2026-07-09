@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createStarwarsGame } from '~/utils/terminalGames'
 import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 import { formatWeather } from '~/utils/terminal/weather'
@@ -282,6 +282,28 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
           setTimeout(send, 420)
         }
         send()
+      }
+    },
+    telnet: {
+      hidden: true,
+      usage: 'telnet <host>',
+      description: 'The classic ASCII Star Wars, on the classic host',
+      examples: ['telnet towel.blinkenlights.nl'],
+      argCandidates: () => ['towel.blinkenlights.nl'],
+      exec: (args) => {
+        const host = args[0]
+        if (!host) {
+          error('telnet: usage: telnet <host>')
+          return
+        }
+        if (host.toLowerCase() !== 'towel.blinkenlights.nl') {
+          error(`telnet: could not resolve ${host}: only one host still speaks telnet around here`)
+          muted('(hint: the towel one)')
+          return
+        }
+        muted(`Trying 176.9.9.172...`)
+        muted(`Connected to ${host}. Escape character is 'q'.`)
+        ctx.startGame(createStarwarsGame)
       }
     },
     curl: {
