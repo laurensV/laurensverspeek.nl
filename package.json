@@ -19,7 +19,8 @@
     "postgenerate": "node scripts/generate-resume.mjs",
     "resume": "node scripts/generate-resume.mjs",
     "test:e2e": "playwright test",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "prepare": "husky"
   },
   "dependencies": {
     "@nuxt/content": "^3.15.0",
@@ -38,10 +39,15 @@
     "@vueuse/nuxt": "^13.0.0",
     "better-sqlite3": "^12.11.1",
     "eslint": "^10.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "sass": "^1.89.0",
     "typescript": "^5.8.0",
     "vitest": "^4.1.10",
     "vue-tsc": "^3.3.6",
     "ws": "^8.21.0"
+  },
+  "lint-staged": {
+    "*.{ts,vue,mjs}": "eslint --fix"
   }
 }
