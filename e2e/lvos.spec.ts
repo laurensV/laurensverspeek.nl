@@ -371,3 +371,15 @@ test('titlebar right-click menu pins a window on top and closes it', async ({ pa
   await menu.locator('button', { hasText: 'close' }).click()
   await expect(readme).toHaveCount(0)
 })
+
+test('the lvOS snake app runs the shared game engine', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^snake$/ }).click()
+  const snake = page.locator('.desktop-snake')
+  await snake.waitFor()
+  await expect(snake.locator('.dsnake-frame')).toContainText('SNAKE')
+  // quitting shows the game-over result with a play-again button
+  await snake.press('q')
+  await expect(snake.locator('.dsnake-again')).toBeVisible()
+})

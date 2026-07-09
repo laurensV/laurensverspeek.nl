@@ -151,6 +151,7 @@
           <LazyDesktopClock v-else-if="win.id === 'clock'" />
           <LazyDesktopNotes v-else-if="win.id === 'notes'" />
           <LazyDesktopLife v-else-if="win.id === 'life'" />
+          <LazyDesktopSnake v-else-if="win.id === 'snake'" />
           <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
           <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         </div>
@@ -235,6 +236,7 @@ const WINDOW_TITLES: Record<string, string> = {
   clock: 'clock',
   notes: 'sticky notes',
   life: 'game of life',
+  snake: 'snake',
   taskmgr: 'task manager',
   terminal: 'lvsh — terminal'
 }
@@ -435,6 +437,7 @@ const icons: { id: string, label: string, icon: IconName, action: () => void }[]
   { id: 'clock', label: 'clock', icon: 'sun', action: () => openWindow('clock') },
   { id: 'notes', label: 'notes', icon: 'type', action: () => openWindow('notes') },
   { id: 'life', label: 'life', icon: 'zap', action: () => openWindow('life') },
+  { id: 'snake', label: 'snake', icon: 'zap', action: () => openWindow('snake') },
   { id: 'taskmgr', label: 'taskmgr', icon: 'cpu', action: () => openWindow('taskmgr') },
   { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
   { id: 'logout', label: 'log out', icon: 'close', action: logout }
