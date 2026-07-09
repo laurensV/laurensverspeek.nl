@@ -586,3 +586,15 @@ test('say explains itself when live cursors are not configured', async ({ page }
   await run(page, 'say hello world')
   await expect(page.locator('.terminal-output')).toContainText('not enabled on this build')
 })
+
+test('asciicam renders the webcam as ascii and q stops it', async ({ page, context }) => {
+  await context.grantPermissions(['camera'])
+  await openTerminal(page)
+  await run(page, 'asciicam')
+  // a fake camera produces frames; the game area fills with ascii
+  const frame = page.locator('.game-frame')
+  await expect(frame).toBeVisible({ timeout: 8000 })
+  await expect.poll(() => frame.textContent().then((t) => (t ?? '').length)).toBeGreaterThan(200)
+  await page.keyboard.press('q')
+  await expect(page.locator('.terminal-output')).toContainText('camera off')
+})

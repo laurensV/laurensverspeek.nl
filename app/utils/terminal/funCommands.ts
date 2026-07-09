@@ -3,6 +3,57 @@ import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, c
 import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 import { formatWeather } from '~/utils/terminal/weather'
+import { framePixelsToAscii } from '~/utils/asciiCam'
+import type { GameHandle } from '~/utils/terminalGames'
+
+const CAM_W = 64
+const CAM_H = 36
+
+// asciicam runs as a game (it owns the keyboard for q) drawing webcam frames
+async function startAsciiCam(ctx: TerminalContext): Promise<void> {
+  let stream: MediaStream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+  } catch {
+    ctx.error('asciicam: no camera, or permission denied. (totally fair.)')
+    return
+  }
+  const video = document.createElement('video')
+  video.srcObject = stream
+  video.muted = true
+  await video.play().catch(() => {})
+  const canvas = document.createElement('canvas')
+  canvas.width = CAM_W
+  canvas.height = CAM_H
+  const context = canvas.getContext('2d', { willReadFrequently: true })!
+  const dark = ctx.colorMode.value !== 'light'
+
+  ctx.startGame((callbacks): GameHandle => {
+    let raf = 0
+    const tick = () => {
+      context.drawImage(video, 0, 0, CAM_W, CAM_H)
+      const { data } = context.getImageData(0, 0, CAM_W, CAM_H)
+      callbacks.onFrame(framePixelsToAscii(data, CAM_W, CAM_H, dark))
+      raf = requestAnimationFrame(tick)
+    }
+    const stop = () => {
+      cancelAnimationFrame(raf)
+      stream.getTracks().forEach((track) => track.stop())
+    }
+    tick()
+    return {
+      onKey: (key) => {
+        if (key.toLowerCase() === 'q' || key === 'Escape') {
+          stop()
+          callbacks.onEnd(['asciicam: camera off. you looked great.'])
+          return true
+        }
+        return false
+      },
+      stop
+    }
+  })
+}
 
 interface GeoResult {
   results?: { name: string, country?: string, latitude: number, longitude: number }[]
@@ -145,6 +196,14 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
           return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
         }
         error(`kill: (${pid}) — no such process`)
+      }
+    },
+    asciicam: {
+      hidden: true,
+      description: 'Your webcam, rendered in ASCII (asks permission)',
+      exec: () => {
+        muted('asciicam: requesting camera... (press q to stop)')
+        return startAsciiCam(ctx)
       }
     },
     weather: {

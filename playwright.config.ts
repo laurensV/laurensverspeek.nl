@@ -18,7 +18,16 @@ export default defineConfig({
     colorScheme: 'dark',
     trace: 'retain-on-failure'
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome'],
+      // a synthetic webcam so the asciicam toy can be exercised headlessly
+      launchOptions: {
+        args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
+      }
+    }
+  }],
   webServer: {
     command: `node scripts/serve-static.mjs`,
     env: { PORT: String(PORT) },
