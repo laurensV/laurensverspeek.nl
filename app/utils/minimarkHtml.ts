@@ -4,9 +4,8 @@
 // nodes (style/script) are dropped.
 
 import type { MinimarkNode, MinimarkElement } from '~/utils/terminalMarkdown'
+import { escapeHtml } from '~/utils/escapeHtml'
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 const isElement = (node: MinimarkNode): node is MinimarkElement => Array.isArray(node)
 

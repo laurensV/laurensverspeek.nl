@@ -2,6 +2,8 @@
 // baked at generate time by server/routes/git-log.json.ts (prerendered, like
 // rss.xml), so the deployed static site ships a real snapshot of this repo.
 
+import { escapeHtml } from '~/utils/escapeHtml'
+
 export interface GitFileStat {
   path: string
   add: number
@@ -47,8 +49,6 @@ export interface GitOutLine {
   html?: boolean
 }
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 export function formatGitLog(commits: GitCommit[], opts: { oneline?: boolean, limit?: number } = {}): GitOutLine[] {
   const shown = commits.slice(0, opts.limit ?? commits.length)

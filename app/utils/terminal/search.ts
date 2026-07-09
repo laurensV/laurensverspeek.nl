@@ -2,6 +2,8 @@
 // come from Nuxt Content's queryCollectionSearchSections (one entry per
 // heading, with the plain-text content underneath it).
 
+import { escapeHtml } from '~/utils/escapeHtml'
+
 export interface SearchableSection {
   /** Path including the heading anchor, e.g. /blog/post#section */
   id: string
@@ -21,8 +23,6 @@ export interface SearchHit {
   snippetHtml: string
 }
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 /** A one-line, html-safe excerpt around the match, highlighted. */
 export function highlightSnippet(content: string, index: number, matchLen: number, radius = 34): string {

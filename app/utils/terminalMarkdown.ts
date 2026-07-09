@@ -2,6 +2,8 @@
 // be read inside the fake terminal without leaving it. Output is trusted HTML
 // built exclusively from our own markdown files (all text is escaped).
 
+import { escapeHtml } from '~/utils/escapeHtml'
+
 export interface TermMdLine {
   type: 'output' | 'muted' | 'primary'
   text: string
@@ -13,8 +15,6 @@ export type MinimarkNode = string | MinimarkElement
 /** The root of a rendered Nuxt Content body: `{ value: [...nodes] }`. */
 export interface MinimarkRoot { value?: MinimarkNode[] }
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 const isElement = (node: MinimarkNode): node is MinimarkElement => Array.isArray(node)
 
