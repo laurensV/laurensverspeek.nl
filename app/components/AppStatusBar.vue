@@ -22,6 +22,7 @@
     </div>
 
     <div class="status-group">
+      <span v-if="pendingKey" class="status-item status-pending" aria-hidden="true">{{ pendingKey }}-</span>
       <span class="status-item is-hidden-touch">Ln {{ line }}, Col {{ column }}</span>
       <span class="status-item is-hidden-touch">UTF-8</span>
       <button class="status-item status-button status-eol is-hidden-touch" title="Line endings" @click="toggleEol">{{ eol }}</button>
@@ -47,6 +48,9 @@ const terminal = useTerminal()
 const palette = useCommandPalette()
 const colorMode = useColorMode()
 const route = useRoute()
+
+// which-key: shows "g-" while a vim go-to chord is waiting for its second key
+const pendingKey = useState('vim-pending-key', () => '')
 
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -131,6 +135,12 @@ watch(
   padding: 0 0.55rem;
   color: inherit;
   white-space: nowrap;
+}
+
+// the pending vim chord ("g-") flashes in accent while it waits
+.status-pending {
+  color: var(--bulma-primary);
+  font-weight: 700;
 }
 
 a.status-item:hover,

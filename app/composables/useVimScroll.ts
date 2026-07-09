@@ -25,6 +25,18 @@ const GO_TARGETS: Record<string, string> = {
  */
 export function useVimScroll() {
   let lastG = 0
+  // which-key style hint: the status bar shows "g-" while a chord is pending
+  const pendingKey = useState('vim-pending-key', () => '')
+  let pendingTimer: ReturnType<typeof setTimeout> | undefined
+  const setPending = () => {
+    pendingKey.value = 'g'
+    clearTimeout(pendingTimer)
+    pendingTimer = setTimeout(() => (pendingKey.value = ''), 500)
+  }
+  const clearPending = () => {
+    clearTimeout(pendingTimer)
+    pendingKey.value = ''
+  }
 
   const behavior = (): ScrollBehavior =>
     window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
@@ -50,10 +62,12 @@ export function useVimScroll() {
     if (now - lastG < 500) {
       event.preventDefault()
       lastG = 0
+      clearPending()
       window.scrollTo({ top: 0, behavior: behavior() })
       return
     }
     lastG = now
+    setPending()
   })
 
   // go-to chords: a pending g followed by a target key navigates
@@ -62,6 +76,7 @@ export function useVimScroll() {
     if (Date.now() - lastG >= 500) return
     event.preventDefault()
     lastG = 0
+    clearPending()
     router.push(GO_TARGETS[event.key]!)
   })
 

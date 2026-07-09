@@ -238,3 +238,29 @@ test('vim go-to chords navigate: gb to blog, gh home', async ({ page }) => {
   await page.waitForTimeout(200)
   await expect(page).toHaveURL(/\/about/)
 })
+
+test('footer build stamp links the changelog', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.build-changelog')).toHaveAttribute('href', '/changelog')
+})
+
+test('deep links flash their target section', async ({ page }) => {
+  await page.goto('/blog/game-of-life-everywhere')
+  const heading = page.locator('.post-body h2[id]').first()
+  await heading.waitFor()
+  const id = await heading.getAttribute('id')
+  await page.goto(`/blog/game-of-life-everywhere#${id}`)
+  await expect(page.locator(`#${id}`)).toHaveClass(/is-anchor-target/, { timeout: 5000 })
+})
+
+test('a pending g chord shows in the status bar', async ({ page }) => {
+  await page.goto('/about')
+  await page.locator('h1').waitFor()
+  await page.keyboard.press('g')
+  await expect(page.locator('.status-pending')).toHaveText('g-')
+  // it clears once the chord resolves
+  await page.keyboard.press('b')
+  await expect(page).toHaveURL(/\/blog\/?$/)
+  await expect(page.locator('.status-pending')).toHaveCount(0)
+})
