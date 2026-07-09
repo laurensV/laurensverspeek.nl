@@ -58,116 +58,83 @@
         />
       </Transition>
 
-      <!-- windows -->
-      <div
+      <!-- windows: chrome lives in DesktopWindow, the apps are slotted in -->
+      <DesktopWindow
         v-for="win in windows"
         :key="win.id"
-        :data-win="win.id"
-        class="lvos-window"
-        :class="{
-          'is-wide': isWideWindow(win.id),
-          'is-minimized': win.minimized,
-          'is-maximized': win.maximized,
-          'has-size': win.maximized || win.height !== undefined,
-          'is-peek': peekedId === win.id,
-          'is-dimmed': peekedId !== null && peekedId !== win.id
-        }"
+        :win="win"
+        :wide="isWideWindow(win.id)"
+        :peek="peekedId === win.id"
+        :dimmed="peekedId !== null && peekedId !== win.id"
+        :flush="win.id === 'terminal'"
         :style="windowStyle(win)"
-        @pointerdown="focusWindow(win)"
+        @focus="focusWindow(win)"
+        @drag="startDrag(win, $event)"
+        @minimize="toggleMinimize(win)"
+        @maximize="toggleMaximize(win)"
+        @close="closeWindow(win.id)"
+        @menu="openTitleMenu(win, $event)"
+        @resize="(event, dir) => startResize(win, event, dir)"
       >
-        <header
-          class="lvos-window-titlebar is-family-code"
-          @pointerdown.prevent="startDrag(win, $event)"
-          @dblclick="toggleMaximize(win)"
-          @contextmenu.prevent.stop="openTitleMenu(win, $event)"
-        >
-          <span class="lvos-window-title">
-            <span v-if="win.pinned" title="Pinned on top" aria-hidden="true">📌 </span>{{ win.title }}
-          </span>
-          <span class="lvos-window-actions">
-            <button :aria-label="`Minimize ${win.title}`" title="Minimize" @pointerdown.stop @click.stop="toggleMinimize(win)">–</button>
-            <button
-              :aria-label="`${win.maximized ? 'Restore' : 'Maximize'} ${win.title}`"
-              :title="win.maximized ? 'Restore' : 'Maximize'"
-              @pointerdown.stop
-              @click.stop="toggleMaximize(win)"
-            >{{ win.maximized ? '❐' : '□' }}</button>
-            <button :aria-label="`Close ${win.title}`" title="Close" @pointerdown.stop @click.stop="closeWindow(win.id)">×</button>
-          </span>
-        </header>
-
-        <div class="lvos-window-body" :class="{ 'is-flush': win.id === 'terminal' }">
-          <template v-if="win.id === 'readme'">
-            <p class="is-family-code has-text-primary-on-scheme mb-2"># {{ profile.name }}</p>
-            <p v-for="(paragraph, i) in profile.bio" :key="i" class="mb-2 is-size-7">
-              {{ paragraph }}
-            </p>
-            <p class="is-family-code is-size-7 mt-3">
-              <a v-for="social in profile.socials" :key="social.label" :href="social.url" target="_blank" rel="noopener" class="mr-3">
-                [{{ social.label.toLowerCase() }}]
-              </a>
-            </p>
-          </template>
-
-          <template v-else-if="win.id === 'projects'">
-            <button
-              v-for="project in projects"
-              :key="project.slug"
-              class="lvos-file is-family-code"
-              @click="openProject(project.slug)"
-            >
-              <AppIcon name="file" :size="14" />
-              <span>{{ project.slug }}.md</span>
-              <span class="lvos-file-meta">[{{ project.category }}]</span>
-            </button>
-          </template>
-
-          <template v-else-if="win.id === 'about-os'">
-            <p class="is-family-code is-size-7">
-              <b>lvOS 2.0</b> — a very serious operating system<br>
-              kernel: nuxt 4 (vue 3)<br>
-              memory: unlimited localStorage<br>
-              uptime: since you clicked that icon<br><br>
-              © {{ new Date().getFullYear() }} laurensverspeek.nl
-            </p>
-          </template>
-
-          <!-- Lazy: each app is its own chunk, loaded only when first opened -->
-          <LazyDesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
-          <LazyDesktopMedia v-else-if="win.id === 'media'" />
-          <LazyDesktopFiles
-            v-else-if="win.id === 'files'"
-            @route="openRoute"
-            @window="openWindow"
-            @post="openBlogPost"
-          />
-          <LazyDesktopBrowser v-else-if="win.id === 'browser'" />
-          <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
-          <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
-          <LazyDesktopSettings v-else-if="win.id === 'settings'" />
-          <LazyDesktopPaint v-else-if="win.id === 'paint'" />
-          <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
-          <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
-          <LazyDesktopClock v-else-if="win.id === 'clock'" />
-          <LazyDesktopNotes v-else-if="win.id === 'notes'" />
-          <LazyDesktopLife v-else-if="win.id === 'life'" />
-          <LazyDesktopSnake v-else-if="win.id === 'snake'" />
-          <LazyDesktopGallery v-else-if="win.id === 'gallery'" />
-          <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
-          <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
-        </div>
-
-        <template v-if="!win.maximized">
-          <span
-            v-for="dir in RESIZE_DIRS"
-            :key="dir"
-            class="lvos-resize"
-            :class="`is-${dir}`"
-            aria-hidden="true"
-            @pointerdown.prevent.stop="startResize(win, $event, dir)"
-          />
+        <template v-if="win.id === 'readme'">
+          <p class="is-family-code has-text-primary-on-scheme mb-2"># {{ profile.name }}</p>
+          <p v-for="(paragraph, i) in profile.bio" :key="i" class="mb-2 is-size-7">
+            {{ paragraph }}
+          </p>
+          <p class="is-family-code is-size-7 mt-3">
+            <a v-for="social in profile.socials" :key="social.label" :href="social.url" target="_blank" rel="noopener" class="mr-3">
+              [{{ social.label.toLowerCase() }}]
+            </a>
+          </p>
         </template>
-      </div>
+
+        <template v-else-if="win.id === 'projects'">
+          <button
+            v-for="project in projects"
+            :key="project.slug"
+            class="lvos-file is-family-code"
+            @click="openProject(project.slug)"
+          >
+            <AppIcon name="file" :size="14" />
+            <span>{{ project.slug }}.md</span>
+            <span class="lvos-file-meta">[{{ project.category }}]</span>
+          </button>
+        </template>
+
+        <template v-else-if="win.id === 'about-os'">
+          <p class="is-family-code is-size-7">
+            <b>lvOS 2.0</b> — a very serious operating system<br>
+            kernel: nuxt 4 (vue 3)<br>
+            memory: unlimited localStorage<br>
+            uptime: since you clicked that icon<br><br>
+            © {{ new Date().getFullYear() }} laurensverspeek.nl
+          </p>
+        </template>
+
+        <!-- Lazy: each app is its own chunk, loaded only when first opened -->
+        <LazyDesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
+        <LazyDesktopMedia v-else-if="win.id === 'media'" />
+        <LazyDesktopFiles
+          v-else-if="win.id === 'files'"
+          @route="openRoute"
+          @window="openWindow"
+          @post="openBlogPost"
+        />
+        <LazyDesktopBrowser v-else-if="win.id === 'browser'" />
+        <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
+        <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
+        <LazyDesktopSettings v-else-if="win.id === 'settings'" />
+        <LazyDesktopPaint v-else-if="win.id === 'paint'" />
+        <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
+        <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
+        <LazyDesktopClock v-else-if="win.id === 'clock'" />
+        <LazyDesktopNotes v-else-if="win.id === 'notes'" />
+        <LazyDesktopLife v-else-if="win.id === 'life'" />
+        <LazyDesktopSnake v-else-if="win.id === 'snake'" />
+        <LazyDesktopGallery v-else-if="win.id === 'gallery'" />
+        <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
+        <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
+      </DesktopWindow>
 
       <!-- window titlebar context menu -->
       <div
@@ -220,13 +187,9 @@ import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
 // lvOS: the operating-system-in-a-browser easter egg. Boot with `desktop` in
-// the terminal. Window mechanics live in useWindowManager; this component is
-// the shell: icons, taskbar and the apps inside the windows.
-
-// window titles come from the shared app registry (see utils/desktopApps)
-
-// the eight resize handles (four edges + four corners)
-const RESIZE_DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const
+// the terminal. Window mechanics live in useWindowManager, per-window chrome
+// in DesktopWindow; this component is the shell: icons, taskbar and the apps
+// inside the windows. Titles come from the app registry (utils/desktopApps).
 
 const terminal = useTerminal()
 const router = useRouter()
@@ -585,176 +548,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 // icons, taskbar, context menu and calendar styles live in their own components
 // (DesktopIcons, DesktopTaskbar, DesktopContextMenu)
 
-.lvos-window {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  width: min(26rem, 88vw);
-
-  &.is-wide {
-    width: min(44rem, 92vw);
-  }
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--lv-scheme-hs), 10%, 0.97);
-  box-shadow: 0 18px 50px hsla(var(--lv-scheme-hs), 2%, 0.6);
-  color: hsl(var(--lv-scheme-hs), 88%);
-  overflow: hidden;
-  animation: lvos-window-open 0.18s ease;
-  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
-
-  // minimize keeps the app mounted (game state survives) but genies it toward
-  // its own taskbar button (--gx/--gy measured at minimize time; fall back to a
-  // generic downward sail)
-  &.is-minimized {
-    opacity: 0;
-    transform: translate(var(--gx, 0), var(--gy, 45vh)) scale(0.08);
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  &.is-maximized {
-    inset: 0 0 2.4rem 0;
-    width: auto;
-    border-radius: 0;
-  }
-
-  // Aero-peek: hovering a taskbar item highlights its window and fades the rest
-  &.is-peek {
-    border-color: var(--bulma-primary);
-    box-shadow: 0 0 0 1px var(--bulma-primary), 0 18px 50px hsla(var(--lv-primary-hsl), 0.3);
-  }
-
-  // a peeked, minimized window ghosts back into view instead of staying hidden
-  &.is-minimized.is-peek {
-    opacity: 0.55;
-    transform: translateY(18vh) scale(0.7);
-    visibility: visible;
-  }
-
-  &.is-dimmed:not(.is-minimized) {
-    opacity: 0.4;
-  }
-}
-
-@keyframes lvos-window-open {
-  from {
-    opacity: 0;
-    transform: scale(0.94) translateY(0.5rem);
-  }
-}
-
-// respect reduced motion: windows appear/minimize without the fly-in or genie,
-// and the CRT power-off is skipped (the JS side already acts immediately)
+// the CRT power-off is skipped under reduced motion (the JS side already
+// acts immediately); window-level reduced motion lives in DesktopWindow
 @media (prefers-reduced-motion: reduce) {
-  .lvos-window {
-    animation: none;
-    transition: opacity 0.12s ease, visibility 0.12s;
-
-    &.is-minimized {
-      transform: none;
-    }
-  }
-
   .lvos.is-powering-off {
     animation: none;
-  }
-}
-
-.lvos-window-titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.72rem;
-  background-color: hsla(var(--lv-primary-hsl), 0.12);
-  border-bottom: 1px solid hsla(var(--lv-primary-hsl), 0.25);
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-
-  &:active {
-    cursor: grabbing;
-  }
-
-  .lvos-window-actions {
-    display: flex;
-
-    button {
-      width: 1.4rem;
-      border: none;
-      background: none;
-      color: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-
-      &:hover {
-        color: var(--bulma-primary);
-      }
-    }
-  }
-}
-
-.lvos-window-body {
-  flex: 1;
-  padding: 1rem;
-  max-height: 50vh;
-  overflow-y: auto;
-  font-size: 0.85rem;
-
-  a {
-    color: var(--bulma-primary);
-  }
-}
-
-// explicit size (resized, snapped or maximized): let the body fill the window
-.lvos-window.has-size .lvos-window-body {
-  max-height: none;
-}
-
-// the terminal app fills its window edge-to-edge
-.lvos-window-body.is-flush {
-  padding: 0;
-}
-
-// resize handles: thin invisible hit areas on each edge, small squares on the
-// corners. The south-east corner keeps the visible diagonal grip.
-.lvos-resize {
-  position: absolute;
-  touch-action: none;
-  z-index: 3;
-
-  // edges (kept just inside the window so overflow:hidden doesn't clip them)
-  &.is-n, &.is-s { left: 0.6rem; right: 0.6rem; height: 6px; cursor: ns-resize; }
-  &.is-e, &.is-w { top: 0.6rem; bottom: 0.6rem; width: 6px; cursor: ew-resize; }
-  &.is-n { top: 0; }
-  &.is-s { bottom: 0; }
-  &.is-e { right: 0; }
-  &.is-w { left: 0; }
-
-  // corners sit above the edges
-  &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 14px; height: 14px; z-index: 4; }
-  &.is-ne { top: 0; right: 0; cursor: nesw-resize; }
-  &.is-nw { top: 0; left: 0; cursor: nwse-resize; }
-  &.is-sw { bottom: 0; left: 0; cursor: nesw-resize; }
-  &.is-se {
-    bottom: 0;
-    right: 0;
-    width: 1rem;
-    height: 1rem;
-    cursor: nwse-resize;
-    // three diagonal grip lines
-    background:
-      linear-gradient(
-        135deg,
-        transparent 0 50%,
-        hsla(var(--lv-primary-hsl), 0.5) 50% 55%,
-        transparent 55% 65%,
-        hsla(var(--lv-primary-hsl), 0.5) 65% 70%,
-        transparent 70% 80%,
-        hsla(var(--lv-primary-hsl), 0.5) 80% 85%,
-        transparent 85%
-      );
   }
 }
 
