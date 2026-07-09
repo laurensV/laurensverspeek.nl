@@ -4,7 +4,7 @@ import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storage
 import { profile } from '~/data/profile'
 
 // The lv "logo", shared by neofetch and sysinfo.
-export const ASCII_LOGO = String.raw`
+const ASCII_LOGO = String.raw`
  _    __      __
 | |   \ \    / /
 | |    \ \  / /
