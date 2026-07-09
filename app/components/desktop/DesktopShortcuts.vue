@@ -6,12 +6,7 @@
         <button aria-label="Close" @click="emit('close')">×</button>
       </header>
       <div class="lvos-shortcuts-body">
-        <div v-for="row in ROWS" :key="row.label" class="lvos-shortcuts-row">
-          <span class="lvos-shortcuts-keys">
-            <kbd v-for="key in row.keys" :key="key">{{ key }}</kbd>
-          </span>
-          <span class="lvos-shortcuts-label">{{ row.label }}</span>
-        </div>
+        <ShortcutRows :rows="ROWS" keys-width="9rem" />
       </div>
       <footer class="lvos-shortcuts-foot">press <kbd>?</kbd> or <kbd>esc</kbd> to close</footer>
     </div>
@@ -79,25 +74,9 @@ const ROWS = [
   padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-}
-
-.lvos-shortcuts-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-
-  .lvos-shortcuts-keys {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    flex-shrink: 0;
-    min-width: 9rem;
-  }
-
-  .lvos-shortcuts-label {
-    color: hsl(var(--lv-scheme-hs), 75%);
-  }
+  gap: 0.15rem;
+  // rows come from the shared ShortcutRows component; lvOS brightens labels
+  --shortcut-label-color: hsl(var(--lv-scheme-hs), 75%);
 }
 
 .lvos-shortcuts-foot {

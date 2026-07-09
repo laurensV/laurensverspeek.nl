@@ -19,12 +19,7 @@
           <div class="shortcuts-body">
             <section v-for="group in GROUPS" :key="group.title" class="shortcuts-group">
               <p class="shortcuts-group-title">## {{ group.title }}</p>
-              <div v-for="row in group.rows" :key="row.label" class="shortcuts-row">
-                <span class="shortcuts-keys">
-                  <kbd v-for="key in row.keys" :key="key">{{ key }}</kbd>
-                </span>
-                <span class="shortcuts-label">{{ row.label }}</span>
-              </div>
+              <ShortcutRows :rows="group.rows" keys-width="6.5rem" />
             </section>
           </div>
 
@@ -160,28 +155,9 @@ onKeyStroke('Escape', () => {
   font-size: 0.8rem;
 }
 
-.shortcuts-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  padding: 0.28rem 0;
+// row layout + keycaps come from the shared ShortcutRows component
+.shortcuts-group {
   font-size: 0.82rem;
-
-  .shortcuts-keys {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    flex-shrink: 0;
-    min-width: 6.5rem;
-  }
-
-  .shortcuts-label {
-    color: var(--bulma-text-weak);
-  }
-}
-
-kbd {
-  font-size: 0.72rem;
 }
 
 .shortcuts-foot {
