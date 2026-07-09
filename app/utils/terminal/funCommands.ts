@@ -4,6 +4,7 @@ import { profile } from '~/data/profile'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 import { formatWeather } from '~/utils/terminal/weather'
 import { framePixelsToAscii } from '~/utils/asciiCam'
+import { effectProcs, SYSTEM_PROCS, killByPid } from '~/utils/terminal/effectProcs'
 import type { GameHandle } from '~/utils/terminalGames'
 
 const CAM_W = 64
@@ -72,19 +73,9 @@ interface ForecastResult {
 export function createFunCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, close } = ctx
 
-  // site effects masquerading as processes: `ps` lists them, `kill` stops them
-  const effectProcs = [
-    { pid: 314, name: 'matrix-rain', running: () => ctx.effects.matrix.value, stop: () => (ctx.effects.matrix.value = false) },
-    { pid: 217, name: 'party-mode', running: () => ctx.effects.party.value, stop: () => (ctx.effects.party.value = false) },
-    { pid: 42, name: 'sl-train', running: () => ctx.effects.train.value, stop: () => (ctx.effects.train.value = false) },
-    { pid: 101, name: 'crt-filter', running: () => ctx.effects.crt.value, stop: () => void ctx.effects.toggleCrt(false) },
-    { pid: 666, name: 'destroy-mode', running: () => ctx.effects.destruct.value, stop: () => (ctx.effects.destruct.value = false) }
-  ]
-  const systemProcs = [
-    { pid: 1, name: 'init' },
-    { pid: 7, name: 'lvsh' },
-    { pid: 77, name: 'easter_eggs.service' }
-  ]
+  // site effects modelled as killable processes for `ps`/`kill` (see effectProcs)
+  const procs = effectProcs(ctx.effects)
+  const systemProcs = SYSTEM_PROCS
 
   const commands: Record<string, TerminalCommand> = {
     cowsay: {
@@ -170,7 +161,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
         for (const proc of systemProcs) {
           out(`${String(proc.pid).padStart(5)}  S    ${proc.name}`)
         }
-        const running = effectProcs.filter((proc) => proc.running())
+        const running = procs.filter((proc) => proc.running())
         for (const proc of running) {
           out(`${String(proc.pid).padStart(5)}  R    ${proc.name}`)
         }
@@ -181,20 +172,14 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
     kill: {
       usage: 'kill <pid>',
       description: 'Stop a process. Yes, kill 314 really stops the rain',
-      argCandidates: () => effectProcs.filter((proc) => proc.running()).map((proc) => String(proc.pid)),
+      argCandidates: () => procs.filter((proc) => proc.running()).map((proc) => String(proc.pid)),
       exec: (args) => {
         const pid = Number(args.find((arg) => !arg.startsWith('-')))
         if (!pid) return error('kill: usage: kill <pid> — see ps for the candidates')
-        const effect = effectProcs.find((proc) => proc.pid === pid)
-        if (effect) {
-          if (!effect.running()) return error(`kill: (${pid}) — no such process (it isn't running)`)
-          effect.stop()
-          out(`[${pid}] ${effect.name} terminated`)
-          return
-        }
-        if (systemProcs.some((proc) => proc.pid === pid)) {
-          return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
-        }
+        const result = killByPid(procs, systemProcs, pid)
+        if (result.ok) return out(`[${pid}] ${result.name} terminated`)
+        if (result.reason === 'not-running') return error(`kill: (${pid}) — no such process (it isn't running)`)
+        if (result.reason === 'not-permitted') return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
         error(`kill: (${pid}) — no such process`)
       }
     },
