@@ -36,6 +36,36 @@ export function edgeZone(
 }
 
 /** The screen rect a zone maps to (top = full-screen maximize preview). */
+export type ArrowKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'
+
+/**
+ * Keyboard snapping (Ctrl+Alt+arrows), Windows-style: left/right take a half,
+ * up refines a half into its top quadrant (or maximizes), down goes to the
+ * bottom quadrant (or restores). Returns null when the key changes nothing.
+ */
+export function keySnapTarget(
+  current: SnapZone | null,
+  maximized: boolean,
+  key: ArrowKey
+): SnapZone | 'maximize' | 'restore' | null {
+  switch (key) {
+    case 'ArrowLeft': return current === 'left' ? null : 'left'
+    case 'ArrowRight': return current === 'right' ? null : 'right'
+    case 'ArrowUp':
+      if (current === 'left') return 'top-left'
+      if (current === 'right') return 'top-right'
+      if (current === 'bottom-left') return 'left'
+      if (current === 'bottom-right') return 'right'
+      return maximized ? null : 'maximize'
+    case 'ArrowDown':
+      if (current === 'left') return 'bottom-left'
+      if (current === 'right') return 'bottom-right'
+      if (current === 'top-left') return 'left'
+      if (current === 'top-right') return 'right'
+      return maximized || current ? 'restore' : null
+  }
+}
+
 export function zoneRect(zone: SnapZone, viewW: number, usableH: number): Rect {
   const halfW = Math.floor(viewW / 2)
   const halfH = Math.floor(usableH / 2)

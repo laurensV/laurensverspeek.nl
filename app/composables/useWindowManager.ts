@@ -1,5 +1,5 @@
 import { useEventListener } from '@vueuse/core'
-import { edgeZone as computeZone, zoneRect as computeRect, type SnapZone } from '~/utils/snapZones'
+import { edgeZone as computeZone, zoneRect as computeRect, keySnapTarget, type ArrowKey, type SnapZone } from '~/utils/snapZones'
 import { nextInCycle, resizeRect, clampDragPosition, spawnPosition } from '~/utils/windowOrder'
 
 // lvOS window manager: state + drag/resize/snap/maximize logic, extracted
@@ -20,6 +20,8 @@ export interface DesktopWindow {
   pinned?: boolean
   /** Rect to restore after un-maximizing/un-snapping */
   restore?: { x: number, y: number, width?: number | undefined, height?: number | undefined } | undefined
+  /** Zone the window is currently snapped to (keyboard snapping refines it) */
+  snapped?: SnapZone | null | undefined
 }
 
 const TASKBAR_PX = 40
@@ -80,6 +82,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
   }
 
   const restoreRect = (win: DesktopWindow) => {
+    win.snapped = null
     if (!win.restore) return
     win.x = win.restore.x
     win.y = win.restore.y
@@ -103,11 +106,29 @@ export function useWindowManager(titles: Record<string, string> = {}) {
   const snap = (win: DesktopWindow, zone: SnapZone) => {
     if (!win.restore) saveRestoreRect(win)
     win.maximized = false
+    win.snapped = zone
     const rect = zoneRect(zone)
     win.x = rect.x
     win.y = rect.y
     win.width = rect.width
     win.height = rect.height
+  }
+
+  // keyboard snapping: Ctrl+Alt+arrows on the focused window
+  const keySnap = (win: DesktopWindow, key: ArrowKey) => {
+    const target = keySnapTarget(win.snapped ?? null, win.maximized, key)
+    if (target === null) return
+    if (target === 'maximize') {
+      toggleMaximize(win)
+    } else if (target === 'restore') {
+      // un-maximize, or un-snap back to the free-floating rect
+      if (win.maximized) toggleMaximize(win)
+      else restoreRect(win)
+      focusWindow(win)
+    } else {
+      snap(win, target)
+      focusWindow(win)
+    }
   }
 
   // ---- pointer interactions ----
@@ -208,6 +229,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     startDrag,
     startResize,
     snapPreview,
+    keySnap,
     cycleWindows
   }
 }

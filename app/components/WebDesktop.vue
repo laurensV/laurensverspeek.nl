@@ -182,6 +182,7 @@
 <script setup lang="ts">
 import { useEventListener, useIdle } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
+import type { ArrowKey } from '~/utils/snapZones'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
@@ -205,6 +206,7 @@ const {
   startDrag,
   startResize,
   snapPreview,
+  keySnap,
   cycleWindows
 } = useWindowManager(WINDOW_TITLES)
 
@@ -407,6 +409,17 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()
   openWindow('terminal')
+})
+
+// Ctrl+Alt+arrows snap the top window to halves/quadrants (up maximizes,
+// down restores) — the keyboard sibling of dragging against an edge
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (locked.value || !event.ctrlKey || !event.altKey) return
+  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+  const top = [...windows.value].filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0]
+  if (!top) return
+  event.preventDefault()
+  keySnap(top, event.key as ArrowKey)
 })
 
 // Alt+Tab switches between open windows (Shift+Alt+Tab goes backwards). Note the

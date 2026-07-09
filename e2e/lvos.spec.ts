@@ -401,3 +401,23 @@ test('? opens the lvOS keyboard cheat sheet', async ({ page }) => {
   // and lvOS is still there (Escape closed the sheet, not the session)
   await expect(page.locator('.lvos')).toBeVisible()
 })
+
+test('ctrl+alt+arrows snap the top window from the keyboard', async ({ page }) => {
+  await bootDesktop(page)
+  const win = page.locator('.lvos-window[data-win="readme"]')
+  await win.waitFor()
+  await page.keyboard.press('Control+Alt+ArrowLeft')
+  await expect.poll(async () => (await win.boundingBox())!.x).toBe(0)
+  const view = page.viewportSize()!
+  const half = await win.boundingBox()
+  expect(Math.abs(half!.width - view.width / 2)).toBeLessThan(4)
+  // up refines the left half into its top quadrant
+  await page.keyboard.press('Control+Alt+ArrowUp')
+  await expect.poll(async () => (await win.boundingBox())!.height).toBeLessThan(view.height / 2 + 4)
+  // down three times: half, bottom quadrant, then restore to free-floating
+  await page.keyboard.press('Control+Alt+ArrowDown')
+  await page.keyboard.press('Control+Alt+ArrowDown')
+  await page.keyboard.press('Control+Alt+ArrowDown')
+  await expect.poll(async () => (await win.boundingBox())!.x).toBeGreaterThan(0)
+})
+

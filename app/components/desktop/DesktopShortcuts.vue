@@ -20,6 +20,7 @@ const ROWS = [
   { keys: ['~'], label: 'open a terminal window' },
   { keys: ['alt', 'tab'], label: 'switch between windows' },
   { keys: ['drag', 'edge'], label: 'snap a window to a half or corner' },
+  { keys: ['ctrl', 'alt', '←→↑↓'], label: 'snap the top window from the keyboard' },
   { keys: ['dbl-click'], label: 'maximize / restore a window (title bar)' },
   { keys: ['right-click', 'title'], label: 'window menu: pin, minimize, close' },
   { keys: ['right-click', 'desktop'], label: 'new terminal · change wallpaper' },
