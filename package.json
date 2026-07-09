@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
     "typecheck:tests": "vue-tsc --noEmit -p tsconfig.tests.json",
-    "knip": "knip",
+    "knip": "npx knip",
     "test": "vitest run",
     "og": "node scripts/generate-og.mjs",
     "pregenerate": "node scripts/generate-og.mjs",
