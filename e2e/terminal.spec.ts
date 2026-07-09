@@ -327,3 +327,9 @@ test('weather reports unknown places and network trouble gracefully', async ({ p
   await run(page, 'weather atlantis-under-the-sea')
   await expect(page.locator('.terminal-output')).toContainText("unknown place 'atlantis-under-the-sea'")
 })
+
+test('the greeting is time-aware', async ({ page }) => {
+  await openTerminal(page)
+  // whatever the hour, one of the period lines is present
+  await expect(page.locator('.terminal-output')).toContainText(/morning|afternoon|evening|midnight/)
+})

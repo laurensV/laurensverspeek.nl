@@ -8,6 +8,7 @@ import { completeInput } from '~/utils/terminal/completion'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
+import { greetingLine } from '~/utils/terminal/greeting'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
@@ -68,6 +69,7 @@ export function useTerminal() {
 
   const greet = () => {
     push('primary', `Welcome to ${profile.domain} v2.0.0`)
+    muted(greetingLine(new Date().getHours()))
     muted(`Type 'help' to see available commands, 'exit' or Esc to close.`)
   }
 
