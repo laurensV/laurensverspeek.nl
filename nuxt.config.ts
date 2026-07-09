@@ -55,6 +55,12 @@ export default defineNuxtConfig({
       icons: [
         { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
         { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' }
+      ],
+      // long-press / right-click shortcuts on the installed app icon
+      shortcuts: [
+        { name: 'Blog', short_name: 'Blog', url: '/blog', description: 'Read the latest posts' },
+        { name: 'lvOS desktop', short_name: 'lvOS', url: '/desktop', description: 'Boot the desktop environment' },
+        { name: 'Changelog', short_name: 'Changelog', url: '/changelog', description: "What's changed on the site" }
       ]
     },
     workbox: {

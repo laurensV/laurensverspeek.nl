@@ -581,3 +581,12 @@ test('project cards support arrow-key navigation', async ({ page }) => {
   })
   expect(focusedIndex).toBeGreaterThan(1)
 })
+
+test('the web manifest advertises app shortcuts', async ({ request }) => {
+  const res = await request.get('/manifest.webmanifest')
+  expect(res.ok()).toBeTruthy()
+  const manifest = await res.json()
+  const urls = (manifest.shortcuts ?? []).map((s: { url: string }) => s.url)
+  expect(urls).toContain('/blog')
+  expect(urls).toContain('/desktop')
+})

@@ -292,6 +292,52 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
         out(all.length ? all.join('  ') : '(empty)')
       }
     },
+    tail: {
+      usage: 'tail [-f] <file>',
+      description: 'Show the end of a file (-f follows it live)',
+      argCandidates: () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((e) => e.name),
+      exec: (args) => {
+        const follow = args.includes('-f')
+        const name = args.find((arg) => !arg.startsWith('-'))
+        if (!name) return error('tail: usage: tail [-f] <file>')
+        const node = ctx.files.value[resolvePath(ctx.fsCwd.value, name)]
+        if (!node) return error(`tail: cannot open '${name}' for reading: No such file or directory`)
+        if (node.dir) return error(`tail: error reading '${name}': Is a directory`)
+        const lines = node.content ? node.content.split('\n') : []
+        lines.slice(-10).forEach(out)
+        if (!follow) return
+        // follow mode: stream plausible log lines until the visitor quits
+        muted(`==> following ${name} (a friendly daemon writes to it) — press q to stop <==`)
+        const events = [
+          'GET /  200  12ms',
+          'terminal.service: command executed',
+          'flow-field: repainted 1 frame',
+          'cache: HIT /rss.xml',
+          'visitor: still reading, nice',
+          'gc: swept 0 easter eggs (all still hidden)'
+        ]
+        ctx.startGame((callbacks) => {
+          const stamp = () => new Date().toLocaleTimeString('en-GB')
+          // stream accumulating log lines into the real output (not the single
+          // game frame), with a small "following" hint pinned below
+          callbacks.onFrame('(following… press q to stop)')
+          const timer = setInterval(() => {
+            out(`[${stamp()}] ${events[Math.floor(Math.random() * events.length)]}`)
+          }, 850)
+          return {
+            onKey: (key) => {
+              if (key.toLowerCase() === 'q' || key === 'Escape') {
+                clearInterval(timer)
+                callbacks.onEnd([`tail: stopped following ${name}`])
+                return true
+              }
+              return false
+            },
+            stop: () => clearInterval(timer)
+          }
+        })
+      }
+    },
     tree: {
       description: 'Show the whole site as a directory tree',
       exec: () => {

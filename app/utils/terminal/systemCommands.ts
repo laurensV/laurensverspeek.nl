@@ -264,6 +264,21 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         ctx.files.value = { ...ctx.files.value, [path]: { dir: true, content: '' } }
       }
     },
+    chmod: {
+      hidden: true,
+      usage: 'chmod <mode> <file>',
+      description: 'Change file permissions (in spirit)',
+      argCandidates: hereEntries,
+      exec: (args) => {
+        const [mode, name] = args
+        if (!mode || !name) return error('chmod: usage: chmod <mode> <file>')
+        const path = resolvePath(ctx.fsCwd.value, name)
+        if (!path || !ctx.files.value[path]) return error(`chmod: cannot access '${name}': No such file or directory`)
+        if (mode === '777') muted(`chmod: '${name}' is now world-writable. living dangerously, i see.`)
+        else if (mode === '000') muted(`chmod: '${name}' locked down to nobody. not even you. brave.`)
+        else out(`chmod: set mode ${mode} on ${name} (well, this is a browser, but the vibe is set)`)
+      }
+    },
     touch: {
       usage: 'touch <name>',
       description: 'Create an empty file',

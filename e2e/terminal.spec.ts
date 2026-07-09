@@ -640,3 +640,19 @@ test('ls -l shows a long listing', async ({ page }) => {
   await expect(out).toContainText('-rw-r--r--')
   await expect(out).toContainText('note.txt')
 })
+
+test('chmod plays along and tail -f follows a file', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo log line one > app.log')
+  await run(page, 'chmod 777 app.log')
+  await expect(out).toContainText('world-writable')
+  // tail prints the file, then -f streams live log lines until q
+  await run(page, 'tail app.log')
+  await expect(out).toContainText('log line one')
+  await run(page, 'tail -f app.log')
+  await expect(page.locator('.game-frame')).toContainText('following')
+  await expect(out).toContainText(/\[\d{2}:\d{2}:\d{2}\]/, { timeout: 4000 })
+  await page.keyboard.press('q')
+  await expect(out).toContainText('stopped following app.log')
+})
