@@ -9,6 +9,7 @@
         <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
       </template>
       <pre v-if="activeGame" class="terminal-line game-frame">{{ gameFrame }}</pre>
+      <pre v-if="spinnerLabel && !activeGame" class="terminal-line is-muted terminal-spinner">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
     </div>
 
     <!-- reverse history search (ctrl+r) -->
@@ -57,7 +58,27 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ escape: [] }>()
 
-const { lines, history, cwd, run, complete, activeGame, gameFrame } = useTerminal()
+const { lines, history, cwd, run, complete, activeGame, gameFrame, spinnerLabel } = useTerminal()
+
+// braille spinner: animate while a command is fetching (a still glyph under
+// reduced motion). The interval only runs while the spinner is visible.
+const SPIN_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+const spinnerFrame = ref(SPIN_FRAMES[0])
+let spinTimer: ReturnType<typeof setInterval> | undefined
+watch(spinnerLabel, (label) => {
+  clearInterval(spinTimer)
+  if (!label || !import.meta.client) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    spinnerFrame.value = '⠿'
+    return
+  }
+  let i = 0
+  spinTimer = setInterval(() => {
+    i = (i + 1) % SPIN_FRAMES.length
+    spinnerFrame.value = SPIN_FRAMES[i]!
+  }, 80)
+})
+onUnmounted(() => clearInterval(spinTimer))
 const fontScale = useTermFontScale()
 const { name } = useIdentity()
 

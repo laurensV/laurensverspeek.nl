@@ -705,3 +705,25 @@ test('telnet only knows the towel host and plays the asciimation', async ({ page
   await page.keyboard.press('q')
   await expect(out).toContainText('Connection closed.')
 })
+
+test('async commands show a braille spinner while fetching', async ({ page }) => {
+  await page.route('**/geocoding-api.open-meteo.com/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 900))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ results: [{ name: 'Testville', latitude: 1, longitude: 1 }] })
+    })
+  })
+  await page.route('**/api.open-meteo.com/**', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ current: { temperature_2m: 20, weather_code: 1, wind_speed_10m: 5, relative_humidity_2m: 40 } })
+  }))
+  await openTerminal(page)
+  await run(page, 'weather testville')
+  const spinner = page.locator('.terminal-spinner')
+  await expect(spinner).toBeVisible()
+  await expect(spinner).toContainText('asking open-meteo about testville')
+  // once the forecast lands, the spinner goes away
+  await expect(page.locator('.terminal-output')).toContainText('Testville', { timeout: 5000 })
+  await expect(spinner).toHaveCount(0)
+})

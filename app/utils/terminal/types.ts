@@ -57,6 +57,9 @@ export interface TerminalContext {
   link: (label: string, url: string) => void
   navigate: (page: string) => void
   close: () => void
+  /** Show an animated "working…" line while a command fetches; call the
+   * returned stop() when done (usually in finally) */
+  spin: (label: string) => () => void
   startGame: (create: (callbacks: GameCallbacks) => GameHandle) => void
   colorMode: { preference: string, value: string }
   identity: {

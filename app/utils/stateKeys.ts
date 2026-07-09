@@ -13,6 +13,7 @@ export const STATE_KEYS = {
   terminalFsCwd: 'terminal-fs-cwd',
   terminalFontScale: 'terminal-font-scale',
   terminalSshHost: 'terminal-ssh-host',
+  terminalSpinner: 'terminal-spinner',
   // site-wide effects
   fxMatrix: 'fx-matrix',
   fxCrt: 'fx-crt',

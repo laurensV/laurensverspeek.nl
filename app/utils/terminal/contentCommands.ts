@@ -519,7 +519,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           muted(`(enable by building with NUXT_PUBLIC_GOATCOUNTER=<code>)`)
           return
         }
-        muted(`Fetching from ${goatcounter}.goatcounter.com ...`)
+        const stopSpin = ctx.spin(`fetching from ${goatcounter}.goatcounter.com ...`)
         try {
           const total = await $fetch<{ count: string }>(
             `https://${goatcounter}.goatcounter.com/counter/TOTAL.json`
@@ -533,6 +533,8 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           muted('(public counters — no cookies, no fingerprints)')
         } catch {
           error('stats: could not reach goatcounter (are public counters switched on?)')
+        } finally {
+          stopSpin()
         }
       }
     },
@@ -540,7 +542,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       category: 'content',
       description: 'Live stats from the GitHub API',
       exec: () => {
-        muted('Fetching from api.github.com ...')
+        const stopSpin = ctx.spin('fetching from api.github.com ...')
         return $fetch<{ followers: number, public_repos: number }>(
           `https://api.github.com/users/${GITHUB_USER}`
         )
@@ -551,6 +553,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
             link(`profile    github.com/${GITHUB_USER}`, `https://github.com/${GITHUB_USER}`)
           })
           .catch(() => error('github: API unreachable (rate limit or offline)'))
+          .finally(stopSpin)
       }
     }
   }

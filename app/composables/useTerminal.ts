@@ -121,6 +121,15 @@ export function useTerminal() {
     })
   }
 
+  // braille spinner label shown under the transcript while a command fetches
+  const spinnerLabel = useState(STATE_KEYS.terminalSpinner, () => '')
+  const spin = (label: string) => {
+    spinnerLabel.value = label
+    return () => {
+      if (spinnerLabel.value === label) spinnerLabel.value = ''
+    }
+  }
+
   const navigate = (page: string) => {
     const target = page === 'home' || page === '~' || page === '/' ? '/' : `/${page}`
     out(`Navigating to ${target} ...`)
@@ -140,6 +149,7 @@ export function useTerminal() {
     link,
     navigate,
     close,
+    spin,
     startGame,
     colorMode,
     identity: {
@@ -338,5 +348,5 @@ export function useTerminal() {
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
 
   // files is shared with the lvOS Files app, which browses the same home fs
-  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, files: ctx.files }
+  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files }
 }

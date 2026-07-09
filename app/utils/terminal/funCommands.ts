@@ -207,7 +207,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       examples: ['weather', 'weather amsterdam', 'weather tokyo'],
       exec: async (args) => {
         const query = args.join(' ').trim() || 'Amsterdam'
-        muted(`Asking open-meteo about ${query} ...`)
+        const stopSpin = ctx.spin(`asking open-meteo about ${query} ...`)
         try {
           const geo = await $fetch<GeoResult>('https://geocoding-api.open-meteo.com/v1/search', {
             query: { name: query, count: 1 }
@@ -230,6 +230,8 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
           }).forEach(out)
         } catch {
           error('weather: the sky is unreachable right now (network error)')
+        } finally {
+          stopSpin()
         }
       }
     },
@@ -344,6 +346,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
           return
         }
         muted(`* Trying ${url.host}...`)
+        const stopSpin = ctx.spin(`waiting for ${url.host} ...`)
         return fetch(url.toString(), { headers: { accept: 'text/plain, application/json, */*' } })
           .then(async (res) => {
             push('primary', `HTTP ${res.status} ${res.statusText}`.trim())
@@ -358,6 +361,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
             if (text.split('\n').length > 40) muted('… (truncated)')
           })
           .catch(() => error(`curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
+          .finally(stopSpin)
       }
     },
     desktop: {
