@@ -448,11 +448,12 @@ test('cd - and pushd/popd remember directories', async ({ page }) => {
   await run(page, 'mkdir depths')
   await run(page, 'cd depths')
   expect(await promptText()).toContain('~/depths')
-  await run(page, 'cd ~')
+  // `cd ..` moves without the page navigation `cd ~` would trigger
+  await run(page, 'cd ..')
   await run(page, 'cd -')
   await expect.poll(promptText).toContain('~/depths')
   // pushd hops and remembers; popd returns
-  await run(page, 'cd ~')
+  await run(page, 'cd ..')
   await run(page, 'pushd depths')
   await expect(out).toContainText('~/depths ~')
   await run(page, 'popd')
