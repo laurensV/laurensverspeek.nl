@@ -397,3 +397,15 @@ test('history expansion re-runs earlier commands', async ({ page }) => {
   await run(page, '!doesnotexist')
   await expect(out).toContainText('event not found')
 })
+
+test('ssh connects, changes the prompt host, and exit disconnects', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'ssh guest@laurensverspeek.nl')
+  await expect(out).toContainText('Welcome to laurensverspeek.nl!')
+  await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('@laurensverspeek.nl:')
+  // first exit only disconnects; the terminal stays open with the local prompt
+  await run(page, 'exit')
+  await expect(out).toContainText('Connection to laurensverspeek.nl closed.')
+  await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('@lv:')
+})

@@ -26,6 +26,10 @@ const ASCII_LOGO = String.raw`
 export function createSystemCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error } = ctx
 
+  // captured at factory time (valid Nuxt context); command handlers run outside it.
+  // Set by the ssh easter egg; the prompt's host segment follows it.
+  const sshHost = useState('terminal-ssh-host', () => '')
+
   // a path can only be created if its parent directory already exists
   const parentExists = (path: string) => {
     const parent = path.split('/').slice(0, -1).join('/')
@@ -326,6 +330,12 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     exit: {
       description: 'Close the terminal',
       exec: () => {
+        // an ssh "session" disconnects first; the next exit closes for real
+        if (sshHost.value) {
+          out(`Connection to ${sshHost.value} closed.`)
+          sshHost.value = ''
+          return
+        }
         out('logout')
         setTimeout(ctx.close, 200)
       }
@@ -413,6 +423,33 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
           default:
             error(`git: '${sub}' is not a git command. See 'man git'.`)
         }
+      }
+    },
+    ssh: {
+      hidden: true,
+      usage: 'ssh <user@host>',
+      description: 'Connect to a very real remote server',
+      exec: (args) => {
+        const target = args[0] ?? ''
+        if (!target) {
+          error('usage: ssh <user@host> — try ssh guest@laurensverspeek.nl')
+          return
+        }
+        const host = target.includes('@') ? target.split('@')[1]! : target
+        if (sshHost.value) return error(`ssh: already connected to ${sshHost.value} — 'exit' first`)
+        muted(`Connecting to ${host} (127.0.0.1) port 22 ...`)
+        return new Promise<void>((resolve) => {
+          setTimeout(() => muted(`Server key fingerprint: SHA256:${'lv'.repeat(3)}...trustme (accepted blindly)`), 350)
+          setTimeout(() => out('Authenticated with method "vibes".'), 750)
+          setTimeout(() => {
+            push('primary', `Welcome to ${host}!`)
+            out('  * You were already here, but now it feels more official.')
+            out(`  * Last login: just now, from your own browser`)
+            muted(`(the prompt now agrees — type 'exit' to disconnect)`)
+            sshHost.value = host
+            resolve()
+          }, 1150)
+        })
       }
     },
     sudo: {

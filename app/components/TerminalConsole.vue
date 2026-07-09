@@ -60,7 +60,9 @@ const emit = defineEmits<{ escape: [] }>()
 const { lines, history, cwd, run, complete, activeGame, gameFrame } = useTerminal()
 const { name } = useIdentity()
 
-const prompt = computed(() => `${name.value}@lv:${cwd.value}$`)
+// the host segment flips when the ssh easter egg "connects" somewhere
+const sshHost = useState('terminal-ssh-host', () => '')
+const prompt = computed(() => `${name.value}@${sshHost.value || 'lv'}:${cwd.value}$`)
 const input = ref('')
 const inputRef = ref<HTMLInputElement>()
 const outputRef = ref<HTMLElement>()
