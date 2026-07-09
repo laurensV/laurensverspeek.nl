@@ -9,7 +9,7 @@
       role="application"
       aria-label="lvOS desktop — press Escape to log out"
       @contextmenu.prevent="openContextMenu"
-      @click="contextMenu.open = false"
+      @click="contextMenu.open = false; titleMenu.open = false"
     >
       <!-- live wallpaper: a dim Game of Life behind everything -->
       <LazyDesktopLifeWallpaper v-if="wallpapers[wallpaper]?.live" />
@@ -79,8 +79,11 @@
           class="lvos-window-titlebar is-family-code"
           @pointerdown.prevent="startDrag(win, $event)"
           @dblclick="toggleMaximize(win)"
+          @contextmenu.prevent.stop="openTitleMenu(win, $event)"
         >
-          <span class="lvos-window-title">{{ win.title }}</span>
+          <span class="lvos-window-title">
+            <span v-if="win.pinned" title="Pinned on top" aria-hidden="true">📌 </span>{{ win.title }}
+          </span>
           <span class="lvos-window-actions">
             <button :aria-label="`Minimize ${win.title}`" title="Minimize" @pointerdown.stop @click.stop="toggleMinimize(win)">–</button>
             <button
@@ -164,6 +167,18 @@
         </template>
       </div>
 
+      <!-- window titlebar context menu -->
+      <div
+        v-if="titleMenu.open && titleMenuWin"
+        class="lvos-titlemenu is-family-code"
+        :style="{ left: `${titleMenu.x}px`, top: `${titleMenu.y}px` }"
+      >
+        <button @click="titleMenuAct((w) => toggleMinimize(w))">– minimize</button>
+        <button @click="titleMenuAct((w) => toggleMaximize(w))">{{ titleMenuWin.maximized ? '❐ restore' : '□ maximize' }}</button>
+        <button @click="titleMenuAct((w) => togglePin(w))">📌 {{ titleMenuWin.pinned ? 'unpin from top' : 'pin on top' }}</button>
+        <button class="is-close" @click="titleMenuAct((w) => closeWindow(w.id))">× close</button>
+      </div>
+
       <!-- lock screen: ceremonial, but it does cover everything -->
       <LazyDesktopLockScreen v-if="locked" @unlock="locked = false" />
 
@@ -237,6 +252,7 @@ const {
   focusWindow,
   toggleMinimize: wmToggleMinimize,
   toggleMaximize,
+  togglePin,
   startDrag,
   startResize,
   snapPreview,
@@ -299,13 +315,30 @@ const openContextMenu = (event: MouseEvent) => {
 const { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper: nextWallpaper } = useWallpaper()
 const cycleWallpaper = () => notify('🖼', 'Wallpaper changed', nextWallpaper())
 
+// right-click menu on a window titlebar
+const titleMenu = reactive({ open: false, x: 0, y: 0, winId: '' })
+const openTitleMenu = (win: DesktopWindow, event: MouseEvent) => {
+  focusWindow(win)
+  titleMenu.open = true
+  titleMenu.x = event.clientX
+  titleMenu.y = event.clientY
+  titleMenu.winId = win.id
+}
+const titleMenuWin = computed(() => windows.value.find((w) => w.id === titleMenu.winId))
+const titleMenuAct = (action: (win: DesktopWindow) => void) => {
+  if (titleMenuWin.value) action(titleMenuWin.value)
+  titleMenu.open = false
+}
+
+const zIndexFor = (win: DesktopWindow) => win.z + (win.pinned ? 1000 : 0)
+
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
-    ? { zIndex: win.z, ...genie[win.id] }
+    ? { zIndex: zIndexFor(win), ...genie[win.id] }
     : {
         left: `${win.x}px`,
         top: `${win.y}px`,
-        zIndex: win.z,
+        zIndex: zIndexFor(win),
         width: win.width !== undefined ? `${win.width}px` : undefined,
         height: win.height !== undefined ? `${win.height}px` : undefined,
         ...genie[win.id]
@@ -442,8 +475,9 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     return
   }
   // Escape first dismisses popups, only logging out when nothing is open
-  if (contextMenu.open || startOpen.value || calendarOpen.value || notifOpen.value) {
+  if (contextMenu.open || titleMenu.open || startOpen.value || calendarOpen.value || notifOpen.value) {
     contextMenu.open = false
+    titleMenu.open = false
     startOpen.value = false
     calendarOpen.value = false
     notifOpen.value = false
@@ -470,6 +504,39 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       hsl(var(--lv-scheme-hs), 8%),
       hsl(var(--bulma-scheme-h), 40%, 4%)
     );
+}
+
+// titlebar right-click menu (same look as the desktop context menu)
+.lvos-titlemenu {
+  position: fixed;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 0.3rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+  font-size: 0.75rem;
+
+  button {
+    padding: 0.4rem 0.6rem;
+    border: none;
+    border-radius: var(--bulma-radius-small);
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 88%);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
+    }
+
+    &.is-close:hover {
+      color: var(--bulma-danger);
+    }
+  }
 }
 
 // CRT power-off: the desktop collapses to a bright horizontal line, then a dot

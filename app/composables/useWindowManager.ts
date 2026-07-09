@@ -16,6 +16,8 @@ export interface DesktopWindow {
   height?: number
   minimized: boolean
   maximized: boolean
+  /** Pinned windows float above the rest (z boost applied in the shell) */
+  pinned?: boolean
   /** Rect to restore after un-maximizing/un-snapping */
   restore?: { x: number, y: number, width?: number, height?: number }
 }
@@ -61,6 +63,11 @@ export function useWindowManager(titles: Record<string, string> = {}) {
 
   const closeWindow = (id: string) => {
     windows.value = windows.value.filter((w) => w.id !== id)
+  }
+
+  const togglePin = (win: DesktopWindow) => {
+    win.pinned = !win.pinned
+    focusWindow(win)
   }
 
   const toggleMinimize = (win: DesktopWindow) => {
@@ -197,6 +204,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     focusWindow,
     toggleMinimize,
     toggleMaximize,
+    togglePin,
     startDrag,
     startResize,
     snapPreview,

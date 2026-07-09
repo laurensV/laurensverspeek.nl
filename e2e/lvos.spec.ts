@@ -348,3 +348,26 @@ test('the game of life wallpaper renders live behind the desktop', async ({ page
   await expect(page.locator('.lvos')).toBeVisible({ timeout: 15000 })
   await expect(page.locator('.lvos-live-wallpaper')).toBeVisible()
 })
+
+test('titlebar right-click menu pins a window on top and closes it', async ({ page }) => {
+  await bootDesktop(page)
+  // open a second window so stacking is observable
+  await page.locator('.lvos-window-titlebar').first().click({ button: 'right' })
+  const menu = page.locator('.lvos-titlemenu')
+  await expect(menu).toBeVisible()
+  await menu.locator('button', { hasText: 'pin on top' }).click()
+  await expect(menu).toHaveCount(0)
+  const readme = page.locator('.lvos-window[data-win="readme"]')
+  await expect(readme.locator('.lvos-window-title')).toContainText('📌')
+  // focusing another window cannot climb above the pinned one
+  await page.locator('.lvos-icon', { hasText: /^taskmgr$/ }).click()
+  await page.locator('.taskmgr').waitFor()
+  const zOf = (sel: string) => page.locator(sel).evaluate((el) => Number(getComputedStyle(el).zIndex))
+  expect(await zOf('.lvos-window[data-win="readme"]')).toBeGreaterThan(await zOf('.lvos-window[data-win="taskmgr"]'))
+  // unpin, then close via the menu
+  await readme.locator('.lvos-window-titlebar').click({ button: 'right' })
+  await menu.locator('button', { hasText: 'unpin' }).click()
+  await readme.locator('.lvos-window-titlebar').click({ button: 'right' })
+  await menu.locator('button', { hasText: 'close' }).click()
+  await expect(readme).toHaveCount(0)
+})
