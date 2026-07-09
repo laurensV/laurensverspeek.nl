@@ -4,6 +4,7 @@ import { parseRedirect, resolvePath, dirEntries, expandFileArgs, writeFileAt } f
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
 import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
 import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
+import { groupCommands } from '~/utils/terminal/helpGroups'
 import { profile } from '~/data/profile'
 
 // the baked commit history (/git-log.json is prerendered at generate time),
@@ -102,15 +103,18 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     help: {
       description: 'List available commands',
       exec: () => {
-        for (const [name, cmd] of Object.entries(ctx.getCommands())) {
-          if (cmd.hidden) continue
-          push(
-            'output',
-            `<span class="term-accent">${(cmd.usage ?? name).padEnd(24, ' ')}</span> ${cmd.description}`,
-            true
-          )
+        for (const group of groupCommands(ctx.getCommands())) {
+          push('primary', `## ${group.title}`)
+          for (const cmd of group.commands) {
+            push(
+              'output',
+              `<span class="term-accent">${(cmd.usage ?? cmd.name).padEnd(24, ' ')}</span> ${cmd.description}`,
+              true
+            )
+          }
+          out('')
         }
-        muted(`\nTip: ↑/↓ history · Tab completes · | grep filters · man <cmd> for details.`)
+        muted(`Tip: ↑/↓ history · Tab completes · | grep filters · man <cmd> for details.`)
       }
     },
     man: {

@@ -561,3 +561,12 @@ test('vim is real now: modal editing and :wq', async ({ page }) => {
   await run(page, 'cat poem.txt')
   await expect(out).toContainText('roses are amber')
 })
+
+test('help is grouped into categories', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'help')
+  await expect(out).toContainText('## your filesystem')
+  await expect(out).toContainText('## games')
+  await expect(out).toContainText('## shell & system')
+})
