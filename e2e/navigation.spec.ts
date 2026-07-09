@@ -257,11 +257,14 @@ test('deep links flash their target section', async ({ page }) => {
 test('a pending g chord shows in the status bar', async ({ page }) => {
   await page.goto('/about')
   await page.locator('h1').waitFor()
+  // chord navigation first, with no assertion inside the 500ms chord window
   await page.keyboard.press('g')
-  await expect(page.locator('.status-pending')).toHaveText('g-')
-  // it clears once the chord resolves
   await page.keyboard.press('b')
   await expect(page).toHaveURL(/\/blog\/?$/)
+  await expect(page.locator('.status-pending')).toHaveCount(0)
+  // an armed chord shows the which-key hint, and expires back to nothing
+  await page.keyboard.press('g')
+  await expect(page.locator('.status-pending')).toHaveText('g-')
   await expect(page.locator('.status-pending')).toHaveCount(0)
 })
 
@@ -276,11 +279,18 @@ test('a route progress bar appears during navigation', async ({ page }) => {
   await page.locator('.hero-name').waitFor()
   const bar = page.locator('.route-progress')
   await expect(bar).toBeAttached()
-  // navigating flips the bar active at least briefly
-  const sawActive = page.waitForSelector('.route-progress.is-active', { timeout: 5000 }).then(() => true).catch(() => false)
+  // the active phase can last only milliseconds on a prerendered site, so
+  // watch for it with a MutationObserver instead of racing a selector poll
+  await page.evaluate(() => {
+    const el = document.querySelector('.route-progress')!
+    window.__sawProgress = false
+    new MutationObserver(() => {
+      if (el.classList.contains('is-active')) window.__sawProgress = true
+    }).observe(el, { attributes: true })
+  })
   await page.locator('.app-navbar a', { hasText: 'projects' }).first().click()
-  expect(await sawActive).toBe(true)
   await expect(page).toHaveURL(/\/projects/)
+  await expect.poll(() => page.evaluate(() => window.__sawProgress)).toBe(true)
 })
 
 test('keyboard focus shows a consistent ring on nav and terminal input', async ({ page }) => {
@@ -312,9 +322,9 @@ test('triple-clicking the brand glyph toggles CRT mode', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   const mark = page.locator('.nav-brand .brand-mark')
-  await mark.click()
-  await mark.click()
-  await mark.click()
+  // one action, three rapid clicks — separate click() calls can drift past
+  // the 600ms triple-click window on a loaded machine
+  await mark.click({ clickCount: 3 })
   await expect(page.locator('html')).toHaveClass(/crt-mode/)
   // and it stayed on the home page (the glyph doesn't navigate)
   await expect(page).toHaveURL(/\/$/)
@@ -323,6 +333,7 @@ test('triple-clicking the brand glyph toggles CRT mode', async ({ page }) => {
 declare global {
   interface Window {
     lv: { hunt(): string, riddle(): string, answer(g: string): string }
+    __sawProgress?: boolean
   }
 }
 
