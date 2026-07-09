@@ -12,7 +12,7 @@ export interface TerminalLine {
 }
 
 /** Where a command lands in `help` — anything without one falls into "misc" */
-export type HelpCategory = 'content' | 'files' | 'games' | 'toys' | 'system' | 'cal'
+type HelpCategory = 'content' | 'files' | 'games' | 'toys' | 'system' | 'cal'
 
 export interface TerminalCommand {
   usage?: string

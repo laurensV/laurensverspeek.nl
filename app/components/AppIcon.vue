@@ -20,8 +20,6 @@
 import { icons, type IconName } from '~/utils/icons'
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 20 })
-
-export type { IconName }
 </script>
 
 <style scoped>

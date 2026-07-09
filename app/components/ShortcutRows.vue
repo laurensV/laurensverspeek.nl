@@ -11,7 +11,7 @@
 // One keys → label cheat-sheet row list, shared by the site-wide shortcuts
 // overlay (?) and the lvOS cheat sheet. Font size inherits from the host;
 // the label color can be tuned via --shortcut-label-color.
-export interface ShortcutRow {
+interface ShortcutRow {
   keys: string[]
   label: string
 }
