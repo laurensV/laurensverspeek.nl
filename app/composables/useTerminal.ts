@@ -17,6 +17,9 @@ import { profile } from '~/data/profile'
 export type { TerminalLine } from '~/utils/terminal/types'
 
 let lineId = 0
+// the page title saved before the terminal started reflecting commands into it;
+// module-scoped so the run-instance and the close-instance share it
+let savedTitle: string | null = null
 
 // Game state lives at module scope: only ever touched client-side,
 // and shared by every useTerminal() caller.
@@ -79,10 +82,25 @@ export function useTerminal() {
     if (!lines.value.length) greet()
     isOpen.value = true
   }
+  // reflect the running command in the browser tab; restore the page's own
+  // title when the terminal closes
+  const reflectTitle = (command: string) => {
+    if (!import.meta.client) return
+    if (savedTitle === null) savedTitle = document.title
+    document.title = `~ ${command} — ${profile.domain}`
+  }
+  const restoreTitle = () => {
+    if (import.meta.client && savedTitle !== null) {
+      document.title = savedTitle
+      savedTitle = null
+    }
+  }
+
   const close = () => {
     activeGame.value?.stop()
     activeGame.value = null
     isOpen.value = false
+    restoreTitle()
   }
   const toggle = () => (isOpen.value ? close() : open())
 
@@ -217,6 +235,7 @@ export function useTerminal() {
     }
     // count which commands get used — names only, never arguments
     trackEvent(`terminal/${name.toLowerCase()}`)
+    reflectTitle(name.toLowerCase())
 
     if (!pipeStages.length && !redirectFile && !toClipboard) {
       command.exec(args)

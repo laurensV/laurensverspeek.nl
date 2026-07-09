@@ -605,3 +605,19 @@ test('curl really fetches a url (and keeps the easter egg for our domain)', asyn
   await run(page, 'curl laurensverspeek.nl')
   await expect(out).toContainText('the real fun is behind the ~ key')
 })
+
+test('the tab title reflects the running command and restores on close', async ({ page }) => {
+  await openTerminal(page)
+  const original = await page.title()
+  await run(page, 'help')
+  await expect.poll(() => page.title()).toContain('~ help')
+  await page.keyboard.press('Escape')
+  await expect.poll(() => page.title()).toBe(original)
+})
+
+test('navigating updates the browser tab title', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.goto('/blog')
+  await expect.poll(() => page.title()).toContain('Blog')
+})
