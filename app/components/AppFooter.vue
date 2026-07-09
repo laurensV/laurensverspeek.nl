@@ -25,6 +25,7 @@
         <button class="build-hash" :title="`git show ${config.public.buildHash}`" @click="showBuild">
           {{ config.public.buildHash }}
         </button>
+        · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
       </p>
     </div>
   </footer>
@@ -81,6 +82,15 @@ const showBuild = () => {
       &:focus-visible {
         text-decoration: underline;
         text-underline-offset: 0.2em;
+      }
+    }
+
+    .build-changelog {
+      color: inherit;
+
+      &:hover,
+      &:focus-visible {
+        color: var(--bulma-primary-on-scheme);
       }
     }
   }
