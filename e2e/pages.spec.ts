@@ -494,3 +494,13 @@ test('the hero canvas has a pointer trail overlay (skipped under reduced motion)
   })
   expect(painted).toBe(true)
 })
+
+test('loading skeletons share the shimmer treatment', async ({ page }) => {
+  // hang the github api so the stats skeleton stays on screen
+  await page.route('**/api.github.com/**', () => {})
+  await page.goto('/about')
+  const skeleton = page.locator('.stat-value.is-skeleton').first()
+  await skeleton.waitFor({ timeout: 10000 })
+  const shimmer = await skeleton.evaluate((el) => getComputedStyle(el, '::after').animationName)
+  expect(shimmer).toContain('skeleton-shimmer')
+})

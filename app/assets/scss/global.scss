@@ -156,6 +156,42 @@ html.is-lvos body {
   }
 }
 
+// One shimmer for every loading skeleton on the site. Bulma's .is-skeleton
+// gives a flat block; this sweeps a soft highlight across it so all the
+// placeholders (blog list, github stats, …) breathe the same way.
+.is-skeleton,
+.is-skeleton-block {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsla(var(--lv-primary-hsl), 0.12),
+      transparent
+    );
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-skeleton::after,
+  .is-skeleton-block::after {
+    animation: none;
+  }
+}
+
 // Deep-link arrival: the targeted section flashes so the eye lands on it
 .is-anchor-target {
   animation: anchor-flash 1.8s ease-out;
