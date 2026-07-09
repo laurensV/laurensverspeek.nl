@@ -383,3 +383,19 @@ test('the lvOS snake app runs the shared game engine', async ({ page }) => {
   await snake.press('q')
   await expect(snake.locator('.dsnake-again')).toBeVisible()
 })
+
+test('the image viewer browses the site art gallery', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^gallery$/ }).click()
+  const gallery = page.locator('.gallery')
+  await gallery.waitFor()
+  const main = gallery.locator('.gallery-image')
+  const first = await main.getAttribute('src')
+  // next advances to a different image
+  await gallery.locator('.gallery-nav[aria-label="Next"]').click()
+  await expect(main).not.toHaveAttribute('src', first ?? '')
+  // clicking a thumbnail selects it
+  await gallery.locator('.gallery-thumb').nth(2).click()
+  await expect(gallery.locator('.gallery-thumb.is-active')).toHaveCount(1)
+})
