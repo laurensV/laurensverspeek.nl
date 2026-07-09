@@ -60,6 +60,7 @@
                 :key="tag"
                 class="tag is-small is-family-code tag-btn"
                 :class="{ 'is-active': tag === activeTag }"
+                :style="{ '--tag-h': tagHue(tag) }"
                 :aria-pressed="tag === activeTag"
                 @click="setTag(tag)"
               >
@@ -74,6 +75,8 @@
 </template>
 
 <script setup lang="ts">
+import { tagHue } from '~/utils/tagHue'
+
 useHead({ title: 'Blog — Laurens Verspeek' })
 useSeoMeta({ description: 'Blog of Laurens Verspeek: code, blockchain and website experiments.' })
 
@@ -179,7 +182,10 @@ onBeforeUnmount(() => clearTimeout(copyTimer))
 }
 
 .tag-btn {
-  border: 1px solid transparent;
+  // each tag wears its own stable tint (hue set inline via --tag-h)
+  border: 1px solid hsla(var(--tag-h, 44), 60%, 50%, 0.25);
+  background-color: hsla(var(--tag-h, 44), 60%, 50%, 0.08);
+  color: hsl(var(--tag-h, 44), 45%, 52%);
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 

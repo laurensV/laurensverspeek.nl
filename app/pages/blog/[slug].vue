@@ -12,7 +12,12 @@
           <p class="is-family-code is-size-7 has-text-grey mb-6">
             {{ formatDate(post.date) }} · {{ readingTime }} min read
             <template v-if="post.tags?.length">
-              · <span v-for="tag in post.tags" :key="tag" class="mr-1">#{{ tag }}</span>
+              · <span
+                v-for="tag in post.tags"
+                :key="tag"
+                class="mr-1 post-tag"
+                :style="{ '--tag-h': tagHue(tag) }"
+              >#{{ tag }}</span>
             </template>
             · <button class="post-share" :class="{ 'is-shared': shared }" @click="share">
               {{ shared ? 'copied ✓' : '[share]' }}
@@ -65,9 +70,11 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
+import { tagHue } from '~/utils/tagHue'
 import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
 
 const route = useRoute()
+
 
 const { data: post } = await useAsyncData(`blog-${route.params.slug}`, () =>
   queryCollection('blog').path(route.path).first()
@@ -347,6 +354,10 @@ onMounted(() => {
 .post-toc .toc-title {
   position: sticky;
   top: 3.5rem;
+}
+
+.post-tag {
+  color: hsl(var(--tag-h, 44), 45%, 52%);
 }
 
 .post-share {
