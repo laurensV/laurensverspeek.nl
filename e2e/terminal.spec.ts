@@ -656,3 +656,25 @@ test('chmod plays along and tail -f follows a file', async ({ page }) => {
   await page.keyboard.press('q')
   await expect(out).toContainText('stopped following app.log')
 })
+
+test('chains commands with &&, || and ;', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  const outputLines = page.locator('.terminal-line.is-output')
+  // ; runs everything in order
+  await run(page, 'echo one; echo two')
+  await expect(outputLines.filter({ hasText: 'one' }).first()).toBeVisible()
+  await expect(outputLines.filter({ hasText: 'two' }).first()).toBeVisible()
+  // && short-circuits after a failure: the rescued echo must not run
+  await run(page, 'cat missing.txt && echo reached')
+  await expect(out).toContainText('No such file or directory')
+  await expect(outputLines.filter({ hasText: 'reached' })).toHaveCount(0)
+  // || is the rescue path — and only fires after a failure
+  await run(page, 'cat missing.txt || echo rescued')
+  await expect(outputLines.filter({ hasText: 'rescued' })).toHaveCount(1)
+  await run(page, 'echo fine || echo fallback')
+  await expect(outputLines.filter({ hasText: 'fallback' })).toHaveCount(0)
+  // a dangling && is a shell syntax error
+  await run(page, 'echo hi &&')
+  await expect(out).toContainText("lvsh: syntax error near unexpected token `&&'")
+})

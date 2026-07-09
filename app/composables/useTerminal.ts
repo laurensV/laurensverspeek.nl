@@ -7,6 +7,8 @@ import { applyFilter, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
+import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
+import type { ChainOp } from '~/utils/terminal/chain'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
@@ -60,9 +62,13 @@ export function useTerminal() {
 
   // output sink indirection: pipes temporarily capture lines instead of printing
   let sink: ((line: TerminalLine) => void) | null = null
+  // a command's "exit status": did it print an error line while running? Chains
+  // (`&&` / `||`) short-circuit on this.
+  let runFailed = false
 
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     const line: TerminalLine = { id: lineId++, type, text, html }
+    if (type === 'error') runFailed = true
     if (sink) sink(line)
     else lines.value.push(line)
   }
@@ -208,37 +214,48 @@ export function useTerminal() {
 
   const makeLine = (text: string): TerminalLine => ({ id: lineId++, type: 'output', text })
 
-  const run = (input: string) => {
-    const trimmed = input.trim()
-    push('input', trimmed)
-    if (!trimmed) return
-    // parse/expand up front (pure): history, env, redirect, pipes, copy sink
-    const plan = planRun(trimmed, {
+  /**
+   * Run one chain segment: parse/expand (pure), then execute with pipes,
+   * redirect and the `| copy` sink. Returns whether the command succeeded
+   * (printed no error line) so chains can short-circuit; async commands
+   * resolve to their status. `record` writes the expanded line to history —
+   * chains record the whole line once instead.
+   */
+  const runSegment = (
+    segment: string,
+    historyCtx: string[],
+    record: boolean
+  ): boolean | Promise<boolean> => {
+    runFailed = false
+    const plan = planRun(segment, {
       aliases: ctx.aliases.value,
       env: ctx.env.value,
-      history: history.value
+      history: historyCtx
     })
     if ('error' in plan) {
       error(plan.error)
-      return
+      return false
     }
     const { commandLine, expanded, name, args, pipeStages, toClipboard, redirectFile, append } = plan
     if (expanded) muted(commandLine) // echo what actually runs
-    history.value.push(commandLine)
-    saveHistory(history.value)
+    if (record) {
+      history.value.push(commandLine)
+      saveHistory(history.value)
+    }
 
     const command = commands[name.toLowerCase()]
     if (!command) {
       error(shellError(`command not found: ${name}`))
       muted(`Type 'help' for available commands.`)
-      return
+      return false
     }
     trackEvent(analyticsEvents.terminalCommand(name))
     reflectTitle(name.toLowerCase())
 
     if (!pipeStages.length && !redirectFile && !toClipboard) {
-      command.exec(args)
-      return
+      const outcome = command.exec(args)
+      if (outcome instanceof Promise) return outcome.then(() => !runFailed)
+      return !runFailed
     }
 
     // capture the command's output to run through filters and/or a redirect
@@ -279,12 +296,43 @@ export function useTerminal() {
     }
     try {
       const outcome = command.exec(args)
-      if (outcome instanceof Promise) outcome.finally(finish)
-      else finish()
+      if (outcome instanceof Promise) return outcome.then(() => { finish(); return !runFailed })
+      finish()
+      return !runFailed
     } catch (err) {
       sink = null
       throw err
     }
+  }
+
+  const run = (input: string) => {
+    const trimmed = input.trim()
+    push('input', trimmed)
+    if (!trimmed) return
+    const chain = splitChain(trimmed)
+    if ('error' in chain) {
+      error(chain.error)
+      return
+    }
+    if (chain.segments.length === 1) {
+      runSegment(trimmed, history.value, true)
+      return
+    }
+    // a chain records the full line once; `!!` inside segments expands against
+    // the history as it was before this line
+    const historySnapshot = [...history.value]
+    history.value.push(trimmed)
+    saveHistory(history.value)
+    void (async () => {
+      let ok = true
+      let op: ChainOp | null = null
+      for (const segment of chain.segments) {
+        if (op === null || shouldRunNext(op, ok)) {
+          ok = await runSegment(segment.cmd, historySnapshot, false)
+        }
+        op = segment.op
+      }
+    })()
   }
 
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
