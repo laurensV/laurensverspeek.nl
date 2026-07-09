@@ -298,3 +298,12 @@ test('keyboard focus shows a consistent ring on nav and terminal input', async (
   const shadow = await input.evaluate((el) => getComputedStyle(el).boxShadow)
   expect(shadow).not.toBe('none')
 })
+
+test('the theme toggle flips the theme (with a reveal where supported)', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const theme = () => page.evaluate(() => document.documentElement.getAttribute('data-theme') ?? document.documentElement.className)
+  const before = await theme()
+  await page.locator('.status-item.status-button[title="Toggle theme"]').click()
+  await expect.poll(theme).not.toBe(before)
+})

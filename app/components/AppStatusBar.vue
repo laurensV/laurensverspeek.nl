@@ -47,7 +47,7 @@
       <button class="status-item status-button" title="Open terminal (~)" @click="terminal.open()">
         <AppIcon name="terminal" :size="11" /> zsh
       </button>
-      <button class="status-item status-button" title="Toggle theme" @click="toggleTheme">
+      <button class="status-item status-button" title="Toggle theme" @click="toggleTheme($event)">
         <ClientOnly>
           <AppIcon :name="colorMode.value === 'dark' ? 'sun' : 'moon'" :size="11" />
           <template #fallback><AppIcon name="moon" :size="11" /></template>
@@ -84,9 +84,7 @@ const versionClick = () => {
 }
 onUnmounted(() => clearTimeout(versionTimer))
 
-const toggleTheme = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
+const { toggle: toggleTheme } = useThemeSwitch()
 
 // ---- bottom-bar easter eggs ----
 // presence, the Slack/Discord way — click the dot to cycle status

@@ -209,7 +209,7 @@ export function useCommandPalette() {
       section: 'Actions',
       keywords: 'dark light mode color',
       perform: () => {
-        colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+        useThemeSwitch().toggle()
         close()
       }
     },
