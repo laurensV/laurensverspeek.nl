@@ -137,3 +137,25 @@ export function expandFileArgs(files: Filesystem, cwd: string, args: string[]): 
     return matches.length ? matches.map((path) => `/${path}`) : [arg]
   })
 }
+
+/**
+ * A playful `ls -l` long listing for a set of entries. Directories get a d/rwx
+ * perm string, files a -/rw-; size is the content byte length (dirs show a
+ * nominal block size). Pure so the formatting is testable.
+ */
+export function formatLongListing(
+  entries: { name: string, dir: boolean, size: number }[],
+  date = 'Jul  9 13:37'
+): string[] {
+  if (!entries.length) return ['total 0']
+  const width = Math.max(...entries.map((e) => String(e.size).length), 4)
+  const rows = entries.map((entry) => {
+    const perms = entry.dir ? 'drwxr-xr-x' : '-rw-r--r--'
+    const links = entry.dir ? 2 : 1
+    const size = String(entry.dir ? 4096 : entry.size).padStart(width)
+    const name = entry.dir ? `${entry.name}/` : entry.name
+    return `${perms} ${links} visitor visitor ${size} ${date} ${name}`
+  })
+  const total = entries.reduce((sum, e) => sum + (e.dir ? 4096 : e.size), 0)
+  return [`total ${Math.ceil(total / 1024)}`, ...rows]
+}

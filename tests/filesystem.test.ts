@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
 describe('writeFileAt', () => {
@@ -132,5 +132,23 @@ describe('expandFileArgs', () => {
 
   it('keeps flags and non-matching globs literal', () => {
     expect(expandFileArgs(fs, '', ['-rf', '*.nope'])).toEqual(['-rf', '*.nope'])
+  })
+})
+
+describe('formatLongListing', () => {
+  it('renders perms, links, size and a total', () => {
+    const rows = formatLongListing([
+      { name: 'a.txt', dir: false, size: 12 },
+      { name: 'stuff', dir: true, size: 0 }
+    ])
+    expect(rows[0]).toMatch(/^total \d+/)
+    expect(rows[1]).toContain('-rw-r--r--')
+    expect(rows[1]).toContain('a.txt')
+    expect(rows[2]).toContain('drwxr-xr-x')
+    expect(rows[2]).toContain('stuff/')
+  })
+
+  it('handles an empty directory', () => {
+    expect(formatLongListing([])).toEqual(['total 0'])
   })
 })

@@ -630,3 +630,13 @@ test('id and hostname print identity info', async ({ page }) => {
   await run(page, 'hostname')
   await expect(out).toContainText('laurensverspeek.nl')
 })
+
+test('ls -l shows a long listing', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo hi > note.txt')
+  await run(page, 'ls -l')
+  await expect(out).toContainText(/total \d+/)
+  await expect(out).toContainText('-rw-r--r--')
+  await expect(out).toContainText('note.txt')
+})

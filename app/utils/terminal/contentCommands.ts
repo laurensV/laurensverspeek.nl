@@ -4,7 +4,7 @@ import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { renderMarkdownToTerminal } from '~/utils/terminalMarkdown'
-import { resolvePath, dirEntries, isGlob, expandGlob } from '~/utils/terminal/filesystem'
+import { resolvePath, dirEntries, isGlob, expandGlob, formatLongListing } from '~/utils/terminal/filesystem'
 import { searchSections } from '~/utils/terminal/search'
 
 // Commands about the site's content: pages, projects, blog, profile.
@@ -264,14 +264,24 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     ls: {
-      usage: 'ls [pattern]',
+      usage: 'ls [-l] [pattern]',
       description: 'List the current directory (pages + your files at home)',
       exec: (args) => {
+        const long = args.includes('-l') || args.includes('-la') || args.includes('-al')
+        // `ls -l`: a long listing with (playful) perms, sizes and dates
+        if (long) {
+          const here = dirEntries(ctx.files.value, ctx.fsCwd.value)
+            .map((e) => ({ name: e.name, dir: e.dir, size: ctx.files.value[ctx.fsCwd.value ? `${ctx.fsCwd.value}/${e.name}` : e.name]?.content.length ?? 0 }))
+          const pages = ctx.fsCwd.value ? [] : PAGES.map((p) => ({ name: p, dir: true, size: 0 }))
+          formatLongListing([...pages, ...here]).forEach(out)
+          return
+        }
+        const pattern = args.find((a) => !a.startsWith('-'))
         // `ls *.txt` narrows to glob matches
-        if (args[0] && isGlob(args[0])) {
-          const matches = expandGlob(ctx.files.value, ctx.fsCwd.value, args[0])
+        if (pattern && isGlob(pattern)) {
+          const matches = expandGlob(ctx.files.value, ctx.fsCwd.value, pattern)
             .map((path) => (ctx.files.value[path]?.dir ? `${path}/` : path))
-          if (!matches.length) return error(`ls: ${args[0]}: No such file or directory`)
+          if (!matches.length) return error(`ls: ${pattern}: No such file or directory`)
           out(matches.join('  '))
           return
         }
