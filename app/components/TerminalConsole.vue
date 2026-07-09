@@ -46,6 +46,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
+import { searchHistory, pickMatch, matchPosition } from '~/utils/terminal/reverseSearch'
 
 // The interactive guts of the terminal: output, input, history, completion,
 // ctrl+r search, and game key routing. Both the centered overlay and the lvOS
@@ -138,21 +139,11 @@ const searchMode = ref(false)
 const searchQuery = ref('')
 const searchCursor = ref(0)
 
-const searchMatches = computed(() =>
-  searchQuery.value
-    ? history.value.filter((cmd) => cmd.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    : []
-)
-const searchMatch = computed(() => {
-  const list = searchMatches.value
-  if (!list.length) return ''
-  return list[list.length - 1 - (searchCursor.value % list.length)] ?? ''
-})
+const searchMatches = computed(() => searchHistory(history.value, searchQuery.value))
+const searchMatch = computed(() => pickMatch(searchMatches.value, searchCursor.value))
 // how many commands match, and which one (1-based) is currently shown
 const searchCount = computed(() => searchMatches.value.length)
-const searchPosition = computed(() =>
-  searchCount.value ? (searchCursor.value % searchCount.value) + 1 : 0
-)
+const searchPosition = computed(() => matchPosition(searchCount.value, searchCursor.value))
 
 const startSearch = () => {
   searchMode.value = true
