@@ -2,7 +2,7 @@
 // notification center. Each entry auto-dismisses from the toast stack after a
 // timeout but stays in history until cleared.
 
-export interface Toast { id: number, icon: string, title: string, body?: string, at: number }
+export interface Toast { id: number, icon: string, title: string, body?: string | undefined, at: number }
 
 const HISTORY_MAX = 30
 

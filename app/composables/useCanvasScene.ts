@@ -17,7 +17,7 @@ export interface CanvasSceneOptions {
   // ambient scenes (the hero) respect prefers-reduced-motion and stay still;
   // interactive tools (/life, the lvOS app) set this true and gate motion via
   // their own play/pause, so the loop is user-initiated, not ambient.
-  alwaysAnimate?: boolean
+  alwaysAnimate?: boolean | undefined
   // false lets the caller drive start()/stop() (e.g. the matrix overlay, which
   // only animates while it's on screen). Defaults to true.
   autoStart?: boolean

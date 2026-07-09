@@ -50,7 +50,7 @@ export interface GitOutLine {
 }
 
 
-export function formatGitLog(commits: GitCommit[], opts: { oneline?: boolean, limit?: number } = {}): GitOutLine[] {
+export function formatGitLog(commits: GitCommit[], opts: { oneline?: boolean, limit?: number | undefined } = {}): GitOutLine[] {
   const shown = commits.slice(0, opts.limit ?? commits.length)
   const lines: GitOutLine[] = []
   for (const commit of shown) {

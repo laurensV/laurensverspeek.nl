@@ -36,7 +36,7 @@ const TITLES: Record<string, string> = {
 
 export interface HelpGroup {
   title: string
-  commands: { name: string, usage?: string, description: string }[]
+  commands: { name: string, usage?: string | undefined, description: string }[]
 }
 
 /** Visible commands sharing a help category with `name` — man's SEE ALSO. */

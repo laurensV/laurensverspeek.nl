@@ -12,14 +12,14 @@ export interface DesktopWindow {
   y: number
   z: number
   /** Explicit size once the user resized/snapped; otherwise CSS decides */
-  width?: number
-  height?: number
+  width?: number | undefined
+  height?: number | undefined
   minimized: boolean
   maximized: boolean
   /** Pinned windows float above the rest (z boost applied in the shell) */
   pinned?: boolean
   /** Rect to restore after un-maximizing/un-snapping */
-  restore?: { x: number, y: number, width?: number, height?: number }
+  restore?: { x: number, y: number, width?: number | undefined, height?: number | undefined } | undefined
 }
 
 const TASKBAR_PX = 40

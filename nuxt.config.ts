@@ -104,7 +104,9 @@ export default defineNuxtConfig({
       compilerOptions: {
         // indexing into arrays/records yields T | undefined — catches real
         // out-of-bounds bugs in the games/VFS code
-        noUncheckedIndexedAccess: true
+        noUncheckedIndexedAccess: true,
+        // missing and explicitly-undefined properties are different things
+        exactOptionalPropertyTypes: true
       }
     }
   },

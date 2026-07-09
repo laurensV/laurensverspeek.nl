@@ -10,9 +10,9 @@ export interface DrawGridOptions {
   sat: number
   light: number
   /** cell fill opacity (the hero draws dim cells) */
-  alpha?: number
+  alpha?: number | undefined
   /** draw a faint background grid (the /life page does) */
-  grid?: boolean
+  grid?: boolean | undefined
 }
 
 export function drawGrid(

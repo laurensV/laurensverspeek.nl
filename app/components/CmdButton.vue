@@ -17,10 +17,10 @@
 // as if the command is ready to run.
 const props = withDefaults(
   defineProps<{
-    to?: string
-    href?: string
+    to?: string | undefined
+    href?: string | undefined
     /** When set, download the href as a file (same tab) instead of opening it */
-    download?: string
+    download?: string | undefined
     variant?: 'ghost' | 'primary'
     size?: 'normal' | 'medium'
   }>(),
