@@ -4,7 +4,7 @@ import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { renderMarkdownToTerminal } from '~/utils/terminalMarkdown'
-import { resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { resolvePath, dirEntries, isGlob, expandGlob } from '~/utils/terminal/filesystem'
 import { searchSections } from '~/utils/terminal/search'
 
 // Commands about the site's content: pages, projects, blog, profile.
@@ -142,6 +142,19 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           error(`Usage: cat <name> — run 'ls', 'projects' or 'blog' to see what's readable.`)
           return
         }
+        // globs read every match, head-style headers between files
+        if (isGlob(args[0])) {
+          const matches = expandGlob(ctx.files.value, ctx.fsCwd.value, args[0])
+            .filter((path) => !ctx.files.value[path]?.dir)
+          if (!matches.length) return error(`cat: ${args[0]}: No such file or directory`)
+          for (const path of matches) {
+            if (matches.length > 1) push('primary', `==> ${path} <==`)
+            const content = ctx.files.value[path]?.content
+            if (content) content.split('\n').forEach(out)
+            else muted('(empty file)')
+          }
+          return
+        }
         // a file the visitor created in their filesystem takes precedence
         const node = ctx.files.value[resolvePath(ctx.fsCwd.value, args[0])]
         if (node) {
@@ -204,8 +217,17 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     ls: {
+      usage: 'ls [pattern]',
       description: 'List the current directory (pages + your files at home)',
-      exec: () => {
+      exec: (args) => {
+        // `ls *.txt` narrows to glob matches
+        if (args[0] && isGlob(args[0])) {
+          const matches = expandGlob(ctx.files.value, ctx.fsCwd.value, args[0])
+            .map((path) => (ctx.files.value[path]?.dir ? `${path}/` : path))
+          if (!matches.length) return error(`ls: ${args[0]}: No such file or directory`)
+          out(matches.join('  '))
+          return
+        }
         const entries = dirEntries(ctx.files.value, ctx.fsCwd.value).map((e) => (e.dir ? `${e.name}/` : e.name))
         // at home the site's pages sit alongside your files
         const pages = ctx.fsCwd.value ? [] : PAGES.map((p) => `${p}/`)

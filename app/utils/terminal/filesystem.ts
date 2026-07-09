@@ -108,3 +108,32 @@ export function parseRedirect(args: string[]): { text: string, file: string | nu
   }
   return { text: text.join(' '), file: file || null }
 }
+
+/** True when an argument should be treated as a glob pattern. */
+export const isGlob = (arg: string) => arg.includes('*')
+
+const escapeRe = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Expand a glob against the filesystem. `*` matches within one path segment
+ * (shell-style), so `notes/*.txt` finds files inside notes but not deeper.
+ * Returns the matching home-relative paths, sorted; empty when nothing hits.
+ */
+export function expandGlob(files: Filesystem, cwd: string, pattern: string): string[] {
+  const resolved = resolvePath(cwd, pattern)
+  const regex = new RegExp(`^${resolved.split('*').map(escapeRe).join('[^/]*')}$`)
+  return Object.keys(files).filter((path) => regex.test(path)).sort()
+}
+
+/**
+ * Shell-style argument expansion for the file commands: glob args become their
+ * matches (home-absolute, so they resolve the same from any cwd); non-globs
+ * and misses pass through untouched, like bash's default nullglob-off.
+ */
+export function expandFileArgs(files: Filesystem, cwd: string, args: string[]): string[] {
+  return args.flatMap((arg) => {
+    if (arg.startsWith('-') || !isGlob(arg)) return [arg]
+    const matches = expandGlob(files, cwd, arg)
+    return matches.length ? matches.map((path) => `/${path}`) : [arg]
+  })
+}

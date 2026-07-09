@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries, writeFileAt } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
 describe('writeFileAt', () => {
@@ -88,5 +88,49 @@ describe('dirEntries', () => {
     const entries = dirEntries(fs, 'notes')
     expect(entries.find((e) => e.name === 'sub')?.dir).toBe(true)
     expect(entries.find((e) => e.name === 'todo.txt')?.dir).toBe(false)
+  })
+})
+
+describe('expandGlob', () => {
+  const fs: Filesystem = {
+    'a.txt': { dir: false, content: '' },
+    'b.txt': { dir: false, content: '' },
+    'c.md': { dir: false, content: '' },
+    'notes': { dir: true, content: '' },
+    'notes/d.txt': { dir: false, content: '' },
+    'notes/deep': { dir: true, content: '' },
+    'notes/deep/e.txt': { dir: false, content: '' }
+  }
+
+  it('matches within a single path segment only', () => {
+    expect(expandGlob(fs, '', '*.txt')).toEqual(['a.txt', 'b.txt'])
+    expect(expandGlob(fs, '', 'notes/*.txt')).toEqual(['notes/d.txt'])
+    // no recursive descent: * never crosses a slash
+    expect(expandGlob(fs, '', '*')).toEqual(['a.txt', 'b.txt', 'c.md', 'notes'])
+  })
+
+  it('resolves against the cwd', () => {
+    expect(expandGlob(fs, 'notes', '*.txt')).toEqual(['notes/d.txt'])
+    expect(expandGlob(fs, 'notes', 'deep/*')).toEqual(['notes/deep/e.txt'])
+  })
+
+  it('escapes regex metacharacters in the pattern', () => {
+    expect(expandGlob(fs, '', 'a.txt')).toEqual(['a.txt'])
+    expect(expandGlob(fs, '', 'a+txt')).toEqual([])
+  })
+})
+
+describe('expandFileArgs', () => {
+  const fs: Filesystem = {
+    'a.txt': { dir: false, content: '' },
+    'b.txt': { dir: false, content: '' }
+  }
+
+  it('replaces glob args with home-absolute matches', () => {
+    expect(expandFileArgs(fs, '', ['*.txt', 'backup'])).toEqual(['/a.txt', '/b.txt', 'backup'])
+  })
+
+  it('keeps flags and non-matching globs literal', () => {
+    expect(expandFileArgs(fs, '', ['-rf', '*.nope'])).toEqual(['-rf', '*.nope'])
   })
 })

@@ -1,6 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
-import { parseRedirect, resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, expandFileArgs } from '~/utils/terminal/filesystem'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
 import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
 import { profile } from '~/data/profile'
@@ -35,9 +35,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
   const hereEntries = () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((entry) => entry.name)
 
   // shared cp/mv (files only): copy a node to dest, and for mv drop the source
-  const copyOrMove = (cmd: 'cp' | 'mv', args: string[]) => {
-    const [srcName, dstName] = args
-    if (!srcName || !dstName) return error(`${cmd}: missing file operand`)
+  const copyOrMoveOne = (cmd: 'cp' | 'mv', srcName: string, dstName: string) => {
     const src = resolvePath(ctx.fsCwd.value, srcName)
     const node = ctx.files.value[src]
     if (!node) return error(`${cmd}: cannot stat '${srcName}': No such file or directory`)
@@ -52,6 +50,18 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
     ctx.files.value = cmd === 'mv'
       ? Object.fromEntries(Object.entries(withDest).filter(([key]) => key !== src))
       : withDest
+  }
+
+  // globs expand to multiple sources; then the destination must be a directory
+  const copyOrMove = (cmd: 'cp' | 'mv', args: string[]) => {
+    const expanded = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args)
+    if (expanded.length < 2) return error(`${cmd}: missing file operand`)
+    const dstName = expanded.at(-1)!
+    const sources = expanded.slice(0, -1)
+    if (sources.length > 1 && !ctx.files.value[resolvePath(ctx.fsCwd.value, dstName)]?.dir) {
+      return error(`${cmd}: target '${dstName}' is not a directory`)
+    }
+    for (const srcName of sources) copyOrMoveOne(cmd, srcName, dstName)
   }
 
   return {
@@ -415,22 +425,26 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       description: 'Remove a file or directory',
       argCandidates: hereEntries,
       exec: (args) => {
-        const name = args.find((arg) => !arg.startsWith('-'))
-        // keep the classic joke for the classic mistake
-        if (args.join(' ').includes('-rf') && /^[~/*]/.test(name ?? '')) {
+        const rawName = args.find((arg) => !arg.startsWith('-'))
+        // keep the classic joke for the classic mistake (checked pre-expansion)
+        if (args.join(' ').includes('-rf') && /^[~/*]/.test(rawName ?? '')) {
           return error('Nice try. I only just finished this website.')
         }
-        if (!name) return error('rm: missing operand')
-        const path = resolvePath(ctx.fsCwd.value, name)
-        if (!path || !(path in ctx.files.value)) {
-          return error(`rm: cannot remove '${name}': No such file or directory`)
+        const names = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args).filter((arg) => !arg.startsWith('-'))
+        if (!names.length) return error('rm: missing operand')
+        for (const name of names) {
+          const path = resolvePath(ctx.fsCwd.value, name)
+          if (!path || !(path in ctx.files.value)) {
+            error(`rm: cannot remove '${name}': No such file or directory`)
+            continue
+          }
+          // remove the entry and, for a directory, everything under it
+          ctx.files.value = Object.fromEntries(
+            Object.entries(ctx.files.value).filter(([key]) => key !== path && !key.startsWith(`${path}/`))
+          )
+          // if we removed the directory we're standing in, walk back to home
+          if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
         }
-        // remove the entry and, for a directory, everything under it
-        ctx.files.value = Object.fromEntries(
-          Object.entries(ctx.files.value).filter(([key]) => key !== path && !key.startsWith(`${path}/`))
-        )
-        // if we removed the directory we're standing in, walk back to home
-        if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
       }
     },
     cp: {

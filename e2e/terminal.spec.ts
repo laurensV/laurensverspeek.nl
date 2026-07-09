@@ -361,3 +361,26 @@ test('df reports real localStorage usage with a total', async ({ page }) => {
   await expect(out).toContainText('TOTAL')
   await expect(out).toContainText('quota')
 })
+
+test('wildcards work across cat, cp, ls and rm', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo alpha > one.txt')
+  await run(page, 'echo beta > two.txt')
+  await run(page, 'mkdir backup')
+  // cat glob prints both files with headers
+  await run(page, 'cat *.txt')
+  await expect(out).toContainText('==> one.txt <==')
+  await expect(out).toContainText('beta')
+  // cp glob into a directory
+  await run(page, 'cp *.txt backup')
+  await run(page, 'ls backup/*')
+  await expect(out).toContainText('backup/one.txt')
+  // rm glob clears the originals
+  await run(page, 'rm *.txt')
+  await run(page, 'cat one.txt')
+  await expect(out).toContainText('No such file or directory')
+  // but the sacred joke survives expansion
+  await run(page, 'rm -rf /*')
+  await expect(out).toContainText('Nice try')
+})
