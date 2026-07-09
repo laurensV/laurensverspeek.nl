@@ -409,3 +409,14 @@ test('ssh connects, changes the prompt host, and exit disconnects', async ({ pag
   await expect(out).toContainText('Connection to laurensverspeek.nl closed.')
   await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('@lv:')
 })
+
+test('qr encodes arbitrary text and defaults to the current url', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'qr hello world')
+  await expect(out.locator('.term-qr')).toHaveCount(1)
+  await expect(out).toContainText('encodes: hello world')
+  await run(page, 'qr')
+  await expect(out.locator('.term-qr')).toHaveCount(2)
+  await expect(out).toContainText(/encodes: http/)
+})

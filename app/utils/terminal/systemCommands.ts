@@ -425,6 +425,23 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         }
       }
     },
+    qr: {
+      usage: 'qr [text|url]',
+      description: 'Turn anything into a scannable QR code',
+      examples: ['qr             (encodes the page you are on)', 'qr https://example.com', 'qr any text at all'],
+      exec: async (args) => {
+        const text = args.join(' ').trim() || (import.meta.client ? window.location.href : '')
+        if (!text) return error('qr: nothing to encode')
+        // lazy: the encoder only loads when someone asks for a code
+        const { qrAsciiLines } = await import('~/utils/qrAscii')
+        try {
+          push('output', `<pre class="term-qr">${qrAsciiLines(text).join('\n')}</pre>`, true)
+          muted(`encodes: ${text.length > 60 ? `${text.slice(0, 57)}...` : text}`)
+        } catch {
+          error('qr: that is too much data for one code — try something shorter')
+        }
+      }
+    },
     ssh: {
       hidden: true,
       usage: 'ssh <user@host>',
