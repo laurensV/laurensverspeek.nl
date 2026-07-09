@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  # PRs get the full check suite, but never the deploy step
+  pull_request:
 
 jobs:
   deploy:
@@ -38,6 +40,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Deploy
+        if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
