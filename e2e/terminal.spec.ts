@@ -333,3 +333,20 @@ test('the greeting is time-aware', async ({ page }) => {
   // whatever the hour, one of the period lines is present
   await expect(page.locator('.terminal-output')).toContainText(/morning|afternoon|evening|midnight/)
 })
+
+test('ps lists a running effect and kill really stops it', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'ps')
+  await expect(out).toContainText('no effects running')
+  await run(page, 'crt')
+  await expect(page.locator('html')).toHaveClass(/crt-mode/)
+  await run(page, 'ps')
+  await expect(out).toContainText('crt-filter')
+  // killing the pid genuinely switches the effect off
+  await run(page, 'kill 101')
+  await expect(out).toContainText('crt-filter terminated')
+  await expect(page.locator('html')).not.toHaveClass(/crt-mode/)
+  await run(page, 'kill 1')
+  await expect(out).toContainText('not permitted')
+})

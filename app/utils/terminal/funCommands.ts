@@ -21,6 +21,19 @@ interface ForecastResult {
 export function createFunCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, close } = ctx
 
+  // site effects masquerading as processes: `ps` lists them, `kill` stops them
+  const effectProcs = [
+    { pid: 314, name: 'matrix-rain', running: () => ctx.effects.matrix.value, stop: () => (ctx.effects.matrix.value = false) },
+    { pid: 217, name: 'party-mode', running: () => ctx.effects.party.value, stop: () => (ctx.effects.party.value = false) },
+    { pid: 42, name: 'sl-train', running: () => ctx.effects.train.value, stop: () => (ctx.effects.train.value = false) },
+    { pid: 101, name: 'crt-filter', running: () => ctx.effects.crt.value, stop: () => void ctx.effects.toggleCrt(false) }
+  ]
+  const systemProcs = [
+    { pid: 1, name: 'init' },
+    { pid: 7, name: 'lvsh' },
+    { pid: 77, name: 'easter_eggs.service' }
+  ]
+
   const commands: Record<string, TerminalCommand> = {
     cowsay: {
       usage: 'cowsay <text>',
@@ -62,6 +75,41 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
         ctx.startGame(create2048Game)
+      }
+    },
+    ps: {
+      description: 'List running processes (effects included)',
+      exec: () => {
+        push('output', `<span class="term-accent">${'PID'.padStart(5)}  ${'STAT'.padEnd(5)}COMMAND</span>`, true)
+        for (const proc of systemProcs) {
+          out(`${String(proc.pid).padStart(5)}  S    ${proc.name}`)
+        }
+        const running = effectProcs.filter((proc) => proc.running())
+        for (const proc of running) {
+          out(`${String(proc.pid).padStart(5)}  R    ${proc.name}`)
+        }
+        if (!running.length) muted(`\nno effects running — start one with 'matrix', 'party', 'sl' or 'crt'.`)
+        else muted(`\nStop an effect with 'kill <pid>'.`)
+      }
+    },
+    kill: {
+      usage: 'kill <pid>',
+      description: 'Stop a process. Yes, kill 314 really stops the rain',
+      argCandidates: () => effectProcs.filter((proc) => proc.running()).map((proc) => String(proc.pid)),
+      exec: (args) => {
+        const pid = Number(args.find((arg) => !arg.startsWith('-')))
+        if (!pid) return error('kill: usage: kill <pid> — see ps for the candidates')
+        const effect = effectProcs.find((proc) => proc.pid === pid)
+        if (effect) {
+          if (!effect.running()) return error(`kill: (${pid}) — no such process (it isn't running)`)
+          effect.stop()
+          out(`[${pid}] ${effect.name} terminated`)
+          return
+        }
+        if (systemProcs.some((proc) => proc.pid === pid)) {
+          return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
+        }
+        error(`kill: (${pid}) — no such process`)
       }
     },
     weather: {

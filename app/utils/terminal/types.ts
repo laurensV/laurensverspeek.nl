@@ -68,7 +68,8 @@ export interface TerminalContext {
     train: Ref<boolean>
     bootReplay: Ref<boolean>
     party: Ref<boolean>
-    toggleCrt: () => boolean
+    crt: Ref<boolean>
+    toggleCrt: (on?: boolean) => boolean
   }
   fetchPosts: () => Promise<TerminalBlogPost[]>
   /** Heading-level sections with plain text content, for full-text search */
