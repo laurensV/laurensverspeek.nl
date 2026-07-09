@@ -592,3 +592,16 @@ test('uptime reports how long the page has been open', async ({ page }) => {
   await run(page, 'uptime')
   await expect(page.locator('.terminal-output')).toContainText(/up .*load average/)
 })
+
+test('curl really fetches a url (and keeps the easter egg for our domain)', async ({ page }) => {
+  await page.route('**/api.example.com/**', (route) =>
+    route.fulfill({ contentType: 'application/json', body: '{"hello":"world"}' })
+  )
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'curl https://api.example.com/thing')
+  await expect(out).toContainText('"hello": "world"')
+  // our own domain still returns the playful canned page
+  await run(page, 'curl laurensverspeek.nl')
+  await expect(out).toContainText('the real fun is behind the ~ key')
+})

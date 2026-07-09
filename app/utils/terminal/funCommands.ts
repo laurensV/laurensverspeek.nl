@@ -301,24 +301,42 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
     },
     curl: {
       usage: 'curl <url>',
-      description: 'Transfer data from a URL (well, pretend to)',
+      description: 'Fetch a URL (really — CORS permitting)',
+      examples: ['curl https://api.github.com/zen', 'curl laurensverspeek.nl'],
       exec: (args) => {
-        const url = args[0]
-        if (!url) {
-          error('curl: try \'curl laurensverspeek.nl\'')
-          return
+        const raw = args.find((arg) => !arg.startsWith('-'))
+        if (!raw) return error(`curl: try 'curl https://api.github.com/zen'`)
+        // a bare host defaults to https and is treated as our own playful page
+        let url: URL
+        try {
+          url = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`)
+        } catch {
+          return error(`curl: (3) URL malformed: ${raw}`)
         }
-        muted(`* Trying ${url}...`)
-        setTimeout(() => muted('* Connected — TLS handshake OK'), 250)
-        setTimeout(() => {
+        // our own domain keeps the original easter-egg response
+        if (/(^|\.)laurensverspeek\.nl$/.test(url.hostname)) {
           push('primary', 'HTTP/2 200')
           out('content-type: text/html; charset=utf-8')
-          out('server: nitro')
-          out('x-powered-by: caffeine & curiosity')
           out('')
           out('<!doctype html><title>Laurens Verspeek</title>')
           out('<!-- psst: the real fun is behind the ~ key -->')
-        }, 550)
+          return
+        }
+        muted(`* Trying ${url.host}...`)
+        return fetch(url.toString(), { headers: { accept: 'text/plain, application/json, */*' } })
+          .then(async (res) => {
+            push('primary', `HTTP ${res.status} ${res.statusText}`.trim())
+            const type = res.headers.get('content-type') ?? ''
+            out(`content-type: ${type || 'unknown'}`)
+            out('')
+            const body = await res.text()
+            const text = type.includes('application/json')
+              ? JSON.stringify(JSON.parse(body), null, 2)
+              : body
+            text.split('\n').slice(0, 40).forEach(out)
+            if (text.split('\n').length > 40) muted('… (truncated)')
+          })
+          .catch(() => error(`curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
       }
     },
     desktop: {
