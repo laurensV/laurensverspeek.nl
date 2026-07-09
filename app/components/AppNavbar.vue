@@ -14,7 +14,7 @@
         @mouseenter="expandBrand(true)"
         @mouseleave="expandBrand(false)"
       >
-        <span class="brand-mark" aria-hidden="true"><AppIcon name="prompt" :size="16" /></span><span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
+        <span class="brand-mark" aria-hidden="true" title="…try me thrice" @click="onMarkClick"><AppIcon name="prompt" :size="16" /></span><span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
       </NuxtLink>
 
       <div class="nav-links is-hidden-touch">
@@ -160,6 +160,26 @@ const navItems = [
 
 // hover effect: nav labels "decode" out of glyph noise
 const { scramble } = useTextScramble()
+
+// hidden: triple-clicking the >_ prompt glyph toggles retro CRT mode (and
+// swallows those clicks so the brand link doesn't navigate)
+const { toggleCrt } = useSiteEffects()
+let markClicks = 0
+let markTimer: ReturnType<typeof setTimeout> | undefined
+const onMarkClick = (event: MouseEvent) => {
+  // the glyph never navigates (the brand text still links home) so the clicks
+  // can accumulate; the third in quick succession flips CRT mode
+  event.preventDefault()
+  event.stopPropagation()
+  markClicks++
+  clearTimeout(markTimer)
+  markTimer = setTimeout(() => (markClicks = 0), 600)
+  if (markClicks >= 3) {
+    markClicks = 0
+    toggleCrt()
+  }
+}
+onUnmounted(() => clearTimeout(markTimer))
 </script>
 
 <style scoped lang="scss">

@@ -307,3 +307,15 @@ test('the theme toggle flips the theme (with a reveal where supported)', async (
   await page.locator('.status-item.status-button[title="Toggle theme"]').click()
   await expect.poll(theme).not.toBe(before)
 })
+
+test('triple-clicking the brand glyph toggles CRT mode', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const mark = page.locator('.nav-brand .brand-mark')
+  await mark.click()
+  await mark.click()
+  await mark.click()
+  await expect(page.locator('html')).toHaveClass(/crt-mode/)
+  // and it stayed on the home page (the glyph doesn't navigate)
+  await expect(page).toHaveURL(/\/$/)
+})
