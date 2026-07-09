@@ -384,3 +384,16 @@ test('wildcards work across cat, cp, ls and rm', async ({ page }) => {
   await run(page, 'rm -rf /*')
   await expect(out).toContainText('Nice try')
 })
+
+test('history expansion re-runs earlier commands', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo expansion-works')
+  await run(page, '!!')
+  // the expanded command is echoed and its output repeats
+  await expect(out.locator('.terminal-line', { hasText: 'expansion-works' }).nth(2)).toBeVisible()
+  await run(page, '!echo')
+  await expect(out.locator('.terminal-line', { hasText: 'expansion-works' }).nth(4)).toBeVisible()
+  await run(page, '!doesnotexist')
+  await expect(out).toContainText('event not found')
+})

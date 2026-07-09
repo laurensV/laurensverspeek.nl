@@ -23,3 +23,34 @@ export function saveHistory(entries: string[]): void {
   if (!import.meta.client) return
   storageSetJson(HISTORY_KEY, entries.slice(-MAX_ENTRIES))
 }
+
+/**
+ * bash-style history expansion: `!!` (last command), `!42` (1-based entry, as
+ * the history command prints), `!prefix` (most recent starting with prefix).
+ * Whole tokens only, expanded once — an unmatched event is an error, like bash.
+ */
+export function expandHistory(
+  input: string,
+  history: string[]
+): { expanded: string, changed: boolean } | { error: string } {
+  let changed = false
+  let failure: string | null = null
+  const expanded = input.replace(
+    /(^|\s)(!(?:!|\d+|[a-zA-Z][\w-]*))(?=\s|$)/g,
+    (match, lead: string, bang: string) => {
+      const event = bang.slice(1)
+      let hit: string | undefined
+      if (event === '!') hit = history[history.length - 1]
+      else if (/^\d+$/.test(event)) hit = history[Number(event) - 1]
+      else hit = [...history].reverse().find((cmd) => cmd.startsWith(event))
+      if (hit === undefined) {
+        failure = `lvsh: ${bang}: event not found`
+        return match
+      }
+      changed = true
+      return `${lead}${hit}`
+    }
+  )
+  if (failure) return { error: failure }
+  return { expanded, changed }
+}

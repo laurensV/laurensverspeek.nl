@@ -5,7 +5,7 @@ import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
 import { expandEnv, parseCommandLine, applyFilter, splitOutputRedirect, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
-import { loadHistory, saveHistory } from '~/utils/terminal/history'
+import { loadHistory, saveHistory, expandHistory } from '~/utils/terminal/history'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
@@ -191,10 +191,18 @@ export function useTerminal() {
     const trimmed = input.trim()
     push('input', trimmed)
     if (!trimmed) return
-    history.value.push(trimmed)
+    // bash-style !!/!n/!prefix, resolved against history BEFORE recording
+    const expansion = expandHistory(trimmed, history.value)
+    if ('error' in expansion) {
+      error(expansion.error)
+      return
+    }
+    const commandLine = expansion.expanded
+    if (expansion.changed) muted(commandLine) // echo what actually runs
+    history.value.push(commandLine)
     saveHistory(history.value)
 
-    const expanded = expandEnv(trimmed, ctx.env.value)
+    const expanded = expandEnv(commandLine, ctx.env.value)
     const { command: cmdLine, file: redirectFile, append } = splitOutputRedirect(expanded)
     const { name, args, pipeStages } = parseCommandLine(cmdLine, ctx.aliases.value)
     const command = commands[name.toLowerCase()]
