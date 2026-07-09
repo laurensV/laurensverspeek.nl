@@ -99,6 +99,16 @@ export default defineNuxtConfig({
 
   css: ['~/assets/scss/global.scss'],
 
+  typescript: {
+    tsConfig: {
+      compilerOptions: {
+        // indexing into arrays/records yields T | undefined — catches real
+        // out-of-bounds bugs in the games/VFS code
+        noUncheckedIndexedAccess: true
+      }
+    }
+  },
+
   vite: {
     css: {
       preprocessorOptions: {
