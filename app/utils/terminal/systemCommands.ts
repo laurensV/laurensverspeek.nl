@@ -239,6 +239,20 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         else error(`colorscheme: unknown accent '${args[0]}'. Try: ${ctx.accent.names.join(', ')}`)
       }
     },
+    uptime: {
+      description: 'How long this page has been up',
+      exec: () => {
+        const secs = Math.round(performance.now() / 1000)
+        const h = Math.floor(secs / 3600)
+        const m = Math.floor((secs % 3600) / 60)
+        const s = secs % 60
+        const clock = `${h ? `${h}:` : ''}${String(m).padStart(h ? 2 : 1, '0')}:${String(s).padStart(2, '0')}`
+        const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+        // a load average that is pure vibes, gently rising with tab age
+        const load = (Math.min(2.5, 0.2 + secs / 600)).toFixed(2)
+        out(` ${now}  up ${clock},  1 user,  load average: ${load}, ${(+load * 0.8).toFixed(2)}, ${(+load * 0.6).toFixed(2)}`)
+      }
+    },
     neofetch: {
       description: 'System information',
       exec: () => {

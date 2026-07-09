@@ -586,3 +586,9 @@ test('asciicam renders the webcam as ascii and q stops it', async ({ page, conte
   await page.keyboard.press('q')
   await expect(page.locator('.terminal-output')).toContainText('camera off')
 })
+
+test('uptime reports how long the page has been open', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'uptime')
+  await expect(page.locator('.terminal-output')).toContainText(/up .*load average/)
+})
