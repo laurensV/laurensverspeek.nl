@@ -65,7 +65,7 @@
         :data-win="win.id"
         class="lvos-window"
         :class="{
-          'is-wide': win.id === 'browser' || win.id === 'blog' || win.id === 'terminal' || win.id === 'notes',
+          'is-wide': isWideWindow(win.id),
           'is-minimized': win.minimized,
           'is-maximized': win.maximized,
           'has-size': win.maximized || win.height !== undefined,
@@ -214,8 +214,8 @@
 
 <script setup lang="ts">
 import { useEventListener, useIdle } from '@vueuse/core'
-import type { IconName } from '~/components/AppIcon.vue'
 import type { DesktopWindow } from '~/composables/useWindowManager'
+import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -223,28 +223,7 @@ import { projects } from '~/data/projects'
 // the terminal. Window mechanics live in useWindowManager; this component is
 // the shell: icons, taskbar and the apps inside the windows.
 
-const WINDOW_TITLES: Record<string, string> = {
-  readme: 'readme.md — editor',
-  projects: '~/projects — files',
-  'about-os': 'about lvOS',
-  minesweeper: 'minesweeper.exe',
-  media: 'media player',
-  files: 'file explorer',
-  browser: 'lv browser',
-  blog: '~/blog — reader',
-  vim: 'vim — ~/notes.txt',
-  settings: 'settings',
-  paint: 'lvpaint.exe',
-  visualizer: 'visualizer',
-  calc: 'calculator',
-  clock: 'clock',
-  notes: 'sticky notes',
-  life: 'game of life',
-  snake: 'snake',
-  gallery: 'image viewer',
-  taskmgr: 'task manager',
-  terminal: 'lvsh — terminal'
-}
+// window titles come from the shared app registry (see utils/desktopApps)
 
 // the eight resize handles (four edges + four corners)
 const RESIZE_DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const
@@ -427,28 +406,18 @@ const reboot = () => powerOff(() => {
   booting.value = true
 })
 
-const icons: { id: string, label: string, icon: IconName, action: () => void }[] = [
-  { id: 'readme', label: 'readme.md', icon: 'file', action: () => openWindow('readme') },
-  { id: 'files', label: 'files', icon: 'layers', action: () => openWindow('files') },
-  { id: 'browser', label: 'lv browser', icon: 'globe', action: () => openWindow('browser') },
-  { id: 'blog', label: 'blog', icon: 'book', action: openBlogApp },
-  { id: 'terminal', label: 'terminal', icon: 'terminal', action: openTerminal },
-  { id: 'minesweeper', label: 'mines.exe', icon: 'cpu', action: () => openWindow('minesweeper') },
-  { id: 'vim', label: 'vim', icon: 'braces', action: () => openWindow('vim') },
-  { id: 'paint', label: 'lvpaint', icon: 'pen', action: () => openWindow('paint') },
-  { id: 'settings', label: 'settings', icon: 'settings', action: () => openWindow('settings') },
-  { id: 'media', label: 'media', icon: 'sun', action: () => openWindow('media') },
-  { id: 'visualizer', label: 'visualizer', icon: 'zap', action: () => openWindow('visualizer') },
-  { id: 'calc', label: 'calculator', icon: 'hash', action: () => openWindow('calc') },
-  { id: 'clock', label: 'clock', icon: 'sun', action: () => openWindow('clock') },
-  { id: 'notes', label: 'notes', icon: 'type', action: () => openWindow('notes') },
-  { id: 'life', label: 'life', icon: 'zap', action: () => openWindow('life') },
-  { id: 'snake', label: 'snake', icon: 'zap', action: () => openWindow('snake') },
-  { id: 'gallery', label: 'gallery', icon: 'sun', action: () => openWindow('gallery') },
-  { id: 'taskmgr', label: 'taskmgr', icon: 'cpu', action: () => openWindow('taskmgr') },
-  { id: 'cv', label: 'resume.pdf', icon: 'mail', action: openCv },
-  { id: 'logout', label: 'log out', icon: 'close', action: logout }
-]
+const iconActions: Record<string, () => void> = {
+  blog: openBlogApp,
+  terminal: openTerminal,
+  cv: openCv,
+  logout
+}
+const icons = DESKTOP_APPS.map((app) => ({
+  id: app.id,
+  label: app.label,
+  icon: app.icon,
+  action: app.action && app.action !== 'window' ? iconActions[app.action]! : () => openWindow(app.id)
+}))
 
 // entering the /desktop page runs the BIOS/POST screen; a fresh session then
 // opens the readme, while a returning session restores its previous windows.
