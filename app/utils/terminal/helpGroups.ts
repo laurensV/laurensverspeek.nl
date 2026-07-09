@@ -39,6 +39,16 @@ export interface HelpGroup {
   commands: { name: string, usage?: string, description: string }[]
 }
 
+/** Visible commands sharing a help category with `name` — man's SEE ALSO. */
+export function relatedCommands(name: string, commands: Record<string, TerminalCommand>): string[] {
+  const category = CATEGORY[name]
+  if (!category) return []
+  return Object.entries(commands)
+    .filter(([other, cmd]) => other !== name && !cmd.hidden && CATEGORY[other] === category)
+    .map(([other]) => other)
+    .sort()
+}
+
 /** Group the visible commands into ordered, titled sections for `help`. */
 export function groupCommands(commands: Record<string, TerminalCommand>): HelpGroup[] {
   const buckets = new Map<string, HelpGroup['commands']>()

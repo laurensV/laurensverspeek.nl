@@ -2,7 +2,7 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { parseRedirect, resolvePath, dirEntries, expandFileArgs, writeFileAt } from '~/utils/terminal/filesystem'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
 import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
-import { groupCommands } from '~/utils/terminal/helpGroups'
+import { groupCommands, relatedCommands } from '~/utils/terminal/helpGroups'
 import { createInfoCommands } from '~/utils/terminal/infoCommands'
 import { profile } from '~/data/profile'
 
@@ -133,6 +133,11 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         if (cmd.examples?.length) {
           push('primary', 'EXAMPLES')
           cmd.examples.forEach((example) => muted(`    ${example}`))
+        }
+        const related = relatedCommands(name, ctx.getCommands())
+        if (related.length) {
+          push('primary', 'SEE ALSO')
+          muted(`    ${related.map((other) => `${other}(1)`).join(', ')}`)
         }
       }
     },

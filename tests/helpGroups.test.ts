@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupCommands } from '../app/utils/terminal/helpGroups'
+import { groupCommands, relatedCommands } from '../app/utils/terminal/helpGroups'
 import type { TerminalCommand } from '~/utils/terminal/types'
 
 const cmd = (description: string, extra: Partial<TerminalCommand> = {}): TerminalCommand =>
@@ -30,5 +30,20 @@ describe('groupCommands', () => {
   it('sorts commands alphabetically within a section', () => {
     const groups = groupCommands({ zed: cmd('z'), abc: cmd('a') })
     expect(groups[0]!.commands.map((c) => c.name)).toEqual(['abc', 'zed'])
+  })
+})
+
+describe('relatedCommands', () => {
+  it('lists visible same-category commands, excluding the command itself', () => {
+    const registry: Record<string, TerminalCommand> = {
+      ls: cmd('list'),
+      cat: cmd('read'),
+      tree: cmd('tree'),
+      snake: cmd('game'),
+      frobnicate: cmd('uncategorized')
+    }
+    expect(relatedCommands('ls', registry)).toEqual(['cat', 'tree'])
+    // uncategorized commands have no SEE ALSO
+    expect(relatedCommands('frobnicate', registry)).toEqual([])
   })
 })

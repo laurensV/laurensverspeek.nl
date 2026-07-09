@@ -678,3 +678,15 @@ test('chains commands with &&, || and ;', async ({ page }) => {
   await run(page, 'echo hi &&')
   await expect(out).toContainText("lvsh: syntax error near unexpected token `&&'")
 })
+
+test('man renders a registry-generated page with SEE ALSO', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'man ls')
+  await expect(out).toContainText('LS(1)')
+  await expect(out).toContainText('NAME')
+  await expect(out).toContainText('SYNOPSIS')
+  // SEE ALSO cross-links the other filesystem commands
+  await expect(out).toContainText('SEE ALSO')
+  await expect(out).toContainText('cat(1)')
+})
