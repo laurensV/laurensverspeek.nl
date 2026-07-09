@@ -1,0 +1,132 @@
+<template>
+  <section class="section">
+    <div class="container changelog-container">
+      <p class="overline mb-2">changelog $ git log --graph</p>
+      <h1 class="title is-2">
+        changelog<span class="has-text-primary-on-scheme is-family-code">[{{ commits?.length ?? 0 }}]</span>
+      </h1>
+      <p class="subtitle is-5 has-text-grey mb-5">
+        What changed on this site, straight from the repository — the same history the terminal's
+        <code>git log</code> replays.
+      </p>
+
+      <div v-if="pending" class="is-family-code has-text-grey">reading history…</div>
+      <div v-else-if="!commits?.length" class="is-family-code has-text-grey">
+        fatal: not a git repository (this should not happen)
+      </div>
+
+      <ol v-else class="changelog is-family-code">
+        <li v-for="(commit, i) in commits" :key="commit.hash" class="changelog-entry">
+          <p class="changelog-head">
+            <span class="changelog-node" aria-hidden="true">*</span>
+            <span class="changelog-hash">{{ commit.hash }}</span>
+            <span v-if="i === 0" class="changelog-ref">(HEAD)</span>
+            <span class="changelog-date">{{ commit.date }}</span>
+          </p>
+          <p class="changelog-subject">{{ commit.subject }}</p>
+          <p v-if="commit.files.length" class="changelog-stat">
+            {{ commit.files.length + (commit.truncated ?? 0) }} file{{ commit.files.length + (commit.truncated ?? 0) === 1 ? '' : 's' }}
+            · <span class="changelog-add">+{{ sum(commit, 'add') }}</span>
+            <span class="changelog-del">−{{ sum(commit, 'del') }}</span>
+          </p>
+        </li>
+      </ol>
+
+      <p class="is-family-code is-size-7 has-text-grey mt-5">
+        // press <kbd>~</kbd> and try <code>git show {{ commits?.[0]?.hash }}</code> for the full diffstat
+      </p>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+import type { GitCommit } from '~/utils/terminal/gitLog'
+
+useHead({ title: 'Changelog — Laurens Verspeek' })
+useSeoMeta({ description: 'The living changelog of laurensverspeek.nl — real commits, baked at build time.' })
+
+// the same prerendered history the terminal's git command reads
+const { data: commits, pending } = await useAsyncData('changelog', () =>
+  $fetch<GitCommit[]>('/git-log.json')
+)
+
+const sum = (commit: GitCommit, field: 'add' | 'del') =>
+  commit.files.reduce((total, file) => total + file[field], 0)
+</script>
+
+<style scoped lang="scss">
+.changelog-container {
+  max-width: 44rem;
+}
+
+.changelog {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid hsla(var(--lv-primary-hsl), 0.35);
+}
+
+.changelog-entry {
+  position: relative;
+  padding: 0 0 1.4rem 1.4rem;
+  font-size: 0.85rem;
+}
+
+.changelog-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.changelog-node {
+  position: absolute;
+  left: -0.36rem;
+  color: var(--bulma-primary);
+  background-color: var(--bulma-scheme-main);
+  line-height: 1;
+}
+
+.changelog-hash {
+  color: var(--bulma-primary-on-scheme);
+}
+
+.changelog-ref {
+  color: var(--bulma-success);
+  font-size: 0.75rem;
+}
+
+.changelog-date {
+  color: var(--bulma-text-weak);
+  font-size: 0.75rem;
+}
+
+.changelog-subject {
+  margin-top: 0.15rem;
+  color: var(--bulma-text-strong);
+}
+
+.changelog-stat {
+  margin-top: 0.1rem;
+  color: var(--bulma-text-weak);
+  font-size: 0.72rem;
+
+  .changelog-add {
+    color: var(--bulma-success);
+  }
+
+  .changelog-del {
+    color: var(--bulma-danger);
+    margin-left: 0.3rem;
+  }
+}
+
+kbd {
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--bulma-border);
+  border-radius: var(--bulma-radius-small);
+  background-color: var(--bulma-scheme-main-ter);
+  font-family: inherit;
+  font-size: 0.9em;
+}
+</style>

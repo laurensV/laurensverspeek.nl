@@ -6,7 +6,7 @@ export default defineEventHandler((event) => {
   const pages = [
     '/', '/projects', '/blog', '/about', '/uses', '/now', '/cv', '/contact',
     // interactive extras
-    '/life', '/desktop'
+    '/life', '/desktop', '/changelog'
   ]
   const posts = [
     // Keep in sync with content/blog/*.md

@@ -365,3 +365,14 @@ test('rss feed ships full post content for readers', async ({ request }) => {
   expect(body).toContain('<h2>')
   expect(body).toContain('<pre><code')
 })
+
+test('/changelog renders the baked git history', async ({ page }) => {
+  await page.goto('/changelog')
+  const entries = page.locator('.changelog-entry')
+  await expect(entries.first()).toBeVisible()
+  expect(await entries.count()).toBeGreaterThan(10)
+  // hashes, HEAD marker and diffstat counts all come from the real repo
+  await expect(page.locator('.changelog-hash').first()).toHaveText(/^[0-9a-f]{7}$/)
+  await expect(page.locator('.changelog-ref').first()).toContainText('HEAD')
+  await expect(page.locator('.changelog-stat').first()).toContainText('+')
+})
