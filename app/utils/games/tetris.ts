@@ -34,6 +34,8 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
 
   let current = randomPiece()
   let next = randomPiece()
+  let hold: { name: string, shape: Matrix } | null = null
+  let holdUsed = false // one hold per drop, like real tetris
   let px = Math.floor((TETRIS_W - current.shape[0]!.length) / 2)
   let py = 0
 
@@ -50,6 +52,7 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
   const spawn = () => {
     current = next
     next = randomPiece()
+    holdUsed = false
     px = Math.floor((TETRIS_W - current.shape[0]!.length) / 2)
     py = 0
     if (collides(current.shape, px, py)) {
@@ -100,20 +103,46 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
     lock()
   }
 
+  const swapHold = () => {
+    if (holdUsed) return
+    const incoming = hold ?? next
+    if (!hold) next = randomPiece()
+    hold = { name: current.name, shape: TETROMINOES[current.name]! }
+    current = incoming
+    px = Math.floor((TETRIS_W - current.shape[0]!.length) / 2)
+    py = 0
+    holdUsed = true
+  }
+
+  // the row the piece would land on if hard-dropped now (for the ghost)
+  const ghostY = () => {
+    let gy = py
+    while (!collides(current.shape, px, gy + 1)) gy++
+    return gy
+  }
+
   function render() {
     if (over) return
     const grid = board.map((row) => [...row])
+    // ghost first (3), then the live piece (2) drawn on top
+    const gy = ghostY()
+    current.shape.forEach((row, dy) =>
+      row.forEach((cell, dx) => {
+        if (cell && gy + dy >= 0 && !grid[gy + dy]![px + dx]) grid[gy + dy]![px + dx] = 3
+      })
+    )
     current.shape.forEach((row, dy) =>
       row.forEach((cell, dx) => {
         if (cell && py + dy >= 0) grid[py + dy]![px + dx] = 2
       })
     )
+    const cellGlyph = (cell: number) => (cell === 3 ? '░░' : cell ? '██' : '  ')
     const rows = grid
-      .map((row) => `│${row.map((cell) => (cell ? '██' : '  ')).join('')}│`)
+      .map((row) => `│${row.map(cellGlyph).join('')}│`)
       .join('\n')
     onFrame(
-      `TETRIS  score: ${score}  lines: ${clearedTotal}  next: ${next.name}\n`
-      + `(←→ move, ↑ rotate, ↓ drop, space slam, q quits)\n\n${rows}\n└${'──'.repeat(TETRIS_W)}┘`
+      `TETRIS  score: ${score}  lines: ${clearedTotal}  next: ${next.name}  hold: ${hold?.name ?? '—'}\n`
+      + `(←→ move, ↑ rotate, ↓ drop, space slam, c hold, q quits)\n\n${rows}\n└${'──'.repeat(TETRIS_W)}┘`
     )
   }
 
@@ -154,7 +183,8 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
         w: rotate,
         arrowdown: softDrop,
         s: softDrop,
-        ' ': hardDrop
+        ' ': hardDrop,
+        c: swapHold
       }
       const action = actions[lower]
       if (!action) return false

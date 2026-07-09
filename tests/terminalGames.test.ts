@@ -89,6 +89,18 @@ describe('createTetrisGame', () => {
     game.onKey('q')
     expect(ended[0]!.join('\n')).toContain('final score')
   })
+
+  it('shows a ghost preview and a hold slot', () => {
+    const { frames, callbacks } = makeCallbacks()
+    const game = createTetrisGame(callbacks)
+    // ghost cells (░░) appear beneath the live piece from the very first frame
+    expect(frames[0]).toContain('░░')
+    expect(frames.at(-1)).toContain('hold: —')
+    // c stashes the piece into the hold slot
+    game.onKey('c')
+    expect(frames.at(-1)).not.toContain('hold: —')
+    game.stop()
+  })
 })
 
 describe('createSnakeGame', () => {
