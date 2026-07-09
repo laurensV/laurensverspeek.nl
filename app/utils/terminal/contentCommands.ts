@@ -22,6 +22,15 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
   // handlers run outside the Nuxt instance
   const { nowUpdated, goatcounter } = useRuntimeConfig().public
 
+  // directory memory: `cd -` returns here, pushd/popd keep a stack
+  let previousDir: string | null = null
+  const dirStack: string[] = []
+  const changeDir = (target: string) => {
+    previousDir = ctx.fsCwd.value
+    ctx.fsCwd.value = target
+  }
+  const dirLabel = (dir: string) => (dir === '' ? '~' : `~/${dir}`)
+
   const fetchPosts = () =>
     ctx.fetchPosts().then((posts) => {
       cachedPostSlugs = posts.map((p) => postSlug(p.path))
@@ -185,7 +194,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cd: {
-      usage: 'cd <dir|page>',
+      usage: 'cd <dir|page|->',
       description: `Enter a folder you made, or go to a page (${PAGES.join(', ')})`,
       argCandidates: () => [
         ...PAGES,
@@ -193,30 +202,65 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       ],
       exec: (args) => {
         const arg = args[0]
+        // cd - : back to the previous directory, like a real shell
+        if (arg === '-') {
+          if (previousDir === null) return error('cd: OLDPWD not set')
+          const back = previousDir
+          changeDir(back)
+          out(dirLabel(back))
+          return
+        }
         // cd / cd ~ : back to the home directory (and the home page)
         if (!arg || arg === '~' || arg === '/') {
-          ctx.fsCwd.value = ''
+          changeDir('')
           ctx.navigate('home')
           return
         }
         // a known site page → navigate there and leave the filesystem
         const page = arg.replace(/^\/|\/$/g, '').toLowerCase()
         if (PAGES.includes(page as (typeof PAGES)[number])) {
-          ctx.fsCwd.value = ''
+          changeDir('')
           ctx.navigate(page)
           return
         }
         // otherwise resolve inside the home filesystem
         const target = resolvePath(ctx.fsCwd.value, arg)
         if (target === '') {
-          ctx.fsCwd.value = ''
+          changeDir('')
           return
         }
         if (ctx.files.value[target]?.dir) {
-          ctx.fsCwd.value = target
+          changeDir(target)
           return
         }
         error(`cd: no such file or directory: ${arg}`)
+      }
+    },
+    pushd: {
+      hidden: true,
+      usage: 'pushd <dir>',
+      description: 'Push the current directory onto the stack and hop',
+      argCandidates: () => dirEntries(ctx.files.value, ctx.fsCwd.value).filter((e) => e.dir).map((e) => e.name),
+      exec: (args) => {
+        const arg = args[0]
+        if (!arg) return error('pushd: usage: pushd <dir>')
+        const target = arg === '~' || arg === '/' ? '' : resolvePath(ctx.fsCwd.value, arg)
+        if (target !== '' && !ctx.files.value[target]?.dir) {
+          return error(`pushd: no such directory: ${arg}`)
+        }
+        dirStack.push(ctx.fsCwd.value)
+        changeDir(target)
+        out([target, ...[...dirStack].reverse()].map(dirLabel).join(' '))
+      }
+    },
+    popd: {
+      hidden: true,
+      description: 'Pop back to the last pushed directory',
+      exec: () => {
+        const top = dirStack.pop()
+        if (top === undefined) return error('popd: directory stack empty')
+        changeDir(top)
+        out([top, ...[...dirStack].reverse()].map(dirLabel).join(' '))
       }
     },
     ls: {

@@ -440,3 +440,23 @@ test('| copy sends piped output to the clipboard', async ({ page, context }) => 
   await expect(out).toContainText(/copied \d+ lines? to the clipboard/)
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('blog')
 })
+
+test('cd - and pushd/popd remember directories', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  const promptText = () => page.locator('.terminal-input-row .term-prompt').textContent()
+  await run(page, 'mkdir depths')
+  await run(page, 'cd depths')
+  expect(await promptText()).toContain('~/depths')
+  await run(page, 'cd ~')
+  await run(page, 'cd -')
+  await expect.poll(promptText).toContain('~/depths')
+  // pushd hops and remembers; popd returns
+  await run(page, 'cd ~')
+  await run(page, 'pushd depths')
+  await expect(out).toContainText('~/depths ~')
+  await run(page, 'popd')
+  await expect.poll(promptText).not.toContain('~/depths')
+  await run(page, 'popd')
+  await expect(out).toContainText('directory stack empty')
+})
