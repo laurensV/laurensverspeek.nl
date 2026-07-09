@@ -350,3 +350,14 @@ test('ps lists a running effect and kill really stops it', async ({ page }) => {
   await run(page, 'kill 1')
   await expect(out).toContainText('not permitted')
 })
+
+test('df reports real localStorage usage with a total', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo some bytes > usage.txt')
+  await run(page, 'df')
+  await expect(out).toContainText('FILESYSTEM')
+  await expect(out).toContainText('lv-terminal-fs')
+  await expect(out).toContainText('TOTAL')
+  await expect(out).toContainText('quota')
+})

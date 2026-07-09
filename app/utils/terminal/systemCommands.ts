@@ -2,6 +2,7 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
 import { parseRedirect, resolvePath, dirEntries } from '~/utils/terminal/filesystem'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
 import { profile } from '~/data/profile'
 
 // the baked commit history (/git-log.json is prerendered at generate time),
@@ -333,6 +334,20 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
           )
         }
         muted(`\n(there might be more... check the browser console 👀)`)
+      }
+    },
+    df: {
+      description: 'How much localStorage this site really uses',
+      exec: () => {
+        for (const line of dfLines(collectStorageSlices())) push(line.type, line.text, line.html)
+        muted(`\nEverything here lives in YOUR browser — nothing is stored server-side.`)
+      }
+    },
+    du: {
+      hidden: true,
+      description: 'Disk usage, sorted (see also df)',
+      exec: () => {
+        for (const line of duLines(collectStorageSlices())) push(line.type, line.text, line.html)
       }
     },
     git: {
