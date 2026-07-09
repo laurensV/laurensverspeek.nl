@@ -3,9 +3,10 @@ import type { TerminalLine, TerminalCommand, TerminalContext } from '~/utils/ter
 import { createContentCommands } from '~/utils/terminal/contentCommands'
 import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
-import { expandEnv, parseCommandLine, applyFilter, splitOutputRedirect, stripHtml } from '~/utils/terminal/pipeline'
+import { applyFilter, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
-import { loadHistory, saveHistory, expandHistory } from '~/utils/terminal/history'
+import { loadHistory, saveHistory } from '~/utils/terminal/history'
+import { planRun } from '~/utils/terminal/planRun'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
@@ -193,20 +194,21 @@ export function useTerminal() {
     const trimmed = input.trim()
     push('input', trimmed)
     if (!trimmed) return
-    // bash-style !!/!n/!prefix, resolved against history BEFORE recording
-    const expansion = expandHistory(trimmed, history.value)
-    if ('error' in expansion) {
-      error(expansion.error)
+    // parse/expand up front (pure): history, env, redirect, pipes, copy sink
+    const plan = planRun(trimmed, {
+      aliases: ctx.aliases.value,
+      env: ctx.env.value,
+      history: history.value
+    })
+    if ('error' in plan) {
+      error(plan.error)
       return
     }
-    const commandLine = expansion.expanded
-    if (expansion.changed) muted(commandLine) // echo what actually runs
+    const { commandLine, expanded, name, args, pipeStages, toClipboard, redirectFile, append } = plan
+    if (expanded) muted(commandLine) // echo what actually runs
     history.value.push(commandLine)
     saveHistory(history.value)
 
-    const expanded = expandEnv(commandLine, ctx.env.value)
-    const { command: cmdLine, file: redirectFile, append } = splitOutputRedirect(expanded)
-    const { name, args, pipeStages } = parseCommandLine(cmdLine, ctx.aliases.value)
     const command = commands[name.toLowerCase()]
     if (!command) {
       error(shellError(`command not found: ${name}`))
@@ -216,7 +218,7 @@ export function useTerminal() {
     // count which commands get used — names only, never arguments
     trackEvent(`terminal/${name.toLowerCase()}`)
 
-    if (!pipeStages.length && !redirectFile) {
+    if (!pipeStages.length && !redirectFile && !toClipboard) {
       command.exec(args)
       return
     }
@@ -227,11 +229,7 @@ export function useTerminal() {
     const finish = () => {
       sink = null
       let result = captured
-      // `| copy` as the final stage sends the output to the clipboard
-      let stages = pipeStages
-      const toClipboard = stages.at(-1)?.trim() === 'copy'
-      if (toClipboard) stages = stages.slice(0, -1)
-      for (const stage of stages) {
+      for (const stage of pipeStages) {
         const filtered = applyFilter(result, stage, makeLine)
         if ('error' in filtered) {
           error(filtered.error)
