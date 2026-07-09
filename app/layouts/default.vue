@@ -33,6 +33,9 @@ const { matrixActive } = useSiteEffects()
 
 // j/k · gg/G scrolling everywhere except lvOS, which has its own keyboard world
 useVimScroll()
+
+// deep links flash their target section on arrival
+useAnchorHighlight()
 </script>
 
 <style scoped lang="scss">

@@ -156,6 +156,31 @@ html.is-lvos body {
   }
 }
 
+// Deep-link arrival: the targeted section flashes so the eye lands on it
+.is-anchor-target {
+  animation: anchor-flash 1.8s ease-out;
+}
+
+@keyframes anchor-flash {
+  0%,
+  25% {
+    background-color: hsla(var(--lv-primary-hsl), 0.22);
+    box-shadow: -0.45rem 0 0 hsla(var(--lv-primary-hsl), 0.22);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-anchor-target {
+    animation: none;
+    background-color: hsla(var(--lv-primary-hsl), 0.16);
+    box-shadow: -0.45rem 0 0 hsla(var(--lv-primary-hsl), 0.16);
+  }
+}
+
 // Subtle themed scrollbar
 * {
   scrollbar-width: thin;
