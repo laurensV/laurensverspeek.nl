@@ -523,3 +523,15 @@ test('the page advertises the RSS feed for autodiscovery', async ({ page }) => {
   const feed = page.locator('link[rel="alternate"][type="application/rss+xml"]')
   await expect(feed).toHaveAttribute('href', '/rss.xml')
 })
+
+test('resume.json is a valid JSON Resume built from profile data', async ({ request }) => {
+  const res = await request.get('/resume.json')
+  expect(res.ok()).toBeTruthy()
+  expect(res.headers()['content-type']).toContain('application/json')
+  const resume = await res.json()
+  expect(resume.$schema).toContain('resume-schema')
+  expect(resume.basics.name).toBe('Laurens Verspeek')
+  expect(resume.basics.profiles.length).toBeGreaterThan(0)
+  expect(resume.work.length).toBeGreaterThan(0)
+  expect(resume.skills.length).toBeGreaterThan(0)
+})

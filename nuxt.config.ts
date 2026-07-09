@@ -105,7 +105,7 @@ export default defineNuxtConfig({
     prerender: {
       // /desktop is client-only (lvOS), but prerender the shell so a direct hit
       // to the shareable URL gets a real file instead of only the SPA fallback
-      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/contact.vcf', '/desktop', '/life']
+      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/contact.vcf', '/resume.json', '/desktop', '/life']
     }
   },
 
