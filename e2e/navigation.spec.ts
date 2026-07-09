@@ -270,3 +270,15 @@ test('the live visitor badge stays hidden when no cursors relay is configured', 
   await page.locator('.hero-name').waitFor()
   await expect(page.locator('.status-visitors')).toHaveCount(0)
 })
+
+test('a route progress bar appears during navigation', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const bar = page.locator('.route-progress')
+  await expect(bar).toBeAttached()
+  // navigating flips the bar active at least briefly
+  const sawActive = page.waitForSelector('.route-progress.is-active', { timeout: 5000 }).then(() => true).catch(() => false)
+  await page.locator('.app-navbar a', { hasText: 'projects' }).first().click()
+  expect(await sawActive).toBe(true)
+  await expect(page).toHaveURL(/\/projects/)
+})

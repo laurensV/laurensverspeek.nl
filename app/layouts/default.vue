@@ -1,6 +1,7 @@
 <template>
   <div class="site-shell">
     <a href="#main-content" class="skip-link">skip to content</a>
+    <RouteProgress />
     <FlowField />
     <div class="site-content">
       <AppNavbar />
