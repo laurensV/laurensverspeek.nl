@@ -550,3 +550,16 @@ test('a post edited after publish shows an updated date and dateModified', async
   await page.locator('h1').waitFor()
   await expect(page.locator('.post-updated')).toHaveCount(0)
 })
+
+test('blog code blocks show line numbers', async ({ page }) => {
+  await page.goto('/blog/snake-in-the-terminal')
+  const line = page.locator('.post-body pre code .line').first()
+  await line.waitFor()
+  // the numbering rule is active (a counter ::before is attached to each line)
+  const before = await line.evaluate((el) => getComputedStyle(el, '::before').content)
+  expect(before).toBe('counter(line)')
+  // and the gutter has real width, pushing the code right
+  const gutter = await line.evaluate((el) => parseFloat(getComputedStyle(el, '::before').marginRight))
+  expect(gutter).toBeGreaterThan(0)
+  expect(await page.locator('.post-body pre code .line').count()).toBeGreaterThan(3)
+})

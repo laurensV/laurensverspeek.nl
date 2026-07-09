@@ -495,6 +495,23 @@ onMounted(() => {
   // simpler inline-block approach)
   :deep(pre code) {
     display: grid;
+    counter-reset: line;
+  }
+
+  // a left gutter of line numbers, drawn with a CSS counter per .line
+  :deep(pre code .line) {
+    counter-increment: line;
+  }
+
+  :deep(pre code .line)::before {
+    content: counter(line);
+    display: inline-block;
+    width: 2ch;
+    margin-right: 1.25rem;
+    text-align: right;
+    color: var(--bulma-text-weak);
+    opacity: 0.35;
+    user-select: none;
   }
 
   // lines called out with a `{2,4-6}` fence directive: an accent band + rail so
