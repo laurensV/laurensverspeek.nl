@@ -96,7 +96,9 @@ const trace = computed(() =>
 interface Line { id: number, type: 'input' | 'output' | 'muted' | 'error', text: string }
 let lineId = 0
 const lines = ref<Line[]>([])
-const push = (type: Line['type'], text: string) => lines.value.push({ id: lineId++, type, text })
+const push = (type: Line['type'], text: string): void => {
+  lines.value.push({ id: lineId++, type, text })
+}
 
 const focusInput = () => inputRef.value?.focus()
 
