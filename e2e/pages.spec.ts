@@ -476,3 +476,21 @@ test('the 404 shell hides a playable snake behind `play`', async ({ page }) => {
   await expect(page.locator('.error-log')).toContainText('terminated')
   await expect(page.locator('.error-input')).toBeVisible()
 })
+
+test('the hero canvas has a pointer trail overlay (skipped under reduced motion)', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 800 })
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const trail = page.locator('.hero-life-trail')
+  await expect(trail).toBeAttached()
+  // moving the pointer over the hero paints trail sparks onto the overlay canvas
+  await page.locator('.hero-life').hover({ position: { x: 80, y: 80 } })
+  await page.mouse.move(140, 140, { steps: 8 })
+  await page.waitForTimeout(120)
+  const painted = await trail.evaluate((el: HTMLCanvasElement) => {
+    const data = el.getContext('2d')!.getImageData(0, 0, el.width, el.height).data
+    for (let i = 3; i < data.length; i += 4) if (data[i]! > 0) return true
+    return false
+  })
+  expect(painted).toBe(true)
+})

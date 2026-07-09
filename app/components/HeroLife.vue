@@ -13,6 +13,7 @@
     @keydown.space.prevent="openFull"
   >
     <canvas ref="canvasRef" class="hero-life-canvas" aria-hidden="true" />
+    <canvas ref="trailRef" class="hero-life-trail" aria-hidden="true" />
     <span class="hero-life-hint is-family-code" aria-hidden="true">▶ play</span>
   </div>
 </template>
@@ -22,6 +23,8 @@
 // automaton drawn as dim amber cells. Drag to seed live cells; a plain click
 // opens the full-page playground at /life. All the grid/canvas mechanics live
 // in useLifeBoard — here we just add a soft paint brush and the click-to-open.
+
+import { useEventListener } from '@vueuse/core'
 
 const containerRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
@@ -57,6 +60,55 @@ const paintAt = (event: PointerEvent) => {
   draw()
 }
 
+// a faint amber trail that follows the pointer across the board (motion-safe)
+const trailRef = ref<HTMLCanvasElement>()
+interface Spark { x: number, y: number, life: number }
+let sparks: Spark[] = []
+let trailRaf = 0
+const reducedMotion = () =>
+  import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const fitTrail = () => {
+  const canvas = trailRef.value
+  const rect = containerRef.value?.getBoundingClientRect()
+  if (!canvas || !rect) return
+  canvas.width = rect.width
+  canvas.height = rect.height
+}
+
+const drawTrail = () => {
+  const canvas = trailRef.value
+  const context = canvas?.getContext('2d')
+  if (!canvas || !context) return
+  context.clearRect(0, 0, canvas.width, canvas.height)
+  for (const spark of sparks) {
+    context.globalAlpha = spark.life * 0.5
+    context.fillStyle = '#ffba00'
+    context.beginPath()
+    context.arc(spark.x, spark.y, 2 + spark.life * 3, 0, Math.PI * 2)
+    context.fill()
+    spark.life -= 0.05
+  }
+  context.globalAlpha = 1
+  sparks = sparks.filter((spark) => spark.life > 0)
+  trailRaf = requestAnimationFrame(drawTrail)
+}
+
+const addSpark = (event: PointerEvent) => {
+  if (reducedMotion()) return
+  const rect = containerRef.value?.getBoundingClientRect()
+  if (!rect) return
+  sparks.push({ x: event.clientX - rect.left, y: event.clientY - rect.top, life: 1 })
+  if (sparks.length > 60) sparks.shift()
+}
+
+onMounted(() => {
+  fitTrail()
+  if (!reducedMotion()) trailRaf = requestAnimationFrame(drawTrail)
+})
+useEventListener('resize', fitTrail)
+onUnmounted(() => cancelAnimationFrame(trailRaf))
+
 // a plain click (little movement) opens the full-page playground; a drag paints
 let downX = 0
 let downY = 0
@@ -67,7 +119,7 @@ const onPointerDown = (event: PointerEvent) => {
   downY = event.clientY
   paintAt(event)
 }
-const onPointerMove = (event: PointerEvent) => paintAt(event)
+const onPointerMove = (event: PointerEvent) => { addSpark(event); paintAt(event) }
 const onPointerUp = (event: PointerEvent) => {
   const tapped = Math.abs(event.clientX - downX) + Math.abs(event.clientY - downY) < 8
   painting.value = false
@@ -126,5 +178,12 @@ watch(
   .hero-life-hint {
     transition: none;
   }
+}
+
+.hero-life-trail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 </style>
