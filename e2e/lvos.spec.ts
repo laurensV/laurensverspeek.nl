@@ -399,3 +399,15 @@ test('the image viewer browses the site art gallery', async ({ page }) => {
   await gallery.locator('.gallery-thumb').nth(2).click()
   await expect(gallery.locator('.gallery-thumb.is-active')).toHaveCount(1)
 })
+
+test('? opens the lvOS keyboard cheat sheet', async ({ page }) => {
+  await bootDesktop(page)
+  await page.keyboard.press('?')
+  const sheet = page.locator('.lvos-shortcuts')
+  await expect(sheet).toBeVisible()
+  await expect(sheet).toContainText('switch between windows')
+  await page.keyboard.press('Escape')
+  await expect(sheet).toHaveCount(0)
+  // and lvOS is still there (Escape closed the sheet, not the session)
+  await expect(page.locator('.lvos')).toBeVisible()
+})

@@ -181,6 +181,9 @@
         <button class="is-close" @click="titleMenuAct((w) => closeWindow(w.id))">× close</button>
       </div>
 
+      <!-- keyboard cheat sheet (press ? on the desktop) -->
+      <DesktopShortcuts v-if="shortcutsOpen" @close="shortcutsOpen = false" />
+
       <!-- lock screen: ceremonial, but it does cover everything -->
       <LazyDesktopLockScreen v-if="locked" @unlock="locked = false" />
 
@@ -396,6 +399,7 @@ const logout = () => {
 
 // the lock screen overlays everything; keyboard shortcuts pause while it's up
 const locked = ref(false)
+const shortcutsOpen = ref(false)
 const lock = () => {
   startOpen.value = false
   calendarOpen.value = false
@@ -454,6 +458,15 @@ onMounted(() => {
   if (firstBoot) openWindow('readme')
 })
 
+// ? toggles the cheat sheet (unless typing in a field or locked)
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (locked.value || event.key !== '?') return
+  const target = event.target as HTMLElement
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
+  event.preventDefault()
+  shortcutsOpen.value = !shortcutsOpen.value
+})
+
 // inside the desktop, ~ opens/focuses the terminal window (unless typing)
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (locked.value) return
@@ -476,6 +489,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 useEventListener('keydown', (event: KeyboardEvent) => {
   // a locked screen ignores Escape — it wouldn't be much of a lock otherwise
   if (locked.value) return
+  if (shortcutsOpen.value && event.key === 'Escape') {
+    event.preventDefault()
+    shortcutsOpen.value = false
+    return
+  }
   // defaultPrevented means the terminal already consumed this Escape
   if (event.key !== 'Escape' || event.defaultPrevented || terminal.isOpen.value) {
     return
