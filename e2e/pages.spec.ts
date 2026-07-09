@@ -618,3 +618,9 @@ test('page source greets view-sourcers with an ascii banner', async ({ request }
     expect(html).toContain('lv.hunt()')
   }
 })
+
+test('the retro hit counter stays hidden when analytics is not configured', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.getByTestId('hit-counter')).toHaveCount(0)
+})

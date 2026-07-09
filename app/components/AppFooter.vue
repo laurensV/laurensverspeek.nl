@@ -27,6 +27,7 @@
         </button>
         · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
       </p>
+      <RetroHitCounter />
     </div>
   </footer>
 </template>
