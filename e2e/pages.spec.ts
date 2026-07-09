@@ -535,3 +535,18 @@ test('resume.json is a valid JSON Resume built from profile data', async ({ requ
   expect(resume.work.length).toBeGreaterThan(0)
   expect(resume.skills.length).toBeGreaterThan(0)
 })
+
+test('a post edited after publish shows an updated date and dateModified', async ({ page }) => {
+  await page.goto('/blog/rebuilding-this-site')
+  await page.locator('h1').waitFor()
+  await expect(page.locator('.post-updated')).toContainText('updated')
+  // and the JSON-LD carries dateModified
+  const ld = await page.locator('script[type="application/ld+json"]')
+    .evaluateAll((nodes) => nodes.map((n) => JSON.parse(n.textContent ?? '{}')))
+  const posting = ld.find((d) => d['@type'] === 'BlogPosting')
+  expect(posting.dateModified).toBeTruthy()
+  // a post NOT edited after publish shows no updated line
+  await page.goto('/blog/snake-in-the-terminal')
+  await page.locator('h1').waitFor()
+  await expect(page.locator('.post-updated')).toHaveCount(0)
+})

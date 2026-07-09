@@ -11,6 +11,7 @@
           <h1 class="title is-2 mb-2" :style="{ viewTransitionName: `post-${route.params.slug}` }">{{ post.title }}</h1>
           <p class="is-family-code is-size-7 has-text-grey mb-6">
             {{ formatDate(post.date) }} · {{ readingTime }} min read
+            <template v-if="updatedDate"> · <span class="post-updated" title="last edited">updated {{ formatDate(updatedDate) }}</span></template>
             <template v-if="post.tags?.length">
               · <span
                 v-for="tag in post.tags"
@@ -75,6 +76,14 @@ import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
 
 const route = useRoute()
 
+// git-derived last-edit date (baked at build); shown only when it post-dates publish
+const updatedDate = computed(() => {
+  const slug = String(route.params.slug)
+  const map = useRuntimeConfig().public.postUpdated as Record<string, string>
+  const updated = map?.[slug]
+  return updated && post.value?.date && updated > String(post.value.date).slice(0, 10) ? updated : ''
+})
+
 
 const { data: post } = await useAsyncData(`blog-${route.params.slug}`, () =>
   queryCollection('blog').path(route.path).first()
@@ -123,6 +132,7 @@ useJsonLd(() => ({
   headline: post.value?.title,
   description: post.value?.description,
   datePublished: post.value?.date,
+  ...(updatedDate.value ? { dateModified: updatedDate.value } : {}),
   keywords: post.value?.tags?.join(', '),
   url: `${SITE_URL}${post.value?.path}`,
   author: { '@type': 'Person', name: 'Laurens Verspeek', url: SITE_URL },

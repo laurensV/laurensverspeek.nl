@@ -18,6 +18,22 @@ const gitFileDate = (file: string) => {
   }
 }
 
+// slug → last-git-modified date for every blog post, baked in so a post can
+// show an honest "updated" line (and dateModified) when it changed after publish
+const postUpdated: Record<string, string> = (() => {
+  try {
+    const files = execSync('git ls-files content/blog/*.md', { encoding: 'utf8' }).trim().split('\n')
+    const map: Record<string, string> = {}
+    for (const file of files.filter(Boolean)) {
+      const slug = file.replace(/^content\/blog\//, '').replace(/\.md$/, '')
+      map[slug] = gitFileDate(file)
+    }
+    return map
+  } catch {
+    return {}
+  }
+})()
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
@@ -97,7 +113,8 @@ export default defineNuxtConfig({
       cursorsWs: '',
       buildHash,
       buildDate: new Date().toISOString().slice(0, 10),
-      nowUpdated: gitFileDate('app/data/now.ts') || new Date().toISOString().slice(0, 10)
+      nowUpdated: gitFileDate('app/data/now.ts') || new Date().toISOString().slice(0, 10),
+      postUpdated
     }
   },
 
