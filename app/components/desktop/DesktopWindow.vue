@@ -114,7 +114,7 @@ const emit = defineEmits<{
   }
 
   &.is-maximized {
-    inset: 0 0 2.4rem 0;
+    inset: 0 0 2.4rem;
     width: auto;
     border-radius: 0;
   }

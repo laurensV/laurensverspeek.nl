@@ -239,7 +239,7 @@ onMounted(focusInput)
 
 .line {
   color: hsl(var(--lv-scheme-hs), 88%);
-  word-break: break-word;
+  overflow-wrap: break-word;
 
   &.muted {
     color: hsl(var(--lv-scheme-hs), 55%);

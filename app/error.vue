@@ -328,7 +328,7 @@ onMounted(focusInput)
 
 .line {
   color: var(--bulma-text);
-  word-break: break-word;
+  overflow-wrap: break-word;
 
   &.is-muted {
     color: var(--bulma-text-weak);

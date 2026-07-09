@@ -237,7 +237,7 @@ const curated = computed<FileEntry[]>(() => {
     background-color: hsla(var(--lv-scheme-hs), 50%, 0.08);
     border-radius: var(--bulma-radius-small);
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
 </style>

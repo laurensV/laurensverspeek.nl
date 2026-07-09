@@ -267,7 +267,7 @@ defineExpose({ focusInput })
   background: none;
   font-size: inherit;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
   color: hsl(var(--lv-scheme-hs), 88%);
 
   &.is-error {

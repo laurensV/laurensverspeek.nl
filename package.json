@@ -10,6 +10,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "lint": "eslint .",
+    "lint:styles": "stylelint \"app/**/*.{scss,vue}\"",
     "typecheck": "nuxt typecheck",
     "typecheck:tests": "vue-tsc --noEmit -p tsconfig.tests.json",
     "knip": "npx knip",
@@ -45,13 +46,17 @@
     "happy-dom": "^20.10.6",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "postcss-html": "^1.8.1",
     "sass": "^1.89.0",
+    "stylelint": "^17.14.0",
+    "stylelint-config-standard-scss": "^17.0.0",
     "typescript": "^5.8.0",
     "vitest": "^4.1.10",
     "vue-tsc": "^3.3.6",
     "ws": "^8.21.0"
   },
   "lint-staged": {
-    "*.{ts,vue,mjs}": "eslint --fix"
+    "*.{ts,vue,mjs}": "eslint --fix",
+    "*.{scss,vue}": "stylelint --fix"
   }
 }

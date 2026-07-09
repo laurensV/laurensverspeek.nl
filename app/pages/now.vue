@@ -127,7 +127,7 @@ const cpu = (title: string, item: string) => {
 
   .ps-cmd {
     color: var(--bulma-text);
-    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
 

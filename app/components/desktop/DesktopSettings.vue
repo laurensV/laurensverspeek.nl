@@ -178,7 +178,7 @@ const enterMatrix = () => {
   padding: 0;
 
   &.is-active {
-    box-shadow: 0 0 0 2px hsl(var(--lv-scheme-hs), 10%), 0 0 0 3px currentColor;
+    box-shadow: 0 0 0 2px hsl(var(--lv-scheme-hs), 10%), 0 0 0 3px currentcolor;
     outline: none;
   }
 }

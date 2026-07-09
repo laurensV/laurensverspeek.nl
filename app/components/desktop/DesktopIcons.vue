@@ -22,8 +22,7 @@ defineProps<{ icons: DesktopIconItem[] }>()
   left: 1.5rem;
   bottom: 4rem;
   display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
+  flex-flow: column wrap;
   align-content: flex-start;
   gap: 0.75rem;
 }

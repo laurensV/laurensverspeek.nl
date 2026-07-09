@@ -158,12 +158,12 @@ watch(outbox, (msg) => {
     padding: 0.2rem 0.55rem;
     border-radius: 0.7rem;
     // readable on any cursor hue: light fill, dark text, hue only on the border
-    border: 1.5px solid currentColor;
+    border: 1.5px solid currentcolor;
     background-color: #fbfbfd;
     color: #101014;
     font-size: 0.65rem;
     white-space: pre-wrap;
-    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
 </style>
