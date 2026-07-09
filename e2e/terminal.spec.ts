@@ -570,3 +570,13 @@ test('help is grouped into categories', async ({ page }) => {
   await expect(out).toContainText('## games')
   await expect(out).toContainText('## shell & system')
 })
+
+test('sysinfo prints a neofetch-style session card', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'sysinfo')
+  await expect(out).toContainText('browser')
+  await expect(out).toContainText('resolution')
+  await expect(out).toContainText(/\d+×\d+/)
+  await expect(out).toContainText('localStorage')
+})

@@ -390,6 +390,36 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         muted(`\n(there might be more... check the browser console 👀)`)
       }
     },
+    sysinfo: {
+      description: 'A neofetch for your browser session',
+      exec: () => {
+        const ua = navigator.userAgent
+        const browser = /Firefox\//.test(ua) ? 'Firefox'
+          : /Edg\//.test(ua) ? 'Edge'
+            : /Chrome\//.test(ua) ? 'Chrome'
+              : /Safari\//.test(ua) ? 'Safari' : 'a browser'
+        const storageKb = (collectStorageSlices().reduce((sum, slice) => sum + slice.bytes, 0) / 1024).toFixed(1)
+        const uptime = Math.round(performance.now() / 1000)
+        const rows: [string, string][] = [
+          ['host', `${ctx.identity.name.value}@${profile.domain}`],
+          ['browser', browser],
+          ['resolution', `${window.innerWidth}×${window.innerHeight}`],
+          ['theme', `${ctx.colorMode.value} · accent ${ctx.accent.current.value}`],
+          ['dpr', String(window.devicePixelRatio)],
+          ['storage', `${storageKb} KB in localStorage`],
+          ['uptime', `${uptime}s on this page`],
+          ['shell', 'lvsh 2.0']
+        ]
+        const logo = ASCII_LOGO.split('\n').filter(Boolean)
+        const maxRows = Math.max(logo.length, rows.length)
+        for (let i = 0; i < maxRows; i++) {
+          const art = (logo[i] ?? '').padEnd(14)
+          const row = rows[i]
+          if (row) push('output', `<span class="term-accent">${art}${row[0].padEnd(12)}</span> ${row[1]}`, true)
+          else push('primary', art)
+        }
+      }
+    },
     df: {
       description: 'How much localStorage this site really uses',
       exec: () => {
