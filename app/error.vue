@@ -56,6 +56,8 @@
 
 <script setup lang="ts">
 import type { NuxtError } from '#app'
+import type { TerminalCommand } from '~/utils/terminal/types'
+import { completeInput } from '~/utils/terminal/completion'
 
 const props = defineProps<{ error?: NuxtError }>()
 
@@ -100,20 +102,62 @@ const focusInput = () => inputRef.value?.focus()
 
 const go = (route: string) => clearError({ redirect: route })
 
-const commands: Record<string, (arg?: string) => void> = {
-  help: () =>
-    push('output', 'available: <b>ls</b> · <b>cd &lt;page&gt;</b> · <b>open &lt;page&gt;</b> · <b>whoami</b> · <b>echo</b> · <b>pwd</b> · <b>clear</b> (Tab completes, ↑/↓ history)'),
-  ls: () => push('output', ROUTES.map((r) => (r === '/' ? 'home/' : `${r.slice(1)}/`)).join('  ')),
-  open: (arg) => (arg ? go(arg.startsWith('/') ? arg : `/${arg}`) : push('error', 'usage: open <page>')),
-  whoami: () => push('muted', 'a lost visitor — let me get you home: try `cd ~`'),
-  echo: () => push('output', '(echo needs something to say)'),
-  clear: () => (lines.value = []),
-  pwd: () => push('output', '/dev/null (you are nowhere)'),
-  sudo: () => push('error', 'nice try. even root can\'t find this page.')
+// the recovery shell speaks the terminal's own command shape, so it can share
+// the real tab-completion module instead of reimplementing it
+const commands: Record<string, TerminalCommand> = {
+  help: {
+    description: 'List available commands',
+    exec: () =>
+      push('output', 'available: <b>ls</b> · <b>cd &lt;page&gt;</b> · <b>open &lt;page&gt;</b> · <b>whoami</b> · <b>echo</b> · <b>pwd</b> · <b>clear</b> (Tab completes, ↑/↓ history)')
+  },
+  ls: {
+    description: 'List the pages that do exist',
+    exec: () => push('output', ROUTES.map((r) => (r === '/' ? 'home/' : `${r.slice(1)}/`)).join('  '))
+  },
+  cd: {
+    description: 'Escape to a real page',
+    argCandidates: () => ROUTES,
+    exec: (args) => {
+      const arg = args.join(' ')
+      const target = (arg || '~').replace(/^\/|\/$/g, '')
+      if (!arg || arg === '~' || target === '') return go('/')
+      go(`/${target}`)
+    }
+  },
+  open: {
+    description: 'Same as cd, for the click-inclined',
+    argCandidates: () => ROUTES,
+    exec: (args) => {
+      const arg = args.join(' ')
+      if (!arg) return push('error', 'usage: open <page>')
+      go(arg.startsWith('/') ? arg : `/${arg}`)
+    }
+  },
+  whoami: {
+    description: 'Identify yourself',
+    exec: () => push('muted', 'a lost visitor — let me get you home: try `cd ~`')
+  },
+  echo: {
+    description: 'Echo',
+    exec: (args) => push('output', args.join(' ') || '(echo needs something to say)')
+  },
+  clear: {
+    description: 'Clear the log',
+    exec: () => {
+      lines.value = []
+    }
+  },
+  pwd: {
+    description: 'Where even are you',
+    exec: () => push('output', '/dev/null (you are nowhere)')
+  },
+  sudo: {
+    description: 'No',
+    exec: () => push('error', 'nice try. even root can\'t find this page.')
+  }
 }
 
-// completion candidates: the commands plus `cd <page>` targets
-const commandNames = ['cd', ...Object.keys(commands)]
+const commandNames = Object.keys(commands)
 
 // history for ↑/↓ recall
 const history = ref<string[]>([])
@@ -128,35 +172,14 @@ const submit = () => {
   historyIndex = history.value.length
 
   const [name = '', ...rest] = value.split(/\s+/)
-  const arg = rest.join(' ')
-  const lower = name.toLowerCase()
-
-  if (lower === 'cd') {
-    const target = (arg || '~').replace(/^\/|\/$/g, '')
-    if (!arg || arg === '~' || target === '') return go('/')
-    return go(`/${target}`)
-  }
-  if (lower === 'echo') return push('output', arg || '')
-  const command = commands[lower]
-  if (command) command(arg)
+  const command = commands[name.toLowerCase()]
+  if (command) command.exec(rest)
   else push('error', `lvsh: command not found: ${name} (try 'help')`)
 }
 
 const autocomplete = () => {
-  const raw = input.value.trimStart()
-  const lower = raw.toLowerCase()
-  if (!lower) return
-  if (!lower.includes(' ')) {
-    const match = commandNames.find((c) => c.startsWith(lower))
-    if (match) input.value = `${match} `
-    return
-  }
-  // complete a `cd`/`open` argument from the known routes
-  const [cmd = '', ...rest] = lower.split(/\s+/)
-  if (cmd !== 'cd' && cmd !== 'open') return
-  const partial = rest.join(' ').replace(/^\//, '')
-  const match = ROUTES.map((r) => r.replace(/^\//, '')).find((r) => r && r.startsWith(partial))
-  if (match) input.value = `${cmd} /${match}`
+  const [first] = completeInput(input.value, commandNames, commands)
+  if (first) input.value = first
 }
 
 const historyUp = () => {
