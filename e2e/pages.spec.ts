@@ -598,3 +598,15 @@ test('contact shows a live local-time badge once hydrated', async ({ page }) => 
   await expect(badge).toContainText(/probably (awake|asleep)/)
   await expect(badge).toContainText('replies within a day')
 })
+
+test('kbd keys share the global keycap style', async ({ page }) => {
+  await page.goto('/')
+  const kbd = page.locator('footer kbd').first()
+  await expect(kbd).toBeVisible()
+  const style = await kbd.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { shadow: cs.boxShadow, font: cs.fontFamily }
+  })
+  expect(style.shadow).not.toBe('none')
+  expect(style.font).toContain('JetBrains Mono')
+})

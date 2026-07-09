@@ -108,11 +108,6 @@ const ROWS = [
 }
 
 kbd {
-  padding: 0.05em 0.4em;
-  border: 1px solid var(--bulma-border);
-  border-radius: var(--bulma-radius-small);
-  background-color: var(--bulma-scheme-main-ter);
-  font-family: inherit;
   font-size: 0.7rem;
 }
 </style>

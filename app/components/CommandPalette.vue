@@ -282,12 +282,6 @@ watch(flat, (list) => {
   font-size: 0.7rem;
   color: var(--bulma-text-weak);
 
-  kbd {
-    padding: 0 0.3em;
-    border: 1px solid var(--bulma-border-weak);
-    border-radius: var(--bulma-radius-small);
-    background-color: var(--bulma-scheme-main-bis);
-  }
 }
 
 .palette-enter-active,

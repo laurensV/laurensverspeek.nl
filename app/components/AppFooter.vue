@@ -95,11 +95,5 @@ const showBuild = () => {
     }
   }
 
-  kbd {
-    padding: 0.1em 0.45em;
-    border: 1px solid var(--bulma-border);
-    border-radius: var(--bulma-radius-small);
-    background-color: var(--bulma-scheme-main-bis);
-  }
 }
 </style>

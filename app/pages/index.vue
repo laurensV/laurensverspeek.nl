@@ -221,13 +221,6 @@ const areas: { icon: IconName; title: string; description: string; file: string 
 
 .hero-hint {
   color: var(--bulma-text-weak);
-
-  kbd {
-    padding: 0.05em 0.4em;
-    border: 1px solid var(--bulma-border);
-    border-radius: var(--bulma-radius-small);
-    background-color: var(--bulma-scheme-main-bis);
-  }
 }
 
 // Float the constellation above the terminal card, fading at its edges so it
