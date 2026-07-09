@@ -41,9 +41,12 @@ const server = createServer(async (req, res) => {
   const url = decodeURIComponent((req.url ?? '/').split('?')[0])
   const candidate = join(root, url)
 
-  // resolve the file, or fall back through index.html → 200.html SPA shell
+  // resolve the file, or fall back through index.html → 200.html SPA shell.
+  // Extensionless paths also try `<path>.html` — GitHub Pages' clean-URL
+  // behavior, which the service worker's precache manifest relies on.
   let file = await tryFile(candidate)
   if (!file && !extname(url)) file = await tryFile(join(candidate, 'index.html'))
+  if (!file && !extname(url)) file = await tryFile(`${candidate}.html`)
   const isFallback = !file
   if (!file) file = join(root, '200.html')
 

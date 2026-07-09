@@ -44,12 +44,17 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: null,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,xml}'],
-      // static site: cache pages as visited, serve from cache when offline
+      // static site: cache pages as visited, serve from cache when offline —
+      // and when neither network nor cache has it, fall back to /offline.html
       runtimeCaching: [
         {
           urlPattern: ({ request }) => request.mode === 'navigate',
           handler: 'NetworkFirst',
-          options: { cacheName: 'pages' }
+          options: {
+            cacheName: 'pages',
+            // the manifest strips .html, so the precache key is extensionless
+            precacheFallback: { fallbackURL: '/offline' }
+          }
         }
       ]
     }

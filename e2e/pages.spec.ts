@@ -432,3 +432,21 @@ test('blog posts have a share affordance that copies the url', async ({ page, co
   const clip = await page.evaluate(() => navigator.clipboard.readText())
   expect(clip).toContain('/blog/snake-in-the-terminal')
 })
+
+test('the service worker precaches the no-uplink offline fallback', async ({ page, request }) => {
+  // Playwright's setOffline cannot cut service-worker fetches, so the true
+  // offline path was verified by killing the server manually; here we pin the
+  // wiring: the clean-url fallback page and the generated sw configuration.
+  const offline = await request.get('/offline')
+  expect(await offline.text()).toContain('no uplink')
+  const sw = await (await request.get('/sw.js')).text()
+  expect(sw).toContain('PrecacheFallbackPlugin')
+  expect(sw).toContain('fallbackURL:"/offline"')
+  expect(sw).toMatch(/\{url:"offline",revision/)
+  // and the worker actually installs + takes control on a real visit
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.evaluate(() => navigator.serviceWorker.ready)
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller), { timeout: 10000 })
+    .toBe(true)
+})
