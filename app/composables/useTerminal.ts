@@ -29,9 +29,9 @@ const gameFrame = ref('')
  * modules under app/utils/terminal/.
  */
 export function useTerminal() {
-  const isOpen = useState('terminal-open', () => false)
-  const lines = useState<TerminalLine[]>('terminal-lines', () => [])
-  const history = useState<string[]>('terminal-history', () => [])
+  const isOpen = useState(STATE_KEYS.terminalOpen, () => false)
+  const lines = useState<TerminalLine[]>(STATE_KEYS.terminalLines, () => [])
+  const history = useState<string[]>(STATE_KEYS.terminalHistory, () => [])
 
   const router = useRouter()
   const route = useRoute()
@@ -39,7 +39,7 @@ export function useTerminal() {
 
   // current directory inside the home filesystem ('' = home). When set, it wins
   // over the route for the prompt; otherwise the cwd tracks the route.
-  const fsCwd = useState('terminal-fs-cwd', () => '')
+  const fsCwd = useState(STATE_KEYS.terminalFsCwd, () => '')
   const cwd = computed(() => {
     if (fsCwd.value) return `~/${fsCwd.value}`
     const path = route.path.replace(/\/+$/, '')
@@ -128,9 +128,9 @@ export function useTerminal() {
     },
     effects: {
       matrix: matrixActive,
-      train: useState('fx-train', () => false),
-      bootReplay: useState('boot-replay', () => false),
-      party: useState('fx-party', () => false),
+      train: useState(STATE_KEYS.fxTrain, () => false),
+      bootReplay: useState(STATE_KEYS.bootReplay, () => false),
+      party: useState(STATE_KEYS.fxParty, () => false),
       crt: crtActive,
       destruct: destructActive,
       toggleCrt
@@ -152,7 +152,7 @@ export function useTerminal() {
       ll: 'ls',
       cls: 'clear'
     })),
-    files: useState<Filesystem>('terminal-fs', () => ({})),
+    files: useState<Filesystem>(STATE_KEYS.terminalFs, () => ({})),
     fsCwd,
     getCommands: () => commands
   }

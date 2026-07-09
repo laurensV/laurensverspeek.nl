@@ -23,7 +23,7 @@ export const sanitizeName = (raw: string) =>
   raw.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, MAX_LEN)
 
 export function useIdentity() {
-  const name = useState('identity-name', () => 'visitor')
+  const name = useState(STATE_KEYS.identityName, () => 'visitor')
 
   // hydrate from storage (or mint a random handle) once on the client
   if (import.meta.client && name.value === 'visitor') {

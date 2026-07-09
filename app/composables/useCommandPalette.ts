@@ -74,7 +74,7 @@ export function highlightLabel(query: string, label: string): LabelSegment[] {
 }
 
 export function useCommandPalette() {
-  const isOpen = useState('palette-open', () => false)
+  const isOpen = useState(STATE_KEYS.paletteOpen, () => false)
 
   const router = useRouter()
   const colorMode = useColorMode()
@@ -92,7 +92,7 @@ export function useCommandPalette() {
   }
 
   // most-recently-used actions, persisted so the palette can surface them first
-  const recent = useState<string[]>('palette-recent', () => [])
+  const recent = useState<string[]>(STATE_KEYS.paletteRecent, () => [])
   if (import.meta.client && !recent.value.length) {
     recent.value = storageGetJson(RECENT_KEY, isStringArray) ?? []
   }

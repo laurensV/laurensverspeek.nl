@@ -10,10 +10,10 @@ let restored = false
  * the choice persists. Everything is inert unless the relay is configured.
  */
 export function useLiveVisitors() {
-  const count = useState('live-visitor-count', () => 0)
-  const showCursors = useState('live-cursors-visible', () => false)
+  const count = useState(STATE_KEYS.liveVisitorCount, () => 0)
+  const showCursors = useState(STATE_KEYS.liveCursorsVisible, () => false)
   // outbox for the terminal `say` command → LiveCursors broadcasts it
-  const outbox = useState<{ text: string, ts: number } | null>('live-say-outbox', () => null)
+  const outbox = useState<{ text: string, ts: number } | null>(STATE_KEYS.liveSayOutbox, () => null)
   if (import.meta.client && !restored) {
     restored = true
     showCursors.value = storageGet(SHOW_KEY) === '1'

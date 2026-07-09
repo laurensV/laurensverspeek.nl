@@ -26,7 +26,7 @@ interface Confetto {
   color: string
 }
 
-const active = useState('fx-party', () => false)
+const active = useState(STATE_KEYS.fxParty, () => false)
 const canvasRef = ref<HTMLCanvasElement>()
 const { width, height } = useWindowSize()
 const reducedMotion = usePreferredReducedMotion()

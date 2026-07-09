@@ -25,7 +25,7 @@ export const ACCENTS: Accent[] = [
 const STORAGE_KEY = 'lv-accent'
 
 export function useAccent() {
-  const accent = useState('accent', () => 'amber')
+  const accent = useState(STATE_KEYS.accent, () => 'amber')
 
   const applyVars = (a: Accent) => {
     if (!import.meta.client) return

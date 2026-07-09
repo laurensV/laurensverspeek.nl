@@ -48,7 +48,7 @@ const WALLPAPER_KEY = 'lvos-wallpaper'
 let restored = false
 
 export function useWallpaper() {
-  const wallpaper = useState('lvos-wallpaper', () => 0)
+  const wallpaper = useState(STATE_KEYS.lvosWallpaper, () => 0)
   if (import.meta.client && !restored) {
     restored = true
     const saved = Number(storageGet(WALLPAPER_KEY))

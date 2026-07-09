@@ -30,7 +30,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
 
   // captured at factory time (valid Nuxt context); command handlers run outside it.
   // Set by the ssh easter egg; the prompt's host segment follows it.
-  const sshHost = useState('terminal-ssh-host', () => '')
+  const sshHost = useState(STATE_KEYS.terminalSshHost, () => '')
   const fontScale = useTermFontScale()
 
   // a path can only be created if its parent directory already exists

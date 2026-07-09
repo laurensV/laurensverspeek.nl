@@ -62,7 +62,7 @@ const fontScale = useTermFontScale()
 const { name } = useIdentity()
 
 // the host segment flips when the ssh easter egg "connects" somewhere
-const sshHost = useState('terminal-ssh-host', () => '')
+const sshHost = useState(STATE_KEYS.terminalSshHost, () => '')
 const prompt = computed(() => `${name.value}@${sshHost.value || 'lv'}:${cwd.value}$`)
 const input = ref('')
 const inputRef = ref<HTMLInputElement>()

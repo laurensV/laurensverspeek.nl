@@ -64,7 +64,7 @@ const colorMode = useColorMode()
 const route = useRoute()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
-const pendingKey = useState('vim-pending-key', () => '')
+const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
 
 // live visitors (cursors relay): count badge; clicking toggles the cursor dots
 const visitors = useLiveVisitors()

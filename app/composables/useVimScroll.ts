@@ -26,7 +26,7 @@ const GO_TARGETS: Record<string, string> = {
 export function useVimScroll() {
   let lastG = 0
   // which-key style hint: the status bar shows "g-" while a chord is pending
-  const pendingKey = useState('vim-pending-key', () => '')
+  const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
   let pendingTimer: ReturnType<typeof setTimeout> | undefined
   const setPending = () => {
     pendingKey.value = 'g'

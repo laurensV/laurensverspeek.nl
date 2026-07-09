@@ -42,7 +42,7 @@ const done = ref(false)
 const reducedMotion = usePreferredReducedMotion()
 
 // `reboot` in the terminal replays the boot sequence on demand
-const replayRequested = useState('boot-replay', () => false)
+const replayRequested = useState(STATE_KEYS.bootReplay, () => false)
 
 let timers: ReturnType<typeof setTimeout>[] = []
 

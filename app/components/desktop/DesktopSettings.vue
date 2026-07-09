@@ -82,7 +82,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 
 const colorMode = useColorMode()
 const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
-const partyActive = useState('fx-party', () => false)
+const partyActive = useState(STATE_KEYS.fxParty, () => false)
 const { accent, accents, setAccent } = useAccent()
 
 const { name, setName } = useIdentity()
@@ -95,7 +95,7 @@ const applyName = () => {
 }
 
 // read the shared window state directly — no need for the manager's listeners
-const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
+const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
 const windowCount = computed(() => windows.value.length)
 
 const enterMatrix = () => {

@@ -38,7 +38,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 
 const emit = defineEmits<{ kill: [id: string] }>()
 
-const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
+const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
 
 const SYSTEM = [
   { pid: 1, name: 'init', mem: 1 },

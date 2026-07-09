@@ -36,7 +36,7 @@ const zoneRect = (zone: SnapZone) =>
 
 export function useWindowManager(titles: Record<string, string> = {}) {
   // useState so the layout survives logging out and back in during a visit
-  const windows = useState<DesktopWindow[]>('lvos-windows', () => [])
+  const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
 
   const focusWindow = (win: DesktopWindow) => {
     win.z = ++zCounter

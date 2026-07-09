@@ -38,7 +38,7 @@ import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 interface StickyNote { id: number, text: string, updated: number }
 
 const STORAGE_KEY = 'lvos-notes'
-const notes = useState<StickyNote[]>('lvos-notes', () => [])
+const notes = useState<StickyNote[]>(STATE_KEYS.lvosNotes, () => [])
 
 const isNoteArray = (value: unknown): value is StickyNote[] =>
   Array.isArray(value) && value.every((n) =>

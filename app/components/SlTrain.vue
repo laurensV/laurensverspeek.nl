@@ -10,7 +10,7 @@
 import { SL_TRAIN } from '~/utils/terminalToys'
 
 // The classic `sl` typo punishment: a steam locomotive crossing the page.
-const trainActive = useState('fx-train', () => false)
+const trainActive = useState(STATE_KEYS.fxTrain, () => false)
 </script>
 
 <style scoped lang="scss">

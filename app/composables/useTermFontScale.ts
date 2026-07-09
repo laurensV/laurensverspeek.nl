@@ -7,7 +7,7 @@ let restored = false
 
 /** The terminal's text scale (ctrl+= / ctrl+- or the fontsize command), persisted. */
 export function useTermFontScale() {
-  const scale = useState('terminal-font-scale', () => 1)
+  const scale = useState(STATE_KEYS.terminalFontScale, () => 1)
   if (import.meta.client && !restored) {
     restored = true
     const saved = Number(storageGet(KEY))

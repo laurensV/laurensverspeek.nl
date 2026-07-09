@@ -1,8 +1,8 @@
 /** Site-wide visual easter-egg effects, toggled from the terminal. */
 export function useSiteEffects() {
-  const matrixActive = useState('fx-matrix', () => false)
-  const crtActive = useState('fx-crt', () => false)
-  const destructActive = useState('fx-destruct', () => false)
+  const matrixActive = useState(STATE_KEYS.fxMatrix, () => false)
+  const crtActive = useState(STATE_KEYS.fxCrt, () => false)
+  const destructActive = useState(STATE_KEYS.fxDestruct, () => false)
 
   const toggleCrt = (on?: boolean) => {
     crtActive.value = on ?? !crtActive.value
