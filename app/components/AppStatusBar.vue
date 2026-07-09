@@ -16,6 +16,16 @@
         @click="versionClick"
       >v2.0.0</button>
       <button
+        v-if="visitors.enabled.value && visitors.count.value > 0"
+        class="status-item status-button status-visitors"
+        :class="{ 'is-showing': visitors.showCursors.value }"
+        :aria-pressed="visitors.showCursors.value"
+        :title="visitors.showCursors.value ? 'Live cursors shown — click to hide' : 'Live cursors hidden — click to show'"
+        @click="visitors.showCursors.value = !visitors.showCursors.value"
+      >
+        ◉ {{ visitors.count.value }} browsing
+      </button>
+      <button
         class="status-item status-button status-online"
         :class="{ 'is-pinging': pinging }"
         :title="`presence: ${presence.label} — click to change`"
@@ -55,6 +65,9 @@ const route = useRoute()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState('vim-pending-key', () => '')
+
+// live visitors (cursors relay): count badge; clicking toggles the cursor dots
+const visitors = useLiveVisitors()
 
 // easter egg: hammering the version number five times arms destroy mode
 const { destructActive } = useSiteEffects()
@@ -154,6 +167,15 @@ watch(
   padding: 0 0.55rem;
   color: inherit;
   white-space: nowrap;
+}
+
+// live visitor badge: dim while cursors are hidden, accent while shown
+.status-visitors {
+  color: var(--bulma-text-weak);
+
+  &.is-showing {
+    color: var(--bulma-primary);
+  }
 }
 
 // the pending vim chord ("g-") flashes in accent while it waits

@@ -264,3 +264,9 @@ test('a pending g chord shows in the status bar', async ({ page }) => {
   await expect(page).toHaveURL(/\/blog\/?$/)
   await expect(page.locator('.status-pending')).toHaveCount(0)
 })
+
+test('the live visitor badge stays hidden when no cursors relay is configured', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.status-visitors')).toHaveCount(0)
+})

@@ -38,25 +38,36 @@ interface RemoteCursor {
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
 const { name } = useIdentity()
+const { count, showCursors, enabled } = useLiveVisitors()
 
-const enabled = computed(() => Boolean(cursorsWs))
 const cursors = ref(new Map<number, RemoteCursor>())
 const tick = ref(0)
 
 let socket: WebSocket | undefined
 let retries = 0
+const connected = ref(false)
 
 const visibleCursors = computed(() => {
   void tick.value
+  if (!showCursors.value) return []
   const now = Date.now()
   return [...cursors.value.values()].filter(
     (c) => c.page === route.path && now - c.seen < 6000
   )
 })
 
+// the status bar badge: everyone active anywhere on the site, plus you
+watchEffect(() => {
+  void tick.value
+  const now = Date.now()
+  const others = [...cursors.value.values()].filter((c) => now - c.seen < 15000).length
+  count.value = connected.value ? others + 1 : 0
+})
+
 const connect = () => {
   if (!cursorsWs) return
   socket = new WebSocket(cursorsWs as string)
+  socket.onopen = () => (connected.value = true)
 
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data)
@@ -70,6 +81,7 @@ const connect = () => {
   }
 
   socket.onclose = () => {
+    connected.value = false
     if (retries++ < 3) setTimeout(connect, 4000 * retries)
   }
 }
