@@ -480,3 +480,18 @@ test('terminal text scales via fontsize and ctrl keys, and persists', async ({ p
   await run(page, 'fontsize reset')
   await expect.poll(sizeOf).toBeCloseTo(base, 0)
 })
+
+test('do a barrel roll spins the page (unless reduced motion)', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'do a barrel roll')
+  await expect(page.locator('html')).toHaveClass(/barrel-roll/)
+  await expect(page.locator('html')).not.toHaveClass(/barrel-roll/, { timeout: 5000 })
+})
+
+test('barrel roll respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await openTerminal(page)
+  await run(page, 'barrel-roll')
+  await expect(page.locator('.terminal-output')).toContainText('imagine')
+  await expect(page.locator('html')).not.toHaveClass(/barrel-roll/)
+})

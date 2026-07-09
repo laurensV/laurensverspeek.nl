@@ -307,6 +307,17 @@ html.is-lvos body {
   }
 }
 
+// barrel-roll — the terminal command; class is removed again after one spin
+html.barrel-roll body {
+  animation: barrel-roll 1.1s cubic-bezier(0.36, 0, 0.34, 1);
+}
+
+@keyframes barrel-roll {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 // Party mode — triggered by the Konami code (or the hidden `party` command)
 html.party-mode .site-shell {
   animation: party-hue 1.4s linear infinite;

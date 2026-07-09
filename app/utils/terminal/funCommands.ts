@@ -77,6 +77,31 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
         ctx.startGame(create2048Game)
       }
     },
+    'barrel-roll': {
+      hidden: true,
+      description: 'Star Fox taught us well',
+      exec: () => {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          muted('reduced motion is on — please imagine the site doing a 360° 🌀')
+          return
+        }
+        document.documentElement.classList.add('barrel-roll')
+        setTimeout(() => document.documentElement.classList.remove('barrel-roll'), 1200)
+        out('🌀 weeeeee')
+      }
+    },
+    do: {
+      hidden: true,
+      usage: 'do a barrel roll',
+      description: 'You know what to do',
+      exec: (args) => {
+        if (args.join(' ').toLowerCase() === 'a barrel roll') {
+          void commands['barrel-roll']!.exec([])
+          return
+        }
+        error(`do: I only know one trick. It involves a barrel.`)
+      }
+    },
     ps: {
       description: 'List running processes (effects included)',
       exec: () => {
