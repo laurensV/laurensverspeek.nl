@@ -624,3 +624,9 @@ test('the retro hit counter stays hidden when analytics is not configured', asyn
   await page.locator('.hero-name').waitFor()
   await expect(page.getByTestId('hit-counter')).toHaveCount(0)
 })
+
+test('/stats explains itself when analytics is not configured', async ({ page }) => {
+  await page.goto('/stats')
+  await expect(page.locator('.stats-off')).toContainText('analytics is not enabled on this build')
+})
+

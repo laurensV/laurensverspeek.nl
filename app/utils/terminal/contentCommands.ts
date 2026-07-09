@@ -531,6 +531,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           ).catch(() => null)
           if (here) push('output', `<span class="term-accent">this page</span>   ${here.count} views`, true)
           muted('(public counters — no cookies, no fingerprints)')
+          muted(`the /stats page draws these as bars — try 'cd stats'`)
         } catch {
           error('stats: could not reach goatcounter (are public counters switched on?)')
         } finally {
