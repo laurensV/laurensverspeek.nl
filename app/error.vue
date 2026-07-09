@@ -33,7 +33,9 @@
         </template>
       </div>
 
-      <div class="error-input-row">
+      <pre v-if="gameFrame" class="error-game">{{ gameFrame }}</pre>
+
+      <div v-if="!game" class="error-input-row">
         <span class="prompt">{{ prompt }}</span>
         <input
           ref="inputRef"
@@ -58,6 +60,7 @@
 import type { NuxtError } from '#app'
 import type { TerminalCommand } from '~/utils/terminal/types'
 import { completeInput } from '~/utils/terminal/completion'
+import { createSnakeGame, type GameHandle } from '~/utils/terminalGames'
 
 const props = defineProps<{ error?: NuxtError }>()
 
@@ -65,6 +68,28 @@ const path = useRoute().path
 const prompt = 'visitor@lv:~$'
 const input = ref('')
 const inputRef = ref<HTMLInputElement>()
+
+// a whole snake game, hidden behind `play`, right in the recovery shell
+const game = ref<GameHandle | null>(null)
+const gameFrame = ref('')
+const startGame = () => {
+  push('muted', 'starting snake — arrows/wasd move, q quits. (yes, on the 404 page.)')
+  game.value = createSnakeGame({
+    onFrame: (frame) => (gameFrame.value = frame),
+    onEnd: (endLines) => {
+      game.value = null
+      gameFrame.value = ''
+      endLines.forEach((line) => push('output', line))
+      nextTick(focusInput)
+    }
+  })
+}
+if (import.meta.client) {
+  window.addEventListener('keydown', (event) => {
+    if (!game.value) return
+    if (game.value.onKey(event.key)) event.preventDefault()
+  })
+}
 
 // known pages, used for the "did you mean" hint, quick links and completion
 const QUICK_LINKS = [
@@ -156,6 +181,10 @@ const commands: Record<string, TerminalCommand> = {
   sudo: {
     description: 'No',
     exec: () => push('error', 'nice try. even root can\'t find this page.')
+  },
+  play: {
+    description: 'Pass the time while you are lost',
+    exec: () => startGame()
   }
 }
 
@@ -317,6 +346,13 @@ onMounted(focusInput)
 .prompt {
   color: var(--bulma-primary);
   font-weight: 600;
+}
+
+.error-game {
+  margin: 0.5rem 0 0;
+  color: var(--bulma-primary);
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .error-input-row {

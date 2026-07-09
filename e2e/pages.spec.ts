@@ -462,3 +462,17 @@ test('github stats count up to the fetched values', async ({ page }) => {
   await expect(page.locator('.stat-value').nth(2)).toHaveText('42', { timeout: 10000 })
   await expect(page.locator('.stat-value').nth(0)).toHaveText('7')
 })
+
+test('the 404 shell hides a playable snake behind `play`', async ({ page }) => {
+  await page.goto('/totally-missing-page')
+  const field = page.locator('.error-input')
+  await field.click()
+  await field.fill('play')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.error-game')).toContainText('SNAKE')
+  // the input row yields to the game; q ends it and brings the prompt back
+  await expect(page.locator('.error-input')).toHaveCount(0)
+  await page.keyboard.press('q')
+  await expect(page.locator('.error-log')).toContainText('terminated')
+  await expect(page.locator('.error-input')).toBeVisible()
+})
