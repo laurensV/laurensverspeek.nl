@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run typecheck:tests
       - run: npm run test
 
       # browser is needed by the resume PDF step (postgenerate) and the E2E run

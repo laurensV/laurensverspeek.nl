@@ -1,0 +1,11 @@
+{
+  // vue-tsc (npm run typecheck) covers the app but not tests/ — this config
+  // lets `npm run typecheck:tests` catch type regressions in the unit tests.
+  // Extending the generated Nuxt config brings the ~ alias and the ambient
+  // auto-import declarations that transitively imported app modules rely on.
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["tests/**/*.ts", ".nuxt/nuxt.d.ts"]
+}
