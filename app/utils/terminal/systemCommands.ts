@@ -29,6 +29,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
   // captured at factory time (valid Nuxt context); command handlers run outside it.
   // Set by the ssh easter egg; the prompt's host segment follows it.
   const sshHost = useState('terminal-ssh-host', () => '')
+  const fontScale = useTermFontScale()
 
   // a path can only be created if its parent directory already exists
   const parentExists = (path: string) => {
@@ -423,6 +424,27 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
           default:
             error(`git: '${sub}' is not a git command. See 'man git'.`)
         }
+      }
+    },
+    fontsize: {
+      usage: 'fontsize [0.7–1.6|+|-|reset]',
+      description: 'Scale the terminal text (also ctrl+= / ctrl+-)',
+      argCandidates: () => ['+', '-', 'reset'],
+      exec: (args) => {
+        const arg = args[0]
+        if (!arg) {
+          out(`current scale: ${fontScale.scale.value}× — try 'fontsize 1.2', '+', '-' or 'reset'`)
+          return
+        }
+        if (arg === '+') fontScale.bump(0.1)
+        else if (arg === '-') fontScale.bump(-0.1)
+        else if (arg === 'reset') fontScale.set(1)
+        else {
+          const value = Number(arg)
+          if (!Number.isFinite(value)) return error(`fontsize: not a number: ${arg}`)
+          fontScale.set(value)
+        }
+        out(`font scale: ${fontScale.scale.value}×`)
       }
     },
     qr: {

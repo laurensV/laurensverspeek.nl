@@ -460,3 +460,23 @@ test('cd - and pushd/popd remember directories', async ({ page }) => {
   await run(page, 'popd')
   await expect(out).toContainText('directory stack empty')
 })
+
+test('terminal text scales via fontsize and ctrl keys, and persists', async ({ page }) => {
+  await openTerminal(page)
+  const output = page.locator('.terminal-output')
+  const sizeOf = () => output.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+  const base = await sizeOf()
+  await run(page, 'fontsize 1.3')
+  await expect(output).toContainText('font scale: 1.3×')
+  expect(await sizeOf()).toBeGreaterThan(base * 1.2)
+  await page.keyboard.press('Control+-')
+  await expect.poll(sizeOf).toBeLessThan(base * 1.3)
+  // survives a reload
+  await page.reload()
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  expect(await sizeOf()).toBeGreaterThan(base * 1.05)
+  await run(page, 'fontsize reset')
+  await expect.poll(sizeOf).toBeCloseTo(base, 0)
+})

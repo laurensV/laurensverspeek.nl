@@ -1,5 +1,5 @@
 <template>
-  <div class="terminal-console is-family-code" @click="focusInput">
+  <div class="terminal-console is-family-code" :style="{ '--term-font-scale': fontScale.scale.value }" @click="focusInput">
     <div ref="outputRef" class="terminal-output">
       <template v-for="line in lines" :key="line.id">
         <div v-if="line.type === 'input'" class="terminal-line">
@@ -58,6 +58,7 @@ const props = withDefaults(
 const emit = defineEmits<{ escape: [] }>()
 
 const { lines, history, cwd, run, complete, activeGame, gameFrame } = useTerminal()
+const fontScale = useTermFontScale()
 const { name } = useIdentity()
 
 // the host segment flips when the ssh easter egg "connects" somewhere
@@ -179,6 +180,25 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     return
   }
 
+  // ctrl+= / ctrl+- / ctrl+0 scale the terminal text
+  if (event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (event.key === '=' || event.key === '+') {
+      event.preventDefault()
+      fontScale.bump(0.1)
+      return
+    }
+    if (event.key === '-') {
+      event.preventDefault()
+      fontScale.bump(-0.1)
+      return
+    }
+    if (event.key === '0') {
+      event.preventDefault()
+      fontScale.set(1)
+      return
+    }
+  }
+
   if (searchMode.value) {
     if (event.key === 'Escape') { event.preventDefault(); cancelSearch() }
     else if (event.key === 'Enter') { event.preventDefault(); acceptSearch(true) }
@@ -233,7 +253,7 @@ defineExpose({ focusInput })
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--term-font-scale, 1));
   line-height: 1.55;
 }
 
@@ -320,7 +340,7 @@ defineExpose({ focusInput })
   border: none;
   outline: none;
   background: none;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--term-font-scale, 1));
   color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
 }
