@@ -47,6 +47,7 @@
       <button class="status-item status-button" title="Open terminal (~)" @click="terminal.open()">
         <AppIcon name="terminal" :size="11" /> zsh
       </button>
+      <span v-if="clock" class="status-item status-clock" :title="`your local time — ${clock}`">{{ clock }}</span>
       <button class="status-item status-button" title="Toggle theme" @click="toggleTheme($event)">
         <ClientOnly>
           <AppIcon :name="colorMode.value === 'dark' ? 'sun' : 'moon'" :size="11" />
@@ -107,6 +108,18 @@ const cyclePresence = () => {
   pingTimer = setTimeout(() => (pinging.value = false), 600)
 }
 onBeforeUnmount(() => clearTimeout(pingTimer))
+
+// a live hh:mm clock, like a real OS bar — client-only (empty in the static
+// HTML) and re-aligned to the next minute boundary after every tick
+const clock = ref('')
+let clockTimer: ReturnType<typeof setTimeout> | undefined
+const tickClock = () => {
+  const now = new Date()
+  clock.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  clockTimer = setTimeout(tickClock, 60_500 - (now.getSeconds() * 1000 + now.getMilliseconds()))
+}
+onMounted(tickClock)
+onUnmounted(() => clearTimeout(clockTimer))
 
 // classic editor toggle: LF ⇄ CRLF
 const eol = ref('LF')

@@ -357,3 +357,9 @@ test('the console dev hunt chains clues to a reward', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText('finished the console hunt')
 })
+
+test('the status bar shows a live clock', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.status-clock')).toHaveText(/\d{1,2}:\d{2}/)
+})
