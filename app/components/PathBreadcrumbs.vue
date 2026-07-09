@@ -32,6 +32,31 @@ const segments = computed(() => {
     last: i === parts.length - 1
   }))
 })
+
+// mirror the visible trail as BreadcrumbList structured data
+useHead({
+  script: computed(() =>
+    segments.value.length
+      ? [{
+          key: 'breadcrumb-ld',
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', 'position': 1, 'name': 'home', 'item': SITE_URL },
+              ...segments.value.map((segment, i) => ({
+                '@type': 'ListItem' as const,
+                'position': i + 2,
+                'name': segment.label,
+                'item': `${SITE_URL}${segment.to}`
+              }))
+            ]
+          })
+        }]
+      : []
+  )
+})
 </script>
 
 <style scoped lang="scss">

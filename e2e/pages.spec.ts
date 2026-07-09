@@ -391,3 +391,19 @@ test('/now shows a git-derived last-updated date', async ({ page }) => {
   await expect(page.getByText(/last updated/)).toBeVisible()
   await expect(page.locator('.subtitle .is-family-code').first()).toHaveText(/^\d{4}-\d{2}-\d{2}$/)
 })
+
+test('subpages emit BreadcrumbList structured data matching the trail', async ({ page }) => {
+  await page.goto('/blog/snake-in-the-terminal')
+  const json = await page.locator('script[type="application/ld+json"]')
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent ?? ''))
+  const breadcrumb = json.map((text) => JSON.parse(text)).find((data) => data['@type'] === 'BreadcrumbList')
+  expect(breadcrumb).toBeTruthy()
+  const names = breadcrumb.itemListElement.map((item: { name: string }) => item.name)
+  expect(names).toEqual(['home', 'blog', 'snake-in-the-terminal'])
+  // the home page emits none
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const homeJson = await page.locator('script[type="application/ld+json"]')
+    .evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent ?? '{}')))
+  expect(homeJson.some((data) => data['@type'] === 'BreadcrumbList')).toBe(false)
+})
