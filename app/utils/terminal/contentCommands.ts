@@ -376,6 +376,22 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           .catch(() => error('search: failed to load the blog index'))
       }
     },
+    say: {
+      hidden: true,
+      usage: 'say <message>',
+      description: 'Say something to other live visitors',
+      exec: (args) => {
+        const message = args.join(' ').trim()
+        if (!message) return error('say: usage: say <message>')
+        const { enabled, say } = useLiveVisitors()
+        if (!enabled.value) {
+          muted('say: nobody is listening — live cursors are not enabled on this build.')
+          return
+        }
+        say(message.slice(0, 80))
+        muted(`(said to everyone browsing right now: "${message.slice(0, 80)}")`)
+      }
+    },
     now: {
       description: `What I'm doing these days`,
       exec: () => {

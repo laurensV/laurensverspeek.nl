@@ -12,11 +12,14 @@ let restored = false
 export function useLiveVisitors() {
   const count = useState('live-visitor-count', () => 0)
   const showCursors = useState('live-cursors-visible', () => false)
+  // outbox for the terminal `say` command → LiveCursors broadcasts it
+  const outbox = useState<{ text: string, ts: number } | null>('live-say-outbox', () => null)
   if (import.meta.client && !restored) {
     restored = true
     showCursors.value = storageGet(SHOW_KEY) === '1'
     watch(showCursors, (value) => storageSet(SHOW_KEY, value ? '1' : '0'))
   }
   const enabled = computed(() => Boolean(useRuntimeConfig().public.cursorsWs))
-  return { count, showCursors, enabled }
+  const say = (text: string) => (outbox.value = { text, ts: Date.now() })
+  return { count, showCursors, enabled, outbox, say }
 }

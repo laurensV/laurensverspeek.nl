@@ -580,3 +580,9 @@ test('sysinfo prints a neofetch-style session card', async ({ page }) => {
   await expect(out).toContainText(/\d+×\d+/)
   await expect(out).toContainText('localStorage')
 })
+
+test('say explains itself when live cursors are not configured', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'say hello world')
+  await expect(page.locator('.terminal-output')).toContainText('not enabled on this build')
+})

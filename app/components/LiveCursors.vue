@@ -14,6 +14,7 @@
         <path d="M0 0 L14 10 L7 11 L4 18 Z" />
       </svg>
       <span class="live-cursor-label is-family-code">{{ cursor.name || 'visitor' }}</span>
+      <span v-if="cursor.say" class="live-cursor-bubble is-family-code">{{ cursor.say }}</span>
     </div>
   </div>
 </template>
@@ -33,12 +34,14 @@ interface RemoteCursor {
   y: number
   page: string
   seen: number
+  say?: string
+  sayUntil?: number
 }
 
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
 const { name } = useIdentity()
-const { count, showCursors, enabled } = useLiveVisitors()
+const { count, showCursors, enabled, outbox } = useLiveVisitors()
 
 const cursors = ref(new Map<number, RemoteCursor>())
 const tick = ref(0)
@@ -51,9 +54,9 @@ const visibleCursors = computed(() => {
   void tick.value
   if (!showCursors.value) return []
   const now = Date.now()
-  return [...cursors.value.values()].filter(
-    (c) => c.page === route.path && now - c.seen < 6000
-  )
+  return [...cursors.value.values()]
+    .map((c) => (c.sayUntil && now > c.sayUntil ? { ...c, say: undefined } : c))
+    .filter((c) => c.page === route.path && now - c.seen < 6000)
 })
 
 // the status bar badge: everyone active anywhere on the site, plus you
@@ -72,11 +75,20 @@ const connect = () => {
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data)
     if (msg.type === 'move') {
-      cursors.value.set(msg.id, { ...msg, seen: Date.now() })
+      // keep any active speech bubble alive across position updates
+      const prev = cursors.value.get(msg.id)
+      cursors.value.set(msg.id, { ...msg, seen: Date.now(), say: prev?.say, sayUntil: prev?.sayUntil })
       cursors.value = new Map(cursors.value)
     } else if (msg.type === 'leave') {
       cursors.value.delete(msg.id)
       cursors.value = new Map(cursors.value)
+    } else if (msg.type === 'say') {
+      const existing = cursors.value.get(msg.id)
+      if (existing) {
+        existing.say = String(msg.text).slice(0, 80)
+        existing.sayUntil = Date.now() + 5000
+        cursors.value = new Map(cursors.value)
+      }
     }
   }
 
@@ -110,6 +122,13 @@ onMounted(() => {
 })
 
 useEventListener('pointermove', send, { passive: true })
+
+// the terminal `say` command writes here; forward it to the relay
+watch(outbox, (msg) => {
+  if (msg && socket?.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: 'say', text: msg.text }))
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -129,6 +148,22 @@ useEventListener('pointermove', send, { passive: true })
     margin-left: 0.9rem;
     font-size: 0.6rem;
     opacity: 0.8;
+  }
+
+  .live-cursor-bubble {
+    position: absolute;
+    left: 0.9rem;
+    bottom: 1.2rem;
+    max-width: 12rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.7rem;
+    // readable on any cursor hue: light fill, dark text, hue only on the border
+    border: 1.5px solid currentColor;
+    background-color: #fbfbfd;
+    color: #101014;
+    font-size: 0.65rem;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 }
 </style>

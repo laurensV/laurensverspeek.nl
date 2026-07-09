@@ -31,6 +31,16 @@ wss.on('connection', (socket) => {
     } catch {
       return
     }
+    // chat: a short message shown as a speech bubble over the sender's cursor
+    if (msg.type === 'say' && typeof msg.text === 'string') {
+      const text = msg.text.slice(0, 80)
+      if (!text.trim()) return
+      const payload = JSON.stringify({ type: 'say', id, text })
+      for (const client of wss.clients) {
+        if (client !== socket && client.readyState === 1) client.send(payload)
+      }
+      return
+    }
     if (typeof msg.x !== 'number' || typeof msg.y !== 'number' || typeof msg.page !== 'string') return
     // relay the visitor's chosen display name (sanitized, length-capped)
     const name = typeof msg.name === 'string'
