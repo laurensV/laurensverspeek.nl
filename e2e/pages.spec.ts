@@ -610,3 +610,11 @@ test('kbd keys share the global keycap style', async ({ page }) => {
   expect(style.shadow).not.toBe('none')
   expect(style.font).toContain('JetBrains Mono')
 })
+
+test('page source greets view-sourcers with an ascii banner', async ({ request }) => {
+  for (const path of ['/', '/blog']) {
+    const html = await (await request.get(path)).text()
+    expect(html).toContain('hello, fellow view-sourcer')
+    expect(html).toContain('lv.hunt()')
+  }
+})
