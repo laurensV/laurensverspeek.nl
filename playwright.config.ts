@@ -6,8 +6,11 @@ const PORT = 4173
 
 export default defineConfig({
   testDir: './e2e',
+  // Parallel across FILES only: each spec file keeps its internal order (some
+  // build on state within a file), but the four suites run side by side —
+  // contexts are isolated and the static server is read-only.
   fullyParallel: false,
-  workers: 1,
+  workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
