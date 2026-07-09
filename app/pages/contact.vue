@@ -3,8 +3,13 @@
     <div class="container contact-container">
       <p class="overline mb-2">contact $ ping laurens</p>
       <h1 class="title is-2">Let's build something</h1>
-      <p class="subtitle is-5 has-text-grey mb-5">
+      <p class="subtitle is-5 has-text-grey mb-4">
         Got a project, an idea, or just want to say hi? Run the script.
+      </p>
+
+      <p class="local-time is-family-code is-size-7 mb-5" data-testid="local-time">
+        <span class="lt-bracket">[</span> my local time <span class="lt-bracket">]</span> <span class="lt-clock">{{ localTime || '--:--' }}</span>
+        <template v-if="localTime"> — {{ awakeHint }} · usually replies within a day</template>
       </p>
 
       <ContactWizard class="mb-5" />
@@ -49,6 +54,28 @@ useSeoMeta({ description: 'Contact Laurens Verspeek — run the contact.sh wizar
 
 // half-block ascii QR pointing at the prerendered vCard
 const qr = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
+
+// live clock in my timezone — client-only (starts as --:-- in the static
+// HTML), so the prerendered page never bakes in a stale time
+const TIME_ZONE = 'Europe/Amsterdam'
+const localTime = ref('')
+const awakeHint = ref('')
+
+const tick = () => {
+  const now = new Date()
+  localTime.value = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit', minute: '2-digit', timeZone: TIME_ZONE, timeZoneName: 'short'
+  }).format(now)
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: TIME_ZONE }).format(now))
+  awakeHint.value = hour >= 8 && hour < 24 ? 'probably awake' : 'probably asleep'
+}
+
+let clock: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  tick()
+  clock = setInterval(tick, 30_000)
+})
+onUnmounted(() => clearInterval(clock))
 </script>
 
 <style scoped lang="scss">
@@ -58,6 +85,19 @@ const qr = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
 
 .contact-alt {
   gap: 0.75rem;
+}
+
+// status-line style local-time badge
+.local-time {
+  color: var(--bulma-text-weak);
+
+  .lt-bracket {
+    color: var(--bulma-primary-on-scheme);
+  }
+
+  .lt-clock {
+    color: var(--bulma-text);
+  }
 }
 
 .contact-social {

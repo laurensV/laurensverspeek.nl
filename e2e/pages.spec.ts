@@ -590,3 +590,11 @@ test('the web manifest advertises app shortcuts', async ({ request }) => {
   expect(urls).toContain('/blog')
   expect(urls).toContain('/desktop')
 })
+
+test('contact shows a live local-time badge once hydrated', async ({ page }) => {
+  await page.goto('/contact')
+  const badge = page.getByTestId('local-time')
+  await expect(badge).toContainText(/\d{2}:\d{2}/)
+  await expect(badge).toContainText(/probably (awake|asleep)/)
+  await expect(badge).toContainText('replies within a day')
+})
