@@ -33,6 +33,12 @@
         </div>
       </div>
 
+      <p v-if="pgp.fingerprint" class="pgp-line is-family-code is-size-7 mt-4">
+        $ curl -s /pgp.txt | gpg --import
+        <span class="pgp-fpr">// {{ pgp.fingerprint }}</span>
+        · <a href="/pgp.txt">public key</a>
+      </p>
+
       <details class="vcard-box is-family-code mt-5">
         <summary>$ cat contact.vcf <span class="vcard-hint">— save my contact card</span></summary>
         <div class="vcard-body">
@@ -48,6 +54,7 @@
 <script setup lang="ts">
 import { profile } from '~/data/profile'
 import { qrAsciiLines } from '~/utils/qrAscii'
+import { pgp } from '~/data/pgp'
 
 useHead({ title: 'Contact — Laurens Verspeek' })
 useSeoMeta({ description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.' })
@@ -85,6 +92,18 @@ onUnmounted(() => clearInterval(clock))
 
 .contact-alt {
   gap: 0.75rem;
+}
+
+.pgp-line {
+  color: var(--bulma-text-weak);
+
+  .pgp-fpr {
+    letter-spacing: 0.06em;
+  }
+
+  a {
+    color: var(--bulma-primary-on-scheme);
+  }
 }
 
 // status-line style local-time badge

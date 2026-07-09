@@ -630,3 +630,19 @@ test('/stats explains itself when analytics is not configured', async ({ page })
   await expect(page.locator('.stats-off')).toContainText('analytics is not enabled on this build')
 })
 
+test('pgp stays hidden while no key is published', async ({ page, request }) => {
+  // not prerendered — the static host serves its fallback page, never a key
+  const body = await (await request.get('/pgp.txt')).text()
+  expect(body).not.toContain('BEGIN PGP')
+  await page.goto('/contact')
+  await expect(page.locator('.pgp-line')).toHaveCount(0)
+  // the hidden gpg command explains the situation (from home — the contact
+  // wizard autofocuses its own input, which would swallow the backtick)
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await page.fill('#terminal-input', 'gpg --list-keys')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText('no public key published on this build')
+})

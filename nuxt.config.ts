@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import { pgp } from './app/data/pgp'
 
 // baked into the footer's build stamp; the hash links into the terminal's git command
 const buildHash = (() => {
@@ -148,7 +149,7 @@ export default defineNuxtConfig({
     prerender: {
       // /desktop is client-only (lvOS), but prerender the shell so a direct hit
       // to the shareable URL gets a real file instead of only the SPA fallback
-      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/contact.vcf', '/resume.json', '/desktop', '/life']
+      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/contact.vcf', '/resume.json', '/desktop', '/life', ...(pgp.publicKey ? ['/pgp.txt'] : [])]
     }
   },
 

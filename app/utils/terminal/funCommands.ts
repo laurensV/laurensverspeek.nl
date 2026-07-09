@@ -5,6 +5,7 @@ import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 import { formatWeather } from '~/utils/terminal/weather'
 import { framePixelsToAscii } from '~/utils/asciiCam'
 import { effectProcs, SYSTEM_PROCS, killByPid } from '~/utils/terminal/effectProcs'
+import { pgp } from '~/data/pgp'
 import type { GameHandle } from '~/utils/terminalGames'
 
 const CAM_W = 64
@@ -298,6 +299,21 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
           setTimeout(send, 420)
         }
         send()
+      }
+    },
+    gpg: {
+      hidden: true,
+      usage: 'gpg --list-keys',
+      description: 'Show my PGP key (when one is published)',
+      exec: () => {
+        if (!pgp.publicKey) {
+          muted(`gpg: keybox '~/.gnupg/pubring.kbx' created`)
+          out('gpg: no public key published on this build (yet)')
+          return
+        }
+        out(`pub   ${pgp.fingerprint}`)
+        out(`uid   ${profile.name} <${profile.email}>`)
+        ctx.link('the armored key lives at /pgp.txt', '/pgp.txt')
       }
     },
     telnet: {
