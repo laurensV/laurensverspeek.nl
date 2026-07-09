@@ -9,6 +9,7 @@ import { loadHistory, saveHistory, expandHistory } from '~/utils/terminal/histor
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
+import { shellError } from '~/utils/terminal/errors'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import { profile } from '~/data/profile'
 
@@ -208,7 +209,7 @@ export function useTerminal() {
     const { name, args, pipeStages } = parseCommandLine(cmdLine, ctx.aliases.value)
     const command = commands[name.toLowerCase()]
     if (!command) {
-      error(`lvsh: command not found: ${name}`)
+      error(shellError(`command not found: ${name}`))
       muted(`Type 'help' for available commands.`)
       return
     }
