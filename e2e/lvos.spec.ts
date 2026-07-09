@@ -421,3 +421,21 @@ test('ctrl+alt+arrows snap the top window from the keyboard', async ({ page }) =
   await expect.poll(async () => (await win.boundingBox())!.x).toBeGreaterThan(0)
 })
 
+test('a paint drawing can hang as the desktop wallpaper', async ({ page }) => {
+  await bootDesktop(page)
+  // close the readme window that covers the icon column
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: 'lvpaint' }).click()
+  const canvas = page.locator('.paint-canvas')
+  await canvas.waitFor()
+  const box = (await canvas.boundingBox())!
+  await page.mouse.move(box.x + 40, box.y + 40)
+  await page.mouse.down()
+  await page.mouse.move(box.x + 160, box.y + 120, { steps: 5 })
+  await page.mouse.up()
+  await page.click('.paint-wallpaper')
+  await expect(page.locator('.paint-wallpaper')).toContainText('hung on the wall')
+  await expect.poll(async () =>
+    page.locator('.lvos').evaluate((el) => getComputedStyle(el).backgroundImage)
+  ).toContain('data:image/png')
+})

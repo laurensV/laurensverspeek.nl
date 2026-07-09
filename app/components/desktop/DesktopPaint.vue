@@ -19,6 +19,7 @@
         >{{ size }}px</button>
       </div>
       <button class="paint-clear" @click="clear">[clear]</button>
+      <button class="paint-wallpaper" @click="hangOnWall">{{ wallLabel }}</button>
     </div>
     <canvas
       ref="canvasRef"
@@ -83,6 +84,28 @@ const clear = () => {
   const canvas = canvasRef.value
   canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
 }
+
+// export the drawing (over the desktop's dark tone, since the canvas itself is
+// transparent) and hang it as the lvOS wallpaper
+const { setCustomWallpaper } = useWallpaper()
+const wallLabel = ref('[set as wallpaper]')
+let wallTimer: ReturnType<typeof setTimeout> | undefined
+const hangOnWall = () => {
+  const canvas = canvasRef.value
+  if (!canvas) return
+  const framed = document.createElement('canvas')
+  framed.width = canvas.width
+  framed.height = canvas.height
+  const ctx = framed.getContext('2d')!
+  ctx.fillStyle = '#101014'
+  ctx.fillRect(0, 0, framed.width, framed.height)
+  ctx.drawImage(canvas, 0, 0)
+  const hung = setCustomWallpaper(framed.toDataURL('image/png'))
+  wallLabel.value = hung ? '[hung on the wall ✓]' : '[storage said no]'
+  clearTimeout(wallTimer)
+  wallTimer = setTimeout(() => (wallLabel.value = '[set as wallpaper]'), 2500)
+}
+onUnmounted(() => clearTimeout(wallTimer))
 </script>
 
 <style scoped lang="scss">
@@ -133,16 +156,24 @@ const clear = () => {
 
 .paint-clear {
   margin-left: auto;
+}
+
+.paint-clear,
+.paint-wallpaper {
   border: none;
   background: none;
   color: hsl(var(--lv-scheme-hs), 55%);
   font: inherit;
   font-size: 0.7rem;
   cursor: pointer;
+}
 
-  &:hover {
-    color: var(--bulma-danger);
-  }
+.paint-clear:hover {
+  color: var(--bulma-danger);
+}
+
+.paint-wallpaper:hover {
+  color: var(--bulma-primary);
 }
 
 .paint-canvas {

@@ -35,7 +35,8 @@ export const STATE_KEYS = {
   // lvOS
   lvosWindows: 'lvos-windows',
   lvosNotes: 'lvos-notes',
-  lvosWallpaper: 'lvos-wallpaper'
+  lvosWallpaper: 'lvos-wallpaper',
+  lvosWallpaperCustom: 'lvos-wallpaper-custom'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]

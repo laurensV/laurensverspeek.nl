@@ -45,23 +45,46 @@ export const WALLPAPERS: Wallpaper[] = [
 ]
 
 const WALLPAPER_KEY = 'lvos-wallpaper'
+const CUSTOM_KEY = 'lvos-wallpaper-custom'
 let restored = false
 
 export function useWallpaper() {
   const wallpaper = useState(STATE_KEYS.lvosWallpaper, () => 0)
+  // a drawing exported from the Paint app, as a data URL (empty = none)
+  const custom = useState(STATE_KEYS.lvosWallpaperCustom, () => '')
+
+  const wallpapers = computed<Wallpaper[]>(() =>
+    custom.value
+      ? [...WALLPAPERS, {
+          name: 'your masterpiece',
+          swatch: `url("${custom.value}") center / cover`,
+          css: `url("${custom.value}") center / cover no-repeat, hsl(var(--lv-scheme-hs), 5%)`
+        }]
+      : WALLPAPERS
+  )
+
   if (import.meta.client && !restored) {
     restored = true
+    custom.value = storageGet(CUSTOM_KEY) ?? ''
     const saved = Number(storageGet(WALLPAPER_KEY))
-    if (Number.isInteger(saved) && saved >= 0 && saved < WALLPAPERS.length) wallpaper.value = saved
+    if (Number.isInteger(saved) && saved >= 0 && saved < wallpapers.value.length) wallpaper.value = saved
     watch(wallpaper, (index) => storageSet(WALLPAPER_KEY, String(index)))
   }
-  const wallpaperStyle = computed(() => ({ background: WALLPAPERS[wallpaper.value]?.css }))
+  const wallpaperStyle = computed(() => ({ background: wallpapers.value[wallpaper.value]?.css }))
 
   // advance to the next wallpaper, returning its name (handy for a toast)
   const cycleWallpaper = () => {
-    wallpaper.value = (wallpaper.value + 1) % WALLPAPERS.length
-    return WALLPAPERS[wallpaper.value]!.name
+    wallpaper.value = (wallpaper.value + 1) % wallpapers.value.length
+    return wallpapers.value[wallpaper.value]!.name
   }
 
-  return { wallpapers: WALLPAPERS, wallpaper, wallpaperStyle, cycleWallpaper }
+  /** Hang a Paint-app drawing as the wallpaper; false when storage refused. */
+  const setCustomWallpaper = (dataUrl: string) => {
+    if (!storageSet(CUSTOM_KEY, dataUrl)) return false
+    custom.value = dataUrl
+    wallpaper.value = WALLPAPERS.length
+    return true
+  }
+
+  return { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper, setCustomWallpaper }
 }
