@@ -225,13 +225,24 @@ export function useTerminal() {
     const finish = () => {
       sink = null
       let result = captured
-      for (const stage of pipeStages) {
+      // `| copy` as the final stage sends the output to the clipboard
+      let stages = pipeStages
+      const toClipboard = stages.at(-1)?.trim() === 'copy'
+      if (toClipboard) stages = stages.slice(0, -1)
+      for (const stage of stages) {
         const filtered = applyFilter(result, stage, makeLine)
         if ('error' in filtered) {
           error(filtered.error)
           return
         }
         result = filtered.lines
+      }
+      if (toClipboard) {
+        const text = result.map((line) => stripHtml(line.text)).join('\n')
+        navigator.clipboard?.writeText(text)
+          .then(() => muted(`copied ${result.length} line${result.length === 1 ? '' : 's'} to the clipboard`))
+          .catch(() => error('copy: the clipboard said no'))
+        return
       }
       if (redirectFile) {
         const written = writeFileAt(

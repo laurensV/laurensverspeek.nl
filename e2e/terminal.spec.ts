@@ -426,3 +426,17 @@ test('stats explains itself when analytics is not configured', async ({ page }) 
   await run(page, 'stats')
   await expect(page.locator('.terminal-output')).toContainText('analytics is not enabled')
 })
+
+test('| copy sends piped output to the clipboard', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo clipboard-bound')
+  await run(page, 'echo clipboard-bound | copy')
+  await expect(out).toContainText('copied 1 line to the clipboard')
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('clipboard-bound')
+  // filters still run before the copy stage
+  await run(page, 'help | grep blog | copy')
+  await expect(out).toContainText(/copied \d+ lines? to the clipboard/)
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('blog')
+})
