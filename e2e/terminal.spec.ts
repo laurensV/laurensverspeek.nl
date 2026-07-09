@@ -495,3 +495,36 @@ test('barrel roll respects reduced motion', async ({ page }) => {
   await expect(page.locator('.terminal-output')).toContainText('imagine')
   await expect(page.locator('html')).not.toHaveClass(/barrel-roll/)
 })
+
+test('destroy mode shoots real dom elements and esc repairs the site', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'destroy')
+  const overlay = page.locator('.destroyer')
+  await expect(overlay).toBeVisible()
+  // the terminal closed itself; shoot the hero heading
+  const hero = page.locator('.hero-name')
+  const box = await hero.boundingBox()
+  if (!box) throw new Error('no hero to destroy')
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  await expect(overlay).toContainText('1 destroyed')
+  // something real got shot (the innermost element under the crosshair)
+  const hiddenCount = () => page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('*')].filter((el) => el.style.visibility === 'hidden').length
+  )
+  expect(await hiddenCount()).toBeGreaterThan(0)
+  // escape ends the rampage and repairs everything
+  await page.keyboard.press('Escape')
+  await expect(overlay).toHaveCount(0)
+  expect(await hiddenCount()).toBe(0)
+  await expect(hero).toBeVisible()
+})
+
+test('five quick clicks on the status bar version arm destroy mode', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const version = page.locator('.status-bar button', { hasText: 'v2.0.0' })
+  for (let i = 0; i < 5; i++) await version.click()
+  await expect(page.locator('.destroyer')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.destroyer')).toHaveCount(0)
+})

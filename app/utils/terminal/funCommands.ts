@@ -26,7 +26,8 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
     { pid: 314, name: 'matrix-rain', running: () => ctx.effects.matrix.value, stop: () => (ctx.effects.matrix.value = false) },
     { pid: 217, name: 'party-mode', running: () => ctx.effects.party.value, stop: () => (ctx.effects.party.value = false) },
     { pid: 42, name: 'sl-train', running: () => ctx.effects.train.value, stop: () => (ctx.effects.train.value = false) },
-    { pid: 101, name: 'crt-filter', running: () => ctx.effects.crt.value, stop: () => void ctx.effects.toggleCrt(false) }
+    { pid: 101, name: 'crt-filter', running: () => ctx.effects.crt.value, stop: () => void ctx.effects.toggleCrt(false) },
+    { pid: 666, name: 'destroy-mode', running: () => ctx.effects.destruct.value, stop: () => (ctx.effects.destruct.value = false) }
   ]
   const systemProcs = [
     { pid: 1, name: 'init' },
@@ -75,6 +76,15 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
         ctx.startGame(create2048Game)
+      }
+    },
+    destroy: {
+      hidden: true,
+      description: 'Enough talk. Shoot the website.',
+      exec: () => {
+        muted('Arming ship... click to fire. Esc ends the rampage and repairs the site.')
+        ctx.effects.destruct.value = true
+        setTimeout(close, 500)
       }
     },
     'barrel-roll': {

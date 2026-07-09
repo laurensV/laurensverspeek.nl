@@ -45,7 +45,7 @@ export function useTerminal() {
     return path === '' ? '~' : `~${path}`
   })
   const colorMode = useColorMode()
-  const { matrixActive, crtActive, toggleCrt } = useSiteEffects()
+  const { matrixActive, crtActive, destructActive, toggleCrt } = useSiteEffects()
   const { accent, accents, setAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
@@ -131,6 +131,7 @@ export function useTerminal() {
       bootReplay: useState('boot-replay', () => false),
       party: useState('fx-party', () => false),
       crt: crtActive,
+      destruct: destructActive,
       toggleCrt
     },
     // commands run from event handlers, outside the Nuxt instance — wrap

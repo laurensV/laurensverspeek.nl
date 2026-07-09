@@ -15,8 +15,9 @@
     <CommandPalette />
     <ShortcutsHelp />
     <BootSplash />
-    <!-- terminal-only easter egg: load its canvas code only once triggered -->
+    <!-- terminal-only easter eggs: loaded only once triggered -->
     <LazyMatrixRain v-if="matrixActive" />
+    <LazyDomDestroyer v-if="destructActive" />
     <SlTrain />
     <PartyMode />
     <LiveCursors />
@@ -29,7 +30,7 @@
 
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the
 // terminal, so gate it behind its flag to keep it out of the initial bundle.
-const { matrixActive } = useSiteEffects()
+const { matrixActive, destructActive } = useSiteEffects()
 
 // j/k · gg/G scrolling everywhere except lvOS, which has its own keyboard world
 useVimScroll()

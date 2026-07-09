@@ -10,7 +10,11 @@
       >
         <AppIcon name="code" :size="11" /> main*
       </a>
-      <span class="status-item is-hidden-mobile">v2.0.0</span>
+      <button
+        class="status-item status-button is-hidden-mobile"
+        title="v2.0.0"
+        @click="versionClick"
+      >v2.0.0</button>
       <button
         class="status-item status-button status-online"
         :class="{ 'is-pinging': pinging }"
@@ -51,6 +55,21 @@ const route = useRoute()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState('vim-pending-key', () => '')
+
+// easter egg: hammering the version number five times arms destroy mode
+const { destructActive } = useSiteEffects()
+let versionClicks = 0
+let versionTimer: ReturnType<typeof setTimeout> | undefined
+const versionClick = () => {
+  versionClicks++
+  clearTimeout(versionTimer)
+  versionTimer = setTimeout(() => (versionClicks = 0), 1500)
+  if (versionClicks >= 5) {
+    versionClicks = 0
+    destructActive.value = true
+  }
+}
+onUnmounted(() => clearTimeout(versionTimer))
 
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'

@@ -2,6 +2,7 @@
 export function useSiteEffects() {
   const matrixActive = useState('fx-matrix', () => false)
   const crtActive = useState('fx-crt', () => false)
+  const destructActive = useState('fx-destruct', () => false)
 
   const toggleCrt = (on?: boolean) => {
     crtActive.value = on ?? !crtActive.value
@@ -11,5 +12,5 @@ export function useSiteEffects() {
     return crtActive.value
   }
 
-  return { matrixActive, crtActive, toggleCrt }
+  return { matrixActive, crtActive, destructActive, toggleCrt }
 }
