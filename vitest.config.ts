@@ -10,6 +10,8 @@ export default defineConfig({
     }
   },
   test: {
-    include: ['tests/**/*.test.ts']
+    include: ['tests/**/*.test.ts'],
+    // component tests need the Nuxt environment — they run via `test:nuxt`
+    exclude: ['tests/nuxt/**']
   }
 })
