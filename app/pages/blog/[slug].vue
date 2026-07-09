@@ -154,8 +154,7 @@ const readingTime = computed(() => {
 })
 
 // share: the native sheet where it exists, otherwise copy the url
-const shared = ref(false)
-let shareTimer: ReturnType<typeof setTimeout> | undefined
+const { copied: shared, copy } = useCopyFlag()
 const share = async () => {
   const url = window.location.href
   const title = post.value?.title ?? document.title
@@ -163,12 +162,8 @@ const share = async () => {
     await navigator.share({ title, url }).catch(() => {})
     return
   }
-  await navigator.clipboard?.writeText(url).catch(() => {})
-  shared.value = true
-  clearTimeout(shareTimer)
-  shareTimer = setTimeout(() => (shared.value = false), 1800)
+  await copy(url)
 }
-onBeforeUnmount(() => clearTimeout(shareTimer))
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })

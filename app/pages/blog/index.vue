@@ -104,17 +104,8 @@ const filtered = computed(() => {
 const transitionName = (path: string) => `post-${path.split('/').pop()}`
 
 // copy the absolute RSS feed URL to paste into a reader
-const copied = ref(false)
-let copyTimer: ReturnType<typeof setTimeout> | undefined
-const copyFeed = () => {
-  if (!import.meta.client) return
-  navigator.clipboard?.writeText(`${SITE_URL}/rss.xml`).then(() => {
-    copied.value = true
-    clearTimeout(copyTimer)
-    copyTimer = setTimeout(() => (copied.value = false), 1800)
-  }).catch(() => {})
-}
-onBeforeUnmount(() => clearTimeout(copyTimer))
+const { copied, copy } = useCopyFlag()
+const copyFeed = () => copy(`${SITE_URL}/rss.xml`)
 </script>
 
 <style scoped lang="scss">
