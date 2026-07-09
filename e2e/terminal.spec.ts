@@ -420,3 +420,9 @@ test('qr encodes arbitrary text and defaults to the current url', async ({ page 
   await expect(out.locator('.term-qr')).toHaveCount(2)
   await expect(out).toContainText(/encodes: http/)
 })
+
+test('stats explains itself when analytics is not configured', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'stats')
+  await expect(page.locator('.terminal-output')).toContainText('analytics is not enabled')
+})

@@ -20,7 +20,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
   const { push, out, muted, error, link } = ctx
   // captured at factory time (inside the composable), since command exec
   // handlers run outside the Nuxt instance
-  const nowUpdated = useRuntimeConfig().public.nowUpdated
+  const { nowUpdated, goatcounter } = useRuntimeConfig().public
 
   const fetchPosts = () =>
     ctx.fetchPosts().then((posts) => {
@@ -377,6 +377,31 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
           link(`${social.label.toLowerCase().padEnd(8, ' ')}${social.url}`, social.url)
         }
         muted(`\nTip: 'contact --qr' prints a scannable contact card.`)
+      }
+    },
+    stats: {
+      description: 'Visitor stats (public GoatCounter counters)',
+      exec: async () => {
+        if (!goatcounter) {
+          muted('analytics is not enabled on this build — no tracking, and therefore no stats.')
+          muted(`(enable by building with NUXT_PUBLIC_GOATCOUNTER=<code>)`)
+          return
+        }
+        muted(`Fetching from ${goatcounter}.goatcounter.com ...`)
+        try {
+          const total = await $fetch<{ count: string }>(
+            `https://${goatcounter}.goatcounter.com/counter/TOTAL.json`
+          )
+          push('output', `<span class="term-accent">site total</span>  ${total.count} views`, true)
+          const path = window.location.pathname.replace(/\/$/, '') || '/'
+          const here = await $fetch<{ count: string }>(
+            `https://${goatcounter}.goatcounter.com/counter/${encodeURIComponent(path)}.json`
+          ).catch(() => null)
+          if (here) push('output', `<span class="term-accent">this page</span>   ${here.count} views`, true)
+          muted('(public counters — no cookies, no fingerprints)')
+        } catch {
+          error('stats: could not reach goatcounter (are public counters switched on?)')
+        }
       }
     },
     github: {
