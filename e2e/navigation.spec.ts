@@ -282,3 +282,19 @@ test('a route progress bar appears during navigation', async ({ page }) => {
   expect(await sawActive).toBe(true)
   await expect(page).toHaveURL(/\/projects/)
 })
+
+test('keyboard focus shows a consistent ring on nav and terminal input', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  // a nav link gets the outline ring when focused via keyboard
+  const link = page.locator('.app-navbar .nav-link').first()
+  await link.focus()
+  const outline = await link.evaluate((el) => getComputedStyle(el).outlineWidth)
+  expect(parseFloat(outline)).toBeGreaterThan(0)
+  // the terminal input, which sets outline:none, gets a box-shadow ring instead
+  await page.keyboard.press('`')
+  const input = page.locator('#terminal-input')
+  await input.focus()
+  const shadow = await input.evaluate((el) => getComputedStyle(el).boxShadow)
+  expect(shadow).not.toBe('none')
+})

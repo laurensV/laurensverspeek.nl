@@ -41,6 +41,19 @@ html.is-lvos body {
   border-radius: 2px;
 }
 
+// Some inputs set `outline: none` (the caret indicates focus) — but for
+// keyboard users a ring is still clearer. A box-shadow ring survives
+// `outline: none`, so re-assert one on the text fields that opt out.
+.terminal-input:focus-visible,
+.error-input:focus-visible,
+.lock-input:focus-visible,
+.note-text:focus-visible,
+.palette-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsla(var(--lv-scheme-hs), 8%, 1), 0 0 0 4px var(--bulma-primary);
+  border-radius: 2px;
+}
+
 // Skip link: first tab stop on every page, jumps past the nav to content.
 .skip-link {
   position: fixed;
