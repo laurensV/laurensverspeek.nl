@@ -59,7 +59,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 
 // the eight resize handles (four edges + four corners)
 const RESIZE_DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const
-export type ResizeDir = (typeof RESIZE_DIRS)[number]
+type ResizeDir = (typeof RESIZE_DIRS)[number]
 
 defineProps<{
   win: DesktopWindow
