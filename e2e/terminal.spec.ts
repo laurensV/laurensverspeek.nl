@@ -621,3 +621,12 @@ test('navigating updates the browser tab title', async ({ page }) => {
   await page.goto('/blog')
   await expect.poll(() => page.title()).toContain('Blog')
 })
+
+test('id and hostname print identity info', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'id')
+  await expect(out).toContainText(/uid=1000\(.+\)/)
+  await run(page, 'hostname')
+  await expect(out).toContainText('laurensverspeek.nl')
+})

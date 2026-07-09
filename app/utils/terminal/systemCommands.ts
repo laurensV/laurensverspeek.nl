@@ -239,6 +239,17 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
         else error(`colorscheme: unknown accent '${args[0]}'. Try: ${ctx.accent.names.join(', ')}`)
       }
     },
+    id: {
+      description: 'Print your terminal user identity',
+      exec: () => {
+        const name = ctx.identity.name.value
+        out(`uid=1000(${name}) gid=1000(${name}) groups=1000(${name}),27(sudo… just kidding),100(visitors)`)
+      }
+    },
+    hostname: {
+      description: 'Show the hostname',
+      exec: () => out(profile.domain)
+    },
     uptime: {
       description: 'How long this page has been up',
       exec: () => {
