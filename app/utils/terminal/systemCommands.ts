@@ -94,6 +94,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
   return {
     ...createInfoCommands(ctx),
     help: {
+      category: 'system',
       description: 'List available commands',
       exec: () => {
         for (const group of groupCommands(ctx.getCommands())) {
@@ -111,6 +112,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     man: {
+      category: 'system',
       usage: 'man <command>',
       description: 'Show the manual page for a command',
       argCandidates: () => Object.keys(ctx.getCommands()).filter((n) => !ctx.getCommands()[n]!.hidden),
@@ -142,6 +144,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     alias: {
+      category: 'system',
       usage: 'alias [name=command]',
       description: 'List or define command aliases',
       exec: (args) => {
@@ -168,6 +171,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     unalias: {
+      category: 'system',
       usage: 'unalias <name>',
       description: 'Remove a command alias',
       argCandidates: () => Object.keys(ctx.aliases.value),
@@ -184,6 +188,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     env: {
+      category: 'system',
       description: 'List environment variables',
       exec: () => {
         for (const [key, value] of Object.entries(ctx.env.value)) {
@@ -192,6 +197,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     export: {
+      category: 'system',
       usage: 'export NAME=value',
       description: 'Set an environment variable',
       exec: (args) => {
@@ -206,6 +212,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     theme: {
+      category: 'system',
       usage: 'theme <dark|light|system>',
       description: 'Change the color theme',
       examples: ['theme dark', 'theme system'],
@@ -222,6 +229,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     colorscheme: {
+      category: 'system',
       usage: 'colorscheme <name>',
       description: `Change the accent color (${ctx.accent.names.join(', ')})`,
       examples: ['colorscheme emerald', 'colorscheme cyan'],
@@ -238,10 +246,12 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     pwd: {
+      category: 'files',
       description: 'Print the working directory',
       exec: () => out(ctx.cwd.value.replace(/^~/, ctx.env.value.HOME ?? '/home/visitor'))
     },
     echo: {
+      category: 'system',
       usage: 'echo <text> [> file]',
       description: 'Print text — or write it to a file with >',
       exec: (args) => {
@@ -257,6 +267,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     mkdir: {
+      category: 'files',
       usage: 'mkdir <name>',
       description: 'Create a directory',
       exec: (args) => {
@@ -285,6 +296,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     touch: {
+      category: 'files',
       usage: 'touch <name>',
       description: 'Create an empty file',
       exec: (args) => {
@@ -299,6 +311,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     which: {
+      category: 'system',
       usage: 'which <command>',
       description: 'Locate a command (builtin or alias)',
       argCandidates: () => Object.keys(ctx.getCommands()).filter((n) => !ctx.getCommands()[n]!.hidden),
@@ -316,17 +329,20 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     history: {
+      category: 'system',
       description: 'Show command history',
       exec: () =>
         ctx.history.value.forEach((cmd, i) => out(`${String(i + 1).padStart(3, ' ')}  ${cmd}`))
     },
     clear: {
+      category: 'system',
       description: 'Clear the terminal',
       exec: () => {
         ctx.lines.value = []
       }
     },
     reboot: {
+      category: 'system',
       description: 'Replay the boot sequence',
       exec: () => {
         out('Rebooting...')
@@ -337,6 +353,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     exit: {
+      category: 'system',
       description: 'Close the terminal',
       exec: () => {
         // an ssh "session" disconnects first; the next exit closes for real
@@ -421,6 +438,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     fontsize: {
+      category: 'system',
       usage: 'fontsize [0.7–1.6|+|-|reset]',
       description: 'Scale the terminal text (also ctrl+= / ctrl+-)',
       argCandidates: () => ['+', '-', 'reset'],
@@ -442,6 +460,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     qr: {
+      category: 'toys',
       usage: 'qr [text|url]',
       description: 'Turn anything into a scannable QR code',
       examples: ['qr             (encodes the page you are on)', 'qr https://example.com', 'qr any text at all'],
@@ -501,6 +520,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     rm: {
+      category: 'files',
       usage: 'rm <file>',
       description: 'Remove a file or directory',
       argCandidates: hereEntries,
@@ -528,18 +548,21 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     cp: {
+      category: 'files',
       usage: 'cp <source> <dest>',
       description: 'Copy a file',
       argCandidates: hereEntries,
       exec: (args) => copyOrMove('cp', args)
     },
     mv: {
+      category: 'files',
       usage: 'mv <source> <dest>',
       description: 'Move or rename a file',
       argCandidates: hereEntries,
       exec: (args) => copyOrMove('mv', args)
     },
     vim: {
+      category: 'files',
       usage: 'vim <file>',
       description: 'A real modal editor. You can even quit it',
       argCandidates: hereEntries,
@@ -552,6 +575,7 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: openVim
     },
     nano: {
+      category: 'files',
       usage: 'nano <file>',
       description: 'Edit a file, the friendly way',
       argCandidates: hereEntries,

@@ -11,9 +11,14 @@ export interface TerminalLine {
   html?: boolean
 }
 
+/** Where a command lands in `help` — anything without one falls into "misc" */
+export type HelpCategory = 'content' | 'files' | 'games' | 'toys' | 'system' | 'cal'
+
 export interface TerminalCommand {
   usage?: string
   description: string
+  /** Help section; declared on the command so new ones can't be forgotten */
+  category?: HelpCategory
   hidden?: boolean
   /** Longer explanation + examples, shown by `man <cmd>` */
   examples?: string[]

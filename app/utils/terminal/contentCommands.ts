@@ -77,10 +77,12 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
 
   return {
     about: {
+      category: 'content',
       description: 'Who is Laurens?',
       exec: () => profile.bio.forEach(out)
     },
     whoami: {
+      category: 'system',
       description: 'Who are you?',
       exec: () => {
         out(ctx.identity.name.value)
@@ -88,6 +90,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     nick: {
+      category: 'system',
       usage: 'nick <name>',
       description: 'Set your display name (used in the prompt & live cursors)',
       exec: (args) => {
@@ -102,6 +105,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     projects: {
+      category: 'content',
       usage: 'projects [category]',
       description: `List projects (${categories.map((c) => c.value).join(', ')})`,
       examples: ['projects', 'projects work', 'projects | grep vue'],
@@ -116,6 +120,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     open: {
+      category: 'content',
       usage: 'open <project>',
       description: 'Open a project in a new tab',
       argCandidates: projectSlugs,
@@ -142,6 +147,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cat: {
+      category: 'files',
       usage: 'cat <file|project|post>',
       description: 'Read a file you made (or a project / blog post)',
       argCandidates: () => [
@@ -194,6 +200,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cd: {
+      category: 'files',
       usage: 'cd <dir|page|->',
       description: `Enter a folder you made, or go to a page (${PAGES.join(', ')})`,
       argCandidates: () => [
@@ -264,6 +271,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     ls: {
+      category: 'files',
       usage: 'ls [-l] [pattern]',
       description: 'List the current directory (pages + your files at home)',
       exec: (args) => {
@@ -339,6 +347,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     tree: {
+      category: 'files',
       description: 'Show the whole site as a directory tree',
       exec: () => {
         push('primary', '~')
@@ -376,10 +385,12 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     cv: {
+      category: 'content',
       description: 'View my CV (printable)',
       exec: () => ctx.navigate('cv')
     },
     blog: {
+      category: 'content',
       usage: 'blog [post]',
       description: 'List blog posts — or read one right here',
       examples: ['blog', 'blog snake-in-the-terminal', 'blog | grep terminal'],
@@ -409,6 +420,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     search: {
+      category: 'content',
       usage: 'search <term>',
       description: 'Full-text search across the blog',
       examples: ['search canvas', 'search game of life', `search vue | head -3`],
@@ -449,6 +461,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     now: {
+      category: 'content',
       description: `What I'm doing these days`,
       exec: () => {
         muted(`last updated ${nowUpdated}`)
@@ -459,6 +472,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     uses: {
+      category: 'content',
       description: 'Gear, software and stack I use',
       exec: () => {
         for (const group of usesData) {
@@ -476,6 +490,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     contact: {
+      category: 'content',
       usage: 'contact [--qr]',
       description: 'How to reach me',
       examples: ['contact', 'contact --qr  (a scannable contact card, right in the terminal)'],
@@ -496,6 +511,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     stats: {
+      category: 'content',
       description: 'Visitor stats (public GoatCounter counters)',
       exec: async () => {
         if (!goatcounter) {
@@ -521,6 +537,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
       }
     },
     github: {
+      category: 'content',
       description: 'Live stats from the GitHub API',
       exec: () => {
         muted('Fetching from api.github.com ...')

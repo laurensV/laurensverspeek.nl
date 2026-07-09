@@ -79,20 +79,24 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
 
   const commands: Record<string, TerminalCommand> = {
     cowsay: {
+      category: 'toys',
       usage: 'cowsay <text>',
       description: 'A cow says your text',
       exec: (args) => out(cowsay(args.join(' ')))
     },
     figlet: {
+      category: 'toys',
       usage: 'figlet <text>',
       description: 'Big ASCII banner text',
       exec: (args) => push('primary', figlet(args.join(' ')))
     },
     fortune: {
+      category: 'toys',
       description: 'Words of dubious wisdom',
       exec: () => out(fortune())
     },
     snake: {
+      category: 'games',
       description: 'Play snake in the terminal',
       exec: () => {
         muted('Starting snake... arrows/wasd to move, q to quit.')
@@ -100,6 +104,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     hangman: {
+      category: 'games',
       description: 'Play hangman (a 2014 classic, remastered)',
       exec: () => {
         muted('Starting hangman... type letters to guess, q to quit.')
@@ -107,6 +112,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     tetris: {
+      category: 'games',
       description: 'Play tetris in the terminal',
       exec: () => {
         muted('Starting tetris... ←→ move, ↑ rotate, ↓ drop, space slams, q quits.')
@@ -114,6 +120,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     2048: {
+      category: 'games',
       description: 'Slide the tiles, double the numbers',
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
@@ -155,6 +162,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     ps: {
+      category: 'system',
       description: 'List running processes (effects included)',
       exec: () => {
         push('output', `<span class="term-accent">${'PID'.padStart(5)}  ${'STAT'.padEnd(5)}COMMAND</span>`, true)
@@ -170,6 +178,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     kill: {
+      category: 'system',
       usage: 'kill <pid>',
       description: 'Stop a process. Yes, kill 314 really stops the rain',
       argCandidates: () => procs.filter((proc) => proc.running()).map((proc) => String(proc.pid)),
@@ -192,6 +201,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     weather: {
+      category: 'toys',
       usage: 'weather [city]',
       description: 'Live weather, wttr.in style (open-meteo)',
       examples: ['weather', 'weather amsterdam', 'weather tokyo'],
@@ -224,6 +234,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     pong: {
+      category: 'games',
       description: 'You vs a slightly fallible AI paddle',
       exec: () => {
         muted('Starting pong... w/s or ↑/↓ to move, first to 5, q quits.')
@@ -231,6 +242,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     wpm: {
+      category: 'games',
       description: 'Typing test — how fast are you really?',
       exec: () => {
         muted('Starting typing test... just start typing, Backspace fixes, Esc quits.')
@@ -238,6 +250,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     top: {
+      category: 'games',
       description: 'Live process monitor',
       exec: () => {
         muted('Starting top... q to quit.')
@@ -245,6 +258,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     life: {
+      category: 'games',
       description: "Conway's Game of Life, in ASCII",
       exec: () => {
         muted('Starting life... space pauses, r reseeds, q quits.')
@@ -360,6 +374,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       exec: () => ctx.getCommands().desktop!.exec([])
     },
     matrix: {
+      category: 'toys',
       description: 'There is no spoon',
       exec: () => {
         push('primary', 'Wake up, Neo...')
@@ -371,6 +386,7 @@ export function createFunCommands(ctx: TerminalContext): Record<string, Terminal
       }
     },
     crt: {
+      category: 'toys',
       description: 'Toggle retro CRT mode',
       exec: () => {
         const on = ctx.effects.toggleCrt()

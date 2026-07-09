@@ -45,6 +45,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     neofetch: {
+      category: 'system',
       description: 'System information',
       exec: () => {
         push('primary', ASCII_LOGO)
@@ -63,10 +64,12 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     date: {
+      category: 'cal',
       description: 'Print the current date',
       exec: () => out(new Date().toString())
     },
     cal: {
+      category: 'cal',
       description: 'Show a calendar of the current month',
       exec: () => {
         const lines = renderCalendar(new Date())
@@ -74,6 +77,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     uname: {
+      category: 'system',
       usage: 'uname [-a]',
       description: 'Print system information',
       argCandidates: () => ['-a'],
@@ -83,6 +87,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
           : 'lvsh')
     },
     sysinfo: {
+      category: 'system',
       description: 'A neofetch for your browser session',
       exec: () => {
         const ua = navigator.userAgent
@@ -113,6 +118,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     df: {
+      category: 'system',
       description: 'How much localStorage this site really uses',
       exec: () => {
         for (const line of dfLines(collectStorageSlices())) push(line.type, line.text, line.html)

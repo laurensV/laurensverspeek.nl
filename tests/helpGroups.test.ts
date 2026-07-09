@@ -7,10 +7,10 @@ const cmd = (description: string, extra: Partial<TerminalCommand> = {}): Termina
 
 describe('groupCommands', () => {
   const registry: Record<string, TerminalCommand> = {
-    blog: cmd('read posts'),
-    ls: cmd('list files'),
-    snake: cmd('game'),
-    help: cmd('help'),
+    blog: cmd('read posts', { category: 'content' }),
+    ls: cmd('list files', { category: 'files' }),
+    snake: cmd('game', { category: 'games' }),
+    help: cmd('help', { category: 'system' }),
     secret: cmd('hidden one', { hidden: true }),
     frobnicate: cmd('uncategorized')
   }
@@ -36,10 +36,10 @@ describe('groupCommands', () => {
 describe('relatedCommands', () => {
   it('lists visible same-category commands, excluding the command itself', () => {
     const registry: Record<string, TerminalCommand> = {
-      ls: cmd('list'),
-      cat: cmd('read'),
-      tree: cmd('tree'),
-      snake: cmd('game'),
+      ls: cmd('list', { category: 'files' }),
+      cat: cmd('read', { category: 'files' }),
+      tree: cmd('tree', { category: 'files' }),
+      snake: cmd('game', { category: 'games' }),
       frobnicate: cmd('uncategorized')
     }
     expect(relatedCommands('ls', registry)).toEqual(['cat', 'tree'])
