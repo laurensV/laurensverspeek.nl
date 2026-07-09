@@ -233,8 +233,7 @@ export function useTerminal() {
       muted(`Type 'help' for available commands.`)
       return
     }
-    // count which commands get used — names only, never arguments
-    trackEvent(`terminal/${name.toLowerCase()}`)
+    trackEvent(analyticsEvents.terminalCommand(name))
     reflectTitle(name.toLowerCase())
 
     if (!pipeStages.length && !redirectFile && !toClipboard) {

@@ -1,3 +1,5 @@
+import type { AnalyticsEvent } from '~/utils/analyticsEvents'
+
 // Privacy-first analytics via GoatCounter (no cookies, no personal data).
 // Disabled unless NUXT_PUBLIC_GOATCOUNTER is set to your GoatCounter code,
 // e.g. NUXT_PUBLIC_GOATCOUNTER=laurensverspeek → laurensverspeek.goatcounter.com
@@ -17,8 +19,8 @@ export function useAnalytics() {
 
   const enabled = computed(() => Boolean(goatcounter))
 
-  /** Count a custom event (e.g. which terminal commands get used) */
-  const trackEvent = (name: string) => {
+  /** Count a custom event — only paths built by the analyticsEvents catalog */
+  const trackEvent = (name: AnalyticsEvent) => {
     if (!import.meta.client || !goatcounter) return
     window.goatcounter?.count({ path: name, event: true })
   }
