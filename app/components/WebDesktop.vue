@@ -11,6 +11,9 @@
       @contextmenu.prevent="openContextMenu"
       @click="contextMenu.open = false"
     >
+      <!-- live wallpaper: a dim Game of Life behind everything -->
+      <LazyDesktopLifeWallpaper v-if="wallpapers[wallpaper]?.live" />
+
       <!-- right-click context menu -->
       <DesktopContextMenu
         v-if="contextMenu.open"

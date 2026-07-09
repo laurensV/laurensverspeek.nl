@@ -326,3 +326,25 @@ test('lock screen covers the desktop until any password unlocks it', async ({ pa
   await page.keyboard.press('Enter')
   await expect(lock).toHaveCount(0, { timeout: 5000 })
 })
+
+test('the game of life wallpaper renders live behind the desktop', async ({ page }) => {
+  await bootDesktop(page)
+  await expect(page.locator('.lvos-live-wallpaper')).toHaveCount(0)
+  await page.locator('.lvos-start').click()
+  // the life wallpaper is the last swatch
+  await page.locator('.lvos-wallpaper-swatch').last().click()
+  const canvas = page.locator('.lvos-live-wallpaper')
+  await expect(canvas).toBeVisible()
+  // cells are actually being drawn (canvas has non-blank pixels)
+  await expect.poll(() =>
+    canvas.evaluate((el: HTMLCanvasElement) => {
+      const data = el.getContext('2d')!.getImageData(0, 0, el.width, el.height).data
+      for (let i = 3; i < data.length; i += 4) if (data[i]! > 0) return true
+      return false
+    })
+  ).toBe(true)
+  // the choice persists across a desktop reload
+  await page.reload()
+  await expect(page.locator('.lvos')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('.lvos-live-wallpaper')).toBeVisible()
+})

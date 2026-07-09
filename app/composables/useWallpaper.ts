@@ -1,8 +1,16 @@
-// lvOS wallpaper: the selectable backdrops plus the session-persisted choice.
+// lvOS wallpaper: the selectable backdrops plus the persisted choice.
 // Extracted from WebDesktop; the taskbar's swatches and the desktop background
 // both read from here.
 
-export interface Wallpaper { name: string, swatch: string, css: string }
+import { storageGet, storageSet } from '~/utils/safeStorage'
+
+export interface Wallpaper {
+  name: string
+  swatch: string
+  css: string
+  /** Rendered by a live component (Game of Life) on top of the base css */
+  live?: boolean
+}
 
 export const WALLPAPERS: Wallpaper[] = [
   {
@@ -27,11 +35,26 @@ export const WALLPAPERS: Wallpaper[] = [
       'radial-gradient(50rem 30rem at 20% 30%, hsla(180, 60%, 30%, 0.25), transparent),'
       + ' radial-gradient(50rem 30rem at 80% 70%, hsla(280, 60%, 30%, 0.25), transparent),'
       + ' hsl(var(--lv-scheme-hs), 5%)'
+  },
+  {
+    name: 'game of life',
+    swatch: 'radial-gradient(circle at 30% 30%, #3a2c00 15%, #0a0a0a 60%)',
+    css: 'hsl(var(--lv-scheme-hs), 5%)',
+    live: true
   }
 ]
 
+const WALLPAPER_KEY = 'lvos-wallpaper'
+let restored = false
+
 export function useWallpaper() {
   const wallpaper = useState('lvos-wallpaper', () => 0)
+  if (import.meta.client && !restored) {
+    restored = true
+    const saved = Number(storageGet(WALLPAPER_KEY))
+    if (Number.isInteger(saved) && saved >= 0 && saved < WALLPAPERS.length) wallpaper.value = saved
+    watch(wallpaper, (index) => storageSet(WALLPAPER_KEY, String(index)))
+  }
   const wallpaperStyle = computed(() => ({ background: WALLPAPERS[wallpaper.value]?.css }))
 
   // advance to the next wallpaper, returning its name (handy for a toast)
