@@ -11,7 +11,6 @@ const root = fileURLToPath(new URL('../.output/public', import.meta.url))
 const outFile = join(root, 'laurens-verspeek-resume.pdf')
 // also refresh the committed copy in public/ so `npm run dev` serves it too
 const sourceCopy = fileURLToPath(new URL('../public/laurens-verspeek-resume.pdf', import.meta.url))
-const port = 4199
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
@@ -45,7 +44,9 @@ const server = createServer(async (req, res) => {
 
 const main = async () => {
   const { chromium } = await import('@playwright/test')
-  await new Promise((resolve) => server.listen(port, resolve))
+  // an ephemeral port: a fixed one once collided with a parked dev server
+  await new Promise((resolve) => server.listen(0, resolve))
+  const port = server.address().port
 
   const browser = await chromium.launch()
   const page = await browser.newPage()
