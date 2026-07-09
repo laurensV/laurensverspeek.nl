@@ -376,3 +376,18 @@ test('/changelog renders the baked git history', async ({ page }) => {
   await expect(page.locator('.changelog-ref').first()).toContainText('HEAD')
   await expect(page.locator('.changelog-stat').first()).toContainText('+')
 })
+
+test('sitemap carries per-page git-derived lastmod dates', async ({ request }) => {
+  const res = await request.get('/sitemap.xml')
+  const body = await res.text()
+  // every url has a lastmod, and they are not all the same build date
+  const dates = [...body.matchAll(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g)].map((m) => m[1])
+  expect(dates.length).toBeGreaterThan(10)
+  expect(new Set(dates).size).toBeGreaterThan(1)
+})
+
+test('/now shows a git-derived last-updated date', async ({ page }) => {
+  await page.goto('/now')
+  await expect(page.getByText(/last updated/)).toBeVisible()
+  await expect(page.locator('.subtitle .is-family-code').first()).toHaveText(/^\d{4}-\d{2}-\d{2}$/)
+})

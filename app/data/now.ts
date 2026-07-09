@@ -1,7 +1,8 @@
 // What I'm up to right now — shown on /now. Update whenever life changes.
+// The "last updated" date is derived from this file's git history at build
+// time (nuxt.config → runtimeConfig.public.nowUpdated), so just edit away.
 
 export const now = {
-  updated: '2026-07-08',
   location: 'The Netherlands',
   sections: [
     {

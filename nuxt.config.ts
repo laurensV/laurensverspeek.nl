@@ -9,6 +9,15 @@ const buildHash = (() => {
   }
 })()
 
+// when a file last really changed, per git — /now's "last updated" is honest
+const gitFileDate = (file: string) => {
+  try {
+    return execSync(`git log -1 --format=%as -- ${file}`, { encoding: 'utf8' }).trim()
+  } catch {
+    return ''
+  }
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-07',
 
@@ -82,7 +91,8 @@ export default defineNuxtConfig({
       // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
       cursorsWs: '',
       buildHash,
-      buildDate: new Date().toISOString().slice(0, 10)
+      buildDate: new Date().toISOString().slice(0, 10),
+      nowUpdated: gitFileDate('app/data/now.ts') || new Date().toISOString().slice(0, 10)
     }
   },
 

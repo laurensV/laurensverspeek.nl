@@ -5,7 +5,7 @@
       <h1 class="title is-2">Now</h1>
       <p class="subtitle is-5 has-text-grey mb-6">
         What I'm doing these days — last updated
-        <span class="is-family-code">{{ now.updated }}</span> from {{ now.location }}.
+        <span class="is-family-code">{{ updated }}</span> from {{ now.location }}.
       </p>
 
       <div class="ps-table is-family-code">
@@ -36,6 +36,9 @@
 
 <script setup lang="ts">
 import { now } from '~/data/now'
+
+// derived from git at build time: when app/data/now.ts last actually changed
+const updated = useRuntimeConfig().public.nowUpdated
 
 useHead({ title: 'Now — Laurens Verspeek' })
 useSeoMeta({ description: 'What Laurens Verspeek is building, learning and tinkering with right now.' })

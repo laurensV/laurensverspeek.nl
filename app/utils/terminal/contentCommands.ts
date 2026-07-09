@@ -18,6 +18,9 @@ let cachedPostSlugs: string[] = []
 
 export function createContentCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, link } = ctx
+  // captured at factory time (inside the composable), since command exec
+  // handlers run outside the Nuxt instance
+  const nowUpdated = useRuntimeConfig().public.nowUpdated
 
   const fetchPosts = () =>
     ctx.fetchPosts().then((posts) => {
@@ -332,7 +335,7 @@ export function createContentCommands(ctx: TerminalContext): Record<string, Term
     now: {
       description: `What I'm doing these days`,
       exec: () => {
-        muted(`last updated ${nowData.updated}`)
+        muted(`last updated ${nowUpdated}`)
         for (const section of nowData.sections) {
           push('primary', `./${section.title.toLowerCase()}`)
           section.items.forEach((item) => out(`- ${item}`))
