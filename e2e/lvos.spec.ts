@@ -307,3 +307,22 @@ test('shutdown under reduced motion skips the animation and just exits', async (
   await page.locator('.lvos-start-menu button', { hasText: 'shut down' }).click()
   await expect(page).toHaveURL(/\/$/, { timeout: 5000 })
 })
+
+test('lock screen covers the desktop until any password unlocks it', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'lock' }).click()
+  const lock = page.locator('.lock')
+  await expect(lock).toBeVisible()
+  await expect(lock).toContainText('locked')
+  // Escape does NOT log out while locked
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.lvos')).toBeVisible()
+  await expect(lock).toBeVisible()
+  // an empty submit gets judged, any real input unlocks
+  await page.locator('.lock-input').press('Enter')
+  await expect(lock).toContainText('standards')
+  await page.locator('.lock-input').fill('hunter2')
+  await page.keyboard.press('Enter')
+  await expect(lock).toHaveCount(0, { timeout: 5000 })
+})

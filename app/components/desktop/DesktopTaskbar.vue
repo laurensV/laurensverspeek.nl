@@ -27,6 +27,7 @@
           @click="wallpaper = i"
         />
       </div>
+      <button @click="emit('lock')">🔒 lock</button>
       <button @click="emit('logout')">← log out</button>
       <button @click="emit('reboot')">↻ reboot</button>
       <button @click="emit('shutdown')">⏻ shut down</button>
@@ -122,6 +123,7 @@ const emit = defineEmits<{
   open: [id: string]
   terminal: []
   logout: []
+  lock: []
   shutdown: []
   reboot: []
   minimize: [win: DesktopWindow]

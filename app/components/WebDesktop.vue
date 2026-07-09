@@ -161,6 +161,9 @@
         </template>
       </div>
 
+      <!-- lock screen: ceremonial, but it does cover everything -->
+      <LazyDesktopLockScreen v-if="locked" @unlock="locked = false" />
+
       <!-- taskbar -->
       <DesktopTaskbar
         v-model:start-open="startOpen"
@@ -174,6 +177,7 @@
         @open="openWindow"
         @terminal="openTerminal"
         @logout="logout"
+        @lock="lock"
         @shutdown="shutdown"
         @reboot="reboot"
         @minimize="toggleMinimize"
@@ -350,6 +354,14 @@ const logout = () => {
   router.push('/')
 }
 
+// the lock screen overlays everything; keyboard shortcuts pause while it's up
+const locked = ref(false)
+const lock = () => {
+  startOpen.value = false
+  calendarOpen.value = false
+  locked.value = true
+}
+
 // CRT power-off: collapse the desktop to a bright line, then act. Reduced
 // motion skips straight to the action.
 const poweringOff = ref(false)
@@ -402,6 +414,7 @@ onMounted(() => {
 
 // inside the desktop, ~ opens/focuses the terminal window (unless typing)
 useEventListener('keydown', (event: KeyboardEvent) => {
+  if (locked.value) return
   if (event.key !== '~' && event.key !== '`') return
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
@@ -412,12 +425,15 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 // Alt+Tab switches between open windows (Shift+Alt+Tab goes backwards). Note the
 // OS may reserve Alt+Tab; the taskbar remains the always-available switcher.
 useEventListener('keydown', (event: KeyboardEvent) => {
+  if (locked.value) return
   if (event.key !== 'Tab' || !event.altKey) return
   event.preventDefault()
   cycleWindows(event.shiftKey ? -1 : 1)
 })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
+  // a locked screen ignores Escape — it wouldn't be much of a lock otherwise
+  if (locked.value) return
   // defaultPrevented means the terminal already consumed this Escape
   if (event.key !== 'Escape' || event.defaultPrevented || terminal.isOpen.value) {
     return
