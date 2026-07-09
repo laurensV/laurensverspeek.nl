@@ -8,7 +8,7 @@
         <p class="overline mb-4">blog $ cat {{ route.params.slug }}.md</p>
 
         <template v-if="post">
-          <h1 class="title is-2 mb-2">{{ post.title }}</h1>
+          <h1 class="title is-2 mb-2" :style="{ viewTransitionName: `post-${route.params.slug}` }">{{ post.title }}</h1>
           <p class="is-family-code is-size-7 has-text-grey mb-6">
             {{ formatDate(post.date) }} · {{ readingTime }} min read
             <template v-if="post.tags?.length">

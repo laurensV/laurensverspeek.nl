@@ -407,3 +407,17 @@ test('subpages emit BreadcrumbList structured data matching the trail', async ({
     .evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent ?? '{}')))
   expect(homeJson.some((data) => data['@type'] === 'BreadcrumbList')).toBe(false)
 })
+
+test('blog titles carry matching view-transition names for the morph', async ({ page }) => {
+  await page.goto('/blog')
+  const listTitle = page.locator('.blog-entry h2').first()
+  const name = await listTitle.evaluate((el) => getComputedStyle(el).viewTransitionName)
+  expect(name).toMatch(/^post-/)
+  await listTitle.locator('a').click()
+  await expect(page).toHaveURL(new RegExp(name.replace('post-', '')))
+  // the post body loads async after the client-side navigation
+  const postTitle = page.locator('h1')
+  await expect.poll(() =>
+    postTitle.evaluate((el) => getComputedStyle(el).viewTransitionName)
+  ).toBe(name)
+})

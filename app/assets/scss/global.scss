@@ -294,6 +294,19 @@ html.is-lvos body {
   }
 }
 
+// shared-element morphs (blog titles) ride along the root wipe
+::view-transition-group(*) {
+  animation-duration: 0.28s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
+}
+
 // Party mode — triggered by the Konami code (or the hidden `party` command)
 html.party-mode .site-shell {
   animation: party-hue 1.4s linear infinite;

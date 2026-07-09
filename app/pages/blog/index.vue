@@ -48,7 +48,7 @@
         <div class="blog-list is-loaded">
           <article v-for="post in filtered" :key="post.path" class="blog-entry">
             <p class="is-family-code is-size-7 has-text-grey mb-1">{{ formatDate(post.date) }}</p>
-            <h2 class="title is-4 mb-1">
+            <h2 class="title is-4 mb-1" :style="{ viewTransitionName: transitionName(post.path) }">
               <NuxtLink :to="post.path" class="blog-link">
                 {{ post.title }} <span class="blog-arrow is-family-code">-></span>
               </NuxtLink>
@@ -96,6 +96,9 @@ const filtered = computed(() => {
   const all = posts.value ?? []
   return activeTag.value ? all.filter((post) => post.tags?.includes(activeTag.value)) : all
 })
+
+// shared-element morph: the list title and the post h1 carry the same name
+const transitionName = (path: string) => `post-${path.split('/').pop()}`
 
 // copy the absolute RSS feed URL to paste into a reader
 const copied = ref(false)
