@@ -1,7 +1,8 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
-import { parseRedirect, resolvePath, dirEntries, expandFileArgs } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, expandFileArgs, writeFileAt } from '~/utils/terminal/filesystem'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
 import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
 import { profile } from '~/data/profile'
 
@@ -38,6 +39,34 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
   }
   // names in the current directory, for tab-completing rm
   const hereEntries = () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((entry) => entry.name)
+
+  // file access for the editors (nano/vim) over the home filesystem
+  const editorIo = (name: string): EditorIO | { error: string } => {
+    const path = resolvePath(ctx.fsCwd.value, name)
+    if (!path || ctx.files.value[path]?.dir) return { error: `${name}: is a directory` }
+    return {
+      filename: name,
+      read: () => ctx.files.value[path]?.content ?? '',
+      write: (content) => {
+        const written = writeFileAt(ctx.files.value, ctx.fsCwd.value, name, content)
+        if ('error' in written) return false
+        ctx.files.value = written.files
+        return true
+      }
+    }
+  }
+
+  const openVim = (args: string[]) => {
+    const name = args[0]
+    if (!name) {
+      muted('vim: which file? this vim is real now — try `vim todo.txt` (and yes, :q! works)')
+      return
+    }
+    const io = editorIo(name)
+    if ('error' in io) return error(`vim: ${io.error}`)
+    muted(`Opening ${name} — i inserts, Esc then :wq writes & quits.`)
+    ctx.startGame((callbacks) => createVimEditor(io, callbacks))
+  }
 
   // shared cp/mv (files only): copy a node to dest, and for mv drop the source
   const copyOrMoveOne = (cmd: 'cp' | 'mv', srcName: string, dstName: string) => {
@@ -536,9 +565,29 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       exec: (args) => copyOrMove('mv', args)
     },
     vim: {
+      usage: 'vim <file>',
+      description: 'A real modal editor. You can even quit it',
+      argCandidates: hereEntries,
+      exec: openVim
+    },
+    vi: {
       hidden: true,
-      description: 'Trap',
-      exec: () => muted(`You are now stuck in vim. Just kidding — this is not a real shell. :q!`)
+      description: 'Alias for vim',
+      argCandidates: hereEntries,
+      exec: openVim
+    },
+    nano: {
+      usage: 'nano <file>',
+      description: 'Edit a file, the friendly way',
+      argCandidates: hereEntries,
+      exec: (args) => {
+        const name = args[0]
+        if (!name) return error('nano: usage: nano <file>')
+        const io = editorIo(name)
+        if ('error' in io) return error(`nano: ${io.error}`)
+        muted(`Editing ${name} — ^S saves, ^X exits.`)
+        ctx.startGame((callbacks) => createNanoEditor(io, callbacks))
+      }
     }
   }
 }

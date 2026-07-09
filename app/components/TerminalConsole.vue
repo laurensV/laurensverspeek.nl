@@ -175,8 +175,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   if (!props.active) return
 
   if (activeGame.value) {
-    if (event.ctrlKey || event.metaKey || event.altKey) return
-    if (activeGame.value.onKey(event.key)) event.preventDefault()
+    if (event.metaKey || event.altKey) return
+    // ctrl combos reach games as 'ctrl+x' etc. (the editors use them);
+    // unconsumed keys keep their browser default, as before
+    const key = event.ctrlKey ? `ctrl+${event.key.toLowerCase()}` : event.key
+    if (activeGame.value.onKey(key)) event.preventDefault()
     return
   }
 
