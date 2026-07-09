@@ -33,14 +33,32 @@ const showSkeleton = computed(() => mounted.value && pending.value)
 
 const YEARS_CODING = new Date().getFullYear() - 2011
 
+// count-up: once the numbers land, ease from 0 to the real values
+const progress = ref(1)
+let raf = 0
+watch(data, (value) => {
+  if (!value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  cancelAnimationFrame(raf)
+  progress.value = 0
+  const start = performance.now()
+  const frame = (now: number) => {
+    const t = Math.min(1, (now - start) / 900)
+    progress.value = 1 - (1 - t) ** 3
+    if (t < 1) raf = requestAnimationFrame(frame)
+  }
+  raf = requestAnimationFrame(frame)
+})
+onUnmounted(() => cancelAnimationFrame(raf))
+
 const stats = computed(() => [
   { label: 'public repos', value: format(data.value?.publicRepos) },
   { label: 'github stars', value: format(data.value?.totalStars) },
   { label: 'followers', value: format(data.value?.followers) },
-  { label: 'years of code', value: `${YEARS_CODING}+` }
+  { label: 'years of code', value: `${Math.round(YEARS_CODING * progress.value)}+` }
 ])
 
-const format = (value?: number) => (value === undefined ? '—' : String(value))
+const format = (value?: number) =>
+  value === undefined ? '—' : String(Math.round(value * progress.value))
 </script>
 
 <style scoped lang="scss">

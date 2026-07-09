@@ -450,3 +450,15 @@ test('the service worker precaches the no-uplink offline fallback', async ({ pag
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller), { timeout: 10000 })
     .toBe(true)
 })
+
+test('github stats count up to the fetched values', async ({ page }) => {
+  await page.route('**/api.github.com/users/**', (route) =>
+    route.request().url().includes('/repos')
+      ? route.fulfill({ json: [{ name: 'x', stargazers_count: 12, fork: false }] })
+      : route.fulfill({ json: { followers: 42, public_repos: 7 } })
+  )
+  await page.goto('/about')
+  // the animation ends on the real numbers
+  await expect(page.locator('.stat-value').nth(2)).toHaveText('42', { timeout: 10000 })
+  await expect(page.locator('.stat-value').nth(0)).toHaveText('7')
+})
