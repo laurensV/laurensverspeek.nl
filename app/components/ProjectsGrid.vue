@@ -82,14 +82,14 @@ const onFilterKey = (event: KeyboardEvent) => {
         : event.key === 'ArrowRight' ? (current + 1) % values.length
           : (current - 1 + values.length) % values.length
   activeCategory.value = values[nextIndex]!
-  nextTick(() => filtersEl.value?.querySelectorAll<HTMLElement>('.filter-flag')[nextIndex]?.focus())
+  void nextTick(() => filtersEl.value?.querySelectorAll<HTMLElement>('.filter-flag')[nextIndex]?.focus())
 }
 
 // 2D keyboard navigation across the project cards: arrows move focus between
 // the card links, Enter/Space follow them (native to the <a>). Columns are
 // detected from the rendered layout so it works across breakpoints.
 const gridEl = ref<{ $el: HTMLElement } | HTMLElement>()
-const gridRoot = () => (gridEl.value && '$el' in gridEl.value ? gridEl.value.$el : gridEl.value) as HTMLElement | undefined
+const gridRoot = () => (gridEl.value && '$el' in gridEl.value ? gridEl.value.$el : gridEl.value)
 const onGridKey = (event: KeyboardEvent) => {
   if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
   const root = gridRoot()

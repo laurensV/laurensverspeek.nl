@@ -112,7 +112,7 @@ onUnmounted(() => cancelAnimationFrame(trailRaf))
 // a plain click (little movement) opens the full-page playground; a drag paints
 let downX = 0
 let downY = 0
-const openFull = () => navigateTo('/life')
+const openFull = () => void navigateTo('/life')
 const onPointerDown = (event: PointerEvent) => {
   painting.value = true
   downX = event.clientX

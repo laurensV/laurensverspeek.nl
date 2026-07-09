@@ -57,7 +57,7 @@ const start = () => {
 const begin = () => {
   document.documentElement.classList.add('party-mode')
 
-  nextTick(() => {
+  void nextTick(() => {
     const canvas = canvasRef.value
     const ctx = canvas?.getContext('2d')
     if (!canvas || !ctx) return

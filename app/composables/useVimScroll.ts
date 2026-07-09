@@ -77,7 +77,7 @@ export function useVimScroll() {
     event.preventDefault()
     lastG = 0
     clearPending()
-    router.push(GO_TARGETS[event.key]!)
+    void router.push(GO_TARGETS[event.key]!)
   })
 
   onKeyStroke('G', (event) => {

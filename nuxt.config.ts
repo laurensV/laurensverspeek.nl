@@ -44,6 +44,14 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/content', '@nuxt/eslint', '@nuxtjs/color-mode', '@vite-pwa/nuxt', '@vueuse/nuxt'],
 
+  eslint: {
+    config: {
+      // strict rules are on by default; the tsconfig path upgrades them to
+      // the type-checked tier (typescript-eslint strict-type-checked)
+      typescript: { strict: true, tsconfigPath: './tsconfig.json' }
+    }
+  },
+
   pwa: {
     registerType: 'autoUpdate',
     manifest: {

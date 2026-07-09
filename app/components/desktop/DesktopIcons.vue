@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconName } from '~/components/AppIcon.vue'
+import type { IconName } from '~/utils/icons'
 
 interface DesktopIconItem { id: string, label: string, icon: IconName, action: () => void }
 

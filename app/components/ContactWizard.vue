@@ -96,9 +96,8 @@ const currentStep = computed(() => steps[stepIndex.value] ?? steps[0]!)
 
 const focusInput = () => inputRef.value?.focus()
 
-const scrollDown = async () => {
-  await nextTick()
-  bodyRef.value?.scrollTo({ top: bodyRef.value.scrollHeight })
+const scrollDown = () => {
+  void nextTick(() => bodyRef.value?.scrollTo({ top: bodyRef.value.scrollHeight }))
 }
 
 const submit = () => {
@@ -154,7 +153,7 @@ const reset = () => {
   answers.message = ''
   hint.value = ''
   scrollDown()
-  nextTick(focusInput)
+  void nextTick(focusInput)
 }
 
 const copyEmail = async () => {

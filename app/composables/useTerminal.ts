@@ -124,7 +124,7 @@ export function useTerminal() {
   const navigate = (page: string) => {
     const target = page === 'home' || page === '~' || page === '/' ? '/' : `/${page}`
     out(`Navigating to ${target} ...`)
-    router.push(target)
+    void router.push(target)
     setTimeout(close, 400)
   }
 
@@ -274,7 +274,7 @@ export function useTerminal() {
       }
       if (toClipboard) {
         const text = result.map((line) => stripHtml(line.text)).join('\n')
-        navigator.clipboard?.writeText(text)
+        navigator.clipboard.writeText(text)
           .then(() => muted(`copied ${result.length} line${result.length === 1 ? '' : 's'} to the clipboard`))
           .catch(() => error('copy: the clipboard said no'))
         return
@@ -315,7 +315,7 @@ export function useTerminal() {
       return
     }
     if (chain.segments.length === 1) {
-      runSegment(trimmed, history.value, true)
+      void runSegment(trimmed, history.value, true)
       return
     }
     // a chain records the full line once; `!!` inside segments expands against

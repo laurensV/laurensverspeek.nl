@@ -140,7 +140,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
   const startResize = (win: DesktopWindow, event: PointerEvent, dir = 'se') => {
     focusWindow(win)
     if (win.maximized) return
-    const el = (event.target as HTMLElement).closest('.lvos-window') as HTMLElement | null
+    const el = (event.target as HTMLElement).closest<HTMLElement>('.lvos-window')
     resizing = win
     resizeDir = dir
     resizeStart = {

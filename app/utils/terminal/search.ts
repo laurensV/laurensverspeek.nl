@@ -41,7 +41,7 @@ export function searchSections(sections: SearchableSection[], term: string, limi
   if (!needle) return []
   const hits: SearchHit[] = []
   for (const section of sections) {
-    const content = section.content ?? ''
+    const content = section.content
     const index = content.toLowerCase().indexOf(needle)
     const inTitle = section.title.toLowerCase().includes(needle)
     if (index < 0 && !inTitle) continue
@@ -49,7 +49,7 @@ export function searchSections(sections: SearchableSection[], term: string, limi
     hits.push({
       path,
       slug: path.split('/').pop() ?? path,
-      heading: [...(section.titles ?? []), section.title].filter(Boolean).join(' › '),
+      heading: [...section.titles, section.title].filter(Boolean).join(' › '),
       snippetHtml: index >= 0
         ? highlightSnippet(content, index, needle.length)
         : escapeHtml(content.replace(/\s+/g, ' ').slice(0, 70).trimEnd()) + (content.length > 70 ? '…' : '')

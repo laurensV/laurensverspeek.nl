@@ -331,12 +331,12 @@ const openProject = (slug: string) => router.push(`/projects/${slug}`)
 
 const openRoute = (path: string) => router.push(path)
 
-const openCv = () => router.push('/cv')
+const openCv = () => void router.push('/cv')
 
 const logout = () => {
   startOpen.value = false
   calendarOpen.value = false
-  router.push('/')
+  void router.push('/')
 }
 
 // the lock screen overlays everything; keyboard shortcuts pause while it's up
@@ -364,7 +364,7 @@ const powerOff = (after: () => void) => {
 }
 onUnmounted(() => clearTimeout(powerTimer))
 
-const shutdown = () => powerOff(() => router.push('/'))
+const shutdown = () => powerOff(() => void router.push('/'))
 const reboot = () => powerOff(() => {
   booting.value = true
 })

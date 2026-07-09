@@ -34,9 +34,15 @@ interface RemoteCursor {
   y: number
   page: string
   seen: number
-  say?: string
-  sayUntil?: number
+  say?: string | undefined
+  sayUntil?: number | undefined
 }
+
+// the relay's wire format (see realtime/cursors-server.mjs)
+type WireMessage =
+  | { type: 'move', id: number, hue: number, name?: string, x: number, y: number, page: string }
+  | { type: 'leave', id: number }
+  | { type: 'say', id: number, text: string }
 
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
@@ -69,11 +75,11 @@ watchEffect(() => {
 
 const connect = () => {
   if (!cursorsWs) return
-  socket = new WebSocket(cursorsWs as string)
+  socket = new WebSocket(cursorsWs)
   socket.onopen = () => (connected.value = true)
 
   socket.onmessage = (event) => {
-    const msg = JSON.parse(event.data)
+    const msg = JSON.parse(event.data as string) as WireMessage
     if (msg.type === 'move') {
       // keep any active speech bubble alive across position updates
       const prev = cursors.value.get(msg.id)
@@ -82,10 +88,10 @@ const connect = () => {
     } else if (msg.type === 'leave') {
       cursors.value.delete(msg.id)
       cursors.value = new Map(cursors.value)
-    } else if (msg.type === 'say') {
+    } else {
       const existing = cursors.value.get(msg.id)
       if (existing) {
-        existing.say = String(msg.text).slice(0, 80)
+        existing.say = msg.text.slice(0, 80)
         existing.sayUntil = Date.now() + 5000
         cursors.value = new Map(cursors.value)
       }

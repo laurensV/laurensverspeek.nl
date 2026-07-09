@@ -85,7 +85,7 @@ const backspace = (buffer: Buffer) => {
     const line = buffer.lines.splice(buffer.row, 1)[0]!
     buffer.row--
     buffer.col = buffer.lines[buffer.row]!.length
-    buffer.lines[buffer.row] += line
+    buffer.lines[buffer.row] = buffer.lines[buffer.row]! + line
     buffer.dirty = true
   }
 }

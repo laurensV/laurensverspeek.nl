@@ -36,7 +36,7 @@ const start = () => {
       result.value = lines
     }
   })
-  nextTick(() => rootRef.value?.focus())
+  void nextTick(() => rootRef.value?.focus())
 }
 
 const onKeydown = (event: KeyboardEvent) => {

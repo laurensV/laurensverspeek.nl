@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
-import type { IconName } from '~/components/AppIcon.vue'
+import type { IconName } from '~/utils/icons'
 
 const { open, run } = useTerminal()
 const bootDesktop = () => navigateTo('/desktop')

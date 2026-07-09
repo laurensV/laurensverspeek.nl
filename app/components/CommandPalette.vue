@@ -133,7 +133,7 @@ const move = (delta: number) => {
   const index = list.findIndex((a) => a.id === activeId.value)
   const next = (index + delta + list.length) % list.length
   activeId.value = list[next]!.id
-  nextTick(() => {
+  void nextTick(() => {
     listRef.value
       ?.querySelector(`[data-palette-id="${CSS.escape(activeId.value)}"]`)
       ?.scrollIntoView({ block: 'nearest' })

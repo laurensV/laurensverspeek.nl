@@ -27,7 +27,7 @@ export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
         x: 1 + Math.floor(Math.random() * (SNAKE_W - 2)),
         y: 1 + Math.floor(Math.random() * (SNAKE_H - 2))
       }
-      if (!snake?.some((c) => c.x === candidate.x && c.y === candidate.y)) return candidate
+      if (!snake.some((c) => c.x === candidate.x && c.y === candidate.y)) return candidate
     }
   }
 

@@ -34,7 +34,7 @@ export function expandHistory(
   history: string[]
 ): { expanded: string, changed: boolean } | { error: string } {
   let changed = false
-  let failure: string | null = null
+  const failures: string[] = []
   const expanded = input.replace(
     /(^|\s)(!(?:!|\d+|[a-zA-Z][\w-]*))(?=\s|$)/g,
     (match, lead: string, bang: string) => {
@@ -44,13 +44,14 @@ export function expandHistory(
       else if (/^\d+$/.test(event)) hit = history[Number(event) - 1]
       else hit = [...history].reverse().find((cmd) => cmd.startsWith(event))
       if (hit === undefined) {
-        failure = `lvsh: ${bang}: event not found`
+        failures.push(`lvsh: ${bang}: event not found`)
         return match
       }
       changed = true
       return `${lead}${hit}`
     }
   )
-  if (failure) return { error: failure }
+  const failure = failures[0]
+  if (failure !== undefined) return { error: failure }
   return { expanded, changed }
 }

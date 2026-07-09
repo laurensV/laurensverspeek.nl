@@ -16,7 +16,7 @@ export function useCopyFlag(resetMs = 1800) {
   const copy = async (text: string) => {
     if (!import.meta.client) return false
     try {
-      await navigator.clipboard?.writeText(text)
+      await navigator.clipboard.writeText(text)
       flag()
       return true
     } catch {

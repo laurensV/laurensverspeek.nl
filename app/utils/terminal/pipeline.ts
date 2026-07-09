@@ -6,8 +6,8 @@ export const stripHtml = (text: string) => text.replace(/<[^>]+>/g, '')
 
 /** Expand $VAR and ${VAR} from an environment map; unknown vars are left as-is. */
 export const expandEnv = (text: string, env: Record<string, string>) =>
-  text.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced, bare) => {
-    const key = braced ?? bare
+  text.replace(/\$\{(\w+)\}|\$(\w+)/g, (match, braced: string | undefined, bare: string | undefined) => {
+    const key = braced ?? bare ?? ''
     return env[key] ?? match
   })
 

@@ -1,4 +1,4 @@
-import type { IconName } from '~/components/AppIcon.vue'
+import type { IconName } from '~/utils/icons'
 
 // One registry for the lvOS window apps: their titles, desktop-icon metadata
 // and layout hints. WebDesktop derives the window titles, the icon grid and the

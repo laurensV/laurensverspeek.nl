@@ -7,7 +7,7 @@ type Matrix = number[][]
 const G2048_HIGHSCORE_KEY = 'lv-2048-highscore'
 
 export function create2048Game({ onFrame, onEnd }: GameCallbacks): GameHandle {
-  let grid: Matrix = Array.from({ length: 4 }, () => Array(4).fill(0))
+  let grid: Matrix = Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => 0))
   let score = 0
   let reached2048 = false
 

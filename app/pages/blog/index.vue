@@ -93,7 +93,7 @@ const route = useRoute()
 const router = useRouter()
 const activeTag = computed(() => (typeof route.query.tag === 'string' ? route.query.tag : ''))
 const setTag = (tag: string) => {
-  router.replace({ query: tag && tag !== activeTag.value ? { tag } : {} })
+  void router.replace({ query: tag && tag !== activeTag.value ? { tag } : {} })
 }
 const filtered = computed(() => {
   const all = posts.value ?? []

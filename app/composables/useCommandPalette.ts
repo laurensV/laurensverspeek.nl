@@ -1,4 +1,4 @@
-import type { IconName } from '~/components/AppIcon.vue'
+import type { IconName } from '~/utils/icons'
 import { projects } from '~/data/projects'
 import { profile } from '~/data/profile'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
@@ -67,7 +67,7 @@ export function highlightLabel(query: string, label: string): LabelSegment[] {
   for (let i = 0; i < label.length; i++) {
     const isMatch = matched.has(i)
     const last = segments[segments.length - 1]
-    if (last && last.match === isMatch) last.text += label[i]
+    if (last && last.match === isMatch) last.text += label[i] ?? ''
     else segments.push({ text: label[i]!, match: isMatch })
   }
   return segments
@@ -88,7 +88,7 @@ export function useCommandPalette() {
 
   const go = (path: string) => {
     close()
-    router.push(path)
+    void router.push(path)
   }
 
   // most-recently-used actions, persisted so the palette can surface them first
@@ -144,7 +144,7 @@ export function useCommandPalette() {
       hint: 'post',
       icon: 'file',
       section: 'Blog',
-      keywords: `${post.tags?.join(' ') ?? ''} ${post.description ?? ''}`,
+      keywords: `${post.tags?.join(' ') ?? ''} ${post.description}`,
       perform: () => go(post.path)
     })),
     ...accents.map<PaletteAction>((a) => ({
@@ -234,14 +234,14 @@ export function useCommandPalette() {
       keywords: 'share url copy clipboard link',
       perform: () => {
         close()
-        if (import.meta.client) navigator.clipboard?.writeText(window.location.href).catch(() => {})
+        if (import.meta.client) navigator.clipboard.writeText(window.location.href).catch(() => {})
       }
     },
     ...profile.socials.map<PaletteAction>((social) => ({
       id: `social-${social.label}`,
       label: social.label,
       hint: 'opens in new tab',
-      icon: (social.icon as IconName) ?? 'external',
+      icon: social.icon as IconName,
       section: 'Socials',
       keywords: 'social link',
       perform: () => {

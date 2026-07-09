@@ -164,7 +164,7 @@ const onKey = (event: KeyboardEvent) => {
       const pos = buffer.value.indexOf('\n', el.selectionStart)
       const insertAt = pos === -1 ? buffer.value.length : pos
       buffer.value = `${buffer.value.slice(0, insertAt)}\n${buffer.value.slice(insertAt)}`
-      nextTick(() => el.setSelectionRange(insertAt + 1, insertAt + 1))
+      void nextTick(() => el.setSelectionRange(insertAt + 1, insertAt + 1))
       mode.value = 'insert'
       break
     }
@@ -172,7 +172,7 @@ const onKey = (event: KeyboardEvent) => {
       const pos = el.selectionStart
       if (pos < buffer.value.length) {
         buffer.value = buffer.value.slice(0, pos) + buffer.value.slice(pos + 1)
-        nextTick(() => el.setSelectionRange(pos, pos))
+        void nextTick(() => el.setSelectionRange(pos, pos))
       }
       break
     }

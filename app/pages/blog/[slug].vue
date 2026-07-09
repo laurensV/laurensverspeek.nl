@@ -77,15 +77,17 @@ import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
 const route = useRoute()
 
 // git-derived last-edit date (baked at build); shown only when it post-dates publish
+const slugParam = String(route.params.slug)
+
 const updatedDate = computed(() => {
-  const slug = String(route.params.slug)
+  const slug = slugParam
   const map = useRuntimeConfig().public.postUpdated as Record<string, string>
-  const updated = map?.[slug]
-  return updated && post.value?.date && updated > String(post.value.date).slice(0, 10) ? updated : ''
+  const updated = map[slug]
+  return updated && post.value?.date && updated > post.value.date.slice(0, 10) ? updated : ''
 })
 
 
-const { data: post } = await useAsyncData(`blog-${route.params.slug}`, () =>
+const { data: post } = await useAsyncData(`blog-${slugParam}`, () =>
   queryCollection('blog').path(route.path).first()
 )
 
@@ -93,7 +95,7 @@ if (!post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
 }
 
-const { data: surround } = await useAsyncData(`blog-surround-${route.params.slug}`, () =>
+const { data: surround } = await useAsyncData(`blog-surround-${slugParam}`, () =>
   queryCollectionItemSurroundings('blog', route.path, { fields: ['title'] })
 )
 
@@ -113,7 +115,7 @@ const related = computed(() => {
     .map((entry) => entry.post)
 })
 
-const ogImage = `${SITE_URL}/og/blog-${route.params.slug}.svg`
+const ogImage = `${SITE_URL}/og/blog-${slugParam}.svg`
 useHead({ title: `${post.value.title} — Laurens Verspeek` })
 useSeoMeta({
   description: post.value.description,
@@ -158,7 +160,7 @@ const { copied: shared, copy } = useCopyFlag()
 const share = async () => {
   const url = window.location.href
   const title = post.value?.title ?? document.title
-  if (navigator.share) {
+  if ('share' in navigator) {
     await navigator.share({ title, url }).catch(() => {})
     return
   }
@@ -172,7 +174,7 @@ const formatDate = (date: string) =>
 interface TocEntry { id: string, text: string, depth: number }
 
 const tocLinks = computed<TocEntry[]>(() => {
-  const links = post.value?.body?.toc?.links ?? []
+  const links = post.value?.body.toc?.links ?? []
   const flat: TocEntry[] = []
   for (const link of links) {
     flat.push({ id: link.id, text: link.text, depth: link.depth })
@@ -267,7 +269,7 @@ onMounted(() => {
       event.preventDefault()
       history.replaceState(null, '', `#${heading.id}`)
       navigator.clipboard
-        ?.writeText(`${location.origin}${location.pathname}#${heading.id}`)
+        .writeText(`${location.origin}${location.pathname}#${heading.id}`)
         .then(() => {
           anchor.classList.add('is-copied')
           setTimeout(() => anchor.classList.remove('is-copied'), 1200)

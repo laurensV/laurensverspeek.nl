@@ -21,7 +21,7 @@ const rotateCW = (shape: Matrix): Matrix =>
   shape[0]!.map((_, x) => shape.map((row) => row[x]!).reverse())
 
 export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
-  const board: Matrix = Array.from({ length: TETRIS_H }, () => Array(TETRIS_W).fill(0))
+  const board: Matrix = Array.from({ length: TETRIS_H }, () => Array.from({ length: TETRIS_W }, () => 0))
   let score = 0
   let clearedTotal = 0
   let over = false
@@ -71,7 +71,7 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
     if (cleared) {
       clearedTotal += cleared
       score += [0, 100, 300, 500, 800][cleared] ?? 800
-      while (remaining.length < TETRIS_H) remaining.unshift(Array(TETRIS_W).fill(0))
+      while (remaining.length < TETRIS_H) remaining.unshift(Array.from({ length: TETRIS_W }, () => 0))
       board.splice(0, TETRIS_H, ...remaining)
     }
     spawn()

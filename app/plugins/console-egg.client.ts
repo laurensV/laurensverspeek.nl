@@ -30,7 +30,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // step 3 reward: a burst of party mode + a hidden terminal command hint
   const reward = () => {
-    nuxtApp.runWithContext(() => {
+    void nuxtApp.runWithContext(() => {
       useState<boolean>(STATE_KEYS.fxParty, () => false).value = true
     })
     say('🎉 You solved it! Reward unlocked — type  hire  in the terminal (press ~).')

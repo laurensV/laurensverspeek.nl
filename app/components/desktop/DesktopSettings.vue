@@ -100,7 +100,7 @@ const windowCount = computed(() => windows.value.length)
 
 const enterMatrix = () => {
   matrixActive.value = true
-  navigateTo('/')
+  void navigateTo('/')
 }
 </script>
 

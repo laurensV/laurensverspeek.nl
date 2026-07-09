@@ -104,7 +104,7 @@ export function figlet(text: string): string {
   for (const ch of chars) {
     const glyph = FIGLET_FONT[ch] ?? FIGLET_FONT['?']!
     for (let r = 0; r < 5; r++) {
-      rows[r] += (glyph[r] ?? '') + '  '
+      rows[r] = (rows[r] ?? '') + (glyph[r] ?? '') + '  '
     }
   }
   return rows.map((row) => row.replaceAll('#', '█').replaceAll('.', ' ')).join('\n')

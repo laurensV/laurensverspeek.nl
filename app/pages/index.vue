@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconName } from '~/components/AppIcon.vue'
+import type { IconName } from '~/utils/icons'
 import { featuredProjects } from '~/data/projects'
 import { profile } from '~/data/profile'
 

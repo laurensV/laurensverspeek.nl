@@ -157,7 +157,7 @@ const startSearch = () => {
 const cancelSearch = () => {
   searchMode.value = false
   searchQuery.value = ''
-  nextTick(focusInput)
+  void nextTick(focusInput)
 }
 
 const acceptSearch = (runIt: boolean) => {
@@ -167,7 +167,7 @@ const acceptSearch = (runIt: boolean) => {
     input.value = match
     if (runIt) submit()
   }
-  nextTick(focusInput)
+  void nextTick(focusInput)
 }
 
 // keyboard for the active console: game keys, and search-mode typing

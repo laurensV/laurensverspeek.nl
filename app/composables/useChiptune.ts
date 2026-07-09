@@ -43,7 +43,7 @@ const play = () => {
 const stop = () => {
   playing.value = false
   clearInterval(noteTimer)
-  audioCtx?.close()
+  void audioCtx?.close()
   audioCtx = undefined
   analyserNode = undefined
 }

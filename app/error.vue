@@ -80,7 +80,7 @@ const startGame = () => {
       game.value = null
       gameFrame.value = ''
       endLines.forEach((line) => push('output', line))
-      nextTick(focusInput)
+      void nextTick(focusInput)
     }
   })
 }
@@ -104,7 +104,7 @@ const ROUTES = ['/', '/projects', '/blog', '/about', '/uses', '/now', '/cv', '/c
 
 // only guess a nearest page for a genuine 404 (not a 500)
 const suggestion = computed(() =>
-  props.error?.statusCode === 404
+  props.error?.status === 404
     ? nearestRoute(path, ROUTES.filter((r) => r !== '/'))
     : null
 )
@@ -127,7 +127,7 @@ const push = (type: Line['type'], text: string): void => {
 
 const focusInput = () => inputRef.value?.focus()
 
-const go = (route: string) => clearError({ redirect: route })
+const go = (route: string) => void clearError({ redirect: route })
 
 // the recovery shell speaks the terminal's own command shape, so it can share
 // the real tab-completion module instead of reimplementing it
@@ -204,7 +204,7 @@ const submit = () => {
 
   const [name = '', ...rest] = value.split(/\s+/)
   const command = commands[name.toLowerCase()]
-  if (command) command.exec(rest)
+  if (command) void command.exec(rest)
   else push('error', `lvsh: command not found: ${name} (try 'help')`)
 }
 
