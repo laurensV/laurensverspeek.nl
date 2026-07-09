@@ -421,3 +421,14 @@ test('blog titles carry matching view-transition names for the morph', async ({ 
     postTitle.evaluate((el) => getComputedStyle(el).viewTransitionName)
   ).toBe(name)
 })
+
+test('blog posts have a share affordance that copies the url', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/blog/snake-in-the-terminal')
+  // headless chromium has no navigator.share, so the copy fallback runs
+  const share = page.locator('.post-share')
+  await share.click()
+  await expect(share).toContainText('copied')
+  const clip = await page.evaluate(() => navigator.clipboard.readText())
+  expect(clip).toContain('/blog/snake-in-the-terminal')
+})

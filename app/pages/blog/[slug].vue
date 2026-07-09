@@ -14,6 +14,9 @@
             <template v-if="post.tags?.length">
               · <span v-for="tag in post.tags" :key="tag" class="mr-1">#{{ tag }}</span>
             </template>
+            · <button class="post-share" :class="{ 'is-shared': shared }" @click="share">
+              {{ shared ? 'copied ✓' : '[share]' }}
+            </button>
           </p>
 
           <div ref="bodyRef" class="content is-medium post-body">
@@ -132,6 +135,23 @@ const readingTime = computed(() => {
   const body = post.value?.body as MinimarkRoot | undefined
   return Math.max(1, Math.round(countWords(body?.value ?? []) / 200))
 })
+
+// share: the native sheet where it exists, otherwise copy the url
+const shared = ref(false)
+let shareTimer: ReturnType<typeof setTimeout> | undefined
+const share = async () => {
+  const url = window.location.href
+  const title = post.value?.title ?? document.title
+  if (navigator.share) {
+    await navigator.share({ title, url }).catch(() => {})
+    return
+  }
+  await navigator.clipboard?.writeText(url).catch(() => {})
+  shared.value = true
+  clearTimeout(shareTimer)
+  shareTimer = setTimeout(() => (shared.value = false), 1800)
+}
+onBeforeUnmount(() => clearTimeout(shareTimer))
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
@@ -327,6 +347,25 @@ onMounted(() => {
 .post-toc .toc-title {
   position: sticky;
   top: 3.5rem;
+}
+
+.post-share {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--bulma-primary-on-scheme);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  &.is-shared {
+    color: var(--bulma-success);
+  }
 }
 
 .post-related {
