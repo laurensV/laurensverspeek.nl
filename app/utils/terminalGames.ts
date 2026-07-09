@@ -4,6 +4,7 @@
 // Shared boilerplate (high scores, tick timers, quit keys) lives in terminalGameKit.
 
 import { finalScoreLines, createTicker, isQuitKey, useHighScore } from '~/utils/terminalGameKit'
+import { boxed, ruledRow } from '~/utils/asciiFrame'
 import { seedRandom, step as lifeStep, population } from '~/utils/gameOfLife'
 
 export interface GameHandle {
@@ -368,7 +369,7 @@ export function create2048Game({ onFrame, onEnd }: GameCallbacks): GameHandle {
     )
 
   function render(message = '') {
-    const line = (l: string, m: string, r: string) => `${l}${Array(4).fill('──────').join(m)}${r}`
+    const line = (l: string, m: string, r: string) => ruledRow(l, m, r, 4, 6)
     const rows = grid
       .map((row) => `│${row.map((cell) => (cell ? String(cell).padStart(5, ' ') + ' ' : '      ')).join('│')}│`)
       .join(`\n${line('├', '┼', '┤')}\n`)
@@ -755,9 +756,7 @@ export function createPongGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
     const score = `you ${playerScore} — ${aiScore} cpu`
     onFrame([
       `PONG  ${score}  (w/s or ↑/↓ · q quits)`,
-      `┌${'─'.repeat(PONG_W)}┐`,
-      ...rows.map((row) => `│${row}│`),
-      `└${'─'.repeat(PONG_W)}┘`
+      ...boxed(rows, PONG_W)
     ].join('\n'))
   }
 
