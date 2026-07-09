@@ -30,7 +30,13 @@
       <span class="filter-cursor" aria-hidden="true" />
     </div>
 
-    <TransitionGroup name="grid" tag="div" class="columns is-multiline">
+    <TransitionGroup
+      ref="gridEl"
+      name="grid"
+      tag="div"
+      class="columns is-multiline"
+      @keydown="onGridKey"
+    >
       <div
         v-for="project in visibleProjects"
         :key="project.slug"
@@ -77,6 +83,30 @@ const onFilterKey = (event: KeyboardEvent) => {
           : (current - 1 + values.length) % values.length
   activeCategory.value = values[nextIndex]!
   nextTick(() => filtersEl.value?.querySelectorAll<HTMLElement>('.filter-flag')[nextIndex]?.focus())
+}
+
+// 2D keyboard navigation across the project cards: arrows move focus between
+// the card links, Enter/Space follow them (native to the <a>). Columns are
+// detected from the rendered layout so it works across breakpoints.
+const gridEl = ref<{ $el: HTMLElement } | HTMLElement>()
+const gridRoot = () => (gridEl.value && '$el' in gridEl.value ? gridEl.value.$el : gridEl.value) as HTMLElement | undefined
+const onGridKey = (event: KeyboardEvent) => {
+  if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+  const root = gridRoot()
+  const links = [...(root?.querySelectorAll<HTMLElement>('.project-thumb') ?? [])]
+  if (!links.length) return
+  const active = document.activeElement as HTMLElement
+  const current = links.indexOf(active)
+  if (current < 0) return
+  event.preventDefault()
+  // columns = how many cards share the top row's offsetTop
+  const firstTop = links[0]!.offsetTop
+  const cols = Math.max(1, links.filter((el) => el.offsetTop === firstTop).length)
+  const delta = event.key === 'ArrowRight' ? 1
+    : event.key === 'ArrowLeft' ? -1
+      : event.key === 'ArrowDown' ? cols : -cols
+  const next = Math.max(0, Math.min(links.length - 1, current + delta))
+  links[next]?.focus()
 }
 
 const visibleProjects = computed(() =>

@@ -563,3 +563,21 @@ test('blog code blocks show line numbers', async ({ page }) => {
   expect(gutter).toBeGreaterThan(0)
   expect(await page.locator('.post-body pre code .line').count()).toBeGreaterThan(3)
 })
+
+test('project cards support arrow-key navigation', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/projects')
+  const cards = page.locator('.project-card .project-thumb')
+  await cards.first().focus()
+  // right moves to the second card
+  await page.keyboard.press('ArrowRight')
+  await expect(cards.nth(1)).toBeFocused()
+  // down moves a full row (>= 2 columns at this width), then Enter follows the link
+  await cards.first().focus()
+  await page.keyboard.press('ArrowDown')
+  const focusedIndex = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('.project-card .project-thumb')]
+    return links.indexOf(document.activeElement as HTMLElement)
+  })
+  expect(focusedIndex).toBeGreaterThan(1)
+})
