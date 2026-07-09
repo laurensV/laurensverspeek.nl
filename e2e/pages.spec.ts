@@ -504,3 +504,16 @@ test('loading skeletons share the shimmer treatment', async ({ page }) => {
   const shimmer = await skeleton.evaluate((el) => getComputedStyle(el, '::after').animationName)
   expect(shimmer).toContain('skeleton-shimmer')
 })
+
+test('blog posts print cleanly with link urls as footnotes', async ({ page }) => {
+  await page.emulateMedia({ media: 'print' })
+  await page.goto('/blog/rebuilding-this-site')
+  await page.locator('.post-body').waitFor()
+  // interactive chrome is hidden in print
+  await expect(page.locator('.post-toc')).toBeHidden()
+  // external links expose their href via a ::after footnote
+  const footnote = await page.locator('.post-body a[href^="http"]').first().evaluate((el) =>
+    getComputedStyle(el, '::after').content
+  )
+  expect(footnote).toContain('http')
+})

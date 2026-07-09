@@ -442,8 +442,43 @@ html.crt-mode {
   .flow-field,
   .skip-link,
   .boot-splash,
+  .crumbs,
+  .status-bar,
+  .route-progress,
   .no-print {
     display: none !important;
+  }
+
+  // Blog posts print as clean documents: no interactive chrome, and every
+  // external link's URL becomes a footnote so paper readers can follow it.
+  .post-toc,
+  .post-related,
+  .post-share,
+  .heading-anchor,
+  .code-copy,
+  .read-progress {
+    display: none !important;
+  }
+
+  .post-body {
+    // the on-screen dotted underline uses ::after; in print reuse it as a
+    // URL footnote (!important beats the more specific screen rule)
+    a[href^='http']::after {
+      content: ' (' attr(href) ')' !important;
+      position: static !important;
+      border: none !important;
+      font-size: 0.85em;
+      color: #555;
+      word-break: break-all;
+    }
+    a::before {
+      display: none !important;
+    }
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
   }
 }
 
