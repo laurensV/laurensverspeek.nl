@@ -9,6 +9,7 @@
     "content.config.ts"
   ],
   "ignoreDependencies": [
-    "bulma"
+    "bulma",
+    "vitest-environment-nuxt"
   ]
 }

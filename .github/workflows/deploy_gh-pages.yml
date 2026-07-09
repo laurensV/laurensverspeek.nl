@@ -27,6 +27,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run typecheck:tests
       - run: npm run test
+      - run: npm run test:nuxt
 
       # browser is needed by the resume PDF step (postgenerate) and the E2E run
       - name: Install Playwright browser
