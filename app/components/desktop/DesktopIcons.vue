@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import type { IconName } from '~/components/AppIcon.vue'
 
-export interface DesktopIconItem { id: string, label: string, icon: IconName, action: () => void }
+interface DesktopIconItem { id: string, label: string, icon: IconName, action: () => void }
 
 defineProps<{ icons: DesktopIconItem[] }>()
 </script>

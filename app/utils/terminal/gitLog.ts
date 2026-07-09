@@ -4,7 +4,7 @@
 
 import { escapeHtml } from '~/utils/escapeHtml'
 
-export interface GitFileStat {
+interface GitFileStat {
   path: string
   add: number
   del: number

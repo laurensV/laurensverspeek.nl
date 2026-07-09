@@ -1,7 +1,7 @@
 // Gear & tools shown on /uses — edit freely.
 import type { IconName } from '~/components/AppIcon.vue'
 
-export interface UsesItem {
+interface UsesItem {
   name: string
   note?: string
   url?: string

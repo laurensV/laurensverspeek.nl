@@ -44,7 +44,7 @@ const server = createServer(async (req, res) => {
 })
 
 const main = async () => {
-  const { chromium } = await import('playwright-core')
+  const { chromium } = await import('@playwright/test')
   await new Promise((resolve) => server.listen(port, resolve))
 
   const browser = await chromium.launch()

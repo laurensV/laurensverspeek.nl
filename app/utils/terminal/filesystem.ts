@@ -4,7 +4,7 @@
 
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 
-export interface FsNode { dir: boolean, content: string }
+interface FsNode { dir: boolean, content: string }
 export type Filesystem = Record<string, FsNode>
 
 const FS_KEY = 'lv-terminal-fs'

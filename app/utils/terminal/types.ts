@@ -26,7 +26,7 @@ export interface TerminalCommand {
 export const PAGES = ['home', 'projects', 'blog', 'about', 'uses', 'now', 'cv', 'contact'] as const
 
 /** Minimal shape of a blog post as the terminal needs it. */
-export interface TerminalBlogPost {
+interface TerminalBlogPost {
   path: string
   title: string
   date: string

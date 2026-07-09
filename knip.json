@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "realtime/cursors-server.mjs",
+    "scripts/*.mjs",
+    "server/routes/*.ts"
+  ],
+  "ignore": [
+    "content.config.ts"
+  ],
+  "ignoreDependencies": [
+    "bulma"
+  ]
+}
