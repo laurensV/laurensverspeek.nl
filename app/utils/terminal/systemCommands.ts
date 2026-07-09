@@ -26,7 +26,7 @@ const ASCII_LOGO = String.raw`
 `
 
 export function createSystemCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
-  const { push, out, muted, error } = ctx
+  const { push, out, muted, error, link } = ctx
 
   // captured at factory time (valid Nuxt context); command handlers run outside it.
   // Set by the ssh easter egg; the prompt's host segment follows it.
@@ -583,6 +583,16 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       hidden: true,
       description: 'Absolutely not',
       exec: () => error('visitor is not in the sudoers file. This incident will be reported. 😏')
+    },
+    hire: {
+      hidden: true,
+      description: 'The console-hunt reward',
+      exec: () => {
+        push('primary', 'Nice — you finished the console hunt. 🕵️')
+        out('If you build things you are proud of, I would love to hear from you.')
+        link(`  → ${profile.email}`, `mailto:${profile.email}`)
+        muted('(the invitation stands whether or not you found the hunt)')
+      }
     },
     rm: {
       usage: 'rm <file>',

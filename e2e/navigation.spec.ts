@@ -319,3 +319,30 @@ test('triple-clicking the brand glyph toggles CRT mode', async ({ page }) => {
   // and it stayed on the home page (the glyph doesn't navigate)
   await expect(page).toHaveURL(/\/$/)
 })
+
+declare global {
+  interface Window {
+    lv: { hunt(): string, riddle(): string, answer(g: string): string }
+  }
+}
+
+test('the console dev hunt chains clues to a reward', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  // the hunt object is exposed on window
+  expect(await page.evaluate(() => typeof window.lv?.hunt)).toBe('function')
+  expect(await page.evaluate(() => window.lv.hunt())).toBe('step-1')
+  // the base64 clue decodes to the next call
+  expect(await page.evaluate(() => atob('bHYucmlkZGxlKCk='))).toBe('lv.riddle()')
+  expect(await page.evaluate(() => window.lv.riddle())).toBe('step-2')
+  // a wrong answer is rejected, the right one ('secrets') solves it and parties
+  expect(await page.evaluate(() => window.lv.answer('nope'))).toBe('wrong')
+  expect(await page.evaluate(() => window.lv.answer('secrets'))).toBe('solved')
+  await expect(page.locator('html.party-mode')).toHaveCount(1)
+  // and the reward command works in the terminal
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await page.fill('#terminal-input', 'hire')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText('finished the console hunt')
+})
