@@ -1,17 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
-
-// Drive the terminal the way a keyboard user would: open with `~`, type, Enter.
-const openTerminal = async (page: Page) => {
-  await page.goto('/')
-  await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
-}
-
-const run = async (page: Page, command: string) => {
-  await page.fill('#terminal-input', command)
-  await page.keyboard.press('Enter')
-}
+import { test, expect } from '@playwright/test'
+import { openTerminal, run } from './helpers'
 
 test('opens and lists commands', async ({ page }) => {
   await openTerminal(page)

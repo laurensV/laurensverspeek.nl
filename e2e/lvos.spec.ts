@@ -1,15 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
-
-const bootDesktop = async (page: Page) => {
-  await page.goto('/')
-  await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.fill('#terminal-input', 'desktop')
-  await page.keyboard.press('Enter')
-  // BIOS boot screen, then the desktop
-  await page.locator('.boot').waitFor({ timeout: 8000 })
-  await page.locator('.lvos').waitFor({ timeout: 8000 })
-}
+import { test, expect } from '@playwright/test'
+import { bootDesktop } from './helpers'
 
 test('boots through the BIOS screen into the desktop', async ({ page }) => {
   await bootDesktop(page)
