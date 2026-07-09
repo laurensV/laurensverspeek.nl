@@ -148,6 +148,8 @@ export default defineNuxtConfig({
         // SVG favicon (the >_ mark) for modern browsers; .ico as the fallback
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // let feed readers and browsers discover the RSS feed automatically
+        { rel: 'alternate', type: 'application/rss+xml', title: 'laurensverspeek.nl — blog', href: '/rss.xml' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

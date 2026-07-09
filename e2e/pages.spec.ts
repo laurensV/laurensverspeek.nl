@@ -517,3 +517,9 @@ test('blog posts print cleanly with link urls as footnotes', async ({ page }) =>
   )
   expect(footnote).toContain('http')
 })
+
+test('the page advertises the RSS feed for autodiscovery', async ({ page }) => {
+  await page.goto('/')
+  const feed = page.locator('link[rel="alternate"][type="application/rss+xml"]')
+  await expect(feed).toHaveAttribute('href', '/rss.xml')
+})
