@@ -646,3 +646,11 @@ test('pgp stays hidden while no key is published', async ({ page, request }) => 
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText('no public key published on this build')
 })
+
+test('changelog commits carry github-style diffstat blocks', async ({ page }) => {
+  await page.goto('/changelog')
+  await page.locator('.changelog-entry').first().waitFor()
+  const blocks = page.locator('.changelog-entry').first().locator('.changelog-block')
+  await expect(blocks).toHaveCount(5)
+})
+

@@ -15,6 +15,9 @@ export interface GitCommit {
   date: string
   subject: string
   files: GitFileStat[]
+  /** Whole-commit totals, computed before any file-list truncation */
+  plus: number
+  minus: number
   /** How many changed files were omitted from `files` to keep the payload small */
   truncated?: number
 }
@@ -38,7 +41,9 @@ export function parseGitNumstat(raw: string): GitCommit[] {
           // binary files report "-" for both counts
           return { path: path.join('\t'), add: Number(add) || 0, del: Number(del) || 0 }
         })
-      return { hash, date, subject, files }
+      const plus = files.reduce((total, file) => total + file.add, 0)
+      const minus = files.reduce((total, file) => total + file.del, 0)
+      return { hash, date, subject, files, plus, minus }
     })
     .filter((commit) => commit.hash)
 }

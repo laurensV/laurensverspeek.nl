@@ -26,8 +26,16 @@
           <p class="changelog-subject">{{ commit.subject }}</p>
           <p v-if="commit.files.length" class="changelog-stat">
             {{ commit.files.length + (commit.truncated ?? 0) }} file{{ commit.files.length + (commit.truncated ?? 0) === 1 ? '' : 's' }}
-            · <span class="changelog-add">+{{ sum(commit, 'add') }}</span>
-            <span class="changelog-del">−{{ sum(commit, 'del') }}</span>
+            · <span class="changelog-add">+{{ commit.plus }}</span>
+            <span class="changelog-del">−{{ commit.minus }}</span>
+            <span class="changelog-blocks" :title="`+${commit.plus} −${commit.minus}`" aria-hidden="true">
+              <span
+                v-for="(kind, b) in diffBlocks(commit)"
+                :key="b"
+                class="changelog-block"
+                :class="`is-${kind}`"
+              />
+            </span>
           </p>
         </li>
       </ol>
@@ -50,8 +58,14 @@ const { data: commits, pending } = await useAsyncData('changelog', () =>
   $fetch<GitCommit[]>('/git-log.json')
 )
 
-const sum = (commit: GitCommit, field: 'add' | 'del') =>
-  commit.files.reduce((total, file) => total + file[field], 0)
+// GitHub-style diffstat squares: five blocks split between green and red in
+// proportion to the commit's additions/deletions
+const diffBlocks = (commit: GitCommit): ('add' | 'del' | 'idle')[] => {
+  const total = commit.plus + commit.minus
+  if (!total) return ['idle', 'idle', 'idle', 'idle', 'idle']
+  const green = Math.min(5, Math.max(commit.plus > 0 ? 1 : 0, Math.round((commit.plus / total) * 5)))
+  return Array.from({ length: 5 }, (_, i) => (i < green ? 'add' : 'del'))
+}
 </script>
 
 <style scoped lang="scss">
@@ -118,6 +132,23 @@ const sum = (commit: GitCommit, field: 'add' | 'del') =>
   .changelog-del {
     color: var(--bulma-danger);
     margin-left: 0.3rem;
+  }
+
+  .changelog-blocks {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 0.5rem;
+    vertical-align: baseline;
+  }
+
+  .changelog-block {
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+
+    &.is-add { background-color: var(--bulma-success); }
+    &.is-del { background-color: var(--bulma-danger); }
+    &.is-idle { background-color: var(--bulma-border); }
   }
 }
 </style>
