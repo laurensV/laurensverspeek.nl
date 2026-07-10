@@ -14,13 +14,17 @@ const outDir = join(root, 'public', 'og')
 mkdirSync(outDir, { recursive: true })
 
 const jiti = createJiti(import.meta.url)
-const { projects } = await jiti.import(join(root, 'app/data/projects.ts'))
-const { profile } = await jiti.import(join(root, 'app/data/profile.ts'))
+/** @type {{ projects: { slug: string, title: string, description: string }[] }} */
+const { projects } = (await jiti.import(join(root, 'app/data/projects.ts')))
+/** @type {{ profile: { name: string, domain: string } }} */
+const { profile } = (await jiti.import(join(root, 'app/data/profile.ts')))
 
+/** @param {unknown} text */
 const escape = (text) =>
   String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 // crude word-wrap into <= maxChars lines, capped at maxLines
+/** @param {string} text @param {number} maxChars @param {number} maxLines */
 const wrap = (text, maxChars, maxLines) => {
   const words = String(text).split(/\s+/)
   const lines = []
@@ -39,6 +43,7 @@ const wrap = (text, maxChars, maxLines) => {
   return lines
 }
 
+/** @param {{ eyebrow: string, title: string, description: string }} data */
 const card = ({ eyebrow, title, description }) => {
   const titleLines = wrap(title, 26, 3)
   const descLines = wrap(description, 58, 2)
@@ -74,6 +79,7 @@ const card = ({ eyebrow, title, description }) => {
 </svg>`
 }
 
+/** @param {string} name @param {{ eyebrow: string, title: string, description: string }} data */
 const writeCard = (name, data) => {
   writeFileSync(join(outDir, `${name}.svg`), card(data))
   return name
@@ -114,6 +120,7 @@ const blogDir = join(root, 'content', 'blog')
 for (const file of readdirSync(blogDir).filter((f) => f.endsWith('.md'))) {
   const raw = readFileSync(join(blogDir, file), 'utf-8')
   const fm = /^---\n([\s\S]*?)\n---/.exec(raw)?.[1] ?? ''
+  /** @param {string} key */
   const field = (key) => {
     const m = new RegExp(`^${key}:\\s*['"]?(.+?)['"]?\\s*$`, 'm').exec(fm)
     return m?.[1] ?? ''

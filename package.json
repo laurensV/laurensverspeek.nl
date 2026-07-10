@@ -13,6 +13,7 @@
     "lint:styles": "stylelint \"app/**/*.{scss,vue}\"",
     "typecheck": "nuxt typecheck",
     "typecheck:tests": "vue-tsc --noEmit -p tsconfig.tests.json",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json",
     "knip": "npx knip",
     "test": "vitest run",
     "og": "node scripts/generate-og.mjs",

@@ -9,7 +9,7 @@
 
 import { WebSocketServer } from 'ws'
 
-const PORT = process.env.PORT || 8787
+const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
 
 const wss = new WebSocketServer({ port: PORT })
@@ -27,7 +27,7 @@ wss.on('connection', (socket) => {
   socket.on('message', (raw) => {
     let msg
     try {
-      msg = JSON.parse(raw)
+      msg = JSON.parse(String(raw))
     } catch {
       return
     }

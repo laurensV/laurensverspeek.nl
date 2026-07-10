@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../.output/public', import.meta.url))
 const port = Number(process.env.PORT ?? 4173)
 
+/** @type {Record<string, string>} */
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript',
@@ -28,6 +29,7 @@ const TYPES = {
   '.woff2': 'font/woff2'
 }
 
+/** @param {string} path @returns {Promise<string | null>} */
 const tryFile = async (path) => {
   try {
     const s = await stat(path)

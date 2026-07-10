@@ -12,12 +12,14 @@ const outFile = join(root, 'laurens-verspeek-resume.pdf')
 // also refresh the committed copy in public/ so `npm run dev` serves it too
 const sourceCopy = fileURLToPath(new URL('../public/laurens-verspeek-resume.pdf', import.meta.url))
 
+/** @type {Record<string, string>} */
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
   '.jpg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff2': 'font/woff2'
 }
 
+/** @param {string} path @returns {Promise<string | null>} */
 const tryFile = async (path) => {
   try {
     const s = await stat(path)
@@ -45,8 +47,10 @@ const server = createServer(async (req, res) => {
 const main = async () => {
   const { chromium } = await import('@playwright/test')
   // an ephemeral port: a fixed one once collided with a parked dev server
-  await new Promise((resolve) => server.listen(0, resolve))
-  const port = server.address().port
+  await new Promise((resolve) => server.listen(0, () => resolve(undefined)))
+  const address = server.address()
+  if (!address || typeof address === 'string') throw new Error('server has no port')
+  const port = address.port
 
   const browser = await chromium.launch()
   const page = await browser.newPage()
@@ -74,7 +78,7 @@ const main = async () => {
 
 try {
   await main()
-} catch (error) {
+} catch (/** @type {any} */ error) {
   console.warn('[resume] skipped PDF generation:', error?.message ?? error)
 } finally {
   server.close()
