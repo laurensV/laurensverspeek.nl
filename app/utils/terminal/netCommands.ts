@@ -1,0 +1,120 @@
+import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
+import { createStarwarsGame } from '~/utils/terminalGames'
+import { profile } from '~/data/profile'
+import { pgp } from '~/data/pgp'
+
+// Network-flavored commands: some real (curl), some theater (ping, telnet).
+
+export function createNetCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
+  const { push, out, muted, error } = ctx
+
+  return {
+    ping: {
+      usage: 'ping <host>',
+      description: 'Send ICMP packets to a host',
+      exec: (args) => {
+        const host = args[0] ?? profile.domain
+        muted(`PING ${host} (127.0.0.1): 56 data bytes`)
+        let seq = 0
+        const times: number[] = []
+        const send = () => {
+          if (seq >= 4) {
+            const min = Math.min(...times).toFixed(1)
+            const max = Math.max(...times).toFixed(1)
+            const avg = (times.reduce((s, t) => s + t, 0) / times.length).toFixed(1)
+            out('')
+            out(`--- ${host} ping statistics ---`)
+            out(`4 packets transmitted, 4 received, 0% packet loss`)
+            out(`round-trip min/avg/max = ${min}/${avg}/${max} ms`)
+            return
+          }
+          const time = 8 + Math.random() * 30
+          times.push(time)
+          out(`64 bytes from ${host}: icmp_seq=${seq} ttl=64 time=${time.toFixed(1)} ms`)
+          seq++
+          setTimeout(send, 420)
+        }
+        send()
+      }
+    },
+    curl: {
+      usage: 'curl <url>',
+      description: 'Fetch a URL (really — CORS permitting)',
+      examples: ['curl https://api.github.com/zen', 'curl laurensverspeek.nl'],
+      exec: (args) => {
+        const raw = args.find((arg) => !arg.startsWith('-'))
+        if (!raw) return error(`curl: try 'curl https://api.github.com/zen'`)
+        // a bare host defaults to https and is treated as our own playful page
+        let url: URL
+        try {
+          url = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`)
+        } catch {
+          return error(`curl: (3) URL malformed: ${raw}`)
+        }
+        // our own domain keeps the original easter-egg response
+        if (/(^|\.)laurensverspeek\.nl$/.test(url.hostname)) {
+          push('primary', 'HTTP/2 200')
+          out('content-type: text/html; charset=utf-8')
+          out('')
+          out('<!doctype html><title>Laurens Verspeek</title>')
+          out('<!-- psst: the real fun is behind the ~ key -->')
+          return
+        }
+        muted(`* Trying ${url.host}...`)
+        const stopSpin = ctx.spin(`waiting for ${url.host} ...`)
+        return fetch(url.toString(), { headers: { accept: 'text/plain, application/json, */*' } })
+          .then(async (res) => {
+            push('primary', `HTTP ${res.status} ${res.statusText}`.trim())
+            const type = res.headers.get('content-type') ?? ''
+            out(`content-type: ${type || 'unknown'}`)
+            out('')
+            const body = await res.text()
+            const text = type.includes('application/json')
+              ? JSON.stringify(JSON.parse(body), null, 2)
+              : body
+            text.split('\n').slice(0, 40).forEach(out)
+            if (text.split('\n').length > 40) muted('… (truncated)')
+          })
+          .catch(() => error(`curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
+          .finally(stopSpin)
+      }
+    },
+    telnet: {
+      hidden: true,
+      usage: 'telnet <host>',
+      description: 'The classic ASCII Star Wars, on the classic host',
+      examples: ['telnet towel.blinkenlights.nl'],
+      argCandidates: () => ['towel.blinkenlights.nl'],
+      exec: (args) => {
+        const host = args[0]
+        if (!host) {
+          error('telnet: usage: telnet <host>')
+          return
+        }
+        if (host.toLowerCase() !== 'towel.blinkenlights.nl') {
+          error(`telnet: could not resolve ${host}: only one host still speaks telnet around here`)
+          muted('(hint: the towel one)')
+          return
+        }
+        muted(`Trying 176.9.9.172...`)
+        muted(`Connected to ${host}. Escape character is 'q'.`)
+        ctx.startGame(createStarwarsGame)
+      }
+    },
+    gpg: {
+      hidden: true,
+      usage: 'gpg --list-keys',
+      description: 'Show my PGP key (when one is published)',
+      exec: () => {
+        if (!pgp.publicKey) {
+          muted(`gpg: keybox '~/.gnupg/pubring.kbx' created`)
+          out('gpg: no public key published on this build (yet)')
+          return
+        }
+        out(`pub   ${pgp.fingerprint}`)
+        out(`uid   ${profile.name} <${profile.email}>`)
+        ctx.link('the armored key lives at /pgp.txt', '/pgp.txt')
+      }
+    }
+  }
+}
