@@ -32,6 +32,11 @@ Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot, then a windowing env
 - **Meta pages** — `/museum` catalogs every feature and easter egg as exhibits; `/stats` draws the public visitor counters; `/changelog` is the real git history; a PGP scaffold gates `/pgp.txt`.
 - Dark/light theme throughout, reduced-motion respected everywhere, filterable projects with detail pages, `/uses` and `/now`.
 
+## Architecture
+
+The guided tour — terminal internals, the shared process table, lvOS, and the
+build pipeline — lives in [docs/architecture.md](docs/architecture.md).
+
 ## Development
 
 ```bash
