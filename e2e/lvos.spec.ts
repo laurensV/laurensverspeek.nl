@@ -239,8 +239,9 @@ test('files app browses the terminal home filesystem', async ({ page }) => {
   await files.locator('.files-file', { hasText: 'stuff/' }).click()
   await files.locator('.files-file', { hasText: 'note.txt' }).click()
   await expect(files.locator('.files-preview')).toContainText('from the shell')
-  // .. climbs back up to the curated home files
-  await files.locator('.files-file', { hasText: '..' }).click()
+  // the breadcrumb bar climbs back up to the curated home files
+  await expect(files.locator('.files-crumb:disabled')).toHaveText('stuff')
+  await files.locator('.files-crumb', { hasText: '~' }).click()
   await expect(files.locator('.files-file', { hasText: 'readme.md' })).toBeVisible()
 })
 

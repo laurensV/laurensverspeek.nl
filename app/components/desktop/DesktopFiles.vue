@@ -13,10 +13,15 @@
       </div>
       <div class="files-list">
         <template v-if="activeDir === '~'">
-          <button v-if="vfsDir" class="files-file is-dir" @click="vfsDir = parentDir">
-            <span class="files-glyph" aria-hidden="true">▸</span>
-            <span>..</span>
-          </button>
+          <nav v-if="vfsDir" class="files-crumbs" aria-label="Current folder path">
+            <button class="files-crumb" @click="vfsDir = ''">~</button>
+            <template v-for="crumb in crumbs" :key="crumb.path">
+              <span class="files-crumb-sep" aria-hidden="true">/</span>
+              <button class="files-crumb" :disabled="crumb.path === vfsDir" @click="vfsDir = crumb.path">
+                {{ crumb.name }}
+              </button>
+            </template>
+          </nav>
           <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
             <template v-if="renaming === entry.name">
               <input
@@ -175,7 +180,11 @@ const switchDir = (dir: string) => {
   preview.value = null
 }
 
-const parentDir = computed(() => vfsDir.value.split('/').slice(0, -1).join('/'))
+// clickable path segments: ~ / dir / subdir (the current one is inert)
+const crumbs = computed(() => {
+  const segments = vfsDir.value ? vfsDir.value.split('/') : []
+  return segments.map((name, i) => ({ name, path: segments.slice(0, i + 1).join('/') }))
+})
 
 const vfsEntries = computed(() => {
   if (activeDir.value !== '~') return []
@@ -324,6 +333,41 @@ const curated = computed<FileEntry[]>(() => {
 .files-glyph {
   width: 13px;
   text-align: center;
+}
+
+.files-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding: 0.1rem 0.3rem 0.35rem;
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.15);
+  margin-bottom: 0.25rem;
+
+  .files-crumb {
+    padding: 0.1rem 0.3rem;
+    border: none;
+    border-radius: var(--bulma-radius-small);
+    background: none;
+    color: var(--bulma-primary);
+    font: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
+    }
+
+    &:disabled {
+      color: hsl(var(--lv-scheme-hs), 80%);
+      cursor: default;
+    }
+  }
+
+  .files-crumb-sep {
+    color: hsl(var(--lv-scheme-hs), 45%);
+    font-size: 0.72rem;
+  }
 }
 
 .files-hint {
