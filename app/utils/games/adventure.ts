@@ -358,7 +358,7 @@ const isAdvState = (parsed: unknown): parsed is AdvState => {
     && typeof candidate.moves === 'number'
 }
 
-export const loadAdventure = (): AdvState | null => storageGetJson(SAVE_KEY, isAdvState)
+const loadAdventure = (): AdvState | null => storageGetJson(SAVE_KEY, isAdvState)
 
 const wrap = (text: string, width = 62): string[] => {
   const out: string[] = []
