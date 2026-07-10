@@ -653,3 +653,24 @@ test('an adopted pet wanders the desktop and clicking feeds it', async ({ page }
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lv-pet') ?? '{}'))
   expect(Date.now() - saved.lastFed).toBeLessThan(60_000)
 })
+
+test('minesweeper offers difficulty levels and times the game', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^mines.exe$/ }).click()
+  const mines = page.locator('.mines')
+  await mines.waitFor()
+  // beginner board: 81 cells
+  await expect(mines.locator('.mines-cell')).toHaveCount(81)
+  // switching level rebuilds the board
+  await mines.locator('.mines-level', { hasText: 'intermediate' }).click()
+  await expect(mines.locator('.mines-cell')).toHaveCount(16 * 12)
+  await expect(mines.locator('.mines-level.is-active')).toHaveText('intermediate')
+  // the timer starts on the first dig
+  await mines.locator('.mines-cell').first().click()
+  await expect(mines.locator('.mines-time')).not.toHaveText('0s', { timeout: 3000 })
+  // the chosen level persists across a reopen
+  await page.locator('.lvos-window[data-win="minesweeper"] .lvos-window-actions button[title="Close"]').click()
+  await page.locator('.lvos-icon', { hasText: /^mines.exe$/ }).click()
+  await expect(page.locator('.mines .mines-level.is-active')).toHaveText('intermediate')
+})
