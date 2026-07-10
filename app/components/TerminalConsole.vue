@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
-import { searchHistory, pickMatch, matchPosition } from '~/utils/terminal/reverseSearch'
+import { useReverseSearch, useCompletionCycle, useSpinnerFrames } from '~/composables/useTerminalConsole'
 
 // The interactive guts of the terminal: output, input, history, completion,
 // ctrl+r search, and game key routing. Both the centered overlay and the lvOS
@@ -63,25 +63,8 @@ const { history, cwd, run, complete, activeGame, gameFrame, spinnerLabel, panes 
 // this console renders one pane's transcript (pane 0 unless told otherwise)
 const paneLines = computed(() => panes.linesFor(props.paneId))
 
-// braille spinner: animate while a command is fetching (a still glyph under
-// reduced motion). The interval only runs while the spinner is visible.
-const SPIN_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-const spinnerFrame = ref(SPIN_FRAMES[0])
-let spinTimer: ReturnType<typeof setInterval> | undefined
-watch(spinnerLabel, (label) => {
-  clearInterval(spinTimer)
-  if (!label || !import.meta.client) return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    spinnerFrame.value = '⠿'
-    return
-  }
-  let i = 0
-  spinTimer = setInterval(() => {
-    i = (i + 1) % SPIN_FRAMES.length
-    spinnerFrame.value = SPIN_FRAMES[i]!
-  }, 80)
-})
-onUnmounted(() => clearInterval(spinTimer))
+// braille spinner while a command is fetching (see useTerminalConsole)
+const { spinnerFrame } = useSpinnerFrames(spinnerLabel)
 const fontScale = useTermFontScale()
 const { name } = useIdentity()
 
@@ -121,33 +104,8 @@ const historyDown = () => {
   }
 }
 
-// Tab completion with zsh-style cycling: the first Tab applies the first match,
-// each further Tab (while the field still holds our suggestion) rotates through
-// the rest. Any real keystroke resets the cycle (see resetCompletion).
-let completionCycle: { list: string[], index: number } | null = null
-
-const autocomplete = () => {
-  if (
-    completionCycle
-    && completionCycle.list.length > 1
-    && input.value === completionCycle.list[completionCycle.index]
-  ) {
-    completionCycle.index = (completionCycle.index + 1) % completionCycle.list.length
-    input.value = completionCycle.list[completionCycle.index]!
-    return
-  }
-  const list = complete(input.value)
-  if (!list.length) {
-    completionCycle = null
-    return
-  }
-  input.value = list[0]!
-  completionCycle = list.length > 1 ? { list, index: 0 } : null
-}
-
-const resetCompletion = () => {
-  completionCycle = null
-}
+// zsh-style Tab completion cycling (see useTerminalConsole)
+const { autocomplete, resetCompletion } = useCompletionCycle(input, complete)
 
 const clearScreen = () => {
   panes.clear(props.paneId)
@@ -161,38 +119,11 @@ const onEscape = () => {
   emit('escape')
 }
 
-// ---- reverse history search (ctrl+r) ----
-const searchMode = ref(false)
-const searchQuery = ref('')
-const searchCursor = ref(0)
-
-const searchMatches = computed(() => searchHistory(history.value, searchQuery.value))
-const searchMatch = computed(() => pickMatch(searchMatches.value, searchCursor.value))
-// how many commands match, and which one (1-based) is currently shown
-const searchCount = computed(() => searchMatches.value.length)
-const searchPosition = computed(() => matchPosition(searchCount.value, searchCursor.value))
-
-const startSearch = () => {
-  searchMode.value = true
-  searchQuery.value = ''
-  searchCursor.value = 0
-}
-
-const cancelSearch = () => {
-  searchMode.value = false
-  searchQuery.value = ''
-  void nextTick(focusInput)
-}
-
-const acceptSearch = (runIt: boolean) => {
-  const match = searchMatch.value
-  searchMode.value = false
-  if (match) {
-    input.value = match
-    if (runIt) submit()
-  }
-  void nextTick(focusInput)
-}
+// ---- reverse history search (ctrl+r, see useTerminalConsole) ----
+const {
+  searchMode, searchQuery, searchMatch, searchCount, searchPosition,
+  startSearch, cancelSearch, onSearchKey
+} = useReverseSearch(history, input, () => void nextTick(focusInput))
 
 // keyboard for the active console: game keys, and search-mode typing
 useEventListener('keydown', (event: KeyboardEvent) => {
@@ -226,18 +157,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     }
   }
 
-  if (searchMode.value) {
-    if (event.key === 'Escape') { event.preventDefault(); cancelSearch() }
-    else if (event.key === 'Enter') { event.preventDefault(); acceptSearch(true) }
-    else if (event.key === 'Tab') { event.preventDefault(); acceptSearch(false) }
-    else if ((event.key === 'r' && event.ctrlKey)) { event.preventDefault(); searchCursor.value++ }
-    else if (event.key === 'Backspace') { event.preventDefault(); searchQuery.value = searchQuery.value.slice(0, -1) }
-    else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
-      event.preventDefault()
-      searchQuery.value += event.key
-      searchCursor.value = 0
-    }
-  }
+  onSearchKey(event, submit)
 })
 
 // refocus the input when a game ends
