@@ -375,3 +375,12 @@ test('the tab favicon flips to a prompt block while the terminal is open', async
   await expect(icon).toHaveAttribute('href', /favicon\.svg$/)
 })
 
+test('theme-color meta follows the active theme', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const meta = page.locator('meta[name="theme-color"]')
+  await expect(meta).not.toHaveAttribute('content', '#ffba00')
+  const dark = await meta.getAttribute('content')
+  await page.locator('.status-item.status-button[title="Toggle theme"]').click()
+  await expect.poll(() => meta.getAttribute('content')).not.toBe(dark)
+})
