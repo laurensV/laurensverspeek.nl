@@ -88,6 +88,25 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
         setTimeout(close, 200)
       }
     },
+    fireworks: {
+      hidden: true,
+      description: 'Light up the night sky (pid 1231 if you regret it)',
+      exec: () => {
+        // reduced motion gets a handcrafted burst instead of the canvas show
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          out(String.raw`       .  *  .`)
+          out(String.raw`    *  \ | /  *`)
+          out(String.raw`   .  ~ -o- ~  .`)
+          out(String.raw`    *  / | \  *`)
+          out(String.raw`       '  *  '`)
+          muted('(reduced motion is on — one artisanal firework, hold the motion)')
+          return
+        }
+        muted('lighting fuses... Esc (or kill 1231) ends the show.')
+        ctx.effects.fireworks.value = true
+        setTimeout(close, 400)
+      }
+    },
     emacs: {
       hidden: true,
       description: 'The other editor (results may vary)',

@@ -9,6 +9,7 @@ const makeEffects = () => ({
   crt: ref(false),
   destruct: ref(false),
   bootReplay: ref(false),
+  fireworks: ref(false),
   toggleCrt: vi.fn((on?: boolean) => (on ?? true))
 })
 
@@ -29,6 +30,9 @@ describe('effectProcs / killByPid', () => {
     const procs = effectProcs(fx as never)
     expect(killByPid(procs, SYSTEM_PROCS, 217)).toEqual({ ok: true, name: 'party-mode' })
     expect(fx.party.value).toBe(false)
+    fx.fireworks.value = true
+    expect(killByPid(procs, SYSTEM_PROCS, 1231)).toEqual({ ok: true, name: 'fireworks.sh' })
+    expect(fx.fireworks.value).toBe(false)
   })
 
   it('reports a not-running effect and forbidden system pids', () => {

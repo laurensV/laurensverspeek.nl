@@ -52,7 +52,7 @@ export function useTerminal() {
     return path === '' ? '~' : `~${path}`
   })
   const colorMode = useColorMode()
-  const { matrixActive, crtActive, destructActive, toggleCrt } = useSiteEffects()
+  const { matrixActive, crtActive, destructActive, fireworksActive, toggleCrt } = useSiteEffects()
   const { accent, accents, setAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
@@ -169,6 +169,7 @@ export function useTerminal() {
       crt: crtActive,
       destruct: destructActive,
       boss: useState(STATE_KEYS.fxBoss, () => false),
+      fireworks: fireworksActive,
       toggleCrt
     },
     // commands run from event handlers, outside the Nuxt instance — wrap

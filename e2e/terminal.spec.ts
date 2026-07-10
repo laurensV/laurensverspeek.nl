@@ -749,3 +749,28 @@ test('emacs refuses with an escalating bit', async ({ page }) => {
   await run(page, 'emacs')
   await expect(out).toContainText('heat death of the universe')
 })
+
+test('fireworks launches a show that ps lists and kill 1231 ends', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'fireworks')
+  const overlay = page.locator('.fireworks-overlay')
+  await expect(overlay).toBeVisible()
+  await expect(overlay).toContainText('Esc (or kill 1231) ends the show')
+  // the terminal closed itself after launching; reopen it over the show
+  await expect(page.locator('#terminal-input')).toHaveCount(0)
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await run(page, 'ps')
+  await expect(page.locator('.terminal-output')).toContainText('fireworks.sh')
+  await run(page, 'kill 1231')
+  await expect(page.locator('.terminal-output')).toContainText('[1231] fireworks.sh terminated')
+  await expect(overlay).toHaveCount(0)
+})
+
+test('fireworks under reduced motion prints ascii art instead', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await openTerminal(page)
+  await run(page, 'fireworks')
+  await expect(page.locator('.terminal-output')).toContainText('one artisanal firework, hold the motion')
+  await expect(page.locator('.fireworks-overlay')).toHaveCount(0)
+})

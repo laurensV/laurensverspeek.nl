@@ -21,6 +21,7 @@ export const STATE_KEYS = {
   fxParty: 'fx-party',
   fxDestruct: 'fx-destruct',
   fxBoss: 'fx-boss',
+  fxFireworks: 'fx-fireworks',
   bootReplay: 'boot-replay',
   // identity, theme, palette
   identityName: 'identity-name',
