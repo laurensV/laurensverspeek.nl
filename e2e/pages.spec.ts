@@ -690,3 +690,18 @@ test('top-level pages carry their own OG cards', async ({ page }) => {
     await expect(og).toHaveAttribute('content', new RegExp(`/og/page-${path.slice(1)}\\.svg$`))
   }
 })
+
+test('/museum catalogues the exhibits and the terminal knows the way', async ({ page }) => {
+  await page.goto('/museum')
+  await expect(page.locator('h1')).toContainText('The Museum')
+  await expect(page.getByText('pieces on display')).toBeVisible()
+  await expect(page.getByText('the terminal wing')).toBeVisible()
+  await expect(page.locator('.museum-plaque', { hasText: 'the process table' })).toBeVisible()
+  // the hidden museum command navigates here
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await pressTerminalKey(page)
+  await page.fill('#terminal-input', 'museum')
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/museum/, { timeout: 5000 })
+})

@@ -45,6 +45,14 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
       description: 'View my CV (printable)',
       exec: () => ctx.navigate('cv')
     },
+    museum: {
+      hidden: true,
+      description: 'Tour every feature and easter egg, as exhibits',
+      exec: () => {
+        muted('unlocking the museum after hours ...')
+        ctx.navigate('museum')
+      }
+    },
     say: {
       hidden: true,
       usage: 'say <message>',
