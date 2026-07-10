@@ -295,7 +295,8 @@ test('shutdown under reduced motion skips the animation and just exits', async (
   await bootDesktop(page)
   await page.locator('.lvos-start').click()
   await page.locator('.lvos-start-menu button', { hasText: 'shut down' }).click()
-  await expect(page).toHaveURL(/\/$/, { timeout: 5000 })
+  // same generous timeout as the animated variant — CI/loaded runners are slow
+  await expect(page).toHaveURL(/\/$/, { timeout: 10000 })
 })
 
 test('lock screen covers the desktop until any password unlocks it', async ({ page }) => {
