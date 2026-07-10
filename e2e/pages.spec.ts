@@ -759,3 +759,18 @@ test('the museum floor is walkable and plaques read on approach', async ({ page 
   }
   await expect(page.locator('.walk-hud')).not.toContainText('the terminal wing')
 })
+
+test('the about timeline draws itself with scroll-driven animations', async ({ page }) => {
+  await page.goto('/about')
+  await page.locator('.gitlog-entry').first().waitFor()
+  const supports = await page.evaluate(() => CSS.supports('animation-timeline: view()'))
+  if (!supports) test.skip()
+  // before scrolling, the amber overlay line is collapsed
+  const scaleOf = () => page.locator('.gitlog-entry').first().evaluate((el) => {
+    const t = getComputedStyle(el, '::after').transform
+    return t === 'none' ? 1 : new DOMMatrixReadOnly(t).d
+  })
+  // scroll the timeline through the viewport: the line draws in
+  await page.locator('.gitlog-entry').last().scrollIntoViewIfNeeded()
+  await expect.poll(scaleOf).toBeGreaterThan(0.9)
+})

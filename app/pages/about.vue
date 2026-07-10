@@ -180,6 +180,41 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
     background-color: var(--bulma-border);
   }
 
+  // native scroll-driven animation: each entry's segment of the branch line
+  // draws itself in amber as the entry scrolls through the viewport — no JS,
+  // and browsers without animation-timeline just keep the static line
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0.32rem;
+    top: 0.4rem;
+    bottom: -0.4rem;
+    width: 1px;
+    background-color: var(--bulma-primary);
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      &::after {
+        animation: gitlog-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 55%;
+      }
+
+      .gitlog-node {
+        animation: gitlog-node-pop linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 80%;
+      }
+    }
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+
   &:last-child {
     padding-bottom: 0;
 
@@ -321,6 +356,21 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
         opacity: 1;
       }
     }
+  }
+}
+
+@keyframes gitlog-draw {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes gitlog-node-pop {
+  from {
+    color: var(--bulma-border);
+  }
+  to {
+    color: var(--bulma-primary);
   }
 }
 </style>
