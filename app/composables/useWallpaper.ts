@@ -48,26 +48,34 @@ const WALLPAPER_KEY = 'lvos-wallpaper'
 const CUSTOM_KEY = 'lvos-wallpaper-custom'
 let restored = false
 
+/** The selectable list: the built-ins, plus a Paint export when one exists. */
+export function buildWallpaperList(custom: string): Wallpaper[] {
+  if (!custom) return WALLPAPERS
+  return [...WALLPAPERS, {
+    name: 'your masterpiece',
+    swatch: `url("${custom}") center / cover`,
+    css: `url("${custom}") center / cover no-repeat, hsl(var(--lv-scheme-hs), 5%)`
+  }]
+}
+
+/** A persisted index is only trusted when it points into the current list. */
+export function restoreIndex(saved: string | null, length: number): number | null {
+  const index = Number(saved)
+  return saved !== null && Number.isInteger(index) && index >= 0 && index < length ? index : null
+}
+
 export function useWallpaper() {
   const wallpaper = useState(STATE_KEYS.lvosWallpaper, () => 0)
   // a drawing exported from the Paint app, as a data URL (empty = none)
   const custom = useState(STATE_KEYS.lvosWallpaperCustom, () => '')
 
-  const wallpapers = computed<Wallpaper[]>(() =>
-    custom.value
-      ? [...WALLPAPERS, {
-          name: 'your masterpiece',
-          swatch: `url("${custom.value}") center / cover`,
-          css: `url("${custom.value}") center / cover no-repeat, hsl(var(--lv-scheme-hs), 5%)`
-        }]
-      : WALLPAPERS
-  )
+  const wallpapers = computed<Wallpaper[]>(() => buildWallpaperList(custom.value))
 
   if (import.meta.client && !restored) {
     restored = true
     custom.value = storageGet(CUSTOM_KEY) ?? ''
-    const saved = Number(storageGet(WALLPAPER_KEY))
-    if (Number.isInteger(saved) && saved >= 0 && saved < wallpapers.value.length) wallpaper.value = saved
+    const saved = restoreIndex(storageGet(WALLPAPER_KEY), wallpapers.value.length)
+    if (saved !== null) wallpaper.value = saved
     watch(wallpaper, (index) => storageSet(WALLPAPER_KEY, String(index)))
   }
   const wallpaperStyle = computed(() => ({ background: wallpapers.value[wallpaper.value]?.css }))
