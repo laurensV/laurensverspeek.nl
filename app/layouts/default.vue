@@ -21,6 +21,7 @@
     <LazyDomDestroyer v-if="destructActive" />
     <SlTrain />
     <PartyMode />
+    <BossScreen />
     <LiveCursors />
   </div>
 </template>

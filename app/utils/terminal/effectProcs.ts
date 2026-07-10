@@ -27,7 +27,8 @@ export function effectProcs(effects: TerminalContext['effects']): EffectProc[] {
     { pid: 217, name: 'party-mode', running: () => effects.party.value, stop: () => (effects.party.value = false) },
     { pid: 42, name: 'sl-train', running: () => effects.train.value, stop: () => (effects.train.value = false) },
     { pid: 101, name: 'crt-filter', running: () => effects.crt.value, stop: () => void effects.toggleCrt(false) },
-    { pid: 666, name: 'destroy-mode', running: () => effects.destruct.value, stop: () => (effects.destruct.value = false) }
+    { pid: 666, name: 'destroy-mode', running: () => effects.destruct.value, stop: () => (effects.destruct.value = false) },
+    { pid: 925, name: 'quarterly-report.xlsx', running: () => effects.boss.value, stop: () => (effects.boss.value = false) }
   ]
 }
 

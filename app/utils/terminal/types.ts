@@ -78,6 +78,7 @@ export interface TerminalContext {
     party: Ref<boolean>
     crt: Ref<boolean>
     destruct: Ref<boolean>
+    boss: Ref<boolean>
     toggleCrt: (on?: boolean) => boolean
   }
   fetchPosts: () => Promise<TerminalBlogPost[]>

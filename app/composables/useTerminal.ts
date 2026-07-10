@@ -168,6 +168,7 @@ export function useTerminal() {
       party: useState(STATE_KEYS.fxParty, () => false),
       crt: crtActive,
       destruct: destructActive,
+      boss: useState(STATE_KEYS.fxBoss, () => false),
       toggleCrt
     },
     // commands run from event handlers, outside the Nuxt instance — wrap

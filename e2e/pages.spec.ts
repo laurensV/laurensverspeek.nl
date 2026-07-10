@@ -664,3 +664,22 @@ test('the offline page ships a pocket snake', async ({ page }) => {
   await expect(page.locator('#score')).toContainText('score:')
 })
 
+test('the boss key hides everything behind a spreadsheet until Esc', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.keyboard.press('b')
+  await page.keyboard.press('b')
+  const boss = page.locator('.boss')
+  await expect(boss).toBeVisible()
+  await expect(boss).toContainText('Q3_forecast_v7_FINAL(2).xlsx')
+  await expect(boss).toContainText('Revenue')
+  await page.keyboard.press('Escape')
+  await expect(boss).toHaveCount(0)
+  // ps sees it as a killable process too
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await page.fill('#terminal-input', 'boss')
+  await page.keyboard.press('Enter')
+  await expect(boss).toBeVisible({ timeout: 3000 })
+  await page.keyboard.press('Escape')
+})

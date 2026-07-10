@@ -79,6 +79,15 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
         error(`kill: (${pid}) — no such process`)
       }
     },
+    boss: {
+      hidden: true,
+      description: 'Quick! The boss! (Esc when the coast is clear)',
+      exec: () => {
+        muted('deploying plausible spreadsheet...')
+        ctx.effects.boss.value = true
+        setTimeout(close, 200)
+      }
+    },
     emacs: {
       hidden: true,
       description: 'The other editor (results may vary)',

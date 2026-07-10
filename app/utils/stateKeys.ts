@@ -20,6 +20,7 @@ export const STATE_KEYS = {
   fxTrain: 'fx-train',
   fxParty: 'fx-party',
   fxDestruct: 'fx-destruct',
+  fxBoss: 'fx-boss',
   bootReplay: 'boot-replay',
   // identity, theme, palette
   identityName: 'identity-name',
