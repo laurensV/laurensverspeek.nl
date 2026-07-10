@@ -102,13 +102,21 @@
         </template>
 
         <template v-else-if="win.id === 'about-os'">
-          <p class="is-family-code is-size-7">
-            <b>lvOS 2.0</b> — a very serious operating system<br>
-            kernel: nuxt 4 (vue 3)<br>
-            memory: unlimited localStorage<br>
-            uptime: since you clicked that icon<br><br>
-            © {{ new Date().getFullYear() }} laurensverspeek.nl
-          </p>
+          <div class="lvos-about is-family-code is-size-7">
+            <p class="lvos-about-logo" aria-hidden="true">⚡</p>
+            <p><b>lvOS 2.0</b> — a very serious operating system</p>
+            <table class="lvos-about-specs">
+              <tbody>
+                <tr><th>kernel</th><td>nuxt 4 (vue 3), fully static</td></tr>
+                <tr><th>uptime</th><td>{{ aboutUptime }}</td></tr>
+                <tr><th>display</th><td>{{ aboutSpecs.display }}</td></tr>
+                <tr><th>browser</th><td>{{ aboutSpecs.browser }}</td></tr>
+                <tr><th>memory</th><td>enough</td></tr>
+                <tr><th>storage</th><td>{{ aboutSpecs.storage }} of localStorage in use</td></tr>
+              </tbody>
+            </table>
+            <p class="lvos-about-foot">© {{ new Date().getFullYear() }} laurensverspeek.nl</p>
+          </div>
         </template>
 
         <!-- Lazy: each app is its own chunk, loaded only when first opened -->
@@ -304,6 +312,49 @@ const onBootDone = () => {
   // a playful nudge a moment later
   setTimeout(() => notify('🔋', 'Battery low', 'plug in your creativity'), 6000)
 }
+
+// ---- about this computer: real specs, lovingly framed ----
+const sessionStart = Date.now()
+const aboutNow = ref(sessionStart)
+let aboutTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  aboutTimer = setInterval(() => (aboutNow.value = Date.now()), 1000)
+})
+onUnmounted(() => clearInterval(aboutTimer))
+
+const aboutUptime = computed(() => {
+  const total = Math.floor((aboutNow.value - sessionStart) / 1000)
+  const minutes = Math.floor(total / 60)
+  const seconds = total % 60
+  return minutes ? `${minutes}m ${seconds}s` : `${seconds}s`
+})
+
+const browserName = (ua: string) => {
+  if (ua.includes('Firefox/')) return 'firefox'
+  if (ua.includes('Edg/')) return 'edge'
+  if (ua.includes('OPR/')) return 'opera'
+  if (ua.includes('Chrome/')) return 'chromium-ish'
+  if (ua.includes('Safari/')) return 'safari'
+  return 'something exotic'
+}
+
+const aboutSpecs = computed(() => {
+  // aboutNow keeps this fresh if storage changes while the window sits open
+  void aboutNow.value
+  if (!import.meta.client) return { display: '—', browser: '—', storage: '—' }
+  let bytes = 0
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)!
+      bytes += key.length + (localStorage.getItem(key)?.length ?? 0)
+    }
+  } catch { /* locked-down browser: leave it at zero */ }
+  return {
+    display: `${window.screen.width}×${window.screen.height} (a lovely resolution)`,
+    browser: browserName(navigator.userAgent),
+    storage: bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`
+  }
+})
 
 const openTerminal = () => {
   startOpen.value = false
@@ -594,6 +645,38 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   &:hover {
     background-color: hsla(var(--lv-primary-hsl), 0.15);
+  }
+}
+
+.lvos-about {
+  .lvos-about-logo {
+    font-size: 1.6rem;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+
+  .lvos-about-specs {
+    margin: 0.6rem 0;
+    border-collapse: collapse;
+
+    th {
+      padding: 0.12rem 1rem 0.12rem 0;
+      color: hsl(var(--lv-scheme-hs), 55%);
+      font-weight: normal;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.12rem 0;
+      color: hsl(var(--lv-scheme-hs), 88%);
+    }
+  }
+
+  .lvos-about-foot {
+    color: hsl(var(--lv-scheme-hs), 55%);
+    font-size: 0.68rem;
   }
 }
 

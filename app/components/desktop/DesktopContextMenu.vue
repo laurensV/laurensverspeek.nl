@@ -7,7 +7,7 @@
     <button @click="emit('terminal')">&gt;_ new terminal</button>
     <button @click="emit('wallpaper')">🖼 next wallpaper</button>
     <button @click="emit('open', 'settings')">⚙ settings</button>
-    <button @click="emit('open', 'about-os')">ℹ about lvOS</button>
+    <button @click="emit('open', 'about-os')">ℹ about this computer</button>
     <button @click="emit('logout')">⏻ log out</button>
   </div>
 </template>

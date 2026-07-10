@@ -492,3 +492,18 @@ test('tile windows arranges every open window into a grid', async ({ page }) => 
   expect(left.width + right.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 4)
   expect(Math.abs(right.x - left.width)).toBeLessThan(4)
 })
+
+test('about this computer reports uptime and real machine specs', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'about this computer' }).click()
+  const about = page.locator('.lvos-about')
+  await expect(about).toBeVisible()
+  await expect(about).toContainText('a very serious operating system')
+  await expect(about).toContainText('a lovely resolution')
+  await expect(about).toContainText('enough')
+  await expect(about).toContainText(/uptime/)
+  // the uptime ticks
+  const before = await about.locator('td').nth(1).textContent()
+  await expect.poll(() => about.locator('td').nth(1).textContent()).not.toBe(before)
+})

@@ -10,7 +10,7 @@
       ⚡ lvOS
     </button>
     <div v-if="startOpen" class="lvos-start-menu">
-      <button @click="openFromStart('about-os')">ℹ about lvOS</button>
+      <button @click="openFromStart('about-os')">ℹ about this computer</button>
       <button @click="openFromStart('settings')">⚙ settings</button>
       <button @click="terminalFromStart">>_ terminal</button>
       <button @click="emit('tile'); startOpen = false">▦ tile windows</button>

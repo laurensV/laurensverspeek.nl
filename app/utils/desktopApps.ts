@@ -49,7 +49,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
 // windows opened by ids not in the icon grid still need titles (projects/about)
 export const EXTRA_TITLES: Record<string, string> = {
   projects: '~/projects — files',
-  'about-os': 'about lvOS'
+  'about-os': 'about this computer'
 }
 
 export const WINDOW_TITLES: Record<string, string> = {
