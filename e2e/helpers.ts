@@ -33,7 +33,7 @@ export const bootDesktop = async (page: Page) => {
   await pressTerminalKey(page)
   await page.fill('#terminal-input', 'desktop')
   await page.keyboard.press('Enter')
-  // BIOS boot screen, then the desktop
-  await page.locator('.boot').waitFor({ timeout: 8000 })
-  await page.locator('.lvos').waitFor({ timeout: 8000 })
+  // the BIOS boot screen flashes past (or is skipped under reduced motion),
+  // so the desktop itself is the only reliable signal
+  await page.locator('.lvos').waitFor({ timeout: 16000 })
 }
