@@ -2,7 +2,11 @@
   <div class="project-card">
     <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
 
-    <NuxtLink :to="`/projects/${project.slug}`" class="project-thumb">
+    <NuxtLink
+      :to="`/projects/${project.slug}`"
+      class="project-thumb"
+      :style="{ viewTransitionName: `project-thumb-${project.slug}` }"
+    >
       <template v-if="project.thumbnail && !imageFailed">
         <div v-show="!imageLoaded" class="skeleton-block project-thumb-skeleton" />
         <!-- hidden via opacity, not display:none — lazy images inside display:none
@@ -36,7 +40,7 @@
         ~/projects/{{ project.slug }}.md
         <span v-if="stars" class="card-stars" title="GitHub stars">★ {{ stars }}</span>
       </p>
-      <p class="title is-5 mb-2">
+      <p class="title is-5 mb-2" :style="{ viewTransitionName: `project-title-${project.slug}` }">
         <NuxtLink :to="`/projects/${project.slug}`" class="project-title-link" :data-text="project.title">
           {{ project.title }}
         </NuxtLink>

@@ -383,3 +383,20 @@ test('theme-color meta follows the active theme', async ({ page }) => {
   await page.locator('.status-item.status-button[title="Toggle theme"]').click()
   await expect.poll(() => meta.getAttribute('content')).not.toBe(dark)
 })
+
+test('project cards and detail pages share view-transition names', async ({ page }) => {
+  await page.goto('/projects')
+  await page.locator('.project-card').first().waitFor()
+  const cardName = await page.locator('.project-card .title').first()
+    .evaluate((el) => getComputedStyle(el).viewTransitionName)
+  expect(cardName).toMatch(/^project-title-/)
+  // the detail page's h1 carries the same name, so the browser morphs them
+  const slug = cardName.replace('project-title-', '')
+  await page.goto(`/projects/${slug}`)
+  const detailName = await page.locator('h1.title')
+    .evaluate((el) => getComputedStyle(el).viewTransitionName)
+  expect(detailName).toBe(cardName)
+  const thumbName = await page.locator('.detail-thumb')
+    .evaluate((el) => getComputedStyle(el).viewTransitionName)
+  expect(thumbName).toBe(`project-thumb-${slug}`)
+})

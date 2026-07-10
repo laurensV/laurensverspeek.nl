@@ -4,7 +4,7 @@
       <p class="overline mb-2">projects $ cat {{ project.slug }}.md</p>
 
       <div class="is-flex is-align-items-center is-flex-wrap-wrap mb-2" style="gap: 0.75rem">
-        <h1 class="title is-2 mb-0">{{ project.title }}</h1>
+        <h1 class="title is-2 mb-0" :style="{ viewTransitionName: `project-title-${project.slug}` }">{{ project.title }}</h1>
         <span class="tag" :class="categoryColor">{{ project.category }}</span>
       </div>
 
@@ -37,6 +37,7 @@
             :is="project.thumbnail && !imageFailed ? 'button' : 'div'"
             class="detail-thumb mb-4"
             :class="{ 'is-zoomable': project.thumbnail && !imageFailed }"
+            :style="{ viewTransitionName: `project-thumb-${project.slug}` }"
             :aria-label="project.thumbnail && !imageFailed ? 'Enlarge preview' : undefined"
             @click="project.thumbnail && !imageFailed && (lightboxOpen = true)"
           >
