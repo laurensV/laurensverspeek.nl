@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createAdventureGame } from '~/utils/terminalGames'
 
 // The terminal mini-games (the game engines live in utils/games/).
 
@@ -69,6 +69,15 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       exec: () => {
         muted('Starting life... space pauses, r reseeds, q quits.')
         ctx.startGame(createLifeGame)
+      }
+    },
+    adventure: {
+      category: 'games',
+      description: 'A text adventure: the site is the dungeon',
+      examples: ['adventure', "then: 'look', 'go west', 'examine keyboard', 'talk duck'"],
+      exec: () => {
+        muted('Starting adventure... type commands, Esc saves & quits.')
+        ctx.startGame(createAdventureGame)
       }
     },
     htop: {
