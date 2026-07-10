@@ -69,7 +69,7 @@ const rows = computed(() => {
 
 onMounted(async () => {
   if (!enabled.value) return
-  const base = `https://${String(code)}.goatcounter.com/counter`
+  const base = `https://${code}.goatcounter.com/counter`
   try {
     const site = await $fetch<{ count: string }>(`${base}/TOTAL.json`)
     total.value = site.count.trim()
