@@ -49,7 +49,14 @@
 import { uses } from '~/data/uses'
 
 useHead({ title: 'Uses — Laurens Verspeek' })
-useSeoMeta({ description: 'The gear, software and stack Laurens Verspeek uses to build things.' })
+const ogImage = `${SITE_URL}/og/page-uses.svg`
+useSeoMeta({
+  description: 'The gear, software and stack Laurens Verspeek uses to build things.',
+  ogUrl: `${SITE_URL}/uses`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 const kebab = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 

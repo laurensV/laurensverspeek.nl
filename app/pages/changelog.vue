@@ -51,7 +51,14 @@
 import type { GitCommit } from '~/utils/terminal/gitLog'
 
 useHead({ title: 'Changelog — Laurens Verspeek' })
-useSeoMeta({ description: 'The living changelog of laurensverspeek.nl — real commits, baked at build time.' })
+const ogImage = `${SITE_URL}/og/page-changelog.svg`
+useSeoMeta({
+  description: 'The living changelog of laurensverspeek.nl — real commits, baked at build time.',
+  ogUrl: `${SITE_URL}/changelog`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 // the same prerendered history the terminal's git command reads
 const { data: commits, pending } = await useAsyncData('changelog', () =>

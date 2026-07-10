@@ -45,7 +45,14 @@
 // expose per-path totals only (time series need an API token), so this renders
 // honest terminal-style bars per page rather than fake sparklines.
 useHead({ title: 'Stats — Laurens Verspeek' })
-useSeoMeta({ description: 'Public, cookie-free visitor stats for laurensverspeek.nl.' })
+const ogImage = `${SITE_URL}/og/page-stats.svg`
+useSeoMeta({
+  description: 'Public, cookie-free visitor stats for laurensverspeek.nl.',
+  ogUrl: `${SITE_URL}/stats`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 const { goatcounter: code } = useRuntimeConfig().public
 const enabled = computed(() => Boolean(code))

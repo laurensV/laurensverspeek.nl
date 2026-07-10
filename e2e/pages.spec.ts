@@ -682,3 +682,11 @@ test('the boss key hides everything behind a spreadsheet until Esc', async ({ pa
   await expect(boss).toBeVisible({ timeout: 3000 })
   await page.keyboard.press('Escape')
 })
+
+test('top-level pages carry their own OG cards', async ({ page }) => {
+  for (const path of ['/about', '/uses', '/changelog']) {
+    await page.goto(path)
+    const og = page.locator('meta[property="og:image"]')
+    await expect(og).toHaveAttribute('content', new RegExp(`/og/page-${path.slice(1)}\\.svg$`))
+  }
+})

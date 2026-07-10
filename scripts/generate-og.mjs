@@ -106,6 +106,23 @@ written.push(writeCard('desktop', {
   description: 'Draggable windows, a taskbar, apps and a real terminal — the site’s operating-system easter egg.'
 }))
 
+// top-level page cards (blog posts and projects get their own below)
+const PAGES = [
+  ['about', 'whoami $', 'About Laurens', 'From a kid with a computer to full-stack & blockchain developer — the whole timeline.'],
+  ['projects', 'ls ~/projects', 'Projects', 'Work, sides and experiments — from decentralized compute to self-coding websites.'],
+  ['blog', 'ls ~/blog', 'Blog', 'Code, blockchain and website experiments, written up.'],
+  ['uses', 'cat uses.txt', 'Uses', 'The gear, software and stack behind the work.'],
+  ['now', 'cat now.txt', 'Now', 'What Laurens is building, learning and tinkering with right now.'],
+  ['contact', './contact.sh', 'Contact', 'Run the wizard, scan the QR, or just send a plain email.'],
+  ['changelog', 'git log', 'Changelog', 'The living history of this site — real commits, baked at build time.'],
+  ['stats', 'cat /proc/stats', 'Stats', 'Public, cookie-free visitor counters for the whole site.'],
+  ['cv', 'less resume.pdf', 'Curriculum Vitae', 'Printable resume of Laurens Verspeek.'],
+  ['museum', 'tour --all', 'The Museum', 'Every feature and easter egg this site ships, catalogued like exhibits.']
+]
+for (const [slug, eyebrow, title, description] of PAGES) {
+  written.push(writeCard(`page-${slug}`, { eyebrow, title, description }))
+}
+
 // per-project cards
 for (const project of projects) {
   written.push(writeCard(`project-${project.slug}`, {

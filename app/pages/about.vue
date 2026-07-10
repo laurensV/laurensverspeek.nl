@@ -90,7 +90,15 @@
 <script setup lang="ts">
 import { profile } from '~/data/profile'
 
+const ogImage = `${SITE_URL}/og/page-about.svg`
 useHead({ title: 'About — Laurens Verspeek' })
+useSeoMeta({
+  ogTitle: 'About Laurens',
+  ogUrl: `${SITE_URL}/about`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 // deterministic fake commit hash per timeline entry
 const commitHash = (input: string) => {

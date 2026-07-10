@@ -14,5 +14,13 @@
 <script setup lang="ts">
 import { projects } from '~/data/projects'
 
+const ogImage = `${SITE_URL}/og/page-projects.svg`
 useHead({ title: 'Projects — Laurens Verspeek' })
+useSeoMeta({
+  ogTitle: 'Projects',
+  ogUrl: `${SITE_URL}/projects`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 </script>

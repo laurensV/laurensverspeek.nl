@@ -41,7 +41,14 @@ import { now } from '~/data/now'
 const updated = useRuntimeConfig().public.nowUpdated
 
 useHead({ title: 'Now — Laurens Verspeek' })
-useSeoMeta({ description: 'What Laurens Verspeek is building, learning and tinkering with right now.' })
+const ogImage = `${SITE_URL}/og/page-now.svg`
+useSeoMeta({
+  description: 'What Laurens Verspeek is building, learning and tinkering with right now.',
+  ogUrl: `${SITE_URL}/now`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 // a process per "now" item — a running program is what a `now` page really is
 const pid = (section: number, item: number) => 1000 + section * 111 + item * 7

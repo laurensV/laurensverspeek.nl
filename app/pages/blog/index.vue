@@ -78,7 +78,14 @@
 import { tagHue } from '~/utils/tagHue'
 
 useHead({ title: 'Blog — Laurens Verspeek' })
-useSeoMeta({ description: 'Blog of Laurens Verspeek: code, blockchain and website experiments.' })
+const ogImage = `${SITE_URL}/og/page-blog.svg`
+useSeoMeta({
+  description: 'Blog of Laurens Verspeek: code, blockchain and website experiments.',
+  ogUrl: `${SITE_URL}/blog`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 const { data: posts, pending, error } = await useAsyncData('blog-posts', () =>
   queryCollection('blog').order('date', 'DESC').all()

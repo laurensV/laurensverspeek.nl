@@ -75,7 +75,14 @@ import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
 useHead({ title: 'CV — Laurens Verspeek' })
-useSeoMeta({ description: 'Curriculum vitae of Laurens Verspeek.' })
+const ogImage = `${SITE_URL}/og/page-cv.svg`
+useSeoMeta({
+  description: 'Curriculum vitae of Laurens Verspeek.',
+  ogUrl: `${SITE_URL}/cv`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 const cvProjects = projects.filter((p) => p.category === 'work' || p.featured)
 

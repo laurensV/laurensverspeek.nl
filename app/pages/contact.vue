@@ -57,7 +57,14 @@ import { qrAsciiLines } from '~/utils/qrAscii'
 import { pgp } from '~/data/pgp'
 
 useHead({ title: 'Contact — Laurens Verspeek' })
-useSeoMeta({ description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.' })
+const ogImage = `${SITE_URL}/og/page-contact.svg`
+useSeoMeta({
+  description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.',
+  ogUrl: `${SITE_URL}/contact`,
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
+})
 
 // half-block ascii QR pointing at the prerendered vCard
 const qr = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
