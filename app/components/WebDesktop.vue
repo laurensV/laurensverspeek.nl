@@ -129,6 +129,8 @@
         <LazyDesktopGallery v-else-if="win.id === 'gallery'" />
         <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
         <LazyDesktopTrash v-else-if="win.id === 'trash'" />
+        <LazyDesktopMail v-else-if="win.id === 'mail'" />
+        <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
       </DesktopWindow>
 
