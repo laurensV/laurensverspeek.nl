@@ -59,3 +59,25 @@ export const WINDOW_TITLES: Record<string, string> = {
 
 const WIDE = new Set(DESKTOP_APPS.filter((app) => app.wide).map((app) => app.id))
 export const isWideWindow = (id: string) => WIDE.has(id)
+
+/**
+ * Resolve a run-dialog query to an app: exact id, then exact label, then
+ * prefix of either. Used by the Win+R style launcher (and its completion).
+ */
+export function matchApp(query: string, apps: DesktopApp[] = DESKTOP_APPS): DesktopApp | null {
+  const q = query.trim().toLowerCase()
+  if (!q) return null
+  return apps.find((app) => app.id === q)
+    ?? apps.find((app) => app.label.toLowerCase() === q)
+    ?? apps.find((app) => app.id.startsWith(q) || app.label.toLowerCase().startsWith(q))
+    ?? null
+}
+
+/** Completion candidates for a partial run-dialog query. */
+export function appCandidates(query: string, apps: DesktopApp[] = DESKTOP_APPS): string[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  return apps
+    .filter((app) => app.id.startsWith(q) || app.label.toLowerCase().startsWith(q))
+    .map((app) => app.id)
+}

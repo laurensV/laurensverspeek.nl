@@ -585,3 +585,24 @@ test('notes.txt is one file across the terminal and the vim app', async ({ page 
   await page.keyboard.press('Enter')
   await expect(page.locator('.lvos-window[data-win="terminal"]')).toContainText('rewritten in the vim app')
 })
+
+test('alt+r opens the run dialog and launches apps by name', async ({ page }) => {
+  await bootDesktop(page)
+  await page.keyboard.press('Alt+r')
+  const run = page.locator('.run')
+  await expect(run).toBeVisible()
+  // tab-completion: 'pa' → paint
+  await page.keyboard.type('pa')
+  await page.keyboard.press('Tab')
+  await expect(run.locator('.run-input')).toHaveValue('paint')
+  await page.keyboard.press('Enter')
+  await expect(run).toHaveCount(0)
+  await expect(page.locator('.lvos-window[data-win="paint"]')).toBeVisible()
+  // nonsense flashes an error instead of launching
+  await page.keyboard.press('Alt+r')
+  await page.keyboard.type('doom')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.run')).toContainText('no such app')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.run')).toHaveCount(0)
+})

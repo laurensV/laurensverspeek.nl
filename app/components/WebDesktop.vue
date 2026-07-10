@@ -157,6 +157,9 @@
         <button class="is-close" @click="titleMenuAct((w) => closeWindow(w.id))">× close</button>
       </div>
 
+      <!-- run dialog (Alt+R): keyboard-first app launching -->
+      <LazyDesktopRunDialog v-if="runOpen" @launch="launchById" @close="runOpen = false" />
+
       <!-- keyboard cheat sheet (press ? on the desktop) -->
       <DesktopShortcuts v-if="shortcutsOpen" @close="shortcutsOpen = false" />
 
@@ -184,6 +187,7 @@
         @read="markRead"
         @clear="clearHistory"
         @tile="tileAll"
+        @run="runOpen = true"
       />
     </div>
   </Teleport>
@@ -438,6 +442,20 @@ const icons = DESKTOP_APPS.map((app) => ({
   action: app.action && app.action !== 'window' ? iconActions[app.action]! : () => openWindow(app.id)
 }))
 
+// ---- run dialog (Alt+R): launches by app id through the same actions ----
+const runOpen = ref(false)
+const launchById = (id: string) => {
+  const app = DESKTOP_APPS.find((candidate) => candidate.id === id)
+  if (app?.action && app.action !== 'window') iconActions[app.action]!()
+  else openWindow(id)
+}
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (locked.value || !event.altKey || event.ctrlKey || event.metaKey) return
+  if (event.key.toLowerCase() !== 'r') return
+  event.preventDefault()
+  runOpen.value = !runOpen.value
+})
+
 // entering the /desktop page runs the BIOS/POST screen; a fresh session then
 // opens the readme, while a returning session restores its previous windows.
 onMounted(() => {
@@ -498,12 +516,13 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     return
   }
   // Escape first dismisses popups, only logging out when nothing is open
-  if (contextMenu.open || titleMenu.open || startOpen.value || calendarOpen.value || notifOpen.value) {
+  if (contextMenu.open || titleMenu.open || startOpen.value || calendarOpen.value || notifOpen.value || runOpen.value) {
     contextMenu.open = false
     titleMenu.open = false
     startOpen.value = false
     calendarOpen.value = false
     notifOpen.value = false
+    runOpen.value = false
     return
   }
   logout()
