@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div ref="rootRef">
     <div class="columns is-mobile is-multiline">
       <div v-for="stat in stats" :key="stat.label" class="column is-3-tablet is-6-mobile">
         <div class="box stat-tile has-text-centered">
@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { useMounted } from '@vueuse/core'
+import { useMounted, useElementVisibility } from '@vueuse/core'
 
 const { data, pending, error } = useGithubStats()
 
@@ -33,11 +33,17 @@ const showSkeleton = computed(() => mounted.value && pending.value)
 
 const YEARS_CODING = new Date().getFullYear() - 2011
 
-// count-up: once the numbers land, ease from 0 to the real values
+// count-up: ease from 0 to the real values — but only once the tiles are
+// actually on screen, so the roll isn't wasted above the visitor's scroll
+const rootRef = ref<HTMLElement>()
+const visible = useElementVisibility(rootRef)
 const progress = ref(1)
+let played = false
 let raf = 0
-watch(data, (value) => {
-  if (!value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+watch([data, visible], ([value, seen]) => {
+  if (!value || !seen || played) return
+  played = true
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   cancelAnimationFrame(raf)
   progress.value = 0
   const start = performance.now()
