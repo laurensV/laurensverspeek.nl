@@ -2,7 +2,7 @@
 // catalogued like exhibits. Grouped into wings; each plaque says how to find
 // the piece. The blurbs are exhibit-label voice on purpose.
 
-export interface Exhibit {
+interface Exhibit {
   name: string
   /** How to find/trigger it — a command, key, or place */
   how: string

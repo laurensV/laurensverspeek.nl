@@ -9,24 +9,27 @@ A minimalist developer portfolio on the surface, with an unusual amount hidden a
 Press <kbd>~</kbd> (or <kbd>`</kbd>) anywhere to open the interactive shell. It is the centerpiece — a real command interpreter shared by the navbar, footer and the lvOS desktop.
 
 - **Navigate & read** — `about`, `projects`, `blog`, `now`, `uses`, `cv`, `contact`, `github`, `stats`, `changelog`, `search <term>` (full-text over blog posts), `open <thing>`.
-- **A persistent virtual filesystem** — `ls`, `cd` (incl. `cd -`, `pushd`/`popd`), `pwd`, `tree`, `cat`, `mkdir`, `touch`, `rm`, `cp`, `mv` — with `*` wildcards, and it survives across visits. Edit files with the real **`nano`** and modal **`vim`**/`vi`.
-- **Pipes & redirection** — `help | grep blog | sort | uniq | wc`, `… > file`, `… >> file`, and `… | copy` to the clipboard.
-- **Shell niceties** — history (<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>R</kbd> reverse search, `!!`/`!n`/`!prefix` expansion), `alias`/`export` (persisted), tab completion, `man`, `which`, `fontsize` (or <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>), grouped `help`.
-- **`git`** — replays this repo's real commit history (`git log`, `git show <sha>`), baked at build time. Also surfaced at `/changelog`.
-- **Toys & effects** — `cowsay`, `figlet`, `fortune`, `weather [city]`, `qr [text]`, `matrix`, `crt`, `sl`, `party`, `sysinfo`, `df`/`du`, `ps`/`kill` (the effects are real processes you can kill), `asciicam` (webcam → ASCII).
-- **Games** — `snake`, `tetris` (with hold + ghost), `2048`, `pong`, `hangman`, `wpm` typing test, `top`, Conway's `life`.
-- **Hidden ones** — `secrets` lists them. Includes `ssh`, `sudo`, `do a barrel roll`, `destroy` (a ship that shoots the actual DOM to bits; <kbd>Esc</kbd> repairs it), and `say` (a speech bubble on your live cursor).
+- **A persistent virtual filesystem** — `ls`, `cd` (incl. `cd -`, `pushd`/`popd`), `pwd`, `tree`, `cat`, `mkdir`, `touch`, `rm`, `cp`, `mv` — with `*` wildcards, and it survives across visits. Edit files with the real **`nano`** and modal **`vim`**/`vi`. Anything you `rm` lands in the lvOS **recycle bin**, restorable from the desktop.
+- **Pipes, redirection & scripts** — `help | grep blog | sort | uniq | wc`, `… > file`, `… >> file`, `… | copy` to the clipboard, chaining with `&&`/`||`/`;`, and real **shell scripts**: write lines to a file and run them with `sh file.sh` (with an `sh -x` trace and a fork-bomb guard).
+- **tmux panes** — <kbd>Ctrl</kbd>+<kbd>B</kbd> then `%` or `"` splits the terminal into up to four panes with independent scrollback; arrows move focus, `x` closes. `tmux` works too.
+- **Shell niceties** — history (<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>R</kbd> reverse search, `!!`/`!n`/`!prefix` expansion), `alias`/`export` (persisted), tab completion, `man` (with SEE ALSO), `which`, `fontsize` (or <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>), grouped `help`, an animated braille spinner on anything async.
+- **`git`** — replays this repo's real commit history (`git log`, `git show <sha>`), baked at build time. Also surfaced at `/changelog` with GitHub-style diffstat blocks.
+- **One process table** — `ps`/`kill`/`top` see everything: terminal effects, **open lvOS windows**, and the running game or editor, with the same pids the desktop task manager shows. `kill` really closes windows, ends games — and `kill 7` terminates your own shell.
+- **Toys & effects** — `cowsay`, `figlet`, `fortune`, `weather [city]`, `qr [text]`, `matrix`, `crt`, `sl`, `party`, `fireworks`, `sysinfo`/`neofetch`, `df`/`du`, `asciicam` (webcam → ASCII).
+- **Games** — `snake`, `tetris` (with hold + ghost), `2048`, `pong`, `hangman`, `wpm` typing test, `top`, Conway's `life`, and `adventure` — a text adventure where the site is the dungeon (autosaves, includes a grue).
+- **Hidden ones** — `secrets` lists them. Includes `ssh`, `sudo`, `do a barrel roll`, `destroy` (a ship that shoots the actual DOM to bits; <kbd>Esc</kbd> repairs it), `boss` (or <kbd>b</kbd><kbd>b</kbd>: instant spreadsheet until the coast is clear), `emacs` (three-stage refusal), `pet` (a tamagotchi that lives in the status bar, hatches, sleeps at night and sulks when unfed), `museum` (the `/museum` catalog of everything), telnet Star Wars, and `say` (a speech bubble on your live cursor).
 
 ## lvOS — a desktop in a route
 
-Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot, then a windowing environment: draggable/resizable windows with edge & corner snapping, <kbd>Alt</kbd>+<kbd>Tab</kbd>, a taskbar with peek previews, a start menu, notifications, a genie minimize, right-click menus (with pin-on-top), a lock screen, shutdown/reboot with a CRT power-off, live wallpapers, and a <kbd>?</kbd> shortcut sheet. Apps include a terminal, file explorer (over the same VFS), blog reader, browser, paint, notes, calculator, clock, Minesweeper, Game of Life, snake, an image gallery, a task manager (kill a window like a process), settings and vim.
+Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot, then a windowing environment: draggable/resizable windows with edge & corner snapping (also <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+arrows), <kbd>Alt</kbd>+<kbd>Tab</kbd>, tile-all from the start menu, a run dialog (<kbd>Alt</kbd>+<kbd>R</kbd>, with tab completion), a taskbar with peek previews, notifications, a genie minimize, right-click menus (with pin-on-top), a lock screen, shutdown/reboot with a CRT power-off, live wallpapers (Paint drawings included), an About This Computer with real uptime/specs, and a <kbd>?</kbd> shortcut sheet. Apps include a terminal (the same shell), file explorer (same VFS, right-click to rename or bin files), recycle bin, blog reader, browser, paint, notes, calculator, clock, Minesweeper, Game of Life, snake, an image gallery, a task manager (windows, terminal effects and games as killable processes), settings and vim — editing the same `notes.txt` the terminal sees.
 
 ## The rest of the site
 
 - **Blog** — markdown via [Nuxt Content](https://content.nuxt.com) with Shiki highlighting, TOC + scrollspy, reading time, copy buttons, deep-link anchors, called-out lines, related posts, clickable hue-coded tags with shareable `?tag=` filters, a full-content RSS feed, and Web Share.
 - **Vim-style navigation** — <kbd>j</kbd>/<kbd>k</kbd> scroll, <kbd>gg</kbd>/<kbd>G</kbd> jump, `gh`/`gb`/`gp` go to home/blog/projects.
 - **Command palette** — <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘K</kbd> fuzzy search over pages, posts, projects and actions.
-- **Details** — an interactive Game of Life hero (with a pointer trail), a working VS Code-style status bar, `pwd` breadcrumbs, a time-aware greeting, theme-aware favicon, an interactive 404 recovery shell (with a hidden `play`), a downloadable vCard + ASCII QR on `/contact`, live GitHub stats that count up, print-optimized `/cv`, `humans.txt` + `security.txt`, breadcrumb & article JSON-LD, an offline PWA fallback, and git-derived "last updated" dates.
+- **Details** — an interactive Game of Life hero (with a pointer trail), a working VS Code-style status bar (clock, presence, EOL/language toys, optionally a pet), `pwd` breadcrumbs, a time-aware greeting, theme-aware favicon (which becomes a prompt while the terminal is open), native **view transitions** (project cards morph into their detail pages), an interactive 404 recovery shell (with a hidden `play`), a downloadable vCard + ASCII QR on `/contact`, live GitHub stats that count up on scroll, print-optimized `/cv`, per-page OG cards generated at build time, `humans.txt` + `security.txt`, breadcrumb & article JSON-LD, an offline page with a playable snake, and git-derived "last updated" dates.
+- **Meta pages** — `/museum` catalogs every feature and easter egg as exhibits; `/stats` draws the public visitor counters; `/changelog` is the real git history; a PGP scaffold gates `/pgp.txt`.
 - Dark/light theme throughout, reduced-motion respected everywhere, filterable projects with detail pages, `/uses` and `/now`.
 
 ## Development
@@ -37,6 +40,7 @@ npm run dev              # dev server on http://localhost:3000
 npm run lint             # eslint
 npm run typecheck        # vue-tsc over the app
 npm run typecheck:tests  # vue-tsc over tests/
+npm run typecheck:scripts # checkJs over scripts/ and realtime/
 npm run test             # vitest unit tests
 npm run test:e2e         # playwright (needs `npm run generate` first)
 npm run knip             # unused files / exports / deps
