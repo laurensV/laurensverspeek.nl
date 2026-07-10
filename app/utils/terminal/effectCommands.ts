@@ -10,6 +10,9 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
   const procs = effectProcs(ctx.effects)
   const systemProcs = SYSTEM_PROCS
 
+  // how many times someone has asked for the other editor this session
+  let insistence = 0
+
   const commands: Record<string, TerminalCommand> = {
     destroy: {
       hidden: true,
@@ -74,6 +77,34 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
         if (result.reason === 'not-running') return error(`kill: (${pid}) — no such process (it isn't running)`)
         if (result.reason === 'not-permitted') return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
         error(`kill: (${pid}) — no such process`)
+      }
+    },
+    emacs: {
+      hidden: true,
+      description: 'The other editor (results may vary)',
+      exec: (args) => {
+        insistence++
+        if (args.join(' ').includes('--force')) {
+          error('emacs: --force is not a chord. this proves nothing.')
+          return
+        }
+        if (insistence === 1) {
+          error('emacs: command not found (and the house is at peace)')
+          muted(`this site runs vim. it's real, too — try 'vim notes.txt'.`)
+          return
+        }
+        if (insistence === 2) {
+          error('emacs: still not found. persistence noted and respected.')
+          muted('(vim is right there. it has :wq and everything.)')
+          return
+        }
+        insistence = 0
+        muted('fine. simulating emacs:')
+        out('loading emacs... [##--------------------] 9%')
+        out('loading emacs... [####------------------] 17%')
+        out('estimated completion: heat death of the universe')
+        error('emacs: out of memory (8 megabytes and constantly swapping)')
+        muted(`M-x doctor says: try 'vim'.`)
       }
     },
     matrix: {

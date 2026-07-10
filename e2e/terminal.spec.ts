@@ -727,3 +727,14 @@ test('async commands show a braille spinner while fetching', async ({ page }) =>
   await expect(page.locator('.terminal-output')).toContainText('Testville', { timeout: 5000 })
   await expect(spinner).toHaveCount(0)
 })
+
+test('emacs refuses with an escalating bit', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'emacs')
+  await expect(out).toContainText('the house is at peace')
+  await run(page, 'emacs')
+  await expect(out).toContainText('persistence noted')
+  await run(page, 'emacs')
+  await expect(out).toContainText('heat death of the universe')
+})
