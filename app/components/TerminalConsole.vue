@@ -1,15 +1,15 @@
 <template>
   <div class="terminal-console is-family-code" :style="{ '--term-font-scale': fontScale.scale.value }" @click="focusInput">
     <div ref="outputRef" class="terminal-output">
-      <template v-for="line in lines" :key="line.id">
+      <template v-for="line in paneLines" :key="line.id">
         <div v-if="line.type === 'input'" class="terminal-line">
           <span class="term-prompt">{{ prompt }}</span> {{ line.text }}
         </div>
         <pre v-else-if="line.html" class="terminal-line" :class="`is-${line.type}`" v-html="line.text" />
         <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
       </template>
-      <pre v-if="activeGame" class="terminal-line game-frame">{{ gameFrame }}</pre>
-      <pre v-if="spinnerLabel && !activeGame" class="terminal-line is-muted terminal-spinner">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
+      <pre v-if="activeGame && active" class="terminal-line game-frame">{{ gameFrame }}</pre>
+      <pre v-if="spinnerLabel && !activeGame && active" class="terminal-line is-muted terminal-spinner">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
     </div>
 
     <!-- reverse history search (ctrl+r) -->
@@ -53,12 +53,15 @@ import { searchHistory, pickMatch, matchPosition } from '~/utils/terminal/revers
 // ctrl+r search, and game key routing. Both the centered overlay and the lvOS
 // desktop window wrap this — `active` gates which instance owns the keyboard.
 const props = withDefaults(
-  defineProps<{ active?: boolean, inputId?: string }>(),
-  { active: true, inputId: 'terminal-input' }
+  defineProps<{ active?: boolean, inputId?: string, paneId?: number }>(),
+  { active: true, inputId: 'terminal-input', paneId: 0 }
 )
 const emit = defineEmits<{ escape: [] }>()
 
-const { lines, history, cwd, run, complete, activeGame, gameFrame, spinnerLabel } = useTerminal()
+const { history, cwd, run, complete, activeGame, gameFrame, spinnerLabel, panes } = useTerminal()
+
+// this console renders one pane's transcript (pane 0 unless told otherwise)
+const paneLines = computed(() => panes.linesFor(props.paneId))
 
 // braille spinner: animate while a command is fetching (a still glyph under
 // reduced motion). The interval only runs while the spinner is visible.
@@ -147,7 +150,7 @@ const resetCompletion = () => {
 }
 
 const clearScreen = () => {
-  lines.value = []
+  panes.clear(props.paneId)
 }
 
 const onEscape = () => {
@@ -257,7 +260,7 @@ watch(
 )
 
 // keep scrolled to the latest output
-watch([() => lines.value.length, () => gameFrame.value !== ''], async () => {
+watch([() => paneLines.value.length, () => gameFrame.value !== ''], async () => {
   await nextTick()
   outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
 })

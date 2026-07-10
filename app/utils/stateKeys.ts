@@ -14,6 +14,9 @@ export const STATE_KEYS = {
   terminalFontScale: 'terminal-font-scale',
   terminalSshHost: 'terminal-ssh-host',
   terminalSpinner: 'terminal-spinner',
+  terminalPanes: 'terminal-panes',
+  terminalActivePane: 'terminal-active-pane',
+  terminalPaneDir: 'terminal-pane-dir',
   // site-wide effects
   fxMatrix: 'fx-matrix',
   fxCrt: 'fx-crt',

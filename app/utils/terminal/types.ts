@@ -93,6 +93,12 @@ export interface TerminalContext {
   files: Ref<Filesystem>
   /** Current directory inside the home filesystem ('' = home) */
   fsCwd: Ref<string>
+  /** tmux-style panes: commands can split, clear and report the pane count */
+  panes: {
+    split: (dir: 'cols' | 'rows') => boolean
+    count: () => number
+    clearActive: () => void
+  }
   /** The full merged registry — for help, secrets, man and aliases */
   getCommands: () => Record<string, TerminalCommand>
 }

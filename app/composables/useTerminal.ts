@@ -10,6 +10,8 @@ import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
 import type { ChainOp } from '~/utils/terminal/chain'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
+import { paneOrder, canSplit, nextFocus, focusAfterClose } from '~/utils/terminal/panes'
+import type { SplitDir } from '~/utils/terminal/panes'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
 import { shellError } from '~/utils/terminal/errors'
@@ -19,6 +21,8 @@ import { profile } from '~/data/profile'
 export type { TerminalLine } from '~/utils/terminal/types'
 
 let lineId = 0
+// tmux-style pane ids stay unique across splits for the whole visit
+let paneIdCounter = 1
 // the page title saved before the terminal started reflecting commands into it;
 // module-scoped so the run-instance and the close-instance share it
 let savedTitle: string | null = null
@@ -38,6 +42,13 @@ export function useTerminal() {
   const isOpen = useState(STATE_KEYS.terminalOpen, () => false)
   const lines = useState<TerminalLine[]>(STATE_KEYS.terminalLines, () => [])
   const history = useState<string[]>(STATE_KEYS.terminalHistory, () => [])
+
+  // tmux-style panes: pane 0 is the classic transcript above; extras carry
+  // their own scrollback. All panes share the one shell (history, env, fs) —
+  // the same way real tmux panes share the OS.
+  const extraPanes = useState<{ id: number, lines: TerminalLine[] }[]>(STATE_KEYS.terminalPanes, () => [])
+  const activePane = useState(STATE_KEYS.terminalActivePane, () => 0)
+  const paneDir = useState<SplitDir>(STATE_KEYS.terminalPaneDir, () => 'cols')
 
   const router = useRouter()
   const route = useRoute()
@@ -66,11 +77,15 @@ export function useTerminal() {
   // (`&&` / `||`) short-circuit on this.
   let runFailed = false
 
+  // the transcript array of one pane (0 = the classic shared one)
+  const paneLines = (id: number): TerminalLine[] =>
+    id === 0 ? lines.value : extraPanes.value.find((pane) => pane.id === id)?.lines ?? lines.value
+
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     const line: TerminalLine = { id: lineId++, type, text, html }
     if (type === 'error') runFailed = true
     if (sink) sink(line)
-    else lines.value.push(line)
+    else paneLines(activePane.value).push(line)
   }
   const out = (text: string) => push('output', text)
   const muted = (text: string) => push('muted', text)
@@ -191,6 +206,14 @@ export function useTerminal() {
     })),
     files: useState<Filesystem>(STATE_KEYS.terminalFs, () => ({})),
     fsCwd,
+    // defined below; command exec only ever runs after setup completes
+    panes: {
+      split: (dir) => splitPane(dir),
+      count: () => paneIds.value.length,
+      clearActive: () => {
+        paneLines(activePane.value).length = 0
+      }
+    },
     getCommands: () => commands
   }
 
@@ -304,7 +327,8 @@ export function useTerminal() {
         return
       }
       if (!result.length) muted('(no output)')
-      result.forEach((line) => lines.value.push(line))
+      const target = paneLines(activePane.value)
+      result.forEach((line) => target.push(line))
     }
     try {
       const outcome = command.exec(args)
@@ -349,6 +373,51 @@ export function useTerminal() {
 
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
 
+  // ── tmux-style pane management ────────────────────────────────────────────
+  const paneIds = computed(() => paneOrder(extraPanes.value.map((pane) => pane.id)))
+
+  const splitPane = (dir: SplitDir): boolean => {
+    if (!canSplit(paneIds.value.length)) return false
+    if (!extraPanes.value.length) paneDir.value = dir
+    const id = paneIdCounter++
+    extraPanes.value = [...extraPanes.value, {
+      id,
+      lines: [{ id: lineId++, type: 'muted', text: '(new pane — same shell, own scrollback. ctrl+b x closes it.)' }]
+    }]
+    activePane.value = id
+    return true
+  }
+
+  const closePane = (id: number): 'closed' | 'root' => {
+    if (id === 0) return 'root'
+    const order = paneIds.value
+    extraPanes.value = extraPanes.value.filter((pane) => pane.id !== id)
+    if (activePane.value === id) activePane.value = focusAfterClose(order, id)
+    return 'closed'
+  }
+
+  const panes = {
+    ids: paneIds,
+    active: activePane,
+    dir: paneDir,
+    linesFor: paneLines,
+    clear: (id: number) => {
+      if (id === 0) lines.value = []
+      else {
+        const pane = extraPanes.value.find((entry) => entry.id === id)
+        if (pane) pane.lines = []
+      }
+    },
+    split: splitPane,
+    close: closePane,
+    focusStep: (step: 1 | -1) => {
+      activePane.value = nextFocus(paneIds.value, activePane.value, step)
+    },
+    setActive: (id: number) => {
+      if (paneIds.value.includes(id)) activePane.value = id
+    }
+  }
+
   // files is shared with the lvOS Files app, which browses the same home fs
-  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files }
+  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files, panes }
 }

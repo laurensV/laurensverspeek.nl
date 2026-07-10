@@ -338,7 +338,21 @@ export function createSystemCommands(ctx: TerminalContext): Record<string, Termi
       category: 'system',
       description: 'Clear the terminal',
       exec: () => {
-        ctx.lines.value = []
+        ctx.panes.clearActive()
+      }
+    },
+    tmux: {
+      category: 'system',
+      usage: 'tmux [split -h|-v]',
+      description: 'Terminal multiplexer — split into panes',
+      examples: ['tmux  (splits side by side)', 'tmux split -v  (stacked)', 'prefix key: ctrl+b — then % or " splits, arrows/o move, x closes'],
+      exec: (args) => {
+        const dir = args.includes('-v') ? 'rows' as const : 'cols' as const
+        if (!ctx.panes.split(dir)) {
+          error(`tmux: this window maxes out at 4 panes — close one with ctrl+b x`)
+          return
+        }
+        muted(`(pane ${ctx.panes.count()} of 4 — ctrl+b then % or " splits, arrows move, x closes)`)
       }
     },
     reboot: {

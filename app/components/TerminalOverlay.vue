@@ -20,7 +20,7 @@
             </button>
           </header>
 
-          <TerminalConsole :active="isOpen" @escape="close" />
+          <TerminalPanes :active="isOpen" @escape="close" />
         </div>
       </div>
     </Transition>

@@ -1,6 +1,6 @@
 <template>
   <div class="desktop-terminal">
-    <TerminalConsole :active="active" input-id="desktop-terminal-input" @escape="() => {}" />
+    <TerminalPanes :active="active" input-id-base="desktop-terminal-input" @escape="() => {}" />
   </div>
 </template>
 

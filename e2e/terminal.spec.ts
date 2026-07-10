@@ -791,3 +791,27 @@ test('adventure explores the site as a dungeon and saves on Esc', async ({ page 
   await expect(frame).toContainText('resumed')
   await page.keyboard.press('Escape')
 })
+
+test('tmux splits the terminal into independent panes', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'tmux')
+  const panes = page.locator('.terminal-pane')
+  await expect(panes).toHaveCount(2)
+  // the new pane grabbed focus and has its own prompt + scrollback
+  await expect(page.locator('#terminal-input-1')).toBeFocused()
+  await page.fill('#terminal-input-1', 'echo hello from pane two')
+  await page.keyboard.press('Enter')
+  await expect(panes.nth(1)).toContainText('hello from pane two')
+  await expect(panes.nth(0)).not.toContainText('hello from pane two')
+  // ctrl+b ← moves focus back to the original pane
+  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ArrowLeft')
+  await expect(page.locator('#terminal-input')).toBeFocused()
+  // ctrl+b → then ctrl+b x closes the second pane
+  await page.keyboard.press('Control+b')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Control+b')
+  await page.keyboard.press('x')
+  await expect(panes).toHaveCount(1)
+  await expect(page.locator('#terminal-input')).toBeFocused()
+})
