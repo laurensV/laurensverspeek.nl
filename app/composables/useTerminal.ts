@@ -207,6 +207,7 @@ export function useTerminal() {
     files: useState<Filesystem>(STATE_KEYS.terminalFs, () => ({})),
     fsCwd,
     // defined below; command exec only ever runs after setup completes
+    runScript: (scriptLines) => runScript(scriptLines),
     panes: {
       split: (dir) => splitPane(dir),
       count: () => paneIds.value.length,
@@ -372,6 +373,39 @@ export function useTerminal() {
   }
 
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
+
+  // `sh` script runner: execute lines sequentially with an sh -x style trace.
+  // The depth guard turns fork bombs into a joke instead of a hang.
+  let scriptDepth = 0
+  const runScript = async (scriptLines: string[]) => {
+    if (scriptDepth >= 3) {
+      error('sh: maximum script recursion reached — nice fork bomb though.')
+      return
+    }
+    scriptDepth++
+    try {
+      for (const raw of scriptLines) {
+        const trimmed = raw.trim()
+        if (!trimmed || trimmed.startsWith('#')) continue
+        push('muted', `+ ${trimmed}`)
+        const chain = splitChain(trimmed)
+        if ('error' in chain) {
+          error(chain.error)
+          continue
+        }
+        let ok = true
+        let op: ChainOp | null = null
+        for (const segment of chain.segments) {
+          if (op === null || shouldRunNext(op, ok)) {
+            ok = await runSegment(segment.cmd, history.value, false)
+          }
+          op = segment.op
+        }
+      }
+    } finally {
+      scriptDepth--
+    }
+  }
 
   // ── tmux-style pane management ────────────────────────────────────────────
   const paneIds = computed(() => paneOrder(extraPanes.value.map((pane) => pane.id)))

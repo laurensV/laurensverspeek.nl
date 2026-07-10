@@ -93,6 +93,8 @@ export interface TerminalContext {
   files: Ref<Filesystem>
   /** Current directory inside the home filesystem ('' = home) */
   fsCwd: Ref<string>
+  /** Run script lines sequentially (used by `sh`); chains and pipes included */
+  runScript: (lines: string[]) => Promise<void>
   /** tmux-style panes: commands can split, clear and report the pane count */
   panes: {
     split: (dir: 'cols' | 'rows') => boolean

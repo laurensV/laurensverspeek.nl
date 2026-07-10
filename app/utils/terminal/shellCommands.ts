@@ -1,5 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { groupCommands, relatedCommands } from '~/utils/terminal/helpGroups'
+import { resolvePath, dirEntries } from '~/utils/terminal/filesystem'
 
 // Shell housekeeping: help, aliases, environment, history, panes and scripts.
 
@@ -171,6 +172,32 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
           return
         }
         muted(`(pane ${ctx.panes.count()} of 4 — ctrl+b then % or " splits, arrows move, x closes)`)
+      }
+    },
+    sh: {
+      category: 'system',
+      usage: 'sh <script>',
+      description: 'Run a shell script from your filesystem',
+      examples: [
+        `echo 'figlet hi' > hello.sh   (write the script first)`,
+        `echo 'fortune' >> hello.sh    (>> appends more lines)`,
+        'sh hello.sh                   (runs it line by line; # comments and && work)'
+      ],
+      argCandidates: () => dirEntries(ctx.files.value, ctx.fsCwd.value)
+        .filter((entry) => !entry.dir)
+        .map((entry) => entry.name),
+      exec: (args) => {
+        const name = args[0]
+        if (!name) return error('sh: usage: sh <script> — write one with echo and >')
+        const path = resolvePath(ctx.fsCwd.value, name)
+        const node = ctx.files.value[path]
+        if (!node) return error(`sh: ${name}: No such file or directory`)
+        if (node.dir) return error(`sh: ${name}: Is a directory`)
+        const scriptLines = node.content.split('\n')
+        if (!scriptLines.some((line) => line.trim() && !line.trim().startsWith('#'))) {
+          return muted(`sh: ${name}: nothing to run (comments and empty lines only)`)
+        }
+        return ctx.runScript(scriptLines)
       }
     },
     exit: {

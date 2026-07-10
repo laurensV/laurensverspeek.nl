@@ -840,3 +840,16 @@ test('pet: adopt a tamagotchi that lives in the status bar and survives reload',
   await expect(page.locator('.terminal-output')).toContainText('waddles off')
   await expect(page.locator('.status-pet')).toHaveCount(0)
 })
+
+test('sh runs a script from the virtual filesystem with a trace', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'echo echo hello-from-script > s.sh')
+  await run(page, 'echo whoami >> s.sh')
+  await run(page, 'sh s.sh')
+  await expect(out).toContainText('+ echo hello-from-script')
+  await expect(out).toContainText('hello-from-script')
+  await expect(out).toContainText('+ whoami')
+  await run(page, 'sh nope.sh')
+  await expect(out).toContainText('sh: nope.sh: No such file or directory')
+})
