@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { pressTerminalKey } from './helpers'
 
 test('navbar gains a divider once scrolled', async ({ page }) => {
   await page.goto('/')
@@ -302,7 +303,7 @@ test('keyboard focus shows a consistent ring on nav and terminal input', async (
   const outline = await link.evaluate((el) => getComputedStyle(el).outlineWidth)
   expect(parseFloat(outline)).toBeGreaterThan(0)
   // the terminal input, which sets outline:none, gets a box-shadow ring instead
-  await page.keyboard.press('`')
+  await pressTerminalKey(page)
   const input = page.locator('#terminal-input')
   await input.focus()
   const shadow = await input.evaluate((el) => getComputedStyle(el).boxShadow)
@@ -351,8 +352,7 @@ test('the console dev hunt chains clues to a reward', async ({ page }) => {
   expect(await page.evaluate(() => window.lv.answer('secrets'))).toBe('solved')
   await expect(page.locator('html.party-mode')).toHaveCount(1)
   // and the reward command works in the terminal
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await page.fill('#terminal-input', 'hire')
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText('finished the console hunt')
@@ -368,8 +368,7 @@ test('the tab favicon flips to a prompt block while the terminal is open', async
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   const icon = page.locator('link[rel="icon"][type="image/svg+xml"]')
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await expect(icon).toHaveAttribute('href', /^data:image\/svg\+xml/)
   await page.keyboard.press('Escape')
   await expect(icon).toHaveAttribute('href', /favicon\.svg$/)

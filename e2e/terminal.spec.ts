@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { openTerminal, run } from './helpers'
+import { openTerminal, pressTerminalKey, run } from './helpers'
 
 test('opens and lists commands', async ({ page }) => {
   await openTerminal(page)
@@ -99,8 +99,7 @@ test('virtual filesystem: create, read, list, remove and persist a file', async 
     .toContain('notes.txt')
   await page.reload()
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await run(page, 'cat notes.txt')
   await expect(page.locator('.terminal-output')).toContainText('hello from the fs')
 
@@ -191,8 +190,7 @@ test('pwd reflects the current route and prompt shows the cwd', async ({ page })
   await page.goto('/projects')
   await page.locator('.filter-flags').waitFor()
   await expect(page.locator('.project-card').first()).toBeVisible()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   // prompt is route-derived, so it should read ~/projects immediately
   await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('~/projects')
   await run(page, 'pwd')
@@ -284,8 +282,7 @@ test('aliases and exported env vars survive a reload', async ({ page }) => {
     .toContain('FAVE')
   await page.reload()
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   const out = page.locator('.terminal-output')
   await run(page, 'hi')
   await expect(out).toContainText('hello-again')
@@ -474,8 +471,7 @@ test('terminal text scales via fontsize and ctrl keys, and persists', async ({ p
   // survives a reload
   await page.reload()
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   expect(await sizeOf()).toBeGreaterThan(base * 1.05)
   await run(page, 'fontsize reset')
   await expect.poll(sizeOf).toBeCloseTo(base, 0)
@@ -507,15 +503,16 @@ test('destroy mode shoots real dom elements and esc repairs the site', async ({ 
   if (!box) throw new Error('no hero to destroy')
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
   await expect(overlay).toContainText('1 destroyed')
-  // something real got shot (the innermost element under the crosshair)
+  // something real got shot (the innermost element under the crosshair) —
+  // poll, since the hit registers before the shatter animation hides it
   const hiddenCount = () => page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('*')].filter((el) => el.style.visibility === 'hidden').length
   )
-  expect(await hiddenCount()).toBeGreaterThan(0)
+  await expect.poll(hiddenCount).toBeGreaterThan(0)
   // escape ends the rampage and repairs everything
   await page.keyboard.press('Escape')
   await expect(overlay).toHaveCount(0)
-  expect(await hiddenCount()).toBe(0)
+  await expect.poll(hiddenCount).toBe(0)
   await expect(hero).toBeVisible()
 })
 
@@ -758,8 +755,7 @@ test('fireworks launches a show that ps lists and kill 1231 ends', async ({ page
   await expect(overlay).toContainText('Esc (or kill 1231) ends the show')
   // the terminal closed itself after launching; reopen it over the show
   await expect(page.locator('#terminal-input')).toHaveCount(0)
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await run(page, 'ps')
   await expect(page.locator('.terminal-output')).toContainText('fireworks.sh')
   await run(page, 'kill 1231')

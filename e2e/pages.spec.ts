@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { pressTerminalKey } from './helpers'
 
 test('404 renders an interactive recovery shell', async ({ page }) => {
   await page.goto('/this-page-does-not-exist')
@@ -640,8 +641,7 @@ test('pgp stays hidden while no key is published', async ({ page, request }) => 
   // wizard autofocuses its own input, which would swallow the backtick)
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await page.fill('#terminal-input', 'gpg --list-keys')
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText('no public key published on this build')
@@ -676,8 +676,7 @@ test('the boss key hides everything behind a spreadsheet until Esc', async ({ pa
   await page.keyboard.press('Escape')
   await expect(boss).toHaveCount(0)
   // ps sees it as a killable process too
-  await page.keyboard.press('`')
-  await page.locator('#terminal-input').waitFor()
+  await pressTerminalKey(page)
   await page.fill('#terminal-input', 'boss')
   await page.keyboard.press('Enter')
   await expect(boss).toBeVisible({ timeout: 3000 })
