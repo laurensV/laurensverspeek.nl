@@ -42,6 +42,9 @@
       <!-- desktop icons -->
       <DesktopIcons :icons="icons" />
 
+      <!-- the tamagotchi wanders the desktop, if one has been adopted -->
+      <DesktopPetWidget />
+
       <!-- Aero-style snap preview: a translucent ghost of where a dragged
            window will land when released against an edge -->
       <Transition name="lvos-snap">

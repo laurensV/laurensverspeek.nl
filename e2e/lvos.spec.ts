@@ -636,3 +636,20 @@ test('the files context menu renames a file for the terminal too', async ({ page
   await files.locator('.files-menu button', { hasText: 'move to bin' }).click()
   await expect(files.locator('.files-file', { hasText: 'final.txt' })).toHaveCount(0)
 })
+
+test('an adopted pet wanders the desktop and clicking feeds it', async ({ page }) => {
+  // adopt before boot: a pre-aged pet so it has hatched
+  await page.addInitScript(() => {
+    const t = Date.now() - 5 * 3600000
+    localStorage.setItem('lv-pet', JSON.stringify({ name: 'pixel', born: t, lastFed: t, lastPlayed: t }))
+  })
+  await bootDesktop(page)
+  const pet = page.locator('.lvos-pet')
+  await expect(pet).toBeVisible()
+  await expect(pet).toContainText('pixel')
+  await pet.click()
+  await expect(pet).toHaveClass(/is-fed/)
+  // feeding here counts in the shared state (lastFed bumped to ~now)
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lv-pet') ?? '{}'))
+  expect(Date.now() - saved.lastFed).toBeLessThan(60_000)
+})
