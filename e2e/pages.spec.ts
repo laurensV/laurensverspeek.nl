@@ -730,3 +730,32 @@ test('/418 serves an interactive teapot and the terminal refuses to brew', async
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText("418 I'm a teapot")
 })
+
+test('the museum floor is walkable and plaques read on approach', async ({ page }) => {
+  await page.goto('/museum')
+  await page.locator('.museum-mode', { hasText: 'walk the floor' }).click()
+  const floor = page.locator('.walk-floor')
+  await expect(floor).toBeVisible()
+  await expect(floor).toContainText('@')
+  await expect(page.locator('.walk-hud')).toContainText('the terminal wing')
+  // walk left until a plaque panel appears (west wall carries plaques)
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press('ArrowLeft')
+    if (await page.locator('.walk-plaque').count()) break
+  }
+  // nudge along the wall if the corridor entrance missed a plaque row
+  for (let i = 0; i < 8 && !(await page.locator('.walk-plaque').count()); i++) {
+    await page.keyboard.press('ArrowUp')
+  }
+  await expect(page.locator('.walk-plaque')).toBeVisible()
+  await expect(page.locator('.walk-seen')).toContainText(/plaques read: [1-9]/)
+  // walking south through doors eventually changes wings
+  for (let i = 0; i < 24; i++) await page.keyboard.press('ArrowDown')
+  for (let i = 0; i < 30; i++) await page.keyboard.press('ArrowRight')
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press('ArrowDown')
+    // wiggle onto the door column: the doorway sits mid-wall
+    if (i % 3 === 2) await page.keyboard.press('ArrowLeft')
+  }
+  await expect(page.locator('.walk-hud')).not.toContainText('the terminal wing')
+})

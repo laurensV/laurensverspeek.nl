@@ -6,11 +6,20 @@
       <p class="subtitle is-5 has-text-grey mb-2">
         Every feature and easter egg this site ships, catalogued like exhibits.
       </p>
-      <p class="is-family-code is-size-7 has-text-grey mb-6">
+      <p class="is-family-code is-size-7 has-text-grey mb-4">
         {{ exhibitCount }} pieces on display · admission free · flash photography encouraged
       </p>
 
-      <RevealBlock v-for="(wing, wi) in museum" :key="wing.title" :delay="wi * 60" class="mb-6">
+      <div class="museum-modes mb-5 is-family-code">
+        <button class="museum-mode" :class="{ 'is-active': mode === 'catalog' }" @click="mode = 'catalog'">[ catalog ]</button>
+        <button class="museum-mode" :class="{ 'is-active': mode === 'walk' }" @click="mode = 'walk'">[ walk the floor ]</button>
+      </div>
+
+      <ClientOnly v-if="mode === 'walk'">
+        <MuseumWalk />
+      </ClientOnly>
+
+      <RevealBlock v-for="(wing, wi) in museum" v-show="mode === 'catalog'" :key="wing.title" :delay="wi * 60" class="mb-6">
         <p class="is-family-code has-text-primary-on-scheme mb-1">
           ## {{ wing.title }}
         </p>
@@ -39,6 +48,9 @@
 <script setup lang="ts">
 import { museum, exhibitCount } from '~/data/museum'
 
+// two ways through the collection: the catalog, or walking the actual floor
+const mode = ref<'catalog' | 'walk'>('catalog')
+
 const ogImage = `${SITE_URL}/og/page-museum.svg`
 useHead({ title: 'The Museum — Laurens Verspeek' })
 useSeoMeta({
@@ -58,6 +70,26 @@ useSeoMeta({
 
 .museum-intro {
   font-style: italic;
+}
+
+.museum-modes {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.museum-mode {
+  padding: 0.3rem 0.2rem;
+  border: none;
+  background: none;
+  color: var(--bulma-text-weak);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &.is-active,
+  &:hover {
+    color: var(--bulma-primary-on-scheme);
+  }
 }
 
 .museum-plaque {
