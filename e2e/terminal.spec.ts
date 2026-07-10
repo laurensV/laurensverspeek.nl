@@ -334,7 +334,8 @@ test('ps lists a running effect and kill really stops it', async ({ page }) => {
   await openTerminal(page)
   const out = page.locator('.terminal-output')
   await run(page, 'ps')
-  await expect(out).toContainText('no effects running')
+  // the shell itself is always in the table now
+  await expect(out).toContainText('lvsh')
   await run(page, 'crt')
   await expect(page.locator('html')).toHaveClass(/crt-mode/)
   await run(page, 'ps')
