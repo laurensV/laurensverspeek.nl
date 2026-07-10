@@ -654,3 +654,13 @@ test('changelog commits carry github-style diffstat blocks', async ({ page }) =>
   await expect(blocks).toHaveCount(5)
 })
 
+test('the offline page ships a pocket snake', async ({ page }) => {
+  await page.goto('/offline.html')
+  await page.locator('#board').waitFor()
+  const before = await page.locator('#board').textContent()
+  await page.keyboard.press('ArrowRight')
+  // the snake moves: the board redraws differently between frames
+  await expect.poll(() => page.locator('#board').textContent()).not.toBe(before)
+  await expect(page.locator('#score')).toContainText('score:')
+})
+

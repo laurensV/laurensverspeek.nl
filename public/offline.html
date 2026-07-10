@@ -29,6 +29,13 @@
     }
     @keyframes blink { to { visibility: hidden } }
     @media (prefers-reduced-motion: reduce) { .cursor { animation: none } }
+    #board {
+      margin: 1rem 0 0.4rem;
+      font-size: 0.85rem;
+      line-height: 1.15;
+      color: #ffba00;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -38,10 +45,85 @@
     <p class="muted">ping: network is unreachable — you appear to be offline.</p>
     <p class="muted">pages you visited before are still cached; this one wasn't. the site will
       reconnect by itself the moment your network returns.</p>
+    <p>$ snake <span class="muted">// something to do while you wait — arrows/wasd steer</span></p>
+    <pre id="board" aria-label="snake"></pre>
+    <p class="muted" id="score">score: 0 · press any arrow to start</p>
     <p>$ <span class="cursor"></span></p>
   </div>
   <script>
     addEventListener('online', function () { location.reload() })
+
+    // a pocket snake so the outage is less boring — vanilla JS, nothing cached
+    // beyond this file. arrows/wasd steer, any key restarts after game over.
+    ;(function () {
+      var W = 24, H = 12
+      var board = document.getElementById('board')
+      var scoreEl = document.getElementById('score')
+      var snake, dir, food, score, timer, dead
+
+      function reset () {
+        snake = [{ x: 6, y: 6 }, { x: 5, y: 6 }, { x: 4, y: 6 }]
+        dir = null
+        score = 0
+        dead = false
+        placeFood()
+        draw()
+      }
+      function placeFood () {
+        do {
+          food = { x: 1 + Math.floor(Math.random() * (W - 2)), y: 1 + Math.floor(Math.random() * (H - 2)) }
+        } while (snake.some(function (c) { return c.x === food.x && c.y === food.y }))
+      }
+      function draw () {
+        var rows = []
+        for (var y = 0; y < H; y++) {
+          var row = ''
+          for (var x = 0; x < W; x++) {
+            if (y === 0 || y === H - 1) row += '─'
+            else if (x === 0 || x === W - 1) row += '│'
+            else if (x === food.x && y === food.y) row += '●'
+            else if (snake[0].x === x && snake[0].y === y) row += dead ? 'x' : '█'
+            else if (snake.some(function (c) { return c.x === x && c.y === y })) row += '▓'
+            else row += ' '
+          }
+          rows.push(row)
+        }
+        rows[0] = '┌' + rows[0].slice(1, -1) + '┐'
+        rows[H - 1] = '└' + rows[H - 1].slice(1, -1) + '┘'
+        board.textContent = rows.join('\n')
+        scoreEl.textContent = dead
+          ? 'score: ' + score + ' · game over — any key restarts'
+          : 'score: ' + score + (dir ? '' : ' · press any arrow to start')
+      }
+      function tick () {
+        if (!dir || dead) return
+        var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y }
+        var hitWall = head.x <= 0 || head.x >= W - 1 || head.y <= 0 || head.y >= H - 1
+        if (hitWall || snake.some(function (c) { return c.x === head.x && c.y === head.y })) {
+          dead = true
+          draw()
+          return
+        }
+        snake.unshift(head)
+        if (head.x === food.x && head.y === food.y) { score++; placeFood() } else { snake.pop() }
+        draw()
+      }
+      var DIRS = {
+        ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+        w: { x: 0, y: -1 }, s: { x: 0, y: 1 }, a: { x: -1, y: 0 }, d: { x: 1, y: 0 }
+      }
+      addEventListener('keydown', function (event) {
+        if (dead) { reset(); return }
+        var next = DIRS[event.key]
+        if (!next) return
+        event.preventDefault()
+        // no instant 180s
+        if (dir && next.x === -dir.x && next.y === -dir.y) return
+        dir = next
+      })
+      reset()
+      timer = setInterval(tick, 140)
+    })()
   </script>
 </body>
 </html>
