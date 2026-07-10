@@ -62,7 +62,6 @@
 const terminal = useTerminal()
 const palette = useCommandPalette()
 const colorMode = useColorMode()
-const route = useRoute()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
@@ -70,77 +69,18 @@ const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
 // live visitors (cursors relay): count badge; clicking toggles the cursor dots
 const visitors = useLiveVisitors()
 
-// easter egg: hammering the version number five times arms destroy mode
-const { destructActive } = useSiteEffects()
-let versionClicks = 0
-let versionTimer: ReturnType<typeof setTimeout> | undefined
-const versionClick = () => {
-  versionClicks++
-  clearTimeout(versionTimer)
-  versionTimer = setTimeout(() => (versionClicks = 0), 1500)
-  if (versionClicks >= 5) {
-    versionClicks = 0
-    destructActive.value = true
-  }
-}
-onUnmounted(() => clearTimeout(versionTimer))
-
 const { toggle: toggleTheme } = useThemeSwitch()
 
-// ---- bottom-bar easter eggs ----
-// presence, the Slack/Discord way — click the dot to cycle status
-const PRESENCE = [
-  { label: 'online', color: 'var(--bulma-success)' },
-  { label: 'away', color: 'var(--bulma-warning)' },
-  { label: 'busy', color: 'var(--bulma-danger)' },
-  { label: 'invisible', color: 'var(--bulma-text-weak)' }
-] as const
-const presenceIndex = ref(0)
-const presence = computed(() => PRESENCE[presenceIndex.value]!)
-const pinging = ref(false)
-let pingTimer: ReturnType<typeof setTimeout> | undefined
-const cyclePresence = () => {
-  presenceIndex.value = (presenceIndex.value + 1) % PRESENCE.length
-  // a quick radar ping on every change
-  pinging.value = false
-  requestAnimationFrame(() => (pinging.value = true))
-  clearTimeout(pingTimer)
-  pingTimer = setTimeout(() => (pinging.value = false), 600)
-}
-onBeforeUnmount(() => clearTimeout(pingTimer))
-
-// a live hh:mm clock, like a real OS bar — client-only (empty in the static
-// HTML) and re-aligned to the next minute boundary after every tick
-const clock = ref('')
-let clockTimer: ReturnType<typeof setTimeout> | undefined
-const tickClock = () => {
-  const now = new Date()
-  clock.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  clockTimer = setTimeout(tickClock, 60_500 - (now.getSeconds() * 1000 + now.getMilliseconds()))
-}
-onMounted(tickClock)
-onUnmounted(() => clearTimeout(clockTimer))
-
-// classic editor toggle: LF ⇄ CRLF
-const eol = ref('LF')
-const toggleEol = () => (eol.value = eol.value === 'LF' ? 'CRLF' : 'LF')
-
-// the language-mode indicator, cycled like clicking it in a real editor
-const LANGS = ['Vue', 'TypeScript', 'SCSS', 'Markdown', 'Rust', 'JSON'] as const
-const lang = ref(0)
-const cycleLang = () => (lang.value = (lang.value + 1) % LANGS.length)
-
-// A cursor position that "moves" as you browse — purely for vibes
-const line = ref(1)
-const column = ref(1)
-watch(
-  () => route.path,
-  (path) => {
-    line.value = (path.length * 7) % 120 + 1
-    column.value = (path.length * 3) % 40 + 1
-  },
-  { immediate: true }
-)
+// presence dot, EOL toggle, language mode, vibe cursor, clock and the
+// destroy-mode version click all live in useStatusBarEggs
+const {
+  presence, pinging, cyclePresence,
+  eol, toggleEol,
+  lang, cycleLang,
+  line, column,
+  clock,
+  versionClick
+} = useStatusBarEggs()
 </script>
 
 <style scoped lang="scss">
