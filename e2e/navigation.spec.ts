@@ -363,3 +363,15 @@ test('the status bar shows a live clock', async ({ page }) => {
   await page.locator('.hero-name').waitFor()
   await expect(page.locator('.status-clock')).toHaveText(/\d{1,2}:\d{2}/)
 })
+
+test('the tab favicon flips to a prompt block while the terminal is open', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  const icon = page.locator('link[rel="icon"][type="image/svg+xml"]')
+  await page.keyboard.press('`')
+  await page.locator('#terminal-input').waitFor()
+  await expect(icon).toHaveAttribute('href', /^data:image\/svg\+xml/)
+  await page.keyboard.press('Escape')
+  await expect(icon).toHaveAttribute('href', /favicon\.svg$/)
+})
+
