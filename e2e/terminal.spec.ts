@@ -815,3 +815,28 @@ test('tmux splits the terminal into independent panes', async ({ page }) => {
   await expect(panes).toHaveCount(1)
   await expect(page.locator('#terminal-input')).toBeFocused()
 })
+
+test('pet: adopt a tamagotchi that lives in the status bar and survives reload', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'pet')
+  await expect(out).toContainText('no pet yet')
+  await run(page, 'pet adopt pixel')
+  await expect(out).toContainText('pixel has been adopted')
+  // it appears in the status bar as an egg
+  const statusPet = page.locator('.status-pet')
+  await expect(statusPet).toContainText('pixel')
+  await run(page, 'pet feed')
+  await expect(out).toContainText('munches happily')
+  await run(page, 'pet')
+  await expect(out).toContainText('stage: egg')
+  // persists across a reload
+  await page.reload()
+  await page.locator('.hero-name').waitFor()
+  await expect(page.locator('.status-pet')).toContainText('pixel')
+  // and can be released
+  await pressTerminalKey(page)
+  await run(page, 'pet release')
+  await expect(page.locator('.terminal-output')).toContainText('waddles off')
+  await expect(page.locator('.status-pet')).toHaveCount(0)
+})

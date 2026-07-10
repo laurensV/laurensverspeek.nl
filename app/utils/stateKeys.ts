@@ -26,6 +26,9 @@ export const STATE_KEYS = {
   fxBoss: 'fx-boss',
   fxFireworks: 'fx-fireworks',
   bootReplay: 'boot-replay',
+  // the status-bar pet
+  petState: 'pet-state',
+  petNow: 'pet-now',
   // identity, theme, palette
   identityName: 'identity-name',
   accent: 'accent',

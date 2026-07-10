@@ -69,8 +69,54 @@ interface ForecastResult {
 
 export function createToyCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error } = ctx
+  // the status-bar tamagotchi (factory-time: exec handlers run outside setup)
+  const tamagotchi = usePet()
 
   return {
+    pet: {
+      category: 'toys',
+      usage: 'pet [adopt <name>|feed|play|release]',
+      description: 'Your status-bar tamagotchi',
+      examples: ['pet adopt pixel', 'pet feed', 'pet play', 'pet  (status card)'],
+      argCandidates: () => ['adopt', 'feed', 'play', 'release'],
+      exec: (args) => {
+        const action = args[0]?.toLowerCase()
+        const view = tamagotchi.view.value
+        if (action === 'adopt') {
+          if (view) return error(`pet: you already have ${view.name}. one pixel mouth to feed is plenty.`)
+          const name = args.slice(1).join(' ').trim().slice(0, 16)
+          if (!name) return error('pet: usage: pet adopt <name>')
+          tamagotchi.adopt(name)
+          push('primary', `  (○)  an egg!`)
+          out(`${name} has been adopted. it lives in the status bar now.`)
+          muted(`feed it with 'pet feed' — it hatches within the hour, and remembers neglect.`)
+          return
+        }
+        if (!view) {
+          muted(`no pet yet. adopt one with 'pet adopt <name>' — it lives in the status bar.`)
+          return
+        }
+        if (action === 'feed') {
+          tamagotchi.feed()
+          out(`${view.name} munches happily. ${tamagotchi.view.value!.face}`)
+          return
+        }
+        if (action === 'play') {
+          tamagotchi.play()
+          out(`you play fetch with the cursor. ${view.name} wins. ${tamagotchi.view.value!.face}`)
+          return
+        }
+        if (action === 'release') {
+          tamagotchi.release()
+          muted(`${view.name} waddles off into the scrollback. it waves. you wave back.`)
+          return
+        }
+        push('primary', `  ${view.face}  ${view.name}`)
+        out(`stage: ${view.stage} · ${view.age}`)
+        out(`mood:  ${view.moodLine}`)
+        muted(`'pet feed' · 'pet play' · 'pet release'`)
+      }
+    },
     cowsay: {
       category: 'toys',
       usage: 'cowsay <text>',

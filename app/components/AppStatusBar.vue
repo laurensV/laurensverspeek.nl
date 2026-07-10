@@ -33,6 +33,12 @@
       >
         <span class="online-dot" :style="{ '--dot': presence.color }" /> {{ presence.label }}
       </button>
+      <button
+        v-if="petView"
+        class="status-item status-button status-pet is-hidden-mobile"
+        :title="`${petView.name} is ${petView.moodLine} run 'pet' in the terminal`"
+        @click="terminal.open()"
+      >{{ petView.face }} {{ petView.name }}</button>
     </div>
 
     <div class="status-group">
@@ -68,6 +74,9 @@ const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
 
 // live visitors (cursors relay): count badge; clicking toggles the cursor dots
 const visitors = useLiveVisitors()
+
+// the tamagotchi (if adopted via the terminal's `pet` command)
+const { view: petView } = usePet()
 
 const { toggle: toggleTheme } = useThemeSwitch()
 
