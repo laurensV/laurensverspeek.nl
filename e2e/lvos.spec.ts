@@ -699,3 +699,12 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await rss.locator('.rss-item', { hasText: 'snake' }).click()
   await expect(page.locator('.lvos-window[data-win="blog"]')).toBeVisible()
 })
+
+test('the start menu downloads a very real lvos.iso', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  const downloadPromise = page.waitForEvent('download')
+  await page.locator('.lvos-start-menu button', { hasText: 'download lvos.iso' }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('lvos-2.0.iso')
+})

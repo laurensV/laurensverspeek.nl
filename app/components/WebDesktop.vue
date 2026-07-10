@@ -177,6 +177,7 @@
         @clear="clearHistory"
         @tile="tileAll"
         @run="runOpen = true"
+        @iso="downloadIso"
       />
     </div>
   </Teleport>
@@ -390,6 +391,36 @@ const icons = DESKTOP_APPS.map((app) => ({
   icon: app.icon,
   action: app.action && app.action !== 'window' ? iconActions[app.action]! : () => openWindow(app.id)
 }))
+
+// the lvos.iso "download": a tiny, very real file with very unreal contents
+const downloadIso = () => {
+  const iso = [
+    '            ⚡ lvOS 2.0 — installation media ⚡',
+    '',
+    '  congratulations on downloading an operating system that',
+    '  only runs inside a portfolio website.',
+    '',
+    '  RELEASE NOTES',
+    '  • everything is a process, including your regrets (kill 7)',
+    '  • the recycle bin forgives; the grue does not',
+    '  • a tamagotchi may imprint on you. this is permanent.',
+    '',
+    '  INSTALLATION',
+    '  1. do not burn this to a disc',
+    '  2. visit https://laurensverspeek.nl/desktop instead',
+    '  3. that was the whole installation',
+    '',
+    '  md5: d41d8cd98f00b204e9800998ecf8427e (of nothing, fittingly)',
+    ''
+  ].join('\n')
+  const url = URL.createObjectURL(new Blob([iso], { type: 'application/octet-stream' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'lvos-2.0.iso'
+  a.click()
+  URL.revokeObjectURL(url)
+  notify('⤓', 'lvos-2.0.iso downloaded', 'boot media for a computer that lives in a browser')
+}
 
 // ---- run dialog (Alt+R): launches by app id through the same actions ----
 const runOpen = ref(false)
