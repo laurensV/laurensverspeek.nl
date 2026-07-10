@@ -25,10 +25,10 @@
         <template v-else>
           <div v-for="row in rows" :key="row.path" class="stats-row">
             <NuxtLink :to="row.path" class="stats-path">{{ row.path }}</NuxtLink>
-            <span class="stats-bar" aria-hidden="true">
-              <span class="stats-bar-fill" :style="{ width: `${row.share}%` }" />
+            <span class="stats-bar" :class="{ 'is-skeleton': row.count === undefined }" aria-hidden="true">
+              <span v-if="row.count !== undefined" class="stats-bar-fill" :style="{ width: `${row.share}%` }" />
             </span>
-            <span class="stats-count">{{ row.count ?? '…' }}</span>
+            <span class="stats-count">{{ row.count ?? '' }}</span>
           </div>
           <p class="stats-muted mt-4">
             // public counters, no cookies, no fingerprints ·
@@ -127,6 +127,11 @@ onMounted(async () => {
     border: 1px solid var(--bulma-border-weak);
     border-radius: 1px;
     overflow: hidden;
+
+    // while a counter loads, the empty bar breathes with the site-wide shimmer
+    &.is-skeleton {
+      background-color: hsla(var(--lv-primary-hsl), 0.06);
+    }
   }
 
   .stats-bar-fill {
