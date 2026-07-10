@@ -60,7 +60,13 @@ export interface TerminalContext {
   /** Show an animated "working…" line while a command fetches; call the
    * returned stop() when done (usually in finally) */
   spin: (label: string) => () => void
-  startGame: (create: (callbacks: GameCallbacks) => GameHandle) => void
+  /** Take over the terminal with a game/editor; `name` labels it in ps/top */
+  startGame: (create: (callbacks: GameCallbacks) => GameHandle, name?: string) => void
+  /** The running game/editor as a killable process (null when idle) */
+  game: {
+    name: () => string | null
+    stop: () => void
+  }
   colorMode: { preference: string, value: string }
   identity: {
     name: Ref<string>

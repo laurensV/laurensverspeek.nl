@@ -13,11 +13,16 @@ const TOP_PROCESSES = [
   { pid: 2048, user: 'visitor', cmd: 'game-of-life' }
 ]
 
-export function createTopGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
+export function createTopGame(
+  { onFrame, onEnd }: GameCallbacks,
+  /** Real processes (lvOS windows, running effects) merged into the theater */
+  liveProcs?: () => { pid: number, cmd: string }[]
+): GameHandle {
   const start = Date.now()
 
   const render = () => {
-    const rows = [...TOP_PROCESSES]
+    const live = (liveProcs?.() ?? []).map((p) => ({ ...p, user: 'visitor' }))
+    const rows = [...TOP_PROCESSES, ...live]
       .map((p) => ({ ...p, cpu: Math.random() * (p.cmd.includes('chrome') ? 60 : 25), mem: Math.random() * 12 }))
       .sort((a, b) => b.cpu - a.cpu)
     const totalCpu = rows.reduce((sum, r) => sum + r.cpu, 0)
@@ -25,7 +30,7 @@ export function createTopGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
 
     const header = [
       `top - lvsh session, up ${upSecs}s,  1 user,  load average: ${(totalCpu / 100).toFixed(2)}, 0.42, 0.13`,
-      `Tasks: ${TOP_PROCESSES.length} total,  ${rows.filter((r) => r.cpu > 20).length} running`,
+      `Tasks: ${rows.length} total,  ${rows.filter((r) => r.cpu > 20).length} running`,
       `%Cpu(s): ${totalCpu.toFixed(1).padStart(4)} us   (q to quit)`,
       '',
       '  PID USER      %CPU  %MEM  COMMAND'

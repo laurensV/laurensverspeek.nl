@@ -98,7 +98,7 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
         }
         muted(`Trying 176.9.9.172...`)
         muted(`Connected to ${host}. Escape character is 'q'.`)
-        ctx.startGame(createStarwarsGame)
+        ctx.startGame(createStarwarsGame, 'telnet')
       }
     },
     gpg: {

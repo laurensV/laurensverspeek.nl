@@ -1,13 +1,29 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { effectProcs, SYSTEM_PROCS, killByPid } from '~/utils/terminal/effectProcs'
+import type { DesktopWindow } from '~/composables/useWindowManager'
+import { effectProcs, windowProcs, gameProc, lvshProc, lvosSessionProc, SYSTEM_PROCS, LVSH_PID, LVOS_SESSION_PID, killByPid } from '~/utils/terminal/effectProcs'
 
 // Site-wide effects and easter eggs, plus the ps/kill process theater.
 
 export function createEffectCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, close } = ctx
 
-  // site effects modelled as killable processes for `ps`/`kill` (see effectProcs)
-  const procs = effectProcs(ctx.effects)
+  // one process table across the whole site: effects, lvOS windows, the
+  // running game/editor and the shell itself (factory-time state captures)
+  const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
+  const route = useRoute()
+  const closeWindow = (id: string) => {
+    windows.value = windows.value.filter((win) => win.id !== id)
+  }
+  const allProcs = () => {
+    const gameName = ctx.game.name()
+    return [
+      ...effectProcs(ctx.effects),
+      ...windowProcs(windows.value, closeWindow),
+      ...(gameName ? [gameProc(gameName, ctx.game.stop)] : []),
+      ...(route.path.startsWith('/desktop') ? [lvosSessionProc(() => ctx.navigate('home'))] : []),
+      lvshProc(close)
+    ]
+  }
   const systemProcs = SYSTEM_PROCS
 
   // how many times someone has asked for the other editor this session
@@ -50,29 +66,32 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
     },
     ps: {
       category: 'system',
-      description: 'List running processes (effects included)',
+      description: 'List running processes (effects, lvOS windows, games)',
       exec: () => {
         push('output', `<span class="term-accent">${'PID'.padStart(5)}  ${'STAT'.padEnd(5)}COMMAND</span>`, true)
         for (const proc of systemProcs) {
           out(`${String(proc.pid).padStart(5)}  S    ${proc.name}`)
         }
-        const running = procs.filter((proc) => proc.running())
+        const running = allProcs()
+          .filter((proc) => proc.running())
+          .sort((a, b) => a.pid - b.pid)
         for (const proc of running) {
           out(`${String(proc.pid).padStart(5)}  R    ${proc.name}`)
         }
-        if (!running.length) muted(`\nno effects running — start one with 'matrix', 'party', 'sl' or 'crt'.`)
-        else muted(`\nStop an effect with 'kill <pid>'.`)
+        muted(`\nStop anything with 'kill <pid>' — lvOS windows and effects really close.`)
       }
     },
     kill: {
       category: 'system',
       usage: 'kill <pid>',
-      description: 'Stop a process. Yes, kill 314 really stops the rain',
-      argCandidates: () => procs.filter((proc) => proc.running()).map((proc) => String(proc.pid)),
+      description: 'Stop a process — an effect, an lvOS window, even the shell',
+      argCandidates: () => allProcs().filter((proc) => proc.running()).map((proc) => String(proc.pid)),
       exec: (args) => {
         const pid = Number(args.find((arg) => !arg.startsWith('-')))
         if (!pid) return error('kill: usage: kill <pid> — see ps for the candidates')
-        const result = killByPid(procs, systemProcs, pid)
+        if (pid === LVSH_PID) muted('kill: terminating your own shell. bold. goodbye.')
+        if (pid === LVOS_SESSION_PID) muted('kill: ending the lvOS session — logging out.')
+        const result = killByPid(allProcs(), systemProcs, pid)
         if (result.ok) return out(`[${pid}] ${result.name} terminated`)
         if (result.reason === 'not-running') return error(`kill: (${pid}) — no such process (it isn't running)`)
         if (result.reason === 'not-permitted') return error(`kill: (${pid}) — operation not permitted. this site needs that.`)

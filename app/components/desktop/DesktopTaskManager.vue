@@ -26,23 +26,40 @@
       </tbody>
     </table>
 
-    <p class="taskmgr-note">{{ denied || `${processes.length} tasks · killing a window really closes it` }}</p>
+    <p class="taskmgr-note">{{ denied || `${processes.length} tasks · windows, terminal effects and games really die here` }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { DesktopWindow } from '~/composables/useWindowManager'
+import { effectProcs, windowPid, GAME_PID } from '~/utils/terminal/effectProcs'
 
-// htop cosplay over real state: every open lvOS window is a "process", and
-// kill actually closes it. The system daemons are load-bearing set dressing.
+// htop cosplay over real state: lvOS windows, the terminal's running effects
+// and its active game/editor are all processes here — same pids as `ps`, and
+// kill actually stops them. The system daemons are load-bearing set dressing.
 
 const emit = defineEmits<{ kill: [id: string] }>()
 
 const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
+const siteEffects = useSiteEffects()
+const terminal = useTerminal()
+
+// the same effect procs the terminal's ps/kill sees (shared useState flags)
+const effectTable = effectProcs({
+  matrix: siteEffects.matrixActive,
+  crt: siteEffects.crtActive,
+  destruct: siteEffects.destructActive,
+  fireworks: siteEffects.fireworksActive,
+  train: useState(STATE_KEYS.fxTrain, () => false),
+  party: useState(STATE_KEYS.fxParty, () => false),
+  boss: useState(STATE_KEYS.fxBoss, () => false),
+  bootReplay: useState(STATE_KEYS.bootReplay, () => false),
+  toggleCrt: siteEffects.toggleCrt
+})
 
 const SYSTEM = [
   { pid: 1, name: 'init', mem: 1 },
-  { pid: 42, name: 'flow-field.service', mem: 12 },
+  { pid: 6, name: 'flow-field.service', mem: 12 },
   { pid: 77, name: 'easter_eggs.service', mem: 7 }
 ]
 
@@ -68,6 +85,7 @@ interface Proc {
   mem: number
   system: boolean
   winId?: string
+  stop?: () => void
 }
 
 const processes = computed<Proc[]>(() => [
@@ -78,14 +96,38 @@ const processes = computed<Proc[]>(() => [
     system: true
   })),
   ...windows.value.map((win) => ({
-    pid: 1000 + win.z,
+    pid: windowPid(win.id),
     name: win.title,
     state: win.minimized ? 'T' : 'R',
     cpu: fakeCpu(win.id) + (win.minimized ? 0 : 2),
     mem: 24 + (win.id.length * 7) % 40,
     system: false,
     winId: win.id
-  }))
+  })),
+  // the terminal's running effects, same pids as `ps` — kill really stops them
+  ...effectTable
+    .filter((proc) => proc.running())
+    .map((proc) => ({
+      pid: proc.pid,
+      name: proc.name,
+      state: 'R',
+      cpu: fakeCpu(proc.name) + 3,
+      mem: 18 + (proc.pid % 30),
+      system: false,
+      stop: proc.stop
+    })),
+  // and the game/editor currently holding the terminal, if any
+  ...(terminal.game.name()
+    ? [{
+        pid: GAME_PID,
+        name: terminal.game.name()!,
+        state: 'R',
+        cpu: fakeCpu('game') + 5,
+        mem: 32,
+        system: false,
+        stop: terminal.game.stop
+      }]
+    : [])
 ])
 
 const meters = computed(() => {
@@ -107,6 +149,7 @@ const kill = (proc: Proc) => {
     return
   }
   if (proc.winId) emit('kill', proc.winId)
+  else proc.stop?.()
 }
 onUnmounted(() => clearTimeout(deniedTimer))
 </script>

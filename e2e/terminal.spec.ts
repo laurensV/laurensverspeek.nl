@@ -853,3 +853,12 @@ test('sh runs a script from the virtual filesystem with a trace', async ({ page 
   await run(page, 'sh nope.sh')
   await expect(out).toContainText('sh: nope.sh: No such file or directory')
 })
+
+test('kill 7 terminates your own shell', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'kill 7')
+  await expect(page.locator('.terminal-window')).toHaveCount(0)
+  // it went down on record: reopening shows the farewell
+  await pressTerminalKey(page)
+  await expect(page.locator('.terminal-output')).toContainText('terminating your own shell. bold.')
+})

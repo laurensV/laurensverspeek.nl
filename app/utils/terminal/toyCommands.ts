@@ -52,7 +52,7 @@ async function startAsciiCam(ctx: TerminalContext): Promise<void> {
       },
       stop
     }
-  })
+  }, 'asciicam')
 }
 
 interface GeoResult {

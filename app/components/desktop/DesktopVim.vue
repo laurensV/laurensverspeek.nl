@@ -22,11 +22,15 @@
 // A lovingly reduced vim: i/a/o insert, hjkl motion, x delete, :w :q :wq.
 // The one thing it does better than real vim: you already know how to quit.
 
-import { storageGet, storageSet } from '~/utils/safeStorage'
+import { storageGet, storageRemove } from '~/utils/safeStorage'
+import { writeFileAt } from '~/utils/terminal/filesystem'
 
 const emit = defineEmits<{ close: [] }>()
 
-const STORAGE_KEY = 'lvos-vim-buffer'
+// notes.txt lives in the shared home filesystem — the terminal's `vim
+// notes.txt` / `cat notes.txt` and the Files app all see the same bytes
+const LEGACY_KEY = 'lvos-vim-buffer'
+const { files } = useTerminal()
 const DEFAULT_BUFFER = `# notes.txt
 
 todo:
@@ -49,21 +53,30 @@ const bufferRef = ref<HTMLTextAreaElement>()
 const dirty = computed(() => buffer.value !== savedBuffer.value)
 
 onMounted(() => {
-  const saved = storageGet(STORAGE_KEY)
-  if (saved !== null) {
+  // prefer the shared filesystem; migrate a pre-unification buffer once
+  const legacy = storageGet(LEGACY_KEY)
+  const saved = files.value['notes.txt']?.content ?? legacy
+  if (saved) {
     buffer.value = saved
     savedBuffer.value = saved
+    if (legacy !== null && !files.value['notes.txt']) {
+      const written = writeFileAt(files.value, '', 'notes.txt', legacy)
+      if (!('error' in written)) files.value = written.files
+    }
   }
+  if (legacy !== null) storageRemove(LEGACY_KEY)
   bufferRef.value?.focus()
 })
 
 const write = () => {
-  if (storageSet(STORAGE_KEY, buffer.value)) {
-    savedBuffer.value = buffer.value
-    hint.value = `"~/notes.txt" ${buffer.value.split('\n').length}L written`
-  } else {
-    hint.value = 'E212: cannot open file for writing (localStorage blocked)'
+  const written = writeFileAt(files.value, '', 'notes.txt', buffer.value)
+  if ('error' in written) {
+    hint.value = 'E212: cannot open file for writing'
+    return
   }
+  files.value = written.files
+  savedBuffer.value = buffer.value
+  hint.value = `"~/notes.txt" ${buffer.value.split('\n').length}L written`
 }
 
 const runCommand = () => {

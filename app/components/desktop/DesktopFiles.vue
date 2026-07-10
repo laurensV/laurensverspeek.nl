@@ -129,7 +129,8 @@ const curated = computed<FileEntry[]>(() => {
       open: () => emit('post', post.path)
     }))
   }
-  // home shows the curated site files only at the top level
+  // home shows the curated site files only at the top level; a curated name
+  // yields to a real VFS file of the same name (notes.txt after a vim :w)
   if (vfsDir.value) return []
   return [
     { name: 'readme.md', open: () => emit('window', 'readme') },
@@ -137,7 +138,7 @@ const curated = computed<FileEntry[]>(() => {
     { name: 'uses.txt', open: () => emit('route', '/uses') },
     { name: 'now.txt', open: () => emit('route', '/now') },
     { name: 'resume.pdf', open: () => emit('route', '/cv') }
-  ]
+  ].filter((file) => !files.value[file.name])
 })
 </script>
 

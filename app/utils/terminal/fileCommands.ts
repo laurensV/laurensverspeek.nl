@@ -217,7 +217,7 @@ export function createFileCommands(ctx: TerminalContext): Record<string, Termina
             },
             stop: () => clearInterval(timer)
           }
-        })
+        }, `tail -f ${name}`)
       }
     }
   }

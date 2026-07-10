@@ -43,7 +43,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     const io = editorIo(name)
     if ('error' in io) return error(`vim: ${io.error}`)
     muted(`Opening ${name} — i inserts, Esc then :wq writes & quits.`)
-    ctx.startGame((callbacks) => createVimEditor(io, callbacks))
+    ctx.startGame((callbacks) => createVimEditor(io, callbacks), `vim ${name}`)
   }
 
   // shared cp/mv (files only): copy a node to dest, and for mv drop the source
@@ -206,7 +206,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
         const io = editorIo(name)
         if ('error' in io) return error(`nano: ${io.error}`)
         muted(`Editing ${name} — ^S saves, ^X exits.`)
-        ctx.startGame((callbacks) => createNanoEditor(io, callbacks))
+        ctx.startGame((callbacks) => createNanoEditor(io, callbacks), `nano ${name}`)
       }
     }
   }

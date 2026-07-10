@@ -31,6 +31,8 @@ let savedTitle: string | null = null
 // and shared by every useTerminal() caller.
 const activeGame = shallowRef<GameHandle | null>(null)
 const gameFrame = ref('')
+// what's running, for the process table (ps/kill and the lvOS task manager)
+const activeGameName = ref('game')
 
 /**
  * Shared terminal state + command interpreter.
@@ -125,7 +127,8 @@ export function useTerminal() {
   }
   const toggle = () => (isOpen.value ? close() : open())
 
-  const startGame = (create: (callbacks: GameCallbacks) => GameHandle) => {
+  const startGame = (create: (callbacks: GameCallbacks) => GameHandle, name = 'game') => {
+    activeGameName.value = name
     activeGame.value = create({
       onFrame: (frame) => (gameFrame.value = frame),
       onEnd: (endLines) => {
@@ -134,6 +137,16 @@ export function useTerminal() {
         endLines.forEach(out)
       }
     })
+  }
+
+  // the running game/editor as a killable process (ps/kill, lvOS task manager)
+  const game = {
+    name: () => (activeGame.value ? activeGameName.value : null),
+    stop: () => {
+      activeGame.value?.stop()
+      activeGame.value = null
+      gameFrame.value = ''
+    }
   }
 
   // braille spinner label shown under the transcript while a command fetches
@@ -166,6 +179,7 @@ export function useTerminal() {
     close,
     spin,
     startGame,
+    game,
     colorMode,
     identity: {
       name: identityName,
@@ -452,6 +466,7 @@ export function useTerminal() {
     }
   }
 
-  // files is shared with the lvOS Files app, which browses the same home fs
-  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files, panes }
+  // files is shared with the lvOS Files app, which browses the same home fs;
+  // game is exposed so the lvOS task manager can list and kill it
+  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files, panes, game }
 }
