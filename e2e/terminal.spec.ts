@@ -92,7 +92,11 @@ test('virtual filesystem: create, read, list, remove and persist a file', async 
   await run(page, 'ls')
   await expect(out).toContainText('notes.txt')
 
-  // survives a full reload (persisted to localStorage)
+  // survives a full reload (persisted to localStorage) — wait for the watcher
+  // to actually flush the write before reloading
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('lv-terminal-fs') ?? ''))
+    .toContain('notes.txt')
   await page.reload()
   await page.locator('.hero-name').waitFor()
   await page.keyboard.press('`')
@@ -271,6 +275,13 @@ test('aliases and exported env vars survive a reload', async ({ page }) => {
   await openTerminal(page)
   await run(page, 'alias hi=echo hello-again')
   await run(page, 'export FAVE=amber')
+  // the persistence watchers flush async — don't reload before they land
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('lv-terminal-aliases') ?? ''))
+    .toContain('hi')
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('lv-terminal-env') ?? ''))
+    .toContain('FAVE')
   await page.reload()
   await page.locator('.hero-name').waitFor()
   await page.keyboard.press('`')
