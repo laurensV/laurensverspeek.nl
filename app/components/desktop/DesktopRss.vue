@@ -43,7 +43,7 @@ onMounted(async () => {
         title: item.querySelector('title')?.textContent ?? '(untitled)',
         path: new URL(link, window.location.origin).pathname,
         date: pubDate ? new Date(pubDate).toISOString().slice(0, 10) : '',
-        description: item.querySelector('description')?.textContent?.split('\n')[0]?.slice(0, 120) ?? ''
+        description: (item.querySelector('description')?.textContent ?? '').split('\n')[0]!.slice(0, 120)
       }
     })
   } catch {

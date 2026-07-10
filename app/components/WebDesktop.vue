@@ -184,9 +184,8 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener, useIdle } from '@vueuse/core'
+import { useIdle } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
-import type { ArrowKey } from '~/utils/snapZones'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
@@ -343,41 +342,9 @@ const openRoute = (path: string) => router.push(path)
 
 const openCv = () => void router.push('/cv')
 
-const logout = () => {
-  startOpen.value = false
-  calendarOpen.value = false
-  void router.push('/')
-}
-
-// the lock screen overlays everything; keyboard shortcuts pause while it's up
-const locked = ref(false)
+// session, lock screen and the CRT power-off live in useDesktopPower
+const { locked, lock, logout, poweringOff, shutdown, reboot } = useDesktopPower({ booting, startOpen, calendarOpen })
 const shortcutsOpen = ref(false)
-const lock = () => {
-  startOpen.value = false
-  calendarOpen.value = false
-  locked.value = true
-}
-
-// CRT power-off: collapse the desktop to a bright line, then act. Reduced
-// motion skips straight to the action.
-const poweringOff = ref(false)
-let powerTimer: ReturnType<typeof setTimeout> | undefined
-const powerOff = (after: () => void) => {
-  startOpen.value = false
-  calendarOpen.value = false
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return after()
-  poweringOff.value = true
-  powerTimer = setTimeout(() => {
-    poweringOff.value = false
-    after()
-  }, 950)
-}
-onUnmounted(() => clearTimeout(powerTimer))
-
-const shutdown = () => powerOff(() => void router.push('/'))
-const reboot = () => powerOff(() => {
-  booting.value = true
-})
 
 const iconActions: Record<string, () => void> = {
   blog: openBlogApp,
@@ -429,13 +396,6 @@ const launchById = (id: string) => {
   if (app?.action && app.action !== 'window') iconActions[app.action]!()
   else openWindow(id)
 }
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (locked.value || !event.altKey || event.ctrlKey || event.metaKey) return
-  if (event.key.toLowerCase() !== 'r') return
-  event.preventDefault()
-  runOpen.value = !runOpen.value
-})
-
 // entering the /desktop page runs the BIOS/POST screen; a fresh session then
 // opens the readme, while a returning session restores its previous windows.
 onMounted(() => {
@@ -444,68 +404,22 @@ onMounted(() => {
   if (firstBoot) openWindow('readme')
 })
 
-// ? toggles the cheat sheet (unless typing in a field or locked)
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (locked.value || event.key !== '?') return
-  const target = event.target as HTMLElement
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
-  event.preventDefault()
-  shortcutsOpen.value = !shortcutsOpen.value
-})
-
-// inside the desktop, ~ opens/focuses the terminal window (unless typing)
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (locked.value) return
-  if (event.key !== '~' && event.key !== '`') return
-  const target = event.target as HTMLElement
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
-  event.preventDefault()
-  openWindow('terminal')
-})
-
-// Ctrl+Alt+arrows snap the top window to halves/quadrants (up maximizes,
-// down restores) — the keyboard sibling of dragging against an edge
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (locked.value || !event.ctrlKey || !event.altKey) return
-  if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
-  const top = [...windows.value].filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0]
-  if (!top) return
-  event.preventDefault()
-  keySnap(top, event.key as ArrowKey)
-})
-
-// Alt+Tab switches between open windows (Shift+Alt+Tab goes backwards). Note the
-// OS may reserve Alt+Tab; the taskbar remains the always-available switcher.
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (locked.value) return
-  if (event.key !== 'Tab' || !event.altKey) return
-  event.preventDefault()
-  cycleWindows(event.shiftKey ? -1 : 1)
-})
-
-useEventListener('keydown', (event: KeyboardEvent) => {
-  // a locked screen ignores Escape — it wouldn't be much of a lock otherwise
-  if (locked.value) return
-  if (shortcutsOpen.value && event.key === 'Escape') {
-    event.preventDefault()
-    shortcutsOpen.value = false
-    return
-  }
-  // defaultPrevented means the terminal already consumed this Escape
-  if (event.key !== 'Escape' || event.defaultPrevented || terminal.isOpen.value) {
-    return
-  }
-  // Escape first dismisses popups, only logging out when nothing is open
-  if (contextMenu.open || titleMenu.open || startOpen.value || calendarOpen.value || notifOpen.value || runOpen.value) {
-    contextMenu.open = false
-    titleMenu.open = false
-    startOpen.value = false
-    calendarOpen.value = false
-    notifOpen.value = false
-    runOpen.value = false
-    return
-  }
-  logout()
+// the desktop keyboard (?, ~, alt+r, alt+tab, ctrl+alt+arrows, escape)
+useDesktopShortcuts({
+  locked,
+  shortcutsOpen,
+  runOpen,
+  startOpen,
+  calendarOpen,
+  notifOpen,
+  contextMenu,
+  titleMenu,
+  terminalOpen: terminal.isOpen,
+  windows,
+  openWindow,
+  keySnap,
+  cycleWindows,
+  logout
 })
 </script>
 
