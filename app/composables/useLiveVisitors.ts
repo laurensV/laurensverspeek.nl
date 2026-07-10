@@ -19,7 +19,10 @@ export function useLiveVisitors() {
     showCursors.value = storageGet(SHOW_KEY) === '1'
     watch(showCursors, (value) => storageSet(SHOW_KEY, value ? '1' : '0'))
   }
-  const enabled = computed(() => Boolean(useRuntimeConfig().public.cursorsWs))
+  // captured here, not inside the computed — lazy evaluation can happen
+  // outside the Nuxt instance (same hazard as the blog jsonld computed)
+  const cursorsWs = useRuntimeConfig().public.cursorsWs
+  const enabled = computed(() => Boolean(cursorsWs))
   const say = (text: string) => (outbox.value = { text, ts: Date.now() })
   return { count, showCursors, enabled, outbox, say }
 }

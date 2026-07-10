@@ -79,10 +79,11 @@ const route = useRoute()
 // git-derived last-edit date (baked at build); shown only when it post-dates publish
 const slugParam = String(route.params.slug)
 
+// captured at setup: unhead may evaluate the jsonld computed after the
+// component instance is gone, where useRuntimeConfig() would throw
+const postUpdatedMap = useRuntimeConfig().public.postUpdated as Record<string, string>
 const updatedDate = computed(() => {
-  const slug = slugParam
-  const map = useRuntimeConfig().public.postUpdated as Record<string, string>
-  const updated = map[slug]
+  const updated = postUpdatedMap[slugParam]
   return updated && post.value?.date && updated > post.value.date.slice(0, 10) ? updated : ''
 })
 
