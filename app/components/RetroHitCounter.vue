@@ -21,6 +21,25 @@ const { goatcounter } = useRuntimeConfig().public
 const raw = ref('')
 const digits = ref<string[] | null>(null)
 
+// roll the odometer from 0 up to the real count over ~0.9s
+let rollTimer: ReturnType<typeof setInterval> | undefined
+const rollTo = (count: string) => {
+  const target = Number(count.replace(/\D/g, '')) || 0
+  if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    digits.value = formatHits(count)
+    return
+  }
+  const started = performance.now()
+  const duration = 900
+  rollTimer = setInterval(() => {
+    const progress = Math.min(1, (performance.now() - started) / duration)
+    const eased = 1 - (1 - progress) ** 3
+    digits.value = formatHits(String(Math.round(target * eased)))
+    if (progress >= 1) clearInterval(rollTimer)
+  }, 40)
+}
+onUnmounted(() => clearInterval(rollTimer))
+
 onMounted(async () => {
   if (!goatcounter) return
   try {
@@ -28,7 +47,7 @@ onMounted(async () => {
       `https://${goatcounter}.goatcounter.com/counter/TOTAL.json`
     )
     raw.value = total.count.trim()
-    digits.value = formatHits(total.count)
+    rollTo(total.count)
   } catch {
     // public counters off or network trouble: the footer simply stays quiet
   }
