@@ -705,3 +705,28 @@ test('/museum catalogues the exhibits and the terminal knows the way', async ({ 
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL(/\/museum/, { timeout: 5000 })
 })
+
+test('/418 serves an interactive teapot and the terminal refuses to brew', async ({ page }) => {
+  await page.goto('/418')
+  await expect(page.locator('h1')).toContainText("I'm a teapot")
+  const pot = page.locator('.teapot')
+  await expect(pot).toBeVisible()
+  // the frame contains actual shading characters
+  await expect.poll(async () => ((await pot.textContent()) ?? '').replace(/\s/g, '').length).toBeGreaterThan(300)
+  // dragging pours: the frame changes
+  const before = await pot.textContent()
+  const box = await pot.boundingBox()
+  if (!box) throw new Error('no teapot to pour')
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2, { steps: 4 })
+  await page.mouse.up()
+  await expect.poll(() => pot.textContent()).not.toBe(before)
+  // the hidden coffee command 418s and links here
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await pressTerminalKey(page)
+  await page.fill('#terminal-input', 'coffee')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText("418 I'm a teapot")
+})

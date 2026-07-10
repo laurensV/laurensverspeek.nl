@@ -193,6 +193,17 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Absolutely not',
       exec: () => error('visitor is not in the sudoers file. This incident will be reported. 😏')
     },
+    coffee: {
+      hidden: true,
+      description: 'Attempt to brew coffee (RFC 2324 compliant)',
+      exec: () => {
+        muted('BREW /pot-0 HTCPCP/1.0')
+        muted('Accept-Additions: milk-type/half-and-half')
+        error(`HTTP/1.1 418 I'm a teapot`)
+        out('the requested entity is short and stout.')
+        ctx.link('  → inspect the teapot at /418', '/418')
+      }
+    },
     hire: {
       hidden: true,
       description: 'The console-hunt reward',

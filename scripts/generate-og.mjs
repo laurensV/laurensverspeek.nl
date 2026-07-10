@@ -117,7 +117,8 @@ const PAGES = [
   ['changelog', 'git log', 'Changelog', 'The living history of this site — real commits, baked at build time.'],
   ['stats', 'cat /proc/stats', 'Stats', 'Public, cookie-free visitor counters for the whole site.'],
   ['cv', 'less resume.pdf', 'Curriculum Vitae', 'Printable resume of Laurens Verspeek.'],
-  ['museum', 'tour --all', 'The Museum', 'Every feature and easter egg this site ships, catalogued like exhibits.']
+  ['museum', 'tour --all', 'The Museum', 'Every feature and easter egg this site ships, catalogued like exhibits.'],
+  ['418', 'BREW /pot-0', "418 — I'm a teapot", 'RFC 2324, faithfully implemented. Coffee will not be brewed.']
 ]
 for (const [slug, eyebrow, title, description] of PAGES) {
   written.push(writeCard(`page-${slug}`, { eyebrow, title, description }))
