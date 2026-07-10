@@ -159,3 +159,30 @@ export function formatLongListing(
   const total = entries.reduce((sum, e) => sum + (e.dir ? 4096 : e.size), 0)
   return [`total ${Math.ceil(total / 1024)}`, ...rows]
 }
+
+/**
+ * Rename a node in place (same directory), carrying a directory's subtree
+ * along. Pure: returns the new map, or an error string when the target name
+ * is invalid or already taken.
+ */
+export function renamePath(
+  files: Filesystem,
+  path: string,
+  newName: string
+): { files: Filesystem } | { error: string } {
+  const node = files[path]
+  if (!node) return { error: `no such file: ${path}` }
+  const clean = newName.trim().replace(/\/+$/, '')
+  if (!clean || clean.includes('/')) return { error: 'names cannot be empty or contain /' }
+  const parent = path.split('/').slice(0, -1).join('/')
+  const target = parent ? `${parent}/${clean}` : clean
+  if (target === path) return { files }
+  if (files[target]) return { error: `${clean} already exists` }
+  const renamed: Filesystem = {}
+  for (const [key, value] of Object.entries(files)) {
+    if (key === path) renamed[target] = value
+    else if (key.startsWith(`${path}/`)) renamed[`${target}${key.slice(path.length)}`] = value
+    else renamed[key] = value
+  }
+  return { files: renamed }
+}

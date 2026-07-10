@@ -18,22 +18,38 @@
             <span>..</span>
           </button>
           <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
-            <button
-              class="files-file"
-              :class="{ 'is-dir': entry.dir }"
-              @click="openVfsEntry(entry)"
-            >
-              <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
-              <AppIcon v-else name="file" :size="13" />
-              <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
-            </button>
-            <button
-              class="files-delete"
-              :aria-label="`Move ${entry.name} to the recycle bin`"
-              title="Move to recycle bin"
-              @click="deleteVfsEntry(entry)"
-            >×</button>
+            <template v-if="renaming === entry.name">
+              <input
+                ref="renameRef"
+                v-model="renameValue"
+                class="files-rename is-family-code"
+                :aria-label="`New name for ${entry.name}`"
+                spellcheck="false"
+                @keydown.enter.prevent="applyRename(entry)"
+                @keydown.esc.prevent="renaming = null"
+                @blur="renaming = null"
+              >
+            </template>
+            <template v-else>
+              <button
+                class="files-file"
+                :class="{ 'is-dir': entry.dir }"
+                @click="openVfsEntry(entry)"
+                @contextmenu.prevent.stop="openFileMenu(entry, $event)"
+              >
+                <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
+                <AppIcon v-else name="file" :size="13" />
+                <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
+              </button>
+              <button
+                class="files-delete"
+                :aria-label="`Move ${entry.name} to the recycle bin`"
+                title="Move to recycle bin"
+                @click="deleteVfsEntry(entry)"
+              >×</button>
+            </template>
           </div>
+          <p v-if="renameError" class="files-error">{{ renameError }}</p>
         </template>
         <button v-for="file in curated" :key="file.name" class="files-file" @click="file.open()">
           <AppIcon name="file" :size="13" />
@@ -44,6 +60,17 @@
         </p>
       </div>
     </div>
+    <!-- right-click context menu on a file: open / rename / bin -->
+    <div
+      v-if="fileMenu"
+      class="files-menu is-family-code"
+      :style="{ left: `${fileMenu.x}px`, top: `${fileMenu.y}px` }"
+    >
+      <button @click="menuOpenEntry">open</button>
+      <button @click="menuRename">rename</button>
+      <button class="is-danger" @click="menuDelete">move to bin</button>
+    </div>
+
     <div v-if="preview" class="files-preview">
       <div class="files-preview-head">
         <span>$ cat {{ preview.name }}</span>
@@ -55,8 +82,9 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { projects } from '~/data/projects'
-import { dirEntries } from '~/utils/terminal/filesystem'
+import { dirEntries, renamePath } from '~/utils/terminal/filesystem'
 
 // lvOS file explorer over the site's content AND the terminal's persistent
 // home filesystem — the same one mkdir/touch/echo> write to (shared useState).
@@ -81,11 +109,60 @@ const preview = ref<{ name: string, content: string } | null>(null)
 const { files } = useTerminal()
 const trash = useTrash()
 
+const entryPath = (name: string) => (vfsDir.value ? `${vfsDir.value}/${name}` : name)
+
 // deleting from the explorer goes through the same recycle bin as `rm`
 const deleteVfsEntry = (entry: { name: string, dir: boolean }) => {
-  const path = vfsDir.value ? `${vfsDir.value}/${entry.name}` : entry.name
-  trash.discard(path)
+  trash.discard(entryPath(entry.name))
   if (preview.value?.name === entry.name) preview.value = null
+}
+
+// ---- right-click menu + inline rename ----
+interface VfsEntry { name: string, dir: boolean }
+const fileMenu = ref<{ entry: VfsEntry, x: number, y: number } | null>(null)
+const renaming = ref<string | null>(null)
+const renameValue = ref('')
+const renameError = ref('')
+const renameRef = ref<HTMLInputElement[]>()
+
+const openFileMenu = (entry: VfsEntry, event: MouseEvent) => {
+  // position relative to the files pane (the window content scrolls with it)
+  const host = (event.currentTarget as HTMLElement).closest('.files')?.getBoundingClientRect()
+  fileMenu.value = {
+    entry,
+    x: event.clientX - (host?.left ?? 0),
+    y: event.clientY - (host?.top ?? 0)
+  }
+}
+useEventListener('click', () => (fileMenu.value = null))
+
+const menuOpenEntry = () => {
+  if (fileMenu.value) openVfsEntry(fileMenu.value.entry)
+  fileMenu.value = null
+}
+const menuDelete = () => {
+  if (fileMenu.value) deleteVfsEntry(fileMenu.value.entry)
+  fileMenu.value = null
+}
+const menuRename = () => {
+  if (!fileMenu.value) return
+  renaming.value = fileMenu.value.entry.name
+  renameValue.value = fileMenu.value.entry.name
+  renameError.value = ''
+  fileMenu.value = null
+  void nextTick(() => renameRef.value?.[0]?.select())
+}
+
+const applyRename = (entry: VfsEntry) => {
+  const result = renamePath(files.value, entryPath(entry.name), renameValue.value)
+  if ('error' in result) {
+    renameError.value = `rename: ${result.error}`
+    renaming.value = null
+    return
+  }
+  files.value = result.files
+  renameError.value = ''
+  renaming.value = null
 }
 
 const { data: posts } = useLazyAsyncData('desktop-posts', () =>
@@ -144,6 +221,7 @@ const curated = computed<FileEntry[]>(() => {
 
 <style scoped lang="scss">
 .files {
+  position: relative; // anchors the right-click file menu
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -253,6 +331,58 @@ const curated = computed<FileEntry[]>(() => {
   padding: 0.3rem 0.5rem;
   color: hsl(var(--lv-scheme-hs), 55%);
   font-size: 0.7rem;
+}
+
+.files-rename {
+  flex: 1;
+  margin: 0.15rem 0;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.5);
+  border-radius: var(--bulma-radius-small);
+  background: none;
+  color: hsl(var(--lv-scheme-hs), 92%);
+  font-size: inherit;
+  outline: none;
+  caret-color: var(--bulma-primary);
+}
+
+.files-error {
+  padding: 0.2rem 0.5rem;
+  color: var(--bulma-danger);
+  font-size: 0.7rem;
+}
+
+.files-menu {
+  position: absolute;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 8rem;
+  padding: 0.25rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+  box-shadow: 0 10px 26px hsla(var(--lv-scheme-hs), 2%, 0.5);
+
+  button {
+    padding: 0.35rem 0.6rem;
+    border: none;
+    border-radius: var(--bulma-radius-small);
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 88%);
+    font: inherit;
+    font-size: 0.75rem;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background-color: hsla(var(--lv-primary-hsl), 0.15);
+    }
+
+    &.is-danger:hover {
+      color: var(--bulma-danger);
+    }
+  }
 }
 
 .files-preview {

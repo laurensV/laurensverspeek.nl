@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing, renamePath } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
 describe('writeFileAt', () => {
@@ -150,5 +150,36 @@ describe('formatLongListing', () => {
 
   it('handles an empty directory', () => {
     expect(formatLongListing([])).toEqual(['total 0'])
+  })
+})
+
+describe('renamePath', () => {
+  const base = () => ({
+    'a.txt': { dir: false, content: 'aa' },
+    'b.txt': { dir: false, content: 'bb' },
+    docs: { dir: true, content: '' },
+    'docs/deep.txt': { dir: false, content: 'dd' }
+  })
+
+  it('renames a file in place', () => {
+    const result = renamePath(base(), 'a.txt', 'renamed.txt')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.files['renamed.txt']?.content).toBe('aa')
+    expect(result.files['a.txt']).toBeUndefined()
+  })
+
+  it('renames a directory and carries its subtree', () => {
+    const result = renamePath(base(), 'docs', 'papers')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.files['papers']?.dir).toBe(true)
+    expect(result.files['papers/deep.txt']?.content).toBe('dd')
+    expect(result.files['docs/deep.txt']).toBeUndefined()
+  })
+
+  it('refuses collisions, slashes and empty names', () => {
+    expect(renamePath(base(), 'a.txt', 'b.txt')).toHaveProperty('error')
+    expect(renamePath(base(), 'a.txt', 'x/y')).toHaveProperty('error')
+    expect(renamePath(base(), 'a.txt', '  ')).toHaveProperty('error')
+    expect(renamePath(base(), 'ghost.txt', 'x')).toHaveProperty('error')
   })
 })
