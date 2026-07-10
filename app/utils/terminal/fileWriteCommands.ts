@@ -7,6 +7,8 @@ import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/termin
 
 export function createFileWriteCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { out, muted, error } = ctx
+  // rm moves things to the lvOS recycle bin (factory-time: valid Nuxt context)
+  const trash = useTrash()
 
   // a path can only be created if its parent directory already exists
   const parentExists = (path: string) => {
@@ -143,7 +145,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     rm: {
       category: 'files',
       usage: 'rm <file>',
-      description: 'Remove a file or directory',
+      description: 'Remove a file or directory (into the lvOS recycle bin)',
       argCandidates: hereEntries,
       exec: (args) => {
         const rawName = args.find((arg) => !arg.startsWith('-'))
@@ -159,10 +161,8 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
             error(`rm: cannot remove '${name}': No such file or directory`)
             continue
           }
-          // remove the entry and, for a directory, everything under it
-          ctx.files.value = Object.fromEntries(
-            Object.entries(ctx.files.value).filter(([key]) => key !== path && !key.startsWith(`${path}/`))
-          )
+          // removed things land in the recycle bin (restorable on the desktop)
+          trash.discard(path)
           // if we removed the directory we're standing in, walk back to home
           if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
         }

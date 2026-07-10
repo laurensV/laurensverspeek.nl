@@ -133,6 +133,7 @@
         <LazyDesktopSnake v-else-if="win.id === 'snake'" />
         <LazyDesktopGallery v-else-if="win.id === 'gallery'" />
         <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
+        <LazyDesktopTrash v-else-if="win.id === 'trash'" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
       </DesktopWindow>
 

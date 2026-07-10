@@ -440,3 +440,36 @@ test('a paint drawing can hang as the desktop wallpaper', async ({ page }) => {
     page.locator('.lvos').evaluate((el) => getComputedStyle(el).backgroundImage)
   ).toContain('data:image/png')
 })
+
+test('rm moves files to the recycle bin, which restores or empties them', async ({ page }) => {
+  await bootDesktop(page)
+  // close the readme window that covers the icon column
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  // create and delete a file through the desktop terminal
+  await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'echo precious data > doomed.txt')
+  await page.keyboard.press('Enter')
+  await page.fill('#desktop-terminal-input', 'rm doomed.txt')
+  await page.keyboard.press('Enter')
+  // minimize the terminal so the icon column is clickable again
+  await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
+  // the bin lists it, restore brings it back
+  await page.locator('.lvos-icon', { hasText: /^recycle bin$/ }).click()
+  const trash = page.locator('.trash')
+  await trash.waitFor()
+  await expect(trash.locator('.trash-row', { hasText: 'doomed.txt' })).toBeVisible()
+  await trash.locator('.trash-restore').click()
+  await expect(trash).toContainText('the bin is empty')
+  // the restored file reads back in the terminal
+  await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
+  await page.fill('#desktop-terminal-input', 'cat doomed.txt')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.lvos-window[data-win="terminal"]')).toContainText('precious data')
+  // delete again and empty the bin for good
+  await page.fill('#desktop-terminal-input', 'rm doomed.txt')
+  await page.keyboard.press('Enter')
+  await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
+  await trash.locator('.trash-empty-btn').click()
+  await expect(trash).toContainText('the bin is empty')
+})

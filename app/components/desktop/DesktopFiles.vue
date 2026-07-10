@@ -17,17 +17,23 @@
             <span class="files-glyph" aria-hidden="true">▸</span>
             <span>..</span>
           </button>
-          <button
-            v-for="entry in vfsEntries"
-            :key="entry.name"
-            class="files-file"
-            :class="{ 'is-dir': entry.dir }"
-            @click="openVfsEntry(entry)"
-          >
-            <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
-            <AppIcon v-else name="file" :size="13" />
-            <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
-          </button>
+          <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
+            <button
+              class="files-file"
+              :class="{ 'is-dir': entry.dir }"
+              @click="openVfsEntry(entry)"
+            >
+              <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
+              <AppIcon v-else name="file" :size="13" />
+              <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
+            </button>
+            <button
+              class="files-delete"
+              :aria-label="`Move ${entry.name} to the recycle bin`"
+              title="Move to recycle bin"
+              @click="deleteVfsEntry(entry)"
+            >×</button>
+          </div>
         </template>
         <button v-for="file in curated" :key="file.name" class="files-file" @click="file.open()">
           <AppIcon name="file" :size="13" />
@@ -73,6 +79,14 @@ const vfsDir = ref('')
 const preview = ref<{ name: string, content: string } | null>(null)
 
 const { files } = useTerminal()
+const trash = useTrash()
+
+// deleting from the explorer goes through the same recycle bin as `rm`
+const deleteVfsEntry = (entry: { name: string, dir: boolean }) => {
+  const path = vfsDir.value ? `${vfsDir.value}/${entry.name}` : entry.name
+  trash.discard(path)
+  if (preview.value?.name === entry.name) preview.value = null
+}
 
 const { data: posts } = useLazyAsyncData('desktop-posts', () =>
   queryCollection('blog').order('date', 'DESC').all()
@@ -194,6 +208,37 @@ const curated = computed<FileEntry[]>(() => {
 
   &.is-dir {
     color: var(--bulma-primary);
+  }
+}
+
+.files-row {
+  display: flex;
+  align-items: center;
+
+  .files-file {
+    flex: 1;
+  }
+
+  // the delete affordance only surfaces on hover, keeping the list calm
+  .files-delete {
+    padding: 0 0.4rem;
+    border: none;
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 55%);
+    font: inherit;
+    font-size: 0.9rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+  }
+
+  &:hover .files-delete,
+  .files-delete:focus-visible {
+    opacity: 1;
+  }
+
+  .files-delete:hover {
+    color: var(--bulma-danger);
   }
 }
 
