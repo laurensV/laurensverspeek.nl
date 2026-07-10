@@ -1,5 +1,5 @@
 import { useEventListener } from '@vueuse/core'
-import { edgeZone as computeZone, zoneRect as computeRect, keySnapTarget, type ArrowKey, type SnapZone } from '~/utils/snapZones'
+import { edgeZone as computeZone, zoneRect as computeRect, keySnapTarget, tileLayout, type ArrowKey, type SnapZone } from '~/utils/snapZones'
 import { nextInCycle, resizeRect, clampDragPosition, spawnPosition } from '~/utils/windowOrder'
 
 // lvOS window manager: state + drag/resize/snap/maximize logic, extracted
@@ -218,6 +218,23 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     if (next) focusWindow(next)
   }
 
+  // auto-tile every visible window into a grid (stacking order → row-major)
+  const tileAll = () => {
+    const visible = windows.value.filter((w) => !w.minimized).sort((a, b) => b.z - a.z)
+    if (!visible.length) return
+    const rects = tileLayout(visible.length, window.innerWidth, window.innerHeight - TASKBAR_PX)
+    visible.forEach((win, i) => {
+      const rect = rects[i]!
+      if (!win.restore && !win.maximized) saveRestoreRect(win)
+      win.maximized = false
+      win.snapped = null
+      win.x = rect.x
+      win.y = rect.y
+      win.width = rect.width
+      win.height = rect.height
+    })
+  }
+
   return {
     windows,
     openWindow,
@@ -230,6 +247,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     startResize,
     snapPreview,
     keySnap,
-    cycleWindows
+    cycleWindows,
+    tileAll
   }
 }

@@ -175,6 +175,7 @@
         @peek="peekedId = $event"
         @read="markRead"
         @clear="clearHistory"
+        @tile="tileAll"
       />
     </div>
   </Teleport>
@@ -208,7 +209,8 @@ const {
   startResize,
   snapPreview,
   keySnap,
-  cycleWindows
+  cycleWindows,
+  tileAll
 } = useWindowManager(WINDOW_TITLES)
 
 // genie effect: aim each window's minimize at its own taskbar button rather

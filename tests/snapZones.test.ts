@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { edgeZone, zoneRect, keySnapTarget } from '~/utils/snapZones'
+import { edgeZone, zoneRect, keySnapTarget, tileLayout } from '~/utils/snapZones'
 
 // a 1000×680 usable area (i.e. 1000×720 viewport minus a 40px taskbar)
 const W = 1000
@@ -72,5 +72,37 @@ describe('keySnapTarget', () => {
     expect(keySnapTarget(null, true, 'ArrowDown')).toBe('restore')
     expect(keySnapTarget('bottom-left', false, 'ArrowDown')).toBe('restore')
     expect(keySnapTarget(null, false, 'ArrowDown')).toBeNull()
+  })
+})
+
+describe('tileLayout', () => {
+  it('gives one window the whole desktop', () => {
+    expect(tileLayout(1, 1000, 600)).toEqual([{ x: 0, y: 0, width: 1000, height: 600 }])
+  })
+
+  it('splits two windows side by side', () => {
+    const rects = tileLayout(2, 1000, 600)
+    expect(rects).toHaveLength(2)
+    expect(rects[0]).toEqual({ x: 0, y: 0, width: 500, height: 600 })
+    expect(rects[1]).toEqual({ x: 500, y: 0, width: 500, height: 600 })
+  })
+
+  it('tiles three windows as two-up plus a full-width bottom row', () => {
+    const rects = tileLayout(3, 1000, 600)
+    expect(rects[0]).toEqual({ x: 0, y: 0, width: 500, height: 300 })
+    expect(rects[1]).toEqual({ x: 500, y: 0, width: 500, height: 300 })
+    expect(rects[2]).toEqual({ x: 0, y: 300, width: 1000, height: 300 })
+  })
+
+  it('covers the desktop exactly for a 2×2 grid, absorbing rounding', () => {
+    const rects = tileLayout(4, 1001, 601)
+    expect(rects).toHaveLength(4)
+    // right column and bottom row absorb the odd pixels
+    expect(rects[1]!.x + rects[1]!.width).toBe(1001)
+    expect(rects[3]!.y + rects[3]!.height).toBe(601)
+  })
+
+  it('handles zero windows', () => {
+    expect(tileLayout(0, 1000, 600)).toEqual([])
   })
 })

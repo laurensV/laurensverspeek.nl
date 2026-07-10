@@ -79,3 +79,29 @@ export function zoneRect(zone: SnapZone, viewW: number, usableH: number): Rect {
     case 'top': return { x: 0, y: 0, width: viewW, height: usableH }
   }
 }
+
+/**
+ * Auto-tile `count` windows into a near-square grid over the usable desktop.
+ * Row-major; the last row's cells widen to use the leftover columns.
+ */
+export function tileLayout(count: number, viewW: number, usableH: number): Rect[] {
+  if (count <= 0) return []
+  const cols = Math.ceil(Math.sqrt(count))
+  const rows = Math.ceil(count / cols)
+  const rects: Rect[] = []
+  for (let row = 0; row < rows; row++) {
+    const inRow = row === rows - 1 ? count - row * cols : cols
+    const cellW = Math.floor(viewW / inRow)
+    const cellH = Math.floor(usableH / rows)
+    for (let col = 0; col < inRow; col++) {
+      rects.push({
+        x: col * cellW,
+        y: row * cellH,
+        // the last cell in a row/column absorbs the rounding leftovers
+        width: col === inRow - 1 ? viewW - col * cellW : cellW,
+        height: row === rows - 1 ? usableH - row * cellH : cellH
+      })
+    }
+  }
+  return rects
+}

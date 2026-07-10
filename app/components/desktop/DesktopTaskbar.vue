@@ -13,6 +13,7 @@
       <button @click="openFromStart('about-os')">ℹ about lvOS</button>
       <button @click="openFromStart('settings')">⚙ settings</button>
       <button @click="terminalFromStart">>_ terminal</button>
+      <button @click="emit('tile'); startOpen = false">▦ tile windows</button>
       <p class="lvos-start-label">wallpaper</p>
       <div class="lvos-wallpapers">
         <button
@@ -105,6 +106,7 @@ const emit = defineEmits<{
   peek: [id: string | null]
   read: []
   clear: []
+  tile: []
 }>()
 
 // these are v-models so the parent can dismiss them on Escape

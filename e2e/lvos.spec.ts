@@ -473,3 +473,22 @@ test('rm moves files to the recycle bin, which restores or empties them', async 
   await trash.locator('.trash-empty-btn').click()
   await expect(trash).toContainText('the bin is empty')
 })
+
+test('tile windows arranges every open window into a grid', async ({ page }) => {
+  await bootDesktop(page)
+  // readme is open; add the calculator so there are two windows
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: 'calculator' }).click()
+  await page.locator('.lvos-icon', { hasText: /^clock$/ }).click()
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'tile windows' }).click()
+  // two windows side by side, together spanning the full width
+  const calc = await page.locator('.lvos-window[data-win="calc"]').boundingBox()
+  const clock = await page.locator('.lvos-window[data-win="clock"]').boundingBox()
+  if (!calc || !clock) throw new Error('windows missing after tile')
+  const [left, right] = calc.x < clock.x ? [calc, clock] : [clock, calc]
+  // sub-pixel wobble from the window-open scale transition is fine
+  expect(left.x).toBeLessThan(4)
+  expect(left.width + right.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 4)
+  expect(Math.abs(right.x - left.width)).toBeLessThan(4)
+})
