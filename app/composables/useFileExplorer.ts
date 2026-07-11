@@ -1,5 +1,5 @@
 import { useEventListener } from '@vueuse/core'
-import { dirEntries, renamePath } from '~/utils/terminal/filesystem'
+import { dirEntries, renamePath, movePath } from '~/utils/terminal/filesystem'
 import { seedFor, isSysPath, markSeedsDeleted } from '~/utils/terminal/siteFs'
 
 // The lvOS file explorer's model over THE filesystem — the same one the
@@ -229,32 +229,14 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
     dragPath.value = null
     dropTarget.value = null
     if (!from) return
-    const name = from.split('/').pop()!
-    const fromParent = from.split('/').slice(0, -1).join('/')
-    if (destDir === fromParent) return // already there
-    if (destDir === from || destDir.startsWith(`${from}/`)) {
-      actionError.value = `can't move ${name} into itself`
+    const result = movePath(files.value, from, destDir)
+    if ('error' in result) {
+      actionError.value = result.error
       return
     }
-    const target = destDir ? `${destDir}/${name}` : name
-    if (files.value[target]) {
-      actionError.value = `${name} already exists in that folder`
-      return
-    }
-    // remap the node (and any subtree) to the new path; a moved copy is the
-    // visitor's own (drops the sys flag), and moving site content tombstones it
-    const moved: typeof files.value = {}
-    const origins: string[] = []
-    for (const [key, node] of Object.entries(files.value)) {
-      if (key === from || key.startsWith(`${from}/`)) {
-        moved[`${target}${key.slice(from.length)}`] = { dir: node.dir, content: node.content }
-        origins.push(key)
-      } else {
-        moved[key] = node
-      }
-    }
-    files.value = moved
-    markSeedsDeleted(origins)
+    files.value = result.files
+    // moving site content tombstones its original paths (so a reseed can restore)
+    markSeedsDeleted(result.origins)
     actionError.value = ''
   }
 

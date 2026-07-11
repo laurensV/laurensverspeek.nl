@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing, renamePath } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing, renamePath, movePath } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
 describe('writeFileAt', () => {
@@ -181,5 +181,53 @@ describe('renamePath', () => {
     expect(renamePath(base(), 'a.txt', 'x/y')).toHaveProperty('error')
     expect(renamePath(base(), 'a.txt', '  ')).toHaveProperty('error')
     expect(renamePath(base(), 'ghost.txt', 'x')).toHaveProperty('error')
+  })
+})
+
+describe('movePath', () => {
+  const base = (): Filesystem => ({
+    'a.txt': { dir: false, content: 'aa' },
+    docs: { dir: true, content: '' },
+    'docs/deep.txt': { dir: false, content: 'dd' },
+    inbox: { dir: true, content: '' }
+  })
+
+  it('moves a file into a folder, keeping its basename', () => {
+    const result = movePath(base(), 'a.txt', 'inbox')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.files['inbox/a.txt']?.content).toBe('aa')
+    expect(result.files['a.txt']).toBeUndefined()
+    expect(result.origins).toEqual(['a.txt'])
+  })
+
+  it('moves a directory and carries its subtree', () => {
+    const result = movePath(base(), 'docs', 'inbox')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.files['inbox/docs']?.dir).toBe(true)
+    expect(result.files['inbox/docs/deep.txt']?.content).toBe('dd')
+    expect(result.files['docs/deep.txt']).toBeUndefined()
+    expect(result.origins.sort()).toEqual(['docs', 'docs/deep.txt'])
+  })
+
+  it('moves to the home root (destDir "")', () => {
+    const fs: Filesystem = { 'docs/note.txt': { dir: false, content: 'n' }, docs: { dir: true, content: '' } }
+    const result = movePath(fs, 'docs/note.txt', '')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.files['note.txt']?.content).toBe('n')
+  })
+
+  it('is a no-op when dropped on its own parent', () => {
+    const result = movePath(base(), 'docs/deep.txt', 'docs')
+    if ('error' in result) throw new Error(result.error)
+    expect(result.origins).toEqual([])
+    expect(result.files['docs/deep.txt']?.content).toBe('dd')
+  })
+
+  it('refuses moving into itself, into a descendant, and name collisions', () => {
+    expect(movePath(base(), 'docs', 'docs')).toHaveProperty('error')
+    expect(movePath(base(), 'docs', 'docs/deep.txt')).toHaveProperty('error')
+    const collide: Filesystem = { ...base(), 'inbox/a.txt': { dir: false, content: 'x' } }
+    expect(movePath(collide, 'a.txt', 'inbox')).toHaveProperty('error')
+    expect(movePath(base(), 'ghost.txt', 'inbox')).toHaveProperty('error')
   })
 })

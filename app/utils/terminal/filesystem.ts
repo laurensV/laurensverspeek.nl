@@ -234,3 +234,37 @@ export function renamePath(
   }
   return { files: renamed }
 }
+
+/**
+ * Move a node (and any subtree) into another directory, keeping its basename.
+ * Pure: returns the new map plus the moved source paths (`origins`, for
+ * tombstoning site content), or an error string. `destDir` is '' for home.
+ * A move onto its own parent is a no-op (unchanged map, no origins).
+ */
+export function movePath(
+  files: Filesystem,
+  from: string,
+  destDir: string
+): { files: Filesystem, origins: string[] } | { error: string } {
+  if (!files[from]) return { error: `no such file: ${from}` }
+  const name = from.split('/').pop()!
+  const fromParent = from.split('/').slice(0, -1).join('/')
+  if (destDir === fromParent) return { files, origins: [] } // already there
+  if (destDir === from || destDir.startsWith(`${from}/`)) {
+    return { error: `can't move ${name} into itself` }
+  }
+  const target = destDir ? `${destDir}/${name}` : name
+  if (files[target]) return { error: `${name} already exists in that folder` }
+  // a moved copy is the visitor's own (drops the sys flag); origins get tombstoned
+  const moved: Filesystem = {}
+  const origins: string[] = []
+  for (const [key, value] of Object.entries(files)) {
+    if (key === from || key.startsWith(`${from}/`)) {
+      moved[`${target}${key.slice(from.length)}`] = { dir: value.dir, content: value.content }
+      origins.push(key)
+    } else {
+      moved[key] = value
+    }
+  }
+  return { files: moved, origins }
+}
