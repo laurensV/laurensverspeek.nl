@@ -3,7 +3,8 @@
     <canvas ref="fxRef" class="destroyer-fx" aria-hidden="true" />
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
-      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> fly (the page scrolls with you) · click to fire · <kbd>esc</kbd> ends &amp; repairs the site</span>
+      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> or drag to fly (the page scrolls with you) · click/tap fires · <kbd>esc</kbd> ends &amp; repairs</span>
+      <button class="destroyer-exit" aria-label="End destroy mode and repair the site" title="End & repair" @click="endMode">✕</button>
     </div>
   </div>
 </template>
@@ -47,6 +48,10 @@ const THRUST: Record<string, [number, number]> = {
   d: [1, 0], arrowright: [1, 0]
 }
 const held = new Set<string>()
+
+// touch flies by dragging: the ship thrusts toward the finger (a tap fires)
+let touchSteer: { id: number, startX: number, startY: number, moved: boolean } | null = null
+let touchPoint = { x: 0, y: 0 }
 
 // something worth shooting: visible, not our overlay, not a page-sized container
 const findTarget = (x: number, y: number): HTMLElement | null => {
@@ -128,15 +133,28 @@ const flyBullet = (bullet: Bullet, dt: number): boolean => {
   return false
 }
 
+const thrusting = () => held.size > 0 || touchSteer?.moved === true
+
 const moveShip = (dt: number) => {
   // thrust: sum of held directions (normalized, so diagonals aren't faster)
   let tx = 0
   let ty = 0
-  for (const key of held) {
-    const dir = THRUST[key]
-    if (dir) {
-      tx += dir[0]
-      ty += dir[1]
+  if (touchSteer?.moved) {
+    // touch: seek the finger (with a deadzone so the ship doesn't jitter)
+    const dx = touchPoint.x - ship.x
+    const dy = touchPoint.y - ship.y
+    const dist = Math.hypot(dx, dy)
+    if (dist > 24) {
+      tx = dx / dist
+      ty = dy / dist
+    }
+  } else {
+    for (const key of held) {
+      const dir = THRUST[key]
+      if (dir) {
+        tx += dir[0]
+        ty += dir[1]
+      }
     }
   }
   const mag = Math.hypot(tx, ty)
@@ -220,7 +238,7 @@ const draw = (time: number) => {
   context.translate(ship.x, ship.y)
   context.rotate(angle + Math.PI / 2)
   // a little exhaust flame while thrusting, flickering with speed
-  if (held.size && !reduced) {
+  if (thrusting() && !reduced) {
     const flame = 8 + Math.random() * 8
     context.fillStyle = 'rgba(255, 107, 53, 0.85)'
     context.beginPath()
@@ -255,12 +273,32 @@ onMounted(() => {
 useEventListener('resize', fit)
 useEventListener('pointermove', (event: PointerEvent) => {
   mouse = { x: event.clientX, y: event.clientY }
+  if (touchSteer && event.pointerId === touchSteer.id) {
+    touchPoint = { x: event.clientX, y: event.clientY }
+    if (Math.hypot(event.clientX - touchSteer.startX, event.clientY - touchSteer.startY) > 12) {
+      touchSteer.moved = true
+    }
+  }
 })
 useEventListener('pointerdown', (event: PointerEvent) => {
-  // fire on anything except the HUD
+  // the HUD is neutral ground
   if ((event.target as HTMLElement).closest('.destroyer-hud')) return
+  if (event.pointerType === 'touch') {
+    // wait and see: a drag flies the ship, a tap fires (decided on release)
+    touchSteer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false }
+    touchPoint = { x: event.clientX, y: event.clientY }
+    mouse = { x: event.clientX, y: event.clientY }
+    return
+  }
   shoot(event)
 })
+const endTouch = (event: PointerEvent) => {
+  if (!touchSteer || event.pointerId !== touchSteer.id) return
+  if (!touchSteer.moved) shoot(event) // it was a tap
+  touchSteer = null
+}
+useEventListener('pointerup', endTouch)
+useEventListener('pointercancel', endTouch)
 // while the ship flies, it owns the scroll completely — wheel and touch are
 // grounded; reaching anything below the fold means flying there
 useEventListener(window, 'wheel', (event: Event) => event.preventDefault(), { passive: false })
@@ -335,6 +373,26 @@ onUnmounted(() => {
       border: 1px solid hsl(var(--lv-scheme-hs), 30%);
       border-radius: 2px;
       font-family: inherit;
+    }
+  }
+
+  // the escape hatch for keyboards-less pilots (touch has no esc key)
+  .destroyer-exit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
+    border-radius: 2px;
+    background: none;
+    color: hsl(var(--lv-scheme-hs), 70%);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--bulma-danger);
+      color: var(--bulma-danger);
     }
   }
 }
