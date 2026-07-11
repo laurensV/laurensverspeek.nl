@@ -708,3 +708,18 @@ test('the start menu downloads a very real lvos.iso', async ({ page }) => {
   const download = await downloadPromise
   expect(download.suggestedFilename()).toBe('lvos-2.0.iso')
 })
+
+test('the hall of fame gathers every high score in one board', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('lv-snake-highscore', '42')
+    localStorage.setItem('lvos-mines-best-beginner', '31')
+  })
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon', { hasText: /^scores$/ }).click()
+  const scores = page.locator('.scores')
+  await scores.waitFor()
+  await expect(scores.locator('tr', { hasText: 'snake' })).toContainText('42')
+  await expect(scores.locator('tr', { hasText: 'beginner' })).toContainText('31')
+  await expect(scores.locator('tr', { hasText: 'tetris' })).toContainText('no entry yet')
+})
