@@ -184,6 +184,8 @@ import { projects } from '~/data/projects'
 // Prop-less window apps render through one <component :is>, each still its own
 // lazy chunk via defineAsyncComponent. Apps with bespoke props/events (files,
 // blog, vim, taskmgr, rss, terminal, world) stay explicit in the template.
+// (eslint's TS service types dynamic .vue imports as any — vue-tsc checks them)
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   minesweeper: defineAsyncComponent(() => import('~/components/desktop/DesktopMinesweeper.vue')),
   media: defineAsyncComponent(() => import('~/components/desktop/DesktopMedia.vue')),
@@ -201,6 +203,7 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   mail: defineAsyncComponent(() => import('~/components/desktop/DesktopMail.vue')),
   scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue'))
 }
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
 // lvOS: the operating-system-in-a-browser easter egg. Boot with `desktop` in
 // the terminal. Window mechanics live in useWindowManager, per-window chrome
