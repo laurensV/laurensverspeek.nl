@@ -38,7 +38,7 @@ export const museum: Wing[] = [
     exhibits: [
       { name: 'lvOS 2.0', how: 'type desktop, or visit /desktop', blurb: 'A BIOS boot, draggable windows, a taskbar, a start menu. The whole desktop metaphor, in a route.' },
       { name: 'window management', how: 'drag to edges, ctrl+alt+arrows', blurb: 'Aero snapping with a live preview, quadrants, keyboard snapping, Alt+Tab, tile-all and a genie minimize.' },
-      { name: 'the app suite', how: 'the icon grid', blurb: 'Files, Paint, Notes, Calculator, Minesweeper, Snake, a media player, a visualizer, a browser browsing this very site.' },
+      { name: 'the app suite', how: 'the icon grid', blurb: 'Files, Paint, Notes, Calculator, Minesweeper, Snake, a media player with visualizer modes, a browser browsing this very site.' },
       { name: 'the run dialog', how: 'alt+r', blurb: 'Type an app, Tab completes, Enter launches. The fastest way around the desktop.' },
       { name: 'the recycle bin', how: 'rm anything, then open the bin', blurb: 'Deleted files wait here to be restored or emptied for good. The terminal and the Files app share it.' },
       { name: 'task manager', how: 'the taskmgr icon', blurb: 'Windows, terminal effects and games as killable processes — the same pids ps shows.' },

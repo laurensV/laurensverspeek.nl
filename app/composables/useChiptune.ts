@@ -1,7 +1,7 @@
 // Shared 8-bit "tracker": a square-wave arpeggio synthesized with WebAudio and
-// exposed through a single AnalyserNode. State lives at module scope so the
-// media player and the visualizer app control the same playback and read the
-// same frequency/waveform data. No audio files were harmed.
+// exposed through a single AnalyserNode. State lives at module scope; the
+// media player (with its visualizer modes) controls playback and reads the
+// frequency/waveform data. No audio files were harmed.
 
 const playing = ref(false)
 const track = 'chiptune_dreams.mod'

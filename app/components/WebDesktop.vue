@@ -190,7 +190,6 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   browser: defineAsyncComponent(() => import('~/components/desktop/DesktopBrowser.vue')),
   settings: defineAsyncComponent(() => import('~/components/desktop/DesktopSettings.vue')),
   paint: defineAsyncComponent(() => import('~/components/desktop/DesktopPaint.vue')),
-  visualizer: defineAsyncComponent(() => import('~/components/desktop/DesktopVisualizer.vue')),
   calc: defineAsyncComponent(() => import('~/components/desktop/DesktopCalculator.vue')),
   clock: defineAsyncComponent(() => import('~/components/desktop/DesktopClock.vue')),
   notes: defineAsyncComponent(() => import('~/components/desktop/DesktopNotes.vue')),
