@@ -1,7 +1,6 @@
 import { storageGet, storageSet } from '~/utils/safeStorage'
 
 const SHOW_KEY = 'lv-show-cursors'
-let restored = false
 
 /**
  * Shared state between LiveCursors (which owns the websocket) and the status
@@ -14,11 +13,10 @@ export function useLiveVisitors() {
   const showCursors = useState(STATE_KEYS.liveCursorsVisible, () => false)
   // outbox for the terminal `say` command → LiveCursors broadcasts it
   const outbox = useState<{ text: string, ts: number } | null>(STATE_KEYS.liveSayOutbox, () => null)
-  if (import.meta.client && !restored) {
-    restored = true
-    showCursors.value = storageGet(SHOW_KEY) === '1'
-    watch(showCursors, (value) => storageSet(SHOW_KEY, value ? '1' : '0'))
-  }
+  persistState(showCursors, SHOW_KEY, {
+    restore: () => (showCursors.value = storageGet(SHOW_KEY) === '1'),
+    persist: (value) => storageSet(SHOW_KEY, value ? '1' : '0')
+  })
   // captured here, not inside the computed — lazy evaluation can happen
   // outside the Nuxt instance (same hazard as the blog jsonld computed)
   const cursorsWs = useRuntimeConfig().public.cursorsWs

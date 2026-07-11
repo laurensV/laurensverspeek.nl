@@ -5,7 +5,6 @@ import { markSeedsDeleted, unmarkSeedsDeleted } from '~/utils/terminal/siteFs'
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 
 const TRASH_KEY = 'lv-trash'
-let restoredOnce = false
 let entryId = 1
 
 /** The lvOS recycle bin: `rm` and the Files app move things here instead of
@@ -16,15 +15,17 @@ export function useTrash() {
   // useTerminal(), which builds its command registry through this composable
   const files = useState<Filesystem>(STATE_KEYS.terminalFs, () => ({}))
 
-  if (import.meta.client && !restoredOnce) {
-    restoredOnce = true
-    const saved = storageGetJson(TRASH_KEY, isTrashEntries)
-    if (saved) {
-      entries.value = saved
-      entryId = Math.max(0, ...saved.map((entry) => entry.id)) + 1
-    }
-    watch(entries, (list) => storageSetJson(TRASH_KEY, list), { deep: true })
-  }
+  persistState(entries, TRASH_KEY, {
+    restore: () => {
+      const saved = storageGetJson(TRASH_KEY, isTrashEntries)
+      if (saved) {
+        entries.value = saved
+        entryId = Math.max(0, ...saved.map((entry) => entry.id)) + 1
+      }
+    },
+    persist: (list) => storageSetJson(TRASH_KEY, list),
+    deep: true
+  })
 
   /** Move a home-relative path (file or dir + subtree) into the bin. */
   const discard = (path: string): TrashEntry | null => {

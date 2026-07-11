@@ -46,7 +46,6 @@ export const WALLPAPERS: Wallpaper[] = [
 
 const WALLPAPER_KEY = 'lvos-wallpaper'
 const CUSTOM_KEY = 'lvos-wallpaper-custom'
-let restored = false
 
 /** The selectable list: the built-ins, plus a Paint export when one exists. */
 export function buildWallpaperList(custom: string): Wallpaper[] {
@@ -71,13 +70,14 @@ export function useWallpaper() {
 
   const wallpapers = computed<Wallpaper[]>(() => buildWallpaperList(custom.value))
 
-  if (import.meta.client && !restored) {
-    restored = true
-    custom.value = storageGet(CUSTOM_KEY) ?? ''
-    const saved = restoreIndex(storageGet(WALLPAPER_KEY), wallpapers.value.length)
-    if (saved !== null) wallpaper.value = saved
-    watch(wallpaper, (index) => storageSet(WALLPAPER_KEY, String(index)))
-  }
+  persistState(wallpaper, WALLPAPER_KEY, {
+    restore: () => {
+      custom.value = storageGet(CUSTOM_KEY) ?? ''
+      const saved = restoreIndex(storageGet(WALLPAPER_KEY), wallpapers.value.length)
+      if (saved !== null) wallpaper.value = saved
+    },
+    persist: (index) => storageSet(WALLPAPER_KEY, String(index))
+  })
   const wallpaperStyle = computed(() => ({ background: wallpapers.value[wallpaper.value]?.css }))
 
   // advance to the next wallpaper, returning its name (handy for a toast)
