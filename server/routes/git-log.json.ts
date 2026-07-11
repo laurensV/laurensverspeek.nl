@@ -5,7 +5,8 @@ import { parseGitNumstat, GIT_LOG_ARGS } from '../../app/utils/terminal/gitLog'
 // real commit history into a static JSON file for the terminal's `git`
 // command. CI checks out with fetch-depth: 0 so the log is complete.
 export default defineEventHandler((event) => {
-  const raw = execSync(`git log -n 40 ${GIT_LOG_ARGS}`, { encoding: 'utf8' })
+  // the WHOLE history: /changelog paginates it, the terminal limits itself
+  const raw = execSync(`git log ${GIT_LOG_ARGS}`, { encoding: 'utf8' })
   const commits = parseGitNumstat(raw).map((commit) => {
     if (commit.files.length <= 12) return commit
     return { ...commit, files: commit.files.slice(0, 12), truncated: commit.files.length - 12 }

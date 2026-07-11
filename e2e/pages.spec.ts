@@ -796,3 +796,13 @@ test('the private-preview gate curtains the site until the famous password', asy
   await expect(page.locator('.gate')).toHaveCount(0)
   await context.close()
 })
+
+test('the changelog paginates the full baked history', async ({ page }) => {
+  await page.goto('/changelog')
+  await page.locator('.changelog-entry').first().waitFor()
+  await expect(page.locator('.changelog-entry')).toHaveCount(25)
+  const more = page.locator('.changelog-more')
+  await expect(more).toContainText('--skip=25')
+  await more.click()
+  await expect(page.locator('.changelog-entry')).toHaveCount(50)
+})

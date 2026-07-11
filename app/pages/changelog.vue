@@ -16,7 +16,7 @@
       </div>
 
       <ol v-else class="changelog is-family-code">
-        <li v-for="(commit, i) in commits" :key="commit.hash" class="changelog-entry">
+        <li v-for="(commit, i) in visibleCommits" :key="commit.hash" class="changelog-entry">
           <p class="changelog-head">
             <span class="changelog-node" aria-hidden="true">*</span>
             <span class="changelog-hash">{{ commit.hash }}</span>
@@ -39,6 +39,14 @@
           </p>
         </li>
       </ol>
+
+      <button
+        v-if="commits && visible < commits.length"
+        class="changelog-more is-family-code"
+        @click="visible += PAGE"
+      >
+        $ git log --skip={{ visible }}  <span class="has-text-grey">({{ commits.length - visible }} more commits)</span>
+      </button>
 
       <p class="is-family-code is-size-7 has-text-grey mt-5">
         // press <kbd>~</kbd> and try <code>git show {{ commits?.[0]?.hash }}</code> for the full diffstat
@@ -64,6 +72,11 @@ useSeoMeta({
 const { data: commits, pending } = await useAsyncData('changelog', () =>
   $fetch<GitCommit[]>('/git-log.json')
 )
+
+// the full history is baked in; the page reveals it a screenful at a time
+const PAGE = 25
+const visible = ref(PAGE)
+const visibleCommits = computed(() => commits.value?.slice(0, visible.value) ?? [])
 
 // GitHub-style diffstat squares: five blocks split between green and red in
 // proportion to the commit's additions/deletions
@@ -156,6 +169,21 @@ const diffBlocks = (commit: GitCommit): ('add' | 'del' | 'idle')[] => {
     &.is-add { background-color: var(--bulma-success); }
     &.is-del { background-color: var(--bulma-danger); }
     &.is-idle { background-color: var(--bulma-border); }
+  }
+}
+
+.changelog-more {
+  margin-top: 1rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background: none;
+  color: var(--bulma-primary-on-scheme);
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: hsla(var(--lv-primary-hsl), 0.12);
   }
 }
 </style>
