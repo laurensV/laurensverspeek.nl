@@ -45,7 +45,8 @@ useAnchorHighlight()
 
 <style scoped lang="scss">
 .site-shell {
-  min-height: 100vh;
+  min-height: 100vh; // fallback
+  min-height: 100dvh; // mobile URL bars retract without a layout jump
   background-color: var(--bulma-scheme-main);
   // Soft brand glow behind the top of every page
   background-image: radial-gradient(
@@ -60,7 +61,8 @@ useAnchorHighlight()
   z-index: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100vh; // fallback
+  min-height: 100dvh;
   // keep content clear of the fixed status bar
   padding-bottom: 1.65rem;
 

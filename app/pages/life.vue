@@ -2,7 +2,7 @@
   <section class="life-page">
     <header class="life-bar is-family-code">
       <div class="life-head">
-        <p class="overline mb-0">conway $ ./life</p>
+        <h1 class="overline mb-0">conway $ ./life</h1>
         <p class="life-stat">gen {{ generation }} · {{ pop }} cells</p>
       </div>
 
@@ -124,6 +124,7 @@ watch(useColorMode(), async () => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 3.25rem - 1.65rem); // viewport minus navbar and status bar
+  height: calc(100dvh - 3.25rem - 1.65rem); // dvh: no mobile URL-bar jump
   min-height: 30rem;
 }
 
@@ -138,6 +139,11 @@ watch(useColorMode(), async () => {
 }
 
 .life-head {
+  h1 {
+    font-size: 0.85rem;
+    font-weight: inherit;
+  }
+
   .life-stat {
     color: var(--bulma-text-weak);
     font-size: 0.75rem;
