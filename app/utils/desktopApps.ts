@@ -45,6 +45,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'mail', title: 'mail — inbox', label: 'mail', icon: 'mail', wide: true },
   { id: 'rss', title: 'feed reader', label: 'rss', icon: 'sparkles', wide: true },
   { id: 'scores', title: 'hall of fame', label: 'scores', icon: 'zap' },
+  { id: 'world', title: 'the pixel world', label: 'world', icon: 'globe', wide: true },
   { id: 'cv', title: 'resume.pdf', label: 'resume.pdf', icon: 'mail', action: 'cv' },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]

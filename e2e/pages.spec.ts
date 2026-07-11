@@ -806,3 +806,37 @@ test('the changelog paginates the full baked history', async ({ page }) => {
   await more.click()
   await expect(page.locator('.changelog-entry')).toHaveCount(50)
 })
+
+test('the pixel world works offline: place, persist, provenance, terminal', async ({ page }) => {
+  await page.goto('/world')
+  const canvas = page.locator('.world-canvas')
+  await expect(canvas).toBeVisible()
+  // the first-visit boot splash swallows clicks until it clears
+  await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
+  // no relay configured on the static build → honest offline mode
+  await expect(page.locator('.world-hud')).toContainText('offline world')
+  await expect(page.locator('.world-swatch')).toHaveCount(16)
+  // place a pixel dead center via a click
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('no canvas')
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lv-world-board') !== null)).toBe(true)
+  // a second immediate placement hits the cooldown
+  await page.mouse.click(box.x + box.width / 2 + 20, box.y + box.height / 2)
+  await expect(page.locator('.world-cooldown')).toBeVisible()
+  // hovering the placed pixel tells who placed it (the who-query is throttled,
+  // so nudge the pointer and poll)
+  await expect(async () => {
+    await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height / 2 + 3)
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await expect(page.locator('.world-info')).toContainText('placed by', { timeout: 1000 })
+  }).toPass({ timeout: 8000 })
+  // the terminal speaks world: status + goto + pixel place
+  await pressTerminalKey(page)
+  await page.fill('#terminal-input', 'world status')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText('offline mode')
+  await page.fill('#terminal-input', 'pixel place 3 3 6')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText(/placed \(3, 3\)|cooldown/)
+})

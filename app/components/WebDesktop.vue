@@ -132,6 +132,7 @@
         <LazyDesktopMail v-else-if="win.id === 'mail'" />
         <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
         <LazyDesktopScores v-else-if="win.id === 'scores'" />
+        <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
       </DesktopWindow>
 
@@ -628,6 +629,10 @@ useDesktopShortcuts({
   &:hover {
     background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
+}
+
+.lvos-world {
+  min-width: 30rem;
 }
 
 .lvos-toasts {

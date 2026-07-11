@@ -29,7 +29,61 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
   // how many times someone has asked for the other editor this session
   let insistence = 0
 
+  // the pixel world speaks terminal (composable captured at factory time)
+  const world = useWorld()
+
   const commands: Record<string, TerminalCommand> = {
+    world: {
+      hidden: true,
+      usage: 'world [open|status|goto <x> <y>]',
+      description: 'The hidden shared pixel canvas',
+      argCandidates: () => ['open', 'status', 'goto'],
+      exec: (args) => {
+        const [sub, xRaw, yRaw] = args
+        if (!sub || sub === 'open') {
+          muted('entering the pixel world ...')
+          ctx.navigate('world')
+          return
+        }
+        if (sub === 'status') {
+          if (world.connected.value) {
+            out(`world: online — ${world.online.value} here now, ${world.recent.value} pixels in the last 10 minutes`)
+          } else {
+            out('world: offline mode — pixels stay in this browser until a relay is configured')
+          }
+          muted(`board: 128×128 · cooldown ${Math.round(world.cooldownMs.value / 1000)}s · 'world goto <x> <y>' jumps the camera`)
+          return
+        }
+        if (sub === 'goto') {
+          const x = Number(xRaw)
+          const y = Number(yRaw)
+          if (!Number.isInteger(x) || !Number.isInteger(y)) return error('world: usage: world goto <x> <y>')
+          world.gotoTarget.value = { x, y }
+          muted(`camera set to (${x}, ${y}) — opening the world ...`)
+          ctx.navigate('world')
+          return
+        }
+        error(`world: unknown subcommand '${sub}' — try open, status or goto`)
+      }
+    },
+    pixel: {
+      hidden: true,
+      usage: 'pixel place <x> <y> <color 0-15>',
+      description: 'Place one pixel in the world, from right here',
+      exec: (args) => {
+        const [sub, xRaw, yRaw, cRaw] = args
+        if (sub !== 'place') return error('pixel: usage: pixel place <x> <y> <color 0-15>')
+        const x = Number(xRaw)
+        const y = Number(yRaw)
+        const c = Number(cRaw)
+        world.enter() // make sure the board exists (online or offline)
+        const wait = world.place(x, y, c)
+        if (wait === -1) return error('pixel: out of bounds or bad color — the board is 128×128, colors 0-15')
+        if (wait > 0) return error(`pixel: cooldown — try again in ${Math.ceil(wait / 1000)}s`)
+        out(`placed (${x}, ${y}) in color ${c} ${world.connected.value ? '— the world saw it' : '— offline, saved locally'}`)
+        muted(`'world goto ${x} ${y}' takes you there`)
+      }
+    },
     destroy: {
       hidden: true,
       description: 'Enough talk. Shoot the website.',

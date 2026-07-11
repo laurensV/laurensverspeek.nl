@@ -8,9 +8,67 @@
 // current page path are relayed. No IPs, IDs or fingerprints are stored.
 
 import { WebSocketServer } from 'ws'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import {
+  WORLD_SIZE, WORLD_COOLDOWN_MS, inWorld, validColor,
+  CooldownGate, createSeedBoard, encodeBoard, decodeBoard
+} from './world-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
+
+// ---- the pixel world: one persistent board, server-authoritative ----
+const WORLD_FILE = process.env.WORLD_FILE
+  ?? fileURLToPath(new URL('./world-board.json', import.meta.url))
+const COOLDOWN_MS = Number(process.env.WORLD_COOLDOWN_MS) || WORLD_COOLDOWN_MS
+
+/** @type {Uint8Array} */
+let board
+/** @type {Record<string, { by: string, at: number }>} provenance, keyed "x,y" */
+let placedBy = {}
+try {
+  const saved = JSON.parse(readFileSync(WORLD_FILE, 'utf8'))
+  board = decodeBoard(saved.board)
+  placedBy = saved.placedBy ?? {}
+  if (board.length !== WORLD_SIZE * WORLD_SIZE) throw new Error('size mismatch')
+} catch {
+  board = createSeedBoard()
+  placedBy = {}
+}
+
+let saveTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined)
+const scheduleSave = () => {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    try {
+      writeFileSync(WORLD_FILE, JSON.stringify({ board: encodeBoard(board), placedBy }))
+    } catch (error) {
+      console.warn('[world] save failed:', error)
+    }
+  }, 2000)
+}
+
+const cooldowns = new CooldownGate(COOLDOWN_MS)
+/** placements in the trailing 10 minutes, for the activity counter */
+/** @type {number[]} */
+let activity = []
+const recentActivity = () => {
+  const cutoff = Date.now() - 10 * 60_000
+  activity = activity.filter((t) => t > cutoff)
+  return activity.length
+}
+
+/** @type {Set<import('ws').WebSocket>} sockets currently inside the world */
+const worldMembers = new Set()
+const broadcastWorld = (/** @type {string} */ payload) => {
+  for (const member of worldMembers) {
+    if (member.readyState === 1) member.send(payload)
+  }
+}
+const broadcastWorldCount = () => {
+  broadcastWorld(JSON.stringify({ type: 'world-count', online: worldMembers.size, recent: recentActivity() }))
+}
 
 const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
@@ -41,6 +99,59 @@ wss.on('connection', (socket) => {
       }
       return
     }
+    // ---- pixel world protocol (server-authoritative) ----
+    if (msg.type === 'world-join') {
+      worldMembers.add(socket)
+      socket.send(JSON.stringify({
+        type: 'world-state',
+        size: WORLD_SIZE,
+        cooldownMs: COOLDOWN_MS,
+        board: encodeBoard(board)
+      }))
+      broadcastWorldCount()
+      return
+    }
+    if (msg.type === 'world-leave') {
+      worldMembers.delete(socket)
+      broadcastWorldCount()
+      return
+    }
+    if (msg.type === 'pixel') {
+      if (!worldMembers.has(socket)) return
+      if (!inWorld(msg.x, msg.y) || !validColor(msg.c)) return
+      const wait = cooldowns.check(id, Date.now())
+      if (wait > 0) {
+        socket.send(JSON.stringify({ type: 'pixel-denied', waitMs: wait }))
+        return
+      }
+      const by = typeof msg.name === 'string'
+        ? msg.name.replace(/[^a-z0-9_-]/gi, '').slice(0, 24) || 'visitor'
+        : 'visitor'
+      const at = Date.now() // server clock; client timestamps are never trusted
+      board[msg.y * WORLD_SIZE + msg.x] = msg.c
+      placedBy[`${msg.x},${msg.y}`] = { by, at }
+      activity.push(at)
+      scheduleSave()
+      broadcastWorld(JSON.stringify({ type: 'pixel', x: msg.x, y: msg.y, c: msg.c, by, at }))
+      broadcastWorldCount()
+      return
+    }
+    if (msg.type === 'world-who') {
+      if (!inWorld(msg.x, msg.y)) return
+      const info = placedBy[`${msg.x},${msg.y}`]
+      socket.send(JSON.stringify({ type: 'pixel-info', x: msg.x, y: msg.y, by: info?.by ?? null, at: info?.at ?? null }))
+      return
+    }
+    // world cursors: board-coordinate positions relayed to other members
+    if (msg.type === 'world-cursor') {
+      if (!worldMembers.has(socket) || typeof msg.x !== 'number' || typeof msg.y !== 'number') return
+      const payload = JSON.stringify({ type: 'world-cursor', id, hue, x: msg.x, y: msg.y })
+      for (const member of worldMembers) {
+        if (member !== socket && member.readyState === 1) member.send(payload)
+      }
+      return
+    }
+
     if (typeof msg.x !== 'number' || typeof msg.y !== 'number' || typeof msg.page !== 'string') return
     // relay the visitor's chosen display name (sanitized, length-capped)
     const name = typeof msg.name === 'string'
@@ -61,6 +172,7 @@ wss.on('connection', (socket) => {
   })
 
   socket.on('close', () => {
+    if (worldMembers.delete(socket)) broadcastWorldCount()
     const payload = JSON.stringify({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
