@@ -1,8 +1,8 @@
 <template>
   <Teleport to="body">
     <Transition name="palette">
-      <div v-if="isOpen" class="palette-backdrop" role="dialog" aria-modal="true" aria-label="Command palette" @click.self="close">
-        <div class="palette-window">
+      <div v-if="isOpen" class="palette-backdrop" role="dialog" aria-modal="true" aria-label="Command palette" @click.self="close" @keydown="onModalKeydown">
+        <div ref="windowRef" class="palette-window">
           <div class="palette-input-row">
             <AppIcon name="terminal" :size="16" class="palette-input-icon" />
             <input
@@ -68,6 +68,11 @@ const query = ref('')
 const activeId = ref('')
 const inputRef = ref<HTMLInputElement>()
 const listRef = ref<HTMLElement>()
+const windowRef = ref<HTMLElement | null>(null)
+
+// aria-modal is a promise: trap Tab inside the palette and hand focus back to
+// the trigger on close (the input is the first focusable, so it gets focus)
+const { onKeydown: onModalKeydown } = useModalMenu(isOpen, windowRef)
 
 const results = computed(() => {
   const scored = actions.value

@@ -8,12 +8,14 @@
         aria-modal="true"
         aria-label="Interactive terminal"
         @click.self="close"
+        @keydown="onModalKeydown"
       >
-        <div class="terminal-window is-family-code">
+        <div ref="windowRef" class="terminal-window is-family-code">
           <header class="terminal-titlebar">
-            <span class="dot dot-close" role="button" title="Close" @click="close" />
-            <span class="dot dot-min" />
-            <span class="dot dot-max" />
+            <!-- decorative traffic lights; the real close button sits at the right -->
+            <span class="dot dot-close" aria-hidden="true" title="Close" @click="close" />
+            <span class="dot dot-min" aria-hidden="true" />
+            <span class="dot dot-max" aria-hidden="true" />
             <span class="terminal-title">{{ name }}@{{ profile.domain }}: ~</span>
             <button class="terminal-close" aria-label="Close terminal" @click="close">
               <AppIcon name="close" :size="16" />
@@ -33,6 +35,21 @@ import { profile } from '~/data/profile'
 
 const { isOpen, toggle, close, activeGame } = useTerminal()
 const { name } = useIdentity()
+
+// aria-modal, honored: Tab stays inside the window and focus returns to the
+// trigger on close. The console focuses its own input, and Escape already has
+// terminal semantics (search → game → close), so both are left to it.
+const windowRef = ref<HTMLElement | null>(null)
+const { onKeydown: trapKeydown } = useModalMenu(isOpen, windowRef, {
+  focusInitial: false,
+  closeOnEscape: false
+})
+// the console input consumes Tab for autocomplete (defaultPrevented) —
+// the trap only catches Tabs that would actually leave the window
+const onModalKeydown = (event: KeyboardEvent) => {
+  if (event.defaultPrevented) return
+  trapKeydown(event)
+}
 
 // Open with ~ or ` when not typing in another field (and not mid-game). The
 // overlay lives in the default layout, so it never mounts on the /desktop route

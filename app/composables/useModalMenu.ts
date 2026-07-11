@@ -10,7 +10,18 @@ import type { Ref } from 'vue'
  * navbar (and its close button) out of reach. The scroll offset is stashed and
  * restored on close.
  */
-export function useModalMenu(open: Ref<boolean>, container: Ref<HTMLElement | null>) {
+const FOCUSABLE = 'a[href], a[role], button, input, textarea, [tabindex]:not([tabindex="-1"])'
+
+export function useModalMenu(
+  open: Ref<boolean>,
+  container: Ref<HTMLElement | null>,
+  opts: {
+    /** Skip the automatic initial focus (the modal focuses its own field) */
+    focusInitial?: boolean
+    /** Skip Escape handling (the modal has its own close semantics) */
+    closeOnEscape?: boolean
+  } = {}
+) {
   let lockedScrollY = 0
   const lockScroll = () => {
     lockedScrollY = window.scrollY
@@ -39,7 +50,9 @@ export function useModalMenu(open: Ref<boolean>, container: Ref<HTMLElement | nu
       lastFocused = document.activeElement as HTMLElement | null
       lockScroll()
       await nextTick()
-      container.value?.querySelector<HTMLElement>('a, button')?.focus()
+      if (opts.focusInitial !== false) {
+        container.value?.querySelector<HTMLElement>(FOCUSABLE)?.focus()
+      }
     } else {
       unlockScroll()
       lastFocused?.focus()
@@ -51,11 +64,11 @@ export function useModalMenu(open: Ref<boolean>, container: Ref<HTMLElement | nu
 
   const onKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
-      open.value = false
+      if (opts.closeOnEscape !== false) open.value = false
       return
     }
     if (e.key !== 'Tab' || !container.value) return
-    const focusable = [...container.value.querySelectorAll<HTMLElement>('a, button')]
+    const focusable = [...container.value.querySelectorAll<HTMLElement>(FOCUSABLE)]
     if (!focusable.length) return
     const first = focusable[0]!
     const last = focusable[focusable.length - 1]!
