@@ -5,6 +5,7 @@ import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
 import { applyFilter, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
+import { nearestCommand } from '~/utils/terminal/nearestCommand'
 import { escapeHtml } from '~/utils/escapeHtml'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
@@ -323,7 +324,9 @@ export function useTerminal() {
     const command = commands[name.toLowerCase()]
     if (!command) {
       error(shellError(`command not found: ${name}`))
-      muted(`Type 'help' for available commands.`)
+      const guess = nearestCommand(name, commandNames)
+      if (guess) muted(`Did you mean '${guess}'? (or type 'help')`)
+      else muted(`Type 'help' for available commands.`)
       return false
     }
     trackEvent(analyticsEvents.terminalCommand(name))
