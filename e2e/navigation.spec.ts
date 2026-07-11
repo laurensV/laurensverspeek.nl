@@ -294,7 +294,7 @@ test('a route progress bar appears during navigation', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.__sawProgress)).toBe(true)
 })
 
-test('keyboard focus shows a consistent ring on nav and terminal input', async ({ page }) => {
+test('keyboard focus shows a ring on nav links but not on the terminal input', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   // a nav link gets the outline ring when focused via keyboard
@@ -302,12 +302,17 @@ test('keyboard focus shows a consistent ring on nav and terminal input', async (
   await link.focus()
   const outline = await link.evaluate((el) => getComputedStyle(el).outlineWidth)
   expect(parseFloat(outline)).toBeGreaterThan(0)
-  // the terminal input, which sets outline:none, gets a box-shadow ring instead
+  // the terminal input stays chrome-free like a real terminal — its blinking
+  // caret is the focus indicator (no outline, no box-shadow ring)
   await pressTerminalKey(page)
   const input = page.locator('#terminal-input')
   await input.focus()
-  const shadow = await input.evaluate((el) => getComputedStyle(el).boxShadow)
-  expect(shadow).not.toBe('none')
+  const styles = await input.evaluate((el) => {
+    const computed = getComputedStyle(el)
+    return { shadow: computed.boxShadow, outline: computed.outlineStyle }
+  })
+  expect(styles.shadow).toBe('none')
+  expect(styles.outline).toBe('none')
 })
 
 test('the theme toggle flips the theme (with a reveal where supported)', async ({ page }) => {

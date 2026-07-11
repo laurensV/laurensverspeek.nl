@@ -44,7 +44,8 @@ html.is-lvos body {
 // Some inputs set `outline: none` (the caret indicates focus) — but for
 // keyboard users a ring is still clearer. A box-shadow ring survives
 // `outline: none`, so re-assert one on the text fields that opt out.
-.terminal-input:focus-visible,
+// (The terminal input deliberately opts out of the ring too: its blinking
+// caret is the focus indicator, like a real terminal.)
 .error-input:focus-visible,
 .lock-input:focus-visible,
 .note-text:focus-visible,
