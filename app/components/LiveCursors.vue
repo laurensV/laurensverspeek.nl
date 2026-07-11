@@ -54,6 +54,8 @@ const tick = ref(0)
 
 let socket: WebSocket | undefined
 let retries = 0
+let alive = true // false after unmount, so onclose can't resurrect the socket
+let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 const connected = ref(false)
 
 const visibleCursors = computed(() => {
@@ -76,7 +78,10 @@ watchEffect(() => {
 const connect = () => {
   if (!cursorsWs) return
   socket = new WebSocket(cursorsWs)
-  socket.onopen = () => (connected.value = true)
+  socket.onopen = () => {
+    connected.value = true
+    retries = 0 // a good connection resets the backoff, so later drops retry too
+  }
 
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data as string) as WireMessage
@@ -100,7 +105,8 @@ const connect = () => {
 
   socket.onclose = () => {
     connected.value = false
-    if (retries++ < 3) setTimeout(connect, 4000 * retries)
+    // close() on unmount fires this synchronously — don't reconnect a dead component
+    if (alive && retries++ < 3) reconnectTimer = setTimeout(connect, 4000 * retries)
   }
 }
 
@@ -122,6 +128,8 @@ onMounted(() => {
   // prune stale cursors so they fade even without traffic
   const pruneTimer = setInterval(() => tick.value++, 2000)
   onBeforeUnmount(() => {
+    alive = false
+    clearTimeout(reconnectTimer)
     clearInterval(pruneTimer)
     socket?.close()
   })
