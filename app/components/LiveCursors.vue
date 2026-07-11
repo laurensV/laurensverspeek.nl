@@ -105,8 +105,10 @@ const connect = () => {
 
   socket.onclose = () => {
     connected.value = false
-    // close() on unmount fires this synchronously — don't reconnect a dead component
-    if (alive && retries++ < 3) reconnectTimer = setTimeout(connect, 4000 * retries)
+    // close() on unmount fires this synchronously — don't reconnect a dead component.
+    // Never give up while mounted: an outage longer than three tries (a relay
+    // redeploy, a laptop nap) should still recover, just at a capped cadence.
+    if (alive) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
   }
 }
 

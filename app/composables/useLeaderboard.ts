@@ -9,6 +9,8 @@ export const GAMES: string[] = LEADERBOARD_GAMES
 // module-scoped socket, shared by every caller (like the world/cursors sockets)
 let socket: WebSocket | undefined
 let wired = false
+let retries = 0
+let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 
 /**
  * The online game leaderboard over the cursors relay. When no relay is
@@ -38,6 +40,7 @@ export function useLeaderboard() {
     }
     socket.onopen = () => {
       connected.value = true
+      retries = 0 // a good connection resets the backoff, so later drops retry too
       socket?.send(JSON.stringify({ type: 'scores-get' }))
     }
     socket.onmessage = (event) => {
@@ -56,6 +59,9 @@ export function useLeaderboard() {
     socket.onclose = () => {
       connected.value = false
       socket = undefined
+      // a relay blip must not freeze the board on "connecting…" forever —
+      // keep retrying with a capped backoff for as long as a consumer is wired
+      if (wired) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
     }
   }
 
@@ -69,9 +75,10 @@ export function useLeaderboard() {
 
   const leave = () => {
     setScoreSink(null)
+    wired = false // before close(), whose onclose would otherwise schedule a reconnect
+    clearTimeout(reconnectTimer)
     socket?.close()
     socket = undefined
-    wired = false
   }
 
   return { boards, connected, enabled, GAMES, enter, leave, submit }

@@ -26,6 +26,8 @@ const OFFLINE_META_KEY = 'lv-world-placed'
 
 let wired = false
 let socket: WebSocket | null = null
+let retries = 0
+let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 let offlineGate: CooldownGate | null = null
 let offlineMeta: Record<string, { by: string, at: number }> = {}
 // the last optimistic placement, so a server denial can roll it back
@@ -78,13 +80,7 @@ export function useWorld() {
     version.value++
   }
 
-  const enter = () => {
-    if (wired) return
-    wired = true
-    if (!wsUrl) {
-      enterOffline()
-      return
-    }
+  const connect = () => {
     try {
       socket = new WebSocket(wsUrl)
     } catch {
@@ -92,6 +88,7 @@ export function useWorld() {
       return
     }
     socket.addEventListener('open', () => {
+      retries = 0 // a good connection resets the backoff, so later drops retry too
       socket?.send(JSON.stringify({ type: 'world-join' }))
     })
     socket.addEventListener('error', () => {
@@ -99,6 +96,10 @@ export function useWorld() {
     })
     socket.addEventListener('close', () => {
       connected.value = false
+      socket = null
+      // a mid-session relay drop must not strand the shared world until a page
+      // reload — keep rejoining with a capped backoff while someone is wired
+      if (wired) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
     })
     socket.addEventListener('message', (event) => {
       let msg: Record<string, unknown>
@@ -146,11 +147,23 @@ export function useWorld() {
     })
   }
 
+  const enter = () => {
+    if (wired) return
+    wired = true
+    if (!wsUrl) {
+      enterOffline()
+      return
+    }
+    connect()
+  }
+
   const leave = () => {
-    socket?.send(JSON.stringify({ type: 'world-leave' }))
+    wired = false // before close(), whose close handler would otherwise reconnect
+    clearTimeout(reconnectTimer)
+    // send() throws on a still-CONNECTING socket — closing early must not
+    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'world-leave' }))
     socket?.close()
     socket = null
-    wired = false
   }
 
   /** Place a pixel; optimistic locally, authoritative on the server. Returns
