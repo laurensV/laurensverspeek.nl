@@ -1,6 +1,6 @@
 import {
   WORLD_SIZE, WORLD_COOLDOWN_MS, WORLD_PALETTE,
-  inWorld, validColor, CooldownGate, createSeedBoard, encodeBoard, decodeBoard
+  inWorld, validColor, plotAt, CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from '../../realtime/world-core.mjs'
 import { storageGet, storageSet } from '~/utils/safeStorage'
 
@@ -42,6 +42,8 @@ export function useWorld() {
   // camera target, settable from the terminal's `world goto`
   const gotoTarget = useState<{ x: number, y: number } | null>('world-goto', () => null)
   const lastInfo = useState<(PixelInfo & { x: number, y: number }) | null>('world-pixel-info', () => null)
+  // recent placements, for the time-lapse scrubber (oldest → newest)
+  const history = useState<{ x: number, y: number, c: number, at: number }[]>('world-history', () => [])
 
   const { name } = useIdentity()
   const wsUrl = useRuntimeConfig().public.cursorsWs
@@ -50,6 +52,10 @@ export function useWorld() {
     if (!board.value) return
     board.value[y * WORLD_SIZE + x] = c
     version.value++
+  }
+
+  const pushHistory = (x: number, y: number, c: number) => {
+    history.value = [...history.value, { x, y, c, at: Date.now() }].slice(-200)
   }
 
   const enterOffline = () => {
@@ -94,10 +100,12 @@ export function useWorld() {
       if (msg.type === 'world-state') {
         board.value = decodeBoard(String(msg.board))
         cooldownMs.value = Number(msg.cooldownMs) || WORLD_COOLDOWN_MS
+        if (Array.isArray(msg.history)) history.value = msg.history as typeof history.value
         connected.value = true
         version.value++
       } else if (msg.type === 'pixel') {
         applyPixel(Number(msg.x), Number(msg.y), Number(msg.c))
+        pushHistory(Number(msg.x), Number(msg.y), Number(msg.c))
       } else if (msg.type === 'world-count') {
         online.value = Number(msg.online) || 0
         recent.value = Number(msg.recent) || 0
@@ -145,6 +153,7 @@ export function useWorld() {
     const wait = offlineGate.check('me', Date.now())
     if (wait > 0) return wait
     applyPixel(x, y, c)
+    pushHistory(x, y, c)
     offlineMeta[`${x},${y}`] = { by: name.value, at: Date.now() }
     storageSet(OFFLINE_KEY, encodeBoard(board.value))
     storageSet(OFFLINE_META_KEY, JSON.stringify(offlineMeta))
@@ -182,6 +191,8 @@ export function useWorld() {
     cursors,
     gotoTarget,
     lastInfo,
+    history,
+    plotAt: (x: number, y: number): string | null => plotAt(x, y),
     enter,
     leave,
     place,

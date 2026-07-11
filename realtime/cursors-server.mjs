@@ -22,6 +22,10 @@ const MAX_CLIENTS = 64
 const WORLD_FILE = process.env.WORLD_FILE
   ?? fileURLToPath(new URL('./world-board.json', import.meta.url))
 const COOLDOWN_MS = Number(process.env.WORLD_COOLDOWN_MS) || WORLD_COOLDOWN_MS
+// a ring buffer of the most recent placements, for the client time-lapse
+const HISTORY_MAX = 200
+/** @type {{ x: number, y: number, c: number, at: number }[]} */
+let history = []
 
 /** @type {Uint8Array} */
 let board
@@ -31,6 +35,7 @@ try {
   const saved = JSON.parse(readFileSync(WORLD_FILE, 'utf8'))
   board = decodeBoard(saved.board)
   placedBy = saved.placedBy ?? {}
+  history = Array.isArray(saved.history) ? saved.history.slice(-HISTORY_MAX) : []
   if (board.length !== WORLD_SIZE * WORLD_SIZE) throw new Error('size mismatch')
 } catch {
   board = createSeedBoard()
@@ -42,7 +47,7 @@ const scheduleSave = () => {
   clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     try {
-      writeFileSync(WORLD_FILE, JSON.stringify({ board: encodeBoard(board), placedBy }))
+      writeFileSync(WORLD_FILE, JSON.stringify({ board: encodeBoard(board), placedBy, history }))
     } catch (error) {
       console.warn('[world] save failed:', error)
     }
@@ -106,7 +111,8 @@ wss.on('connection', (socket) => {
         type: 'world-state',
         size: WORLD_SIZE,
         cooldownMs: COOLDOWN_MS,
-        board: encodeBoard(board)
+        board: encodeBoard(board),
+        history
       }))
       broadcastWorldCount()
       return
@@ -130,6 +136,8 @@ wss.on('connection', (socket) => {
       const at = Date.now() // server clock; client timestamps are never trusted
       board[msg.y * WORLD_SIZE + msg.x] = msg.c
       placedBy[`${msg.x},${msg.y}`] = { by, at }
+      history.push({ x: msg.x, y: msg.y, c: msg.c, at })
+      if (history.length > HISTORY_MAX) history = history.slice(-HISTORY_MAX)
       activity.push(at)
       scheduleSave()
       broadcastWorld(JSON.stringify({ type: 'pixel', x: msg.x, y: msg.y, c: msg.c, by, at }))

@@ -26,6 +26,23 @@ export const WORLD_PALETTE = [
   '#2c2c38'  // 15 slate
 ]
 
+// Named plots: labelled regions the camera announces on entry. Room is left
+// for visitors to claim more; these are the founding districts.
+export const WORLD_PLOTS = [
+  { name: 'the amber district', x0: 12, y0: 14, x1: 52, y1: 40 },
+  { name: 'the terminal quarter', x0: 70, y0: 84, x1: 100, y1: 104 },
+  { name: 'greenhill', x0: 20, y0: 72, x1: 44, y1: 104 },
+  { name: 'the commons', x0: 52, y0: 44, x1: 96, y1: 82 }
+]
+
+/** @param {number} x @param {number} y @returns {string | null} */
+export const plotAt = (x, y) => {
+  for (const plot of WORLD_PLOTS) {
+    if (x >= plot.x0 && x <= plot.x1 && y >= plot.y0 && y <= plot.y1) return plot.name
+  }
+  return null
+}
+
 /** @param {number} x @param {number} y */
 export const inWorld = (x, y) =>
   Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < WORLD_SIZE && y >= 0 && y < WORLD_SIZE
