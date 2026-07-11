@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { projects } from '~/data/projects'
 
-const ogImage = `${SITE_URL}/og/page-projects.svg`
+const ogImage = `${SITE_URL}/og/page-projects.png`
 useHead({ title: 'Projects — Laurens Verspeek' })
 useSeoMeta({
   ogTitle: 'Projects',

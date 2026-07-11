@@ -130,7 +130,7 @@ const related = computed(() => {
     .map((entry) => entry.post)
 })
 
-const ogImage = `${SITE_URL}/og/blog-${slugParam}.svg`
+const ogImage = `${SITE_URL}/og/blog-${slugParam}.png`
 useHead({ title: `${post.value.title} — Laurens Verspeek` })
 useSeoMeta({
   description: post.value.description,

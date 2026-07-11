@@ -51,7 +51,7 @@ import { museum, exhibitCount } from '~/data/museum'
 // two ways through the collection: the catalog, or walking the actual floor
 const mode = ref<'catalog' | 'walk'>('catalog')
 
-const ogImage = `${SITE_URL}/og/page-museum.svg`
+const ogImage = `${SITE_URL}/og/page-museum.png`
 useHead({ title: 'The Museum — Laurens Verspeek' })
 useSeoMeta({
   description: 'Every feature and easter egg on laurensverspeek.nl, catalogued like museum exhibits.',

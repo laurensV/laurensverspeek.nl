@@ -183,10 +183,10 @@ export default defineNuxtConfig({
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:url', content: 'https://laurensverspeek.nl' },
-        { property: 'og:image', content: 'https://laurensverspeek.nl/og/default.svg' },
+        { property: 'og:image', content: 'https://laurensverspeek.nl/og/default.png' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:title', content: 'Laurens Verspeek' },
-        { name: 'twitter:image', content: 'https://laurensverspeek.nl/og/default.svg' }
+        { name: 'twitter:image', content: 'https://laurensverspeek.nl/og/default.png' }
       ],
       link: [
         // SVG favicon (the >_ mark) for modern browsers; .ico as the fallback

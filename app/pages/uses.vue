@@ -49,7 +49,7 @@
 import { uses } from '~/data/uses'
 
 useHead({ title: 'Uses — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-uses.svg`
+const ogImage = `${SITE_URL}/og/page-uses.png`
 useSeoMeta({
   description: 'The gear, software and stack Laurens Verspeek uses to build things.',
   ogUrl: `${SITE_URL}/uses`,

@@ -78,7 +78,7 @@
 import { tagHue } from '~/utils/tagHue'
 
 useHead({ title: 'Blog — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-blog.svg`
+const ogImage = `${SITE_URL}/og/page-blog.png`
 useSeoMeta({
   description: 'Blog of Laurens Verspeek: code, blockchain and website experiments.',
   ogUrl: `${SITE_URL}/blog`,

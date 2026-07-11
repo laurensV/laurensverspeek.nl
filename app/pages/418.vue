@@ -36,7 +36,7 @@
 import { useEventListener } from '@vueuse/core'
 import { teapotPoints, renderTeapot } from '~/utils/teapot'
 
-const ogImage = `${SITE_URL}/og/page-418.svg`
+const ogImage = `${SITE_URL}/og/page-418.png`
 useHead({ title: "418 I'm a teapot — Laurens Verspeek" })
 useSeoMeta({
   description: "RFC 2324, faithfully implemented: an interactive ASCII teapot. Coffee will not be brewed.",

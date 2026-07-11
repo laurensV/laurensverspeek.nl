@@ -62,9 +62,9 @@ test('clicking the hero game of life opens the /life page', async ({ page }) => 
 
 test('/life and /desktop carry their own OG images', async ({ page }) => {
   await page.goto('/life')
-  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/life\.svg/)
+  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/life\.png/)
   await page.goto('/desktop')
-  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/desktop\.svg/)
+  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/desktop\.png/)
 })
 
 test('game of life page pauses, steps, clears and places a preset', async ({ page }) => {
@@ -264,7 +264,7 @@ test('project detail page has a package.json card and og image', async ({ page }
   await page.goto('/projects/nosana')
   await expect(page.locator('.detail-pkg')).toContainText('"name": "nosana"')
   const og = page.locator('head meta[property="og:image"]')
-  await expect(og).toHaveAttribute('content', /og\/project-nosana\.svg/)
+  await expect(og).toHaveAttribute('content', /og\/project-nosana\.png/)
 })
 
 test('serves humans.txt and .well-known/security.txt', async ({ request }) => {

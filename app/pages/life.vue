@@ -50,7 +50,7 @@ import { LIFE_PATTERNS, type LifePattern } from '~/utils/lifePatterns'
 // full-viewport app page: the pwd breadcrumb strip would eat into the board
 definePageMeta({ breadcrumb: false })
 
-const ogImage = `${SITE_URL}/og/life.svg`
+const ogImage = `${SITE_URL}/og/life.png`
 useHead({ title: "Conway's Game of Life — Laurens Verspeek" })
 useSeoMeta({
   description: "A full-page, playable Conway's Game of Life — draw cells and watch them evolve.",

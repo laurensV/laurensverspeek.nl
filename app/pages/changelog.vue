@@ -59,7 +59,7 @@
 import type { GitCommit } from '~/utils/terminal/gitLog'
 
 useHead({ title: 'Changelog — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-changelog.svg`
+const ogImage = `${SITE_URL}/og/page-changelog.png`
 useSeoMeta({
   description: 'The living changelog of laurensverspeek.nl — real commits, baked at build time.',
   ogUrl: `${SITE_URL}/changelog`,

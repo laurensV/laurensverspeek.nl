@@ -18,7 +18,7 @@
     "test": "vitest run",
     "og": "node scripts/generate-og.mjs",
     "pregenerate": "node scripts/generate-og.mjs",
-    "postgenerate": "node scripts/generate-resume.mjs",
+    "postgenerate": "node scripts/generate-og-png.mjs && node scripts/generate-resume.mjs",
     "resume": "node scripts/generate-resume.mjs",
     "test:e2e": "playwright test",
     "postinstall": "nuxt prepare",

@@ -29,17 +29,22 @@ const PAGE_SOURCES: Record<string, string[]> = {
   '/contact': ['app/pages/contact.vue'],
   '/life': ['app/pages/life.vue'],
   '/desktop': ['app/pages/desktop.vue'],
-  '/changelog': ['app/pages/changelog.vue']
+  '/changelog': ['app/pages/changelog.vue'],
+  '/stats': ['app/pages/stats.vue'],
+  '/museum': ['app/pages/museum.vue', 'app/data/museum.ts']
+  // (/world is intentionally omitted: it's noindex)
 }
 
-const POSTS = [
-  // Keep in sync with content/blog/*.md
-  'rebuilding-this-site',
-  'snake-in-the-terminal',
-  'a-window-manager-in-a-div',
-  'an-os-on-its-own-route',
-  'game-of-life-everywhere'
-]
+// the blog posts, read from disk so a new post can't be forgotten here
+const postSlugs = (): string[] => {
+  try {
+    return execSync('git ls-files content/blog/*.md', { encoding: 'utf8' })
+      .trim().split('\n').filter(Boolean)
+      .map((file) => file.replace(/^content\/blog\//, '').replace(/\.md$/, ''))
+  } catch {
+    return []
+  }
+}
 
 export default defineEventHandler((event) => {
   const urls: { loc: string, lastmod: string }[] = [
@@ -51,7 +56,7 @@ export default defineEventHandler((event) => {
       loc: `/projects/${p.slug}`,
       lastmod: gitDate('app/data/projects.ts', 'app/pages/projects/[slug].vue')
     })),
-    ...POSTS.map((slug) => ({
+    ...postSlugs().map((slug) => ({
       loc: `/blog/${slug}`,
       lastmod: gitDate(`content/blog/${slug}.md`)
     }))

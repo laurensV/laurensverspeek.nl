@@ -7,3 +7,16 @@
     </NuxtLayout>
   </div>
 </template>
+
+<script setup lang="ts">
+// A self-referential canonical on every page: search engines get one declared
+// URL per route (og:url alone isn't a canonical). Trailing slashes are trimmed
+// to match the clean-URL static output.
+const route = useRoute()
+useHead({
+  link: [{
+    rel: 'canonical',
+    href: computed(() => `${SITE_URL}${route.path.replace(/\/+$/, '') || '/'}`)
+  }]
+})
+</script>

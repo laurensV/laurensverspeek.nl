@@ -144,7 +144,7 @@ onKeyStroke('Escape', () => {
   if (lightboxOpen.value) lightboxOpen.value = false
 })
 
-const ogImage = `${SITE_URL}/og/project-${project.slug}.svg`
+const ogImage = `${SITE_URL}/og/project-${project.slug}.png`
 useHead({ title: `${project.title} — Laurens Verspeek` })
 useSeoMeta({
   description: project.description,

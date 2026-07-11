@@ -11,7 +11,7 @@
 // no page wipe here — the lvOS BIOS boot sequence is this route's entrance
 definePageMeta({ layout: 'desktop', pageTransition: false })
 
-const ogImage = `${SITE_URL}/og/desktop.svg`
+const ogImage = `${SITE_URL}/og/desktop.png`
 useHead({
   title: 'lvOS — Laurens Verspeek',
   htmlAttrs: { class: 'is-lvos' }

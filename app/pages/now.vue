@@ -41,7 +41,7 @@ import { now } from '~/data/now'
 const updated = useRuntimeConfig().public.nowUpdated
 
 useHead({ title: 'Now — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-now.svg`
+const ogImage = `${SITE_URL}/og/page-now.png`
 useSeoMeta({
   description: 'What Laurens Verspeek is building, learning and tinkering with right now.',
   ogUrl: `${SITE_URL}/now`,

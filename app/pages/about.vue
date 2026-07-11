@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { profile } from '~/data/profile'
 
-const ogImage = `${SITE_URL}/og/page-about.svg`
+const ogImage = `${SITE_URL}/og/page-about.png`
 useHead({ title: 'About — Laurens Verspeek' })
 useSeoMeta({
   ogTitle: 'About Laurens',

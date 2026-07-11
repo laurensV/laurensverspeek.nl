@@ -75,7 +75,7 @@ import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
 useHead({ title: 'CV — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-cv.svg`
+const ogImage = `${SITE_URL}/og/page-cv.png`
 useSeoMeta({
   description: 'Curriculum vitae of Laurens Verspeek.',
   ogUrl: `${SITE_URL}/cv`,

@@ -57,7 +57,7 @@ import { qrAsciiLines } from '~/utils/qrAscii'
 import { pgp } from '~/data/pgp'
 
 useHead({ title: 'Contact — Laurens Verspeek' })
-const ogImage = `${SITE_URL}/og/page-contact.svg`
+const ogImage = `${SITE_URL}/og/page-contact.png`
 useSeoMeta({
   description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.',
   ogUrl: `${SITE_URL}/contact`,
