@@ -11,6 +11,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
+import { stepShip, steerToward } from '~/utils/shipPhysics'
 
 // Destroy mode: an Asteroids-style ship — rotate with ←→, thrust forward with
 // ↑, fire with space — flies the page and shoots the actual DOM to pieces.
@@ -32,12 +33,7 @@ let destroyed: { el: HTMLElement, visibility: string }[] = []
 let raf = 0
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// ---- ship physics ----
-// low thrust + low drag = heavy momentum: slow acceleration, a long glide, and
-// direction changes that take real commitment (à la kickassapp.com / Asteroids)
-const ACCEL = 900 // forward thrust, px/s²
-const DRAG = 0.7 // exponential drag, 1/s — top speed ≈ ACCEL/DRAG, and the glide is long
-const ROT_SPEED = 3.2 // turn rate while a rotate key is held, rad/s
+// ---- ship physics (the pure flight model lives in utils/shipPhysics) ----
 const BULLET_SPEED = 1400 // px/s
 const BULLET_STEP = 9 // collision sampling distance, px
 const SCROLL_EDGE = 130 // px from top/bottom where the ship starts flying the page
@@ -154,38 +150,17 @@ const flyBullet = (bullet: Bullet, dt: number): boolean => {
   return false
 }
 
-// smallest signed angle difference, normalized to [-π, π]
-const angleDelta = (from: number, to: number): number => {
-  let diff = (to - from + Math.PI) % (Math.PI * 2)
-  if (diff < 0) diff += Math.PI * 2
-  return diff - Math.PI
-}
-
 const thrustingForward = () => anyHeld(FORWARD) || touchSteer?.moved === true
 
 const moveShip = (dt: number) => {
-  // rotation: hold ← / → to turn (touch aims toward the finger instead)
+  // touch aims the nose toward the finger; keys rotate ← / →
   if (touchSteer?.moved) {
-    const desired = Math.atan2(touchPoint.y - ship.y, touchPoint.x - ship.x)
-    const turn = Math.max(-ROT_SPEED * dt, Math.min(ROT_SPEED * dt, angleDelta(ship.angle, desired)))
-    ship.angle += turn
-  } else {
-    if (anyHeld(LEFT)) ship.angle -= ROT_SPEED * dt
-    if (anyHeld(RIGHT)) ship.angle += ROT_SPEED * dt
+    ship.angle = steerToward(ship, touchPoint.x, touchPoint.y, dt)
   }
-
-  // thrust only ever pushes forward along the heading
-  if (thrustingForward()) {
-    ship.vx += Math.cos(ship.angle) * ACCEL * dt
-    ship.vy += Math.sin(ship.angle) * ACCEL * dt
-  }
-
-  // low drag → a long, heavy glide that resists sudden direction changes
-  const drag = Math.exp(-DRAG * dt)
-  ship.vx *= drag
-  ship.vy *= drag
-  ship.x += ship.vx * dt
-  ship.y += ship.vy * dt
+  const turn = touchSteer?.moved ? 0 : (anyHeld(RIGHT) ? 1 : 0) - (anyHeld(LEFT) ? 1 : 0)
+  // the pure Asteroids model advances heading + momentum (utils/shipPhysics)
+  const next = stepShip(ship, { thrust: thrustingForward(), turn, dt })
+  Object.assign(ship, next)
 
   // FLYING into the top/bottom edge zone scrolls the page until the document
   // runs out — the whole page is the arena, the viewport just the camera.
