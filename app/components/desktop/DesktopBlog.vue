@@ -9,7 +9,7 @@
       <p class="is-family-code has-text-primary-on-scheme mb-1"># {{ override?.title ?? post.title }}</p>
       <p class="is-family-code blog-meta mb-3">
         {{ override?.date || post.date }}<template v-if="post.tags?.length"> · {{ post.tags.map((t) => `#${t}`).join(' ') }}</template>
-        <template v-if="override"> · ✎ your edit (rm blog/{{ slugOf(post.path) }}.md restores)</template>
+        <template v-if="override"> · ✎ your edit (reseed blog/{{ slugOf(post.path) }}.md restores)</template>
       </p>
       <div class="content is-small blog-body">
         <!-- overrides come from markdownLite, which escapes every text node

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applySeeds, siteSeeds, blogSeeds, removalPlan, isSysPath, minimarkToMarkdown } from '~/utils/terminal/siteFs'
+import { applySeeds, siteSeeds, blogSeeds, restoreSeeds, hasSeedsUnder, isSysPath, minimarkToMarkdown } from '~/utils/terminal/siteFs'
 import { pathCandidates, stripSysNodes } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
@@ -15,7 +15,7 @@ describe('siteSeeds', () => {
   })
 })
 
-describe('applySeeds / removalPlan', () => {
+describe('applySeeds / restoreSeeds', () => {
   const seeded = () => applySeeds(
     { 'notes.txt': { dir: false, content: 'mine' } },
     { 'blog': null, 'blog/post.md': '# original' }
@@ -26,6 +26,8 @@ describe('applySeeds / removalPlan', () => {
     expect(fs['blog']).toEqual({ dir: true, content: '', sys: true })
     expect(fs['blog/post.md']).toEqual({ dir: false, content: '# original', sys: true })
     expect(fs['notes.txt']).toEqual({ dir: false, content: 'mine' })
+    expect(isSysPath(fs, 'blog')).toBe(true)
+    expect(isSysPath(fs, 'notes.txt')).toBe(false)
   })
 
   it('lets a user override win over a seed', () => {
@@ -37,16 +39,38 @@ describe('applySeeds / removalPlan', () => {
     expect(reseeded['blog/post.md']).toEqual({ dir: false, content: '# my edit' })
   })
 
-  it('protects sys nodes and restores seeds under removed overrides', () => {
-    const fs = seeded()
-    expect(removalPlan(fs, 'blog/post.md')).toBe('protected')
-    expect(removalPlan(fs, 'blog')).toBe('protected')
-    expect(removalPlan(fs, 'ghost.txt')).toBe('missing')
-    expect(removalPlan(fs, 'notes.txt')).toEqual({ restoreSeed: null })
-    const withEdit: Filesystem = { ...fs, 'blog/post.md': { dir: false, content: '# my edit' } }
-    expect(removalPlan(withEdit, 'blog/post.md')).toEqual({ restoreSeed: '# original' })
-    expect(isSysPath(withEdit, 'blog/post.md')).toBe(false)
-    expect(isSysPath(withEdit, 'blog')).toBe(true)
+  it('skips tombstoned paths, so deleted site files stay deleted', () => {
+    const fs = applySeeds(
+      {},
+      { 'blog': null, 'blog/post.md': '# original' },
+      new Set(['blog/post.md'])
+    )
+    expect(fs['blog']).toBeDefined()
+    expect(fs['blog/post.md']).toBeUndefined()
+  })
+
+  it('restoreSeeds regrows edits and deletions, scoped by prefix', () => {
+    seeded() // populate the registry
+    const mangled: Filesystem = {
+      'notes.txt': { dir: false, content: 'mine' },
+      'blog': { dir: true, content: '', sys: true },
+      'blog/post.md': { dir: false, content: '# my edit' } // override
+    }
+    const scoped = restoreSeeds(mangled, 'blog/post.md')
+    expect(scoped.restored).toBe(1)
+    expect(scoped.files['blog/post.md']).toEqual({ dir: false, content: '# original', sys: true })
+    expect(scoped.files['notes.txt']).toEqual({ dir: false, content: 'mine' })
+    // full restore counts only nodes that actually changed
+    const full = restoreSeeds(scoped.files)
+    expect(full.restored).toBe(0)
+  })
+
+  it('knows which paths are site content', () => {
+    seeded()
+    expect(hasSeedsUnder('blog')).toBe(true)
+    expect(hasSeedsUnder('blog/post.md')).toBe(true)
+    expect(hasSeedsUnder('notes.txt')).toBe(false)
+    expect(hasSeedsUnder('')).toBe(true)
   })
 })
 

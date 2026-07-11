@@ -72,13 +72,37 @@
       lvOS 2.0 · kernel nuxt 4 · {{ windowCount }} window(s) open<br>
       settings are applied instantly and some persist in localStorage
     </p>
+
+    <p class="settings-section mt-4"># danger zone</p>
+    <div class="settings-row">
+      <span class="settings-label">site files</span>
+      <div class="settings-options">
+        <button @click="reseedSite">[{{ reseeded ? `✓ restored ${reseeded}` : 'reseed originals' }}]</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-label">everything</span>
+      <div class="settings-options">
+        <button class="is-danger" @click="factoryReset">
+          [{{ resetArmed ? 'click again to wipe it all' : 'factory reset…' }}]
+        </button>
+      </div>
+    </div>
+    <p class="settings-note">
+      // reseed regrows the site's own files (undoes your edits &amp; deletions)<br>
+      // factory reset wipes ALL local data — files, scores, pet, the lot — and reboots
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { DesktopWindow } from '~/composables/useWindowManager'
+import type { Filesystem } from '~/utils/terminal/filesystem'
+import { restoreSeeds } from '~/utils/terminal/siteFs'
+import { storageWipe } from '~/utils/safeStorage'
 
-// lvOS settings that actually control the real site: theme, CRT, party mode.
+// lvOS settings that actually control the real site: theme, CRT, party mode —
+// plus the danger zone (reseed site files / factory reset).
 
 const colorMode = useColorMode()
 const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
@@ -102,6 +126,31 @@ const enterMatrix = () => {
   matrixActive.value = true
   void navigateTo('/')
 }
+
+// ---- danger zone ----
+const files = useState<Filesystem>(STATE_KEYS.terminalFs, () => ({}))
+const reseeded = ref(0)
+const reseedSite = () => {
+  const result = restoreSeeds(files.value)
+  files.value = result.files
+  reseeded.value = result.restored
+  setTimeout(() => (reseeded.value = 0), 2500)
+}
+
+// factory reset arms on the first click, fires on the second
+const resetArmed = ref(false)
+let disarmTimer: ReturnType<typeof setTimeout> | undefined
+const factoryReset = () => {
+  if (!resetArmed.value) {
+    resetArmed.value = true
+    disarmTimer = setTimeout(() => (resetArmed.value = false), 4000)
+    return
+  }
+  clearTimeout(disarmTimer)
+  storageWipe()
+  window.location.reload()
+}
+onUnmounted(() => clearTimeout(disarmTimer))
 </script>
 
 <style scoped lang="scss">
@@ -144,6 +193,14 @@ const enterMatrix = () => {
 
     &.is-active {
       color: var(--bulma-primary);
+    }
+
+    &.is-danger {
+      color: hsl(var(--lv-scheme-hs), 55%);
+
+      &:hover {
+        color: var(--bulma-danger);
+      }
     }
   }
 }

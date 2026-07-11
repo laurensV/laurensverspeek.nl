@@ -52,3 +52,19 @@ export function storageSetJson(key: string, value: unknown): boolean {
 
 export const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((entry) => typeof entry === 'string')
+
+/**
+ * Factory reset: wipe everything this site stored in the browser (files,
+ * edits, scores, pet, trash, settings, history, …) except `keep` keys —
+ * the site gate stays open so a reset doesn't lock the visitor out.
+ */
+export function storageWipe(keep: string[] = ['lv-gate-open']): void {
+  try {
+    const preserved = keep
+      .map((key) => [key, localStorage.getItem(key)] as const)
+      .filter(([, value]) => value !== null)
+    localStorage.clear()
+    for (const [key, value] of preserved) localStorage.setItem(key, value!)
+    sessionStorage.clear()
+  } catch { /* blocked storage — nothing to wipe then */ }
+}

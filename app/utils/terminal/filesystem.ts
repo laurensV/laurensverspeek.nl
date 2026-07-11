@@ -216,9 +216,12 @@ export function renamePath(
   if (target === path) return { files }
   if (files[target]) return { error: `${clean} already exists` }
   const renamed: Filesystem = {}
+  // a renamed node becomes the visitor's own (drops any seed flag — a sys
+  // node wouldn't persist under its new name otherwise)
+  const own = (node: FsNode): FsNode => ({ dir: node.dir, content: node.content })
   for (const [key, value] of Object.entries(files)) {
-    if (key === path) renamed[target] = value
-    else if (key.startsWith(`${path}/`)) renamed[`${target}${key.slice(path.length)}`] = value
+    if (key === path) renamed[target] = own(value)
+    else if (key.startsWith(`${path}/`)) renamed[`${target}${key.slice(path.length)}`] = own(value)
     else renamed[key] = value
   }
   return { files: renamed }

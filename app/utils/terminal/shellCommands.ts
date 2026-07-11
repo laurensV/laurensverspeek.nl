@@ -1,6 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { groupCommands, relatedCommands } from '~/utils/terminal/helpGroups'
 import { resolvePath, pathCandidates } from '~/utils/terminal/filesystem'
+import { storageWipe } from '~/utils/safeStorage'
 
 // Shell housekeeping: help, aliases, environment, history, panes and scripts.
 
@@ -196,6 +197,26 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
           return muted(`sh: ${name}: nothing to run (comments and empty lines only)`)
         }
         return ctx.runScript(scriptLines)
+      }
+    },
+    'factory-reset': {
+      category: 'system',
+      usage: 'factory-reset [--yes]',
+      description: 'Wipe everything this site stored in your browser',
+      examples: ['factory-reset        (shows what would be wiped)', 'factory-reset --yes  (actually does it, then reboots the page)'],
+      argCandidates: () => ['--yes'],
+      exec: (args) => {
+        if (!args.includes('--yes')) {
+          push('primary', 'factory-reset would erase ALL local data for this site:')
+          out('  your files & edits · command history · aliases & env · game scores')
+          out('  the recycle bin · your pet (!) · wallpaper & settings · pixel-world cache')
+          muted(`nothing is stored server-side, so this really is everything.`)
+          muted(`run 'factory-reset --yes' if you mean it — the page reboots after.`)
+          return
+        }
+        out('wiping localStorage ... goodbye, everything.')
+        storageWipe()
+        setTimeout(() => window.location.reload(), 400)
       }
     },
     exit: {

@@ -1,12 +1,15 @@
 // The site as a filesystem: every page becomes a real folder with real files
 // in the terminal's home filesystem (blog posts as their actual markdown,
 // projects/about/uses/now/contact generated from the data modules). Seeds are
-// marked `sys`: rebuilt fresh every visit, never persisted, protected from rm
-// — but editable. Editing writes a plain user node over the seed (an
-// "override"), which persists and, for blog posts, changes the rendered post.
+// marked `sys`: rebuilt fresh every visit and never persisted. They're fully
+// yours though — editing writes a plain user node over the seed (an
+// "override", which persists and, for blog posts, changes the rendered post)
+// and deleting one leaves a persisted tombstone so it STAYS deleted next
+// visit. `reseed` (or the Settings danger zone) brings the originals back.
 
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 import { uses } from '~/data/uses'
@@ -15,24 +18,62 @@ import { now } from '~/data/now'
 /** A seed: file content, or null for a directory. */
 export type SeedMap = Record<string, string | null>
 
-// every seed ever applied this session, so rm can restore the original
-// after deleting an override (module scope: shared by terminal + lvOS)
+// every seed ever applied this session, so reseed can restore originals
+// (module scope: shared by terminal + lvOS)
 const SEED_REGISTRY = new Map<string, string | null>()
 
 /** The original seeded content for a path (undefined = not site content). */
 export const seedFor = (path: string): string | null | undefined => SEED_REGISTRY.get(path)
 
-/** True when the node at `path` is untouched site content (protected). */
+/** True when the node at `path` is untouched site content. */
 export const isSysPath = (files: Filesystem, path: string): boolean => files[path]?.sys === true
+
+// ---- tombstones: deleted site files stay deleted across visits ----
+const DELETED_KEY = 'lv-fs-deleted'
+let tombstones: Set<string> | null = null
+const loadTombstones = (): Set<string> => {
+  tombstones ??= new Set(storageGetJson(DELETED_KEY, isStringArray) ?? [])
+  return tombstones
+}
+const saveTombstones = () => {
+  if (tombstones) storageSetJson(DELETED_KEY, [...tombstones])
+}
+
+/** Record deliberately deleted site paths, so seeding skips them next visit. */
+export function markSeedsDeleted(paths: string[]): void {
+  const deleted = loadTombstones()
+  let changed = false
+  for (const path of paths) {
+    if (SEED_REGISTRY.has(path) && !deleted.has(path)) {
+      deleted.add(path)
+      changed = true
+    }
+  }
+  if (changed) saveTombstones()
+}
+
+/** Forget tombstones (a trash restore brought the paths back). */
+export function unmarkSeedsDeleted(paths: string[]): void {
+  const deleted = loadTombstones()
+  let changed = false
+  for (const path of paths) changed = deleted.delete(path) || changed
+  if (changed) saveTombstones()
+}
 
 /**
  * Merge seeds into the filesystem. A seed only lands where the visitor has no
- * node of their own — an existing non-sys node is an override and wins.
+ * node of their own — an existing non-sys node is an override and wins, and a
+ * tombstoned path stays deleted.
  */
-export function applySeeds(files: Filesystem, seeds: SeedMap): Filesystem {
+export function applySeeds(
+  files: Filesystem,
+  seeds: SeedMap,
+  deleted: ReadonlySet<string> = loadTombstones()
+): Filesystem {
   const next = { ...files }
   for (const [path, content] of Object.entries(seeds)) {
     SEED_REGISTRY.set(path, content)
+    if (deleted.has(path)) continue // the visitor rm'd this — respect it
     const existing = next[path]
     if (existing && !existing.sys) continue // user override wins
     next[path] = content === null
@@ -42,19 +83,37 @@ export function applySeeds(files: Filesystem, seeds: SeedMap): Filesystem {
   return next
 }
 
+/** Any site content seeded at or under `prefix` ('' = everything)? */
+export function hasSeedsUnder(prefix: string): boolean {
+  if (prefix === '') return SEED_REGISTRY.size > 0
+  for (const path of SEED_REGISTRY.keys()) {
+    if (path === prefix || path.startsWith(`${prefix}/`)) return true
+  }
+  return false
+}
+
 /**
- * What removing `path` should do: site dirs and untouched site files are
- * protected; removing an override restores the original seed underneath.
+ * Bring site content back: clears tombstones and overrides at/under `prefix`
+ * ('' = all site content) and re-applies those seeds. The visitor's own files
+ * are untouched. Returns the new map and how many nodes actually changed.
  */
-export function removalPlan(
-  files: Filesystem,
-  path: string
-): 'missing' | 'protected' | { restoreSeed: string | null } {
-  const node = files[path]
-  if (!node) return 'missing'
-  if (node.sys) return 'protected'
-  const seed = SEED_REGISTRY.get(path)
-  return { restoreSeed: typeof seed === 'string' ? seed : null }
+export function restoreSeeds(files: Filesystem, prefix = ''): { files: Filesystem, restored: number } {
+  const deleted = loadTombstones()
+  const matches = (path: string) => prefix === '' || path === prefix || path.startsWith(`${prefix}/`)
+  const next = { ...files }
+  let restored = 0
+  let stonesChanged = false
+  for (const [path, content] of SEED_REGISTRY) {
+    if (!matches(path)) continue
+    if (deleted.delete(path)) stonesChanged = true
+    const existing = next[path]
+    if (!existing || !existing.sys) restored++ // was deleted or edited
+    next[path] = content === null
+      ? { dir: true, content: '', sys: true }
+      : { dir: false, content, sys: true }
+  }
+  if (stonesChanged) saveTombstones()
+  return { files: next, restored }
 }
 
 const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -70,8 +129,11 @@ export function siteSeeds(): SeedMap {
     '',
     ...profile.socials.map((social) => `- ${social.label.toLowerCase()}: ${social.url}`),
     '',
-    '(this is a real file — edit it, rm it, the site will regrow it)'
+    `(this is a real file — edit it, rm it; 'reseed' regrows the originals)`
   ].join('\n')
+
+  // the hero terminal on the homepage runs `cat mission.txt` — keep it honest
+  seeds['mission.txt'] = 'decentralize compute, ship cool things'
 
   // ~/about — bio, skills, timeline
   seeds['about'] = null

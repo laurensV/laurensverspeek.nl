@@ -47,7 +47,6 @@
               <span v-if="entry.edited" class="files-badge" title="Edited by you — rm restores the original">edited</span>
             </button>
             <button
-              v-if="!entry.sys"
               class="files-delete"
               :aria-label="`Move ${entry.name} to the recycle bin`"
               title="Move to recycle bin"
@@ -104,7 +103,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { dirEntries, renamePath } from '~/utils/terminal/filesystem'
-import { removalPlan, isSysPath } from '~/utils/terminal/siteFs'
+import { seedFor, isSysPath, markSeedsDeleted } from '~/utils/terminal/siteFs'
 
 // lvOS file explorer over THE filesystem — the same one the terminal's
 // cd/ls/cat/vim walk, which holds the site's pages as seeded folders next to
@@ -133,21 +132,12 @@ const entryPath = (name: string) => (vfsDir.value ? `${vfsDir.value}/${name}` : 
 
 const actionError = ref('')
 
-// deleting from the explorer follows the same rules as `rm`: user files go to
-// the bin, site content is protected, deleting an edit restores the original
+// deleting from the explorer follows the same rules as `rm`: everything goes
+// to the bin, deleted site content stays deleted (reseed brings it back)
 const deleteVfsEntry = (entry: VfsEntry) => {
   const path = entryPath(entry.name)
-  const plan = removalPlan(files.value, path)
-  if (plan === 'missing') return
-  if (plan === 'protected') {
-    actionError.value = `${entry.name}: site content — edit it instead, edits do stick`
-    return
-  }
   actionError.value = ''
   trash.discard(path)
-  if (plan.restoreSeed !== null) {
-    files.value = { ...files.value, [path]: { dir: false, content: plan.restoreSeed, sys: true } }
-  }
   if (preview.value?.name === entry.name) preview.value = null
 }
 
@@ -193,7 +183,7 @@ const menuProperties = () => {
     lines: entry.dir ? null : (content ? content.split('\n').length : 0),
     path,
     perms: entry.sys
-      ? 'r--r--r--  (site content — yours to read and edit, not to rm)'
+      ? '-rw-r--r--  (site content — edit, delete, reseed at will)'
       : entry.dir ? 'drwxr-xr-x  (yours, all of it)' : '-rw-r--r--  (read, write, dream)'
   }
   fileMenu.value = null
@@ -201,11 +191,6 @@ const menuProperties = () => {
 
 const menuRename = () => {
   if (!fileMenu.value) return
-  if (fileMenu.value.entry.sys) {
-    actionError.value = `${fileMenu.value.entry.name}: site content keeps its name`
-    fileMenu.value = null
-    return
-  }
   renaming.value = fileMenu.value.entry.name
   renameValue.value = fileMenu.value.entry.name
   actionError.value = ''
@@ -214,13 +199,18 @@ const menuRename = () => {
 }
 
 const applyRename = (entry: VfsEntry) => {
-  const result = renamePath(files.value, entryPath(entry.name), renameValue.value)
+  const oldPath = entryPath(entry.name)
+  // renaming site content away counts as deleting the original paths
+  const oldPaths = Object.keys(files.value)
+    .filter((key) => key === oldPath || key.startsWith(`${oldPath}/`))
+  const result = renamePath(files.value, oldPath, renameValue.value)
   if ('error' in result) {
     actionError.value = `rename: ${result.error}`
     renaming.value = null
     return
   }
   files.value = result.files
+  markSeedsDeleted(oldPaths)
   actionError.value = ''
   renaming.value = null
 }
@@ -241,12 +231,11 @@ const vfsEntries = computed<VfsEntry[]>(() =>
     .map((entry) => {
       const path = entryPath(entry.name)
       const sys = isSysPath(files.value, path)
-      const plan = removalPlan(files.value, path)
       return {
         ...entry,
         sys,
         // a user-owned node where a seed exists is a local edit of site content
-        edited: !entry.dir && !sys && typeof plan === 'object' && plan.restoreSeed !== null
+        edited: !entry.dir && !sys && typeof seedFor(path) === 'string'
       }
     })
     .sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name))

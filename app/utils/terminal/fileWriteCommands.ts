@@ -1,13 +1,12 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { parseRedirect, resolvePath, expandFileArgs, writeFileAt, pathCandidates } from '~/utils/terminal/filesystem'
-import { removalPlan } from '~/utils/terminal/siteFs'
+import { markSeedsDeleted, restoreSeeds, hasSeedsUnder, isSysPath } from '~/utils/terminal/siteFs'
 import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
 
 // The writing half of the virtual filesystem: creating, copying, removing and
 // editing files. (The reading half — cat/ls/cd — lives in fileCommands.)
-// Site pages live here as seeded `sys` nodes: editable (the edit becomes a
-// persisted override), but rm/mv-protected; removing an override restores
-// the original underneath.
+// Site pages live here as seeded `sys` nodes — fully editable AND deletable
+// (deletions persist via tombstones); `reseed` brings the originals back.
 
 export function createFileWriteCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { out, muted, error } = ctx
@@ -56,7 +55,6 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     const node = ctx.files.value[src]
     if (!node) return error(`${cmd}: cannot stat '${srcName}': No such file or directory`)
     if (node.dir) return error(`${cmd}: omitting directory '${srcName}'`)
-    if (cmd === 'mv' && node.sys) return error(`mv: cannot move '${srcName}': site content is welded down (cp works, or just edit it)`)
     let dst = resolvePath(ctx.fsCwd.value, dstName)
     // a directory destination keeps the source's filename
     if (ctx.files.value[dst]?.dir) dst = `${dst}/${src.split('/').pop()}`
@@ -67,6 +65,8 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     ctx.files.value = cmd === 'mv'
       ? Object.fromEntries(Object.entries(withDest).filter(([key]) => key !== src))
       : withDest
+    // moving a site file away counts as deleting the original path
+    if (cmd === 'mv') markSeedsDeleted([src])
   }
 
   // globs expand to multiple sources; then the destination must be a directory
@@ -160,28 +160,38 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
         }
         const names = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args).filter((arg) => !arg.startsWith('-'))
         if (!names.length) return error('rm: missing operand')
+        let removedSiteContent = false
         for (const name of names) {
           const path = resolvePath(ctx.fsCwd.value, name)
-          const plan = removalPlan(ctx.files.value, path || '/')
-          if (!path || plan === 'missing') {
+          if (!path || !(path in ctx.files.value)) {
             error(`rm: cannot remove '${name}': No such file or directory`)
             continue
           }
-          // the site's own pages are welded down (edits, however, are welcome)
-          if (plan === 'protected') {
-            error(`rm: cannot remove '${name}': site content — edit it instead, edits do stick`)
-            continue
-          }
-          // removed things land in the recycle bin (restorable on the desktop)
+          removedSiteContent ||= isSysPath(ctx.files.value, path) || hasSeedsUnder(path)
+          // removed things land in the recycle bin (restorable on the desktop);
+          // deleted site content stays deleted — the bin or `reseed` undoes it
           trash.discard(path)
-          // deleting an edit of a site file brings the original back
-          if (plan.restoreSeed !== null) {
-            ctx.files.value = { ...ctx.files.value, [path]: { dir: false, content: plan.restoreSeed, sys: true } }
-            muted(`rm: your edit moved to the recycle bin — the original ${name} is back`)
-          }
           // if we removed the directory we're standing in, walk back to home
           if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
         }
+        if (removedSiteContent) muted(`(that was site content — 'reseed' brings the originals back)`)
+      }
+    },
+    reseed: {
+      category: 'files',
+      usage: 'reseed [path]',
+      description: `Restore the site's own files (undoes your edits and deletions)`,
+      examples: ['reseed blog/rebuilding-this-site.md', 'reseed blog', 'reseed   (restores every site file)'],
+      argCandidates: completePaths,
+      exec: (args) => {
+        const prefix = args[0] ? resolvePath(ctx.fsCwd.value, args[0]) : ''
+        if (prefix && !hasSeedsUnder(prefix)) {
+          return error(`reseed: ${args[0] ?? prefix}: not site content (only the site's own files can regrow)`)
+        }
+        const result = restoreSeeds(ctx.files.value, prefix)
+        ctx.files.value = result.files
+        if (!result.restored) return muted('reseed: everything already matches the site — nothing to do')
+        out(`reseed: restored ${result.restored} site file${result.restored === 1 ? '' : 's'}`)
       }
     },
     cp: {

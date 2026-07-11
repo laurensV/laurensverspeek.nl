@@ -1,6 +1,7 @@
 import { removeToTrash, restoreEntry, isTrashEntries } from '~/utils/trash'
 import type { TrashEntry } from '~/utils/trash'
 import type { Filesystem } from '~/utils/terminal/filesystem'
+import { markSeedsDeleted, unmarkSeedsDeleted } from '~/utils/terminal/siteFs'
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 
 const TRASH_KEY = 'lv-trash'
@@ -30,6 +31,8 @@ export function useTrash() {
     const result = removeToTrash(files.value, path, entryId++, Date.now())
     if (!result) return null
     files.value = result.files
+    // deleted site content stays deleted next visit (until a reseed)
+    markSeedsDeleted(Object.keys(result.entry.nodes))
     // newest first, and the bin only keeps so much garbage
     entries.value = [result.entry, ...entries.value].slice(0, 50)
     return result.entry
@@ -39,6 +42,7 @@ export function useTrash() {
     const entry = entries.value.find((candidate) => candidate.id === id)
     if (!entry) return
     files.value = restoreEntry(files.value, entry)
+    unmarkSeedsDeleted(Object.keys(entry.nodes))
     entries.value = entries.value.filter((candidate) => candidate.id !== id)
   }
 

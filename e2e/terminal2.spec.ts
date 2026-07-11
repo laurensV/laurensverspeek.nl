@@ -36,10 +36,16 @@ test('the site pages are real folders, and editing a blog post changes the site'
   // cat reads the actual markdown source, frontmatter and all
   await run(page, 'cat blog/rebuilding-this-site.md')
   await expect(out).toContainText('title:')
-  // site content is rm-protected...
+  // site content really deletes (with a hint), and reseed regrows it
   await run(page, 'rm about/bio.md')
-  await expect(out).toContainText('site content')
-  // ...but editable: overwrite a post, and the rendered page shows the edit
+  await expect(out).toContainText(`'reseed' brings the originals back`)
+  await run(page, 'cat about/bio.md')
+  await expect(out).toContainText('No such file or directory')
+  await run(page, 'reseed about')
+  await expect(out).toContainText('restored 1 site file')
+  await run(page, 'cat about/bio.md')
+  await expect(out).toContainText('# about')
+  // and it's editable: overwrite a post, and the rendered page shows the edit
   await run(page, 'echo # hijacked by the shell > blog/rebuilding-this-site.md')
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('lv-terminal-fs') ?? ''))
@@ -47,10 +53,10 @@ test('the site pages are real folders, and editing a blog post changes the site'
   await page.goto('/blog/rebuilding-this-site')
   await expect(page.locator('.post-edited-note')).toBeVisible()
   await expect(page.locator('.post-body')).toContainText('hijacked by the shell')
-  // rm on the edit restores the original post
+  // reseeding the post drops the edit — the page shows the original again
   await pressTerminalKey(page)
-  await run(page, 'rm blog/rebuilding-this-site.md')
-  await expect(page.locator('.terminal-output')).toContainText('the original blog/rebuilding-this-site.md is back')
+  await run(page, 'reseed blog/rebuilding-this-site.md')
+  await expect(page.locator('.terminal-output')).toContainText('restored 1 site file')
   await page.keyboard.press('Escape')
   await expect(page.locator('.post-edited-note')).toHaveCount(0)
   await expect(page.locator('.post-body')).not.toContainText('hijacked by the shell')

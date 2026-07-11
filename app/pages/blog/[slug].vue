@@ -27,7 +27,7 @@
 
           <p v-if="override" class="post-edited-note is-family-code is-size-7">
             ✎ you edited this post in the terminal — this is your copy.
-            <code>rm blog/{{ slugParam }}.md</code> brings the original back.
+            <code>reseed blog/{{ slugParam }}.md</code> brings the original back.
           </p>
 
           <div ref="bodyRef" class="content is-medium post-body">
