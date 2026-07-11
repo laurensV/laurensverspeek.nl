@@ -40,6 +40,15 @@ export const profile = {
       items: ['AI / Genetic Algorithms', 'CI/CD', 'Docker', 'Linux']
     }
   ],
+  // author-declared comfort levels (0–100), rendered as animated bars on /about
+  proficiencies: [
+    { name: 'Vue & Nuxt', level: 95 },
+    { name: 'TypeScript', level: 90 },
+    { name: 'Node.js', level: 85 },
+    { name: 'Rust & Solana', level: 80 },
+    { name: 'Docker & CI/CD', level: 78 },
+    { name: 'Python', level: 70 }
+  ] as { name: string; level: number }[],
   timeline: [
     {
       period: '2021 — now',
