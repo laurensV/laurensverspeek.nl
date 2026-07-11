@@ -185,6 +185,11 @@ watch([() => paneLines.value.length, () => gameFrame.value !== ''], async () => 
   outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
 })
 
+// a console opening onto an existing transcript starts at the bottom too
+onMounted(() => {
+  outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
+})
+
 defineExpose({ focusInput })
 </script>
 
