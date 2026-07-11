@@ -24,7 +24,6 @@ export function useDesktopShortcuts(deps: {
   openWindow: (id: string) => void
   keySnap: (win: DesktopWindow, key: ArrowKey) => void
   cycleWindows: (dir: number) => void
-  logout: () => void
 }) {
   // Alt+R toggles the run dialog
   useEventListener('keydown', (event: KeyboardEvent) => {
@@ -82,17 +81,13 @@ export function useDesktopShortcuts(deps: {
     if (event.key !== 'Escape' || event.defaultPrevented || deps.terminalOpen.value) {
       return
     }
-    // Escape first dismisses popups, only logging out when nothing is open
-    if (deps.contextMenu.open || deps.titleMenu.open || deps.startOpen.value
-      || deps.calendarOpen.value || deps.notifOpen.value || deps.runOpen.value) {
-      deps.contextMenu.open = false
-      deps.titleMenu.open = false
-      deps.startOpen.value = false
-      deps.calendarOpen.value = false
-      deps.notifOpen.value = false
-      deps.runOpen.value = false
-      return
-    }
-    deps.logout()
+    // Escape dismisses popups and nothing more — logging out is a start-menu
+    // decision, not a keystroke accident
+    deps.contextMenu.open = false
+    deps.titleMenu.open = false
+    deps.startOpen.value = false
+    deps.calendarOpen.value = false
+    deps.notifOpen.value = false
+    deps.runOpen.value = false
   })
 }

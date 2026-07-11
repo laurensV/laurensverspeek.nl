@@ -7,7 +7,7 @@
       :class="{ 'is-powering-off': poweringOff }"
       :style="wallpaperStyle"
       role="application"
-      aria-label="lvOS desktop — press Escape to log out"
+      aria-label="lvOS desktop — log out from the start menu"
       @contextmenu.prevent="openContextMenu"
       @click="contextMenu.open = false; titleMenu.open = false"
     >
@@ -500,8 +500,7 @@ useDesktopShortcuts({
   windows,
   openWindow,
   keySnap,
-  cycleWindows,
-  logout
+  cycleWindows
 })
 </script>
 

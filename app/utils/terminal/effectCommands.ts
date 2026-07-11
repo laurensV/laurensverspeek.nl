@@ -251,7 +251,7 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
       description: 'Boot the lvOS desktop environment',
       exec: () => {
         push('primary', 'Booting lvOS 2.0 ...')
-        muted('Tip: Esc or the start menu logs you out again.')
+        muted('Tip: the start menu logs you out again.')
         ctx.navigate('desktop')
       }
     },

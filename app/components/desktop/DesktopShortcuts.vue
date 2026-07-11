@@ -24,7 +24,7 @@ const ROWS = [
   { keys: ['dbl-click'], label: 'maximize / restore a window (title bar)' },
   { keys: ['right-click', 'title'], label: 'window menu: pin, minimize, close' },
   { keys: ['right-click', 'desktop'], label: 'new terminal · change wallpaper' },
-  { keys: ['esc'], label: 'dismiss a menu, or log out' },
+  { keys: ['esc'], label: 'dismiss menus and popups' },
   { keys: ['?'], label: 'this cheat sheet' }
 ]
 </script>
