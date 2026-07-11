@@ -14,6 +14,9 @@
       <!-- live wallpaper: a dim Game of Life behind everything -->
       <LazyDesktopLifeWallpaper v-if="wallpapers[wallpaper]?.live" />
 
+      <!-- night-light warm wash (Displays app); over everything, click-through -->
+      <div v-if="nightLight.overlayOpacity.value" class="lvos-nightlight" :style="{ opacity: nightLight.overlayOpacity.value }" />
+
       <!-- right-click context menu -->
       <DesktopContextMenu
         v-if="contextMenu.open"
@@ -189,7 +192,9 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   gallery: defineAsyncComponent(() => import('~/components/desktop/DesktopGallery.vue')),
   trash: defineAsyncComponent(() => import('~/components/desktop/DesktopTrash.vue')),
   mail: defineAsyncComponent(() => import('~/components/desktop/DesktopMail.vue')),
-  scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue'))
+  scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue')),
+  sysmon: defineAsyncComponent(() => import('~/components/desktop/DesktopSysMon.vue')),
+  displays: defineAsyncComponent(() => import('~/components/desktop/DesktopDisplays.vue'))
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
@@ -270,6 +275,8 @@ const openContextMenu = (event: MouseEvent) => {
 
 // ---- wallpaper (persisted for the session) ----
 const { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper: nextWallpaper } = useWallpaper()
+// night-light warm wash, toggled from the Displays app
+const nightLight = useNightLight()
 const cycleWallpaper = () => notify('🖼', 'Wallpaper changed', nextWallpaper())
 
 // right-click menu on a window titlebar
@@ -444,6 +451,17 @@ useDesktopShortcuts({
       hsl(var(--lv-scheme-hs), 8%),
       hsl(var(--bulma-scheme-h), 40%, 4%)
     );
+}
+
+// night light: a warm amber wash over the whole desktop, click-through
+.lvos-nightlight {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+  background: linear-gradient(160deg, #ff8c1a, #ff5e1a);
+  mix-blend-mode: multiply;
+  transition: opacity 0.4s ease;
 }
 
 // titlebar right-click menu (same look as the desktop context menu)
