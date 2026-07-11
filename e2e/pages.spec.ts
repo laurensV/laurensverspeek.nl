@@ -774,3 +774,25 @@ test('the about timeline draws itself with scroll-driven animations', async ({ p
   await page.locator('.gitlog-entry').last().scrollIntoViewIfNeeded()
   await expect.poll(scaleOf).toBeGreaterThan(0.9)
 })
+
+test('the private-preview gate curtains the site until the famous password', async ({ browser }) => {
+  // a fresh context without the suite's pre-opened gate
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  const page = await context.newPage()
+  await page.goto('/')
+  const gate = page.locator('.gate')
+  await expect(gate).toBeVisible()
+  await expect(gate).toContainText('private preview')
+  await page.fill('#gate-password', 'wrong')
+  await page.keyboard.press('Enter')
+  await expect(gate).toContainText('access denied')
+  await page.fill('#gate-password', 'hunter2')
+  await page.keyboard.press('Enter')
+  await expect(gate).toHaveCount(0)
+  await expect(page.locator('.hero-name')).toBeVisible()
+  // and it stays open on reload
+  await page.reload()
+  await expect(page.locator('.hero-name')).toBeVisible()
+  await expect(page.locator('.gate')).toHaveCount(0)
+  await context.close()
+})
