@@ -19,7 +19,8 @@
         >{{ size }}px</button>
       </div>
       <button class="paint-clear" @click="clear">[clear]</button>
-      <button class="paint-wallpaper" @click="hangOnWall">{{ wallLabel }}</button>
+      <button class="paint-wallpaper paint-gallery" @click="saveToGallery">{{ galleryLabel }}</button>
+      <button class="paint-wallpaper paint-hang" @click="hangOnWall">{{ wallLabel }}</button>
     </div>
     <canvas
       ref="canvasRef"
@@ -31,12 +32,15 @@
       @pointerup="endStroke"
       @pointerleave="endStroke"
     />
-    <p class="paint-note">lvpaint.exe — masterpieces are lost on close, screenshot responsibly</p>
+    <p class="paint-note">lvpaint.exe — save masterpieces to the gallery before closing</p>
   </div>
 </template>
 
 <script setup lang="ts">
-// Tiny paint app: pointer strokes on a canvas, nothing more, nothing less.
+// Tiny paint app: pointer strokes on a canvas. Drawings can hang as the
+// wallpaper or land in the Gallery (same shelf the screenshot tool fills).
+
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 
 const COLORS = ['#ffba00', '#f5f5f5', '#f14668', '#3ec46d', '#3e8ed0', '#111111']
 
@@ -85,14 +89,11 @@ const clear = () => {
   canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-// export the drawing (over the desktop's dark tone, since the canvas itself is
-// transparent) and hang it as the lvOS wallpaper
-const { setCustomWallpaper } = useWallpaper()
-const wallLabel = ref('[set as wallpaper]')
-let wallTimer: ReturnType<typeof setTimeout> | undefined
-const hangOnWall = () => {
+// export the drawing over the desktop's dark tone (the canvas itself is
+// transparent) — shared by the wallpaper and gallery buttons
+const exportDrawing = (): string | null => {
   const canvas = canvasRef.value
-  if (!canvas) return
+  if (!canvas) return null
   const framed = document.createElement('canvas')
   framed.width = canvas.width
   framed.height = canvas.height
@@ -100,12 +101,38 @@ const hangOnWall = () => {
   ctx.fillStyle = '#101014'
   ctx.fillRect(0, 0, framed.width, framed.height)
   ctx.drawImage(canvas, 0, 0)
-  const hung = setCustomWallpaper(framed.toDataURL('image/png'))
+  return framed.toDataURL('image/png')
+}
+
+const { setCustomWallpaper } = useWallpaper()
+const wallLabel = ref('[set as wallpaper]')
+let wallTimer: ReturnType<typeof setTimeout> | undefined
+const hangOnWall = () => {
+  const drawing = exportDrawing()
+  if (!drawing) return
+  const hung = setCustomWallpaper(drawing)
   wallLabel.value = hung ? '[hung on the wall ✓]' : '[storage said no]'
   clearTimeout(wallTimer)
   wallTimer = setTimeout(() => (wallLabel.value = '[set as wallpaper]'), 2500)
 }
-onUnmounted(() => clearTimeout(wallTimer))
+
+// the Gallery browses 'lvos-shots' — screenshots and masterpieces alike
+const galleryLabel = ref('[save to gallery]')
+let galleryTimer: ReturnType<typeof setTimeout> | undefined
+const saveToGallery = () => {
+  const drawing = exportDrawing()
+  if (!drawing) return
+  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
+  const saved = storageSetJson('lvos-shots', [drawing, ...existing].slice(0, 6))
+  galleryLabel.value = saved ? '[in the gallery ✓]' : '[storage said no]'
+  clearTimeout(galleryTimer)
+  galleryTimer = setTimeout(() => (galleryLabel.value = '[save to gallery]'), 2500)
+}
+
+onUnmounted(() => {
+  clearTimeout(wallTimer)
+  clearTimeout(galleryTimer)
+})
 </script>
 
 <style scoped lang="scss">

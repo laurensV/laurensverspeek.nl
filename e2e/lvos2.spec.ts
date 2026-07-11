@@ -72,11 +72,15 @@ test('a paint drawing can hang as the desktop wallpaper', async ({ page }) => {
   await page.mouse.down()
   await page.mouse.move(box.x + 160, box.y + 120, { steps: 5 })
   await page.mouse.up()
-  await page.click('.paint-wallpaper')
-  await expect(page.locator('.paint-wallpaper')).toContainText('hung on the wall')
+  await page.click('.paint-hang')
+  await expect(page.locator('.paint-hang')).toContainText('hung on the wall')
   await expect.poll(async () =>
     page.locator('.lvos').evaluate((el) => getComputedStyle(el).backgroundImage)
   ).toContain('data:image/png')
+  // and the same drawing can land on the gallery's shelf
+  await page.click('.paint-gallery')
+  await expect(page.locator('.paint-gallery')).toContainText('in the gallery')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lvos-shots') ?? '')).toContain('data:image/png')
 })
 
 test('rm moves files to the recycle bin, which restores or empties them', async ({ page }) => {
