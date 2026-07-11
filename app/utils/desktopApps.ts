@@ -41,7 +41,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'snake', title: 'snake', label: 'snake', icon: 'zap' },
   { id: 'gallery', title: 'image viewer', label: 'gallery', icon: 'sun' },
   { id: 'taskmgr', title: 'task manager', label: 'taskmgr', icon: 'cpu' },
-  { id: 'trash', title: 'recycle bin', label: 'recycle bin', icon: 'box' },
+  { id: 'trash', title: 'recycle bin', label: 'recycle bin', icon: 'trash' },
   { id: 'mail', title: 'mail — inbox', label: 'mail', icon: 'mail', wide: true },
   { id: 'rss', title: 'feed reader', label: 'rss', icon: 'sparkles', wide: true },
   { id: 'scores', title: 'hall of fame', label: 'scores', icon: 'zap' },
