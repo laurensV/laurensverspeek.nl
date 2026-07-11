@@ -1,1 +1,0 @@
-import{_ as o,g as s,h as r,P as n}from"./p0IUVLag.js";const t={};function c(e,a){return s(),r("code",null,[n(e.$slots,"default")])}const l=Object.assign(o(t,[["render",c]]),{__name:"ProseCode"});export{l as default};
