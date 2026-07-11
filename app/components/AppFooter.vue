@@ -27,6 +27,7 @@
         </button>
         · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
         · <NuxtLink to="/keyboard" class="build-shortcuts">shortcuts</NuxtLink>
+        · <NuxtLink to="/til" class="build-til">til</NuxtLink>
       </p>
       <RetroHitCounter />
     </div>
@@ -98,7 +99,8 @@ const showBuild = () => {
     }
 
     .build-changelog,
-    .build-shortcuts {
+    .build-shortcuts,
+    .build-til {
       color: inherit;
 
       &:hover,

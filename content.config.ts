@@ -13,6 +13,17 @@ export default defineContentConfig({
         // the terminal's virtual filesystem serves posts as real .md files
         rawbody: z.string().optional()
       })
+    }),
+    // "Today I Learned": short micro-posts, rendered inline on /til (no detail
+    // pages). Lower ceremony than a blog post — a title, a date, a few lines.
+    til: defineCollection({
+      type: 'page',
+      source: 'til/*.md',
+      schema: z.object({
+        title: z.string(),
+        date: z.string(),
+        tags: z.array(z.string()).optional()
+      })
     })
   }
 })
