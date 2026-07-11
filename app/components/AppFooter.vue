@@ -26,7 +26,7 @@
           {{ config.public.buildHash }}
         </button>
         · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
-        · <NuxtLink to="/keyboard" class="build-changelog">shortcuts</NuxtLink>
+        · <NuxtLink to="/keyboard" class="build-shortcuts">shortcuts</NuxtLink>
       </p>
       <RetroHitCounter />
     </div>
@@ -97,7 +97,8 @@ const showBuild = () => {
       }
     }
 
-    .build-changelog {
+    .build-changelog,
+    .build-shortcuts {
       color: inherit;
 
       &:hover,
