@@ -63,20 +63,34 @@ let lastShot = 0
 let touchSteer: { id: number, startX: number, startY: number, moved: boolean } | null = null
 let touchPoint = { x: 0, y: 0 }
 
-// something worth shooting: visible, not our overlay, not a page-sized container
-const findTarget = (x: number, y: number): HTMLElement | null => {
-  const viewportArea = window.innerWidth * window.innerHeight
-  for (const el of document.elementsFromPoint(x, y)) {
-    if (!(el instanceof HTMLElement)) continue
-    if (el.closest('.destroyer')) continue
-    if (['HTML', 'BODY', 'MAIN', 'SECTION', 'NAV', 'FOOTER'].includes(el.tagName)) continue
-    if (el.classList.contains('site-shell') || el.classList.contains('site-content') || el.classList.contains('container')) continue
-    const rect = el.getBoundingClientRect()
-    if (rect.width * rect.height > viewportArea * 0.5) continue
-    if (rect.width < 4 || rect.height < 4) continue
-    return el
+// does this element still have visible element children? a container is only
+// destroyable once its children are cleared — so you dismantle inner-to-outer
+const hasVisibleChildren = (el: HTMLElement): boolean => {
+  for (const child of el.children) {
+    if (!(child instanceof HTMLElement)) continue
+    if (child.style.visibility === 'hidden') continue
+    if (child.closest('.destroyer')) continue
+    const rect = child.getBoundingClientRect()
+    if (rect.width >= 2 && rect.height >= 2) return true
   }
-  return null
+  return false
+}
+
+// something worth shooting under (x, y): the single topmost element (a cheap
+// elementFromPoint, since the overlay is pointer-transparent), but ONLY when
+// it's a leaf — a big parent full of children survives until they're gone, so
+// bullets chew through the small/nested bits first.
+const findTarget = (x: number, y: number): HTMLElement | null => {
+  const el = document.elementFromPoint(x, y)
+  if (!(el instanceof HTMLElement)) return null
+  if (el.closest('.destroyer')) return null
+  if (['HTML', 'BODY', 'MAIN', 'SECTION', 'NAV', 'FOOTER'].includes(el.tagName)) return null
+  if (el.classList.contains('site-shell') || el.classList.contains('site-content') || el.classList.contains('container')) return null
+  const rect = el.getBoundingClientRect()
+  if (rect.width * rect.height > window.innerWidth * window.innerHeight * 0.5) return null
+  if (rect.width < 4 || rect.height < 4) return null
+  if (hasVisibleChildren(el)) return null // clear the inner elements first
+  return el
 }
 
 const explode = (rect: DOMRect) => {
@@ -333,6 +347,15 @@ useEventListener('keyup', (event: KeyboardEvent) => {
   if (key === ' ' || key === 'spacebar') firing = false
   else held.delete(key)
 })
+// the overlay is pointer-transparent (so hit-testing is cheap), so swallow page
+// clicks in the capture phase — a shot must never also follow a link
+useEventListener(window, 'click', (event: MouseEvent) => {
+  const target = event.target
+  if (target instanceof HTMLElement && target.closest('.destroyer-hud')) return
+  event.preventDefault()
+  event.stopPropagation()
+}, { capture: true })
+
 // while the ship flies, it owns the scroll — wheel and touch are grounded
 useEventListener(window, 'wheel', (event: Event) => event.preventDefault(), { passive: false })
 useEventListener(window, 'touchmove', (event: Event) => event.preventDefault(), { passive: false })
@@ -354,6 +377,14 @@ onUnmounted(() => {
   inset: 0;
   z-index: 300;
   cursor: crosshair;
+  // pointer-transparent so elementFromPoint reaches the page beneath (cheap
+  // hit-testing); shooting + page-click suppression run on window listeners
+  pointer-events: none;
+
+  // only the HUD is interactive
+  .destroyer-hud {
+    pointer-events: auto;
+  }
 }
 
 .destroyer-fx {
