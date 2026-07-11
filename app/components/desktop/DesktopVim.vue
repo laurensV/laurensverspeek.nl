@@ -12,7 +12,7 @@
       <span class="vim-mode" :class="`is-${mode}`">
         {{ mode === 'insert' ? '-- INSERT --' : mode === 'command' ? `:${command}` : 'NORMAL' }}
       </span>
-      <span class="vim-file">~/notes.txt {{ dirty ? '[+]' : '' }}</span>
+      <span class="vim-file">~/{{ path }} {{ dirty ? '[+]' : '' }}</span>
       <span class="vim-hint">{{ hint }}</span>
     </div>
   </div>
@@ -20,15 +20,16 @@
 
 <script setup lang="ts">
 // A lovingly reduced vim: i/a/o insert, hjkl motion, x delete, :w :q :wq.
+// It edits any file in the shared home filesystem — the Files app's
+// "edit in vim" hands it a path; without one it opens the classic notes.txt.
 // The one thing it does better than real vim: you already know how to quit.
 
 import { storageGet, storageRemove } from '~/utils/safeStorage'
 import { writeFileAt } from '~/utils/terminal/filesystem'
 
+const props = defineProps<{ openPath?: string | null }>()
 const emit = defineEmits<{ close: [] }>()
 
-// notes.txt lives in the shared home filesystem — the terminal's `vim
-// notes.txt` / `cat notes.txt` and the Files app all see the same bytes
 const LEGACY_KEY = 'lvos-vim-buffer'
 const { files } = useTerminal()
 const DEFAULT_BUFFER = `# notes.txt
@@ -43,8 +44,10 @@ todo:
 (psst: you can actually edit this file — press i)
 (it saves with :w and remembers your changes)`
 
-const buffer = ref(DEFAULT_BUFFER)
-const savedBuffer = ref(DEFAULT_BUFFER)
+const path = computed(() => props.openPath ?? 'notes.txt')
+
+const buffer = ref('')
+const savedBuffer = ref('')
 const mode = ref<'normal' | 'insert' | 'command'>('normal')
 const command = ref('')
 const hint = ref(`:q quits — you know this one`)
@@ -52,31 +55,43 @@ const bufferRef = ref<HTMLTextAreaElement>()
 
 const dirty = computed(() => buffer.value !== savedBuffer.value)
 
+const loadFile = () => {
+  const fallback = path.value === 'notes.txt' ? DEFAULT_BUFFER : ''
+  const saved = files.value[path.value]?.content
+  buffer.value = saved ?? fallback
+  savedBuffer.value = buffer.value
+  mode.value = 'normal'
+}
+
+// switching files through the Files app reloads the buffer
+watch(path, () => {
+  loadFile()
+  hint.value = `"~/${path.value}" opened`
+})
+
 onMounted(() => {
-  // prefer the shared filesystem; migrate a pre-unification buffer once
+  // migrate a pre-unification notes buffer once, then load whatever we edit
   const legacy = storageGet(LEGACY_KEY)
-  const saved = files.value['notes.txt']?.content ?? legacy
-  if (saved) {
-    buffer.value = saved
-    savedBuffer.value = saved
-    if (legacy !== null && !files.value['notes.txt']) {
+  if (legacy !== null) {
+    if (!files.value['notes.txt']) {
       const written = writeFileAt(files.value, '', 'notes.txt', legacy)
       if (!('error' in written)) files.value = written.files
     }
+    storageRemove(LEGACY_KEY)
   }
-  if (legacy !== null) storageRemove(LEGACY_KEY)
+  loadFile()
   bufferRef.value?.focus()
 })
 
 const write = () => {
-  const written = writeFileAt(files.value, '', 'notes.txt', buffer.value)
+  const written = writeFileAt(files.value, '', path.value, buffer.value)
   if ('error' in written) {
     hint.value = 'E212: cannot open file for writing'
     return
   }
   files.value = written.files
   savedBuffer.value = buffer.value
-  hint.value = `"~/notes.txt" ${buffer.value.split('\n').length}L written`
+  hint.value = `"~/${path.value}" ${buffer.value.split('\n').length}L written`
 }
 
 const runCommand = () => {

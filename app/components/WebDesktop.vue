@@ -99,9 +99,10 @@
           v-else-if="win.id === 'files'"
           @window="openWindow"
           @post="openBlogPost"
+          @edit="openVim"
         />
         <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
-        <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
+        <LazyDesktopVim v-else-if="win.id === 'vim'" :open-path="vimOpenPath" @close="closeWindow('vim')" />
         <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" />
         <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
         <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
@@ -332,6 +333,13 @@ const terminalActive = computed(() => {
 
 // which post the blog reader should show (set by the file explorer)
 const blogOpenPath = ref<string | null>(null)
+
+// which file vim edits (set by the file explorer's "edit in vim")
+const vimOpenPath = ref<string | null>(null)
+const openVim = (path: string) => {
+  vimOpenPath.value = path
+  openWindow('vim')
+}
 
 const openBlogPost = (path: string) => {
   blogOpenPath.value = path

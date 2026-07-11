@@ -68,6 +68,7 @@
       :style="{ left: `${fileMenu.x}px`, top: `${fileMenu.y}px` }"
     >
       <button @click="menuOpenEntry">open</button>
+      <button v-if="fileMenu && !fileMenu.entry.dir" @click="menuEdit">edit in vim</button>
       <button @click="menuRename">rename</button>
       <button @click="menuProperties">properties</button>
       <button class="is-danger" @click="menuDelete">move to bin</button>
@@ -113,6 +114,8 @@ import { seedFor, isSysPath, markSeedsDeleted } from '~/utils/terminal/siteFs'
 const emit = defineEmits<{
   window: [id: string]
   post: [path: string]
+  /** Open a file in the vim window */
+  edit: [path: string]
 }>()
 
 const SIDEBAR = [
@@ -161,6 +164,12 @@ useEventListener('click', () => (fileMenu.value = null))
 
 const menuOpenEntry = () => {
   if (fileMenu.value) openVfsEntry(fileMenu.value.entry)
+  fileMenu.value = null
+}
+const menuEdit = () => {
+  if (fileMenu.value && !fileMenu.value.entry.dir) {
+    emit('edit', entryPath(fileMenu.value.entry.name))
+  }
   fileMenu.value = null
 }
 const menuDelete = () => {
@@ -248,11 +257,12 @@ const openVfsEntry = (entry: VfsEntry) => {
     preview.value = null
     return
   }
-  // blog posts open in the reader app; the resume opens the PDF viewer
+  // blog posts open in the reader app; the resume opens the PDF viewer;
+  // right-click → "edit in vim" works on any of them
   const post = /^blog\/(.+)\.md$/.exec(path)
   if (post) return emit('post', `/blog/${post[1]}`)
   if (path.endsWith('.pdf')) return emit('window', 'cv')
-  if (path === 'notes.txt') return emit('window', 'vim')
+  if (path === 'notes.txt') return emit('edit', path)
   preview.value = { name: entry.name, content: files.value[path]?.content ?? '' }
 }
 </script>
