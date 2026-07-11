@@ -1,0 +1,1 @@
+import{_ as s,g as r,h as t,S as n}from"./CJmp-A8P.js";const o={};function a(e,c){return r(),t("td",null,[n(e.$slots,"default")])}const l=Object.assign(s(o,[["render",a]]),{__name:"ProseTd"});export{l as default};
