@@ -56,8 +56,11 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     if (!node) return error(`${cmd}: cannot stat '${srcName}': No such file or directory`)
     if (node.dir) return error(`${cmd}: omitting directory '${srcName}'`)
     let dst = resolvePath(ctx.fsCwd.value, dstName)
-    // a directory destination keeps the source's filename
-    if (ctx.files.value[dst]?.dir) dst = `${dst}/${src.split('/').pop()}`
+    const base = src.split('/').pop()
+    // a directory destination keeps the source's filename — including the home
+    // root (`~`, `.`, `/`), which resolves to '' and holds files too
+    if (ctx.files.value[dst]?.dir) dst = `${dst}/${base}`
+    else if (!dst) dst = base ?? ''
     if (!dst) return error(`${cmd}: cannot write to the home directory`)
     if (src === dst) return
     if (!parentExists(dst)) return error(`${cmd}: cannot create '${dstName}': No such file or directory`)
@@ -154,8 +157,9 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       argCandidates: completePaths,
       exec: (args) => {
         const rawName = args.find((arg) => !arg.startsWith('-'))
-        // keep the classic joke for the classic mistake (checked pre-expansion)
-        if (args.join(' ').includes('-rf') && /^[~/*]/.test(rawName ?? '')) {
+        // keep the classic joke for the classic mistake — but only for the
+        // whole-site targets (`~`, `/`, `*`), not legit `rm -rf ~/notes`/`*.txt`
+        if (args.join(' ').includes('-rf') && ['~', '/', '*'].includes(rawName ?? '')) {
           return error('Nice try. I only just finished this website.')
         }
         const names = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args).filter((arg) => !arg.startsWith('-'))
