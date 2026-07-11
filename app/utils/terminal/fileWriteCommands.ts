@@ -157,10 +157,14 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       argCandidates: completePaths,
       exec: (args) => {
         const rawName = args.find((arg) => !arg.startsWith('-'))
-        // keep the classic joke for the classic mistake — but only for the
-        // whole-site targets (`~`, `/`, `*`), not legit `rm -rf ~/notes`/`*.txt`
-        if (args.join(' ').includes('-rf') && ['~', '/', '*'].includes(rawName ?? '')) {
-          return error('Nice try. I only just finished this website.')
+        // keep the classic joke for the classic mistake — a whole-site wipe
+        // (`/`, `~`, `*`, `/*`, `~/*`), but NOT legit `rm -rf ~/notes`/`*.txt`.
+        // strip trailing slashes/globs: what's left of a wipe is '' or '~'
+        if (rawName !== undefined && args.join(' ').includes('-rf')) {
+          const root = rawName.replace(/[/*]+$/, '')
+          if (root === '' || root === '~') {
+            return error('Nice try. I only just finished this website.')
+          }
         }
         const names = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args).filter((arg) => !arg.startsWith('-'))
         if (!names.length) return error('rm: missing operand')
