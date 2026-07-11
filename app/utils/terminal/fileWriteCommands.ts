@@ -94,10 +94,10 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       exec: (args) => {
         const { text, file } = parseRedirect(args)
         if (file) {
-          const path = resolvePath(ctx.fsCwd.value, file)
-          if (!path) return error('echo: cannot write to the home directory')
-          if (!parentExists(path)) return error(`echo: ${file}: No such file or directory`)
-          ctx.files.value = { ...ctx.files.value, [path]: { dir: false, content: text } }
+          // writeFileAt owns all the guards (missing parent, directory target)
+          const written = writeFileAt(ctx.files.value, ctx.fsCwd.value, file, text)
+          if ('error' in written) return error(`echo: ${written.error}`)
+          ctx.files.value = written.files
           return
         }
         out(text)
