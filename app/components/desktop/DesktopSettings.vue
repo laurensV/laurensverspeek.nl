@@ -122,9 +122,9 @@ const applyName = () => {
 const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
 const windowCount = computed(() => windows.value.length)
 
+// the rabbit hole opens right here — the desktop layout renders the rain
 const enterMatrix = () => {
   matrixActive.value = true
-  void navigateTo('/')
 }
 
 // ---- danger zone ----
