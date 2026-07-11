@@ -13,10 +13,12 @@ export interface RunPlan {
   expanded: boolean
   name: string
   args: string[]
-  /** Pipe filter stages (grep/head/…), excluding a trailing `copy` */
+  /** Pipe filter stages (grep/head/…), excluding a trailing `copy`/`less` */
   pipeStages: string[]
   /** True when the final pipe stage was `copy` (send to clipboard) */
   toClipboard: boolean
+  /** True when the final pipe stage was `less`/`more` (page the output) */
+  toPager: boolean
   /** Redirect target file, or null */
   redirectFile: string | null
   append: boolean
@@ -34,14 +36,17 @@ export function planRun(
   const { command: cmdLine, file: redirectFile, append } = splitOutputRedirect(withEnv)
   const { name, args, pipeStages } = parseCommandLine(cmdLine, ctx.aliases)
 
-  const toClipboard = pipeStages.at(-1)?.trim() === 'copy'
+  const last = pipeStages.at(-1)?.trim()
+  const toClipboard = last === 'copy'
+  const toPager = last === 'less' || last === 'more'
   return {
     commandLine,
     expanded: expansion.changed,
     name,
     args,
-    pipeStages: toClipboard ? pipeStages.slice(0, -1) : pipeStages,
+    pipeStages: toClipboard || toPager ? pipeStages.slice(0, -1) : pipeStages,
     toClipboard,
+    toPager,
     redirectFile,
     append
   }

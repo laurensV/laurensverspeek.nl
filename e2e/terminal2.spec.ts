@@ -526,3 +526,18 @@ test('tips deals a random usage tip', async ({ page }) => {
   await run(page, 'tips')
   await expect(page.locator('.terminal-output')).toContainText('💡')
 })
+
+test('| less pages long output and q quits the pager', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'help | less')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toContainText('less —')
+  await expect(frame).toContainText('q quit')
+  // j scrolls; the position indicator advances
+  const before = await frame.textContent()
+  await page.keyboard.press('j')
+  await expect.poll(async () => (await frame.textContent()) !== before).toBe(true)
+  // q closes the pager
+  await page.keyboard.press('q')
+  await expect(frame).toHaveCount(0)
+})

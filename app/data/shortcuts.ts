@@ -32,7 +32,8 @@ export const siteShortcuts: ShortcutGroup[] = [
       { keys: ['tab'], label: 'autocomplete commands & arguments' },
       { keys: ['ctrl', 'r'], label: 'reverse history search' },
       { keys: ['ctrl', 'l'], label: 'clear the screen' },
-      { keys: ['|', 'grep'], label: 'pipe output through grep / head / tail / wc' }
+      { keys: ['|', 'grep'], label: 'pipe output through grep / head / tail / wc' },
+      { keys: ['|', 'less'], label: 'page long output (j/k scroll, / search, q quit)' }
     ]
   },
   {

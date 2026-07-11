@@ -22,6 +22,15 @@ describe('planRun', () => {
     expect(plan.toClipboard).toBe(true)
   })
 
+  it('routes a trailing | less / | more to the pager', () => {
+    const lessPlan = planRun('help | grep blog | less', base)
+    if ('error' in lessPlan) throw new Error('unexpected error')
+    expect(lessPlan.pipeStages).toEqual(['grep blog'])
+    expect(lessPlan.toPager).toBe(true)
+    expect(lessPlan.toClipboard).toBe(false)
+    expect(planRun('help | more', base)).toMatchObject({ toPager: true })
+  })
+
   it('captures output redirection', () => {
     const plan = planRun('echo hi > a.txt', base)
     expect(plan).toMatchObject({ redirectFile: 'a.txt', append: false })

@@ -6,6 +6,7 @@ import { createFunCommands } from '~/utils/terminal/funCommands'
 import { applyFilter, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
 import { nearestCommand } from '~/utils/terminal/nearestCommand'
+import { createPager } from '~/utils/terminal/pager'
 import { escapeHtml } from '~/utils/escapeHtml'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
@@ -314,7 +315,7 @@ export function useTerminal() {
       error(plan.error)
       return false
     }
-    const { commandLine, expanded, name, args, pipeStages, toClipboard, redirectFile, append } = plan
+    const { commandLine, expanded, name, args, pipeStages, toClipboard, toPager, redirectFile, append } = plan
     if (expanded) muted(commandLine) // echo what actually runs
     if (record) {
       history.value.push(commandLine)
@@ -332,7 +333,7 @@ export function useTerminal() {
     trackEvent(analyticsEvents.terminalCommand(name))
     reflectTitle(name.toLowerCase())
 
-    if (!pipeStages.length && !redirectFile && !toClipboard) {
+    if (!pipeStages.length && !redirectFile && !toClipboard && !toPager) {
       const outcome = command.exec(args)
       if (outcome instanceof Promise) return outcome.then(() => !runFailed)
       return !runFailed
@@ -369,6 +370,13 @@ export function useTerminal() {
         )
         if ('error' in written) return error(`lvsh: ${written.error}`)
         ctx.files.value = written.files
+        return
+      }
+      if (toPager) {
+        // page the output in a less-style takeover instead of dumping it
+        const textLines = result.flatMap((line) => stripHtml(line.text).split('\n'))
+        if (!textLines.length) return muted('(no output)')
+        startGame((callbacks) => createPager(textLines, callbacks), 'less')
         return
       }
       if (!result.length) muted('(no output)')
