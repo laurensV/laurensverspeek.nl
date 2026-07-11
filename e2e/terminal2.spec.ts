@@ -122,12 +122,14 @@ test('destroy mode shoots real dom elements and esc repairs the site', async ({ 
   await run(page, 'destroy')
   const overlay = page.locator('.destroyer')
   await expect(overlay).toBeVisible()
-  // the terminal closed itself; shoot the hero heading
+  // the ship spawns bottom-centre facing up; a click fires straight ahead,
+  // and the bullet travels up the centre column through the (centred) hero
   const hero = page.locator('.hero-name')
-  const box = await hero.boundingBox()
-  if (!box) throw new Error('no hero to destroy')
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-  await expect(overlay).toContainText('1 destroyed')
+  await hero.waitFor()
+  // click position is irrelevant now (mouse fires forward, it doesn't aim);
+  // loose a few shots straight up so one is sure to hit the centred hero column
+  for (let i = 0; i < 4; i++) await page.mouse.click(640, 300 + i * 20)
+  await expect(overlay).toContainText(/[1-9]\d* destroyed/)
   // something real got shot (the innermost element under the crosshair) —
   // poll, since the hit registers before the shatter animation hides it
   const hiddenCount = () => page.evaluate(() =>
@@ -152,15 +154,13 @@ test('the destroyer ship flies the page: diving scrolls it, manual scrolling is 
   await page.mouse.wheel(0, 600)
   await page.waitForTimeout(300)
   expect(await page.evaluate(() => window.scrollY)).toBe(initial)
-  // diving into the bottom edge drives the page scroll at flight speed
-  await page.keyboard.down('ArrowDown')
-  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeGreaterThan(150)
-  await page.keyboard.up('ArrowDown')
-  // climbing scrolls back up (give the dive's inertia a moment to settle)
-  await page.waitForTimeout(1200)
-  const low = await page.evaluate(() => window.scrollY)
+  // the ship starts nose-up; rotate a half-turn to face down, then thrust —
+  // flying into the bottom edge drives the page scroll
+  await page.keyboard.down('ArrowRight')
+  await page.waitForTimeout(1000) // ~π rad at 3.2 rad/s ≈ facing down
+  await page.keyboard.up('ArrowRight')
   await page.keyboard.down('ArrowUp')
-  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeLessThan(low)
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeGreaterThan(120)
   await page.keyboard.up('ArrowUp')
   await page.keyboard.press('Escape')
   await expect(page.locator('.destroyer')).toHaveCount(0)

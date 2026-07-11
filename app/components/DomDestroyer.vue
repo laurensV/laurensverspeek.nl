@@ -3,7 +3,7 @@
     <canvas ref="fxRef" class="destroyer-fx" aria-hidden="true" />
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
-      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> or drag to fly (the page scrolls with you) · click/tap fires · <kbd>esc</kbd> ends &amp; repairs</span>
+      <span class="destroyer-hint"><kbd>↑</kbd>/<kbd>w</kbd> thrust · <kbd>←</kbd><kbd>→</kbd> rotate · <kbd>space</kbd> fires · <kbd>esc</kbd> ends &amp; repairs</span>
       <button class="destroyer-exit" aria-label="End destroy mode and repair the site" title="End & repair" @click="endMode">✕</button>
     </div>
   </div>
@@ -12,9 +12,11 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 
-// Destroy mode: a little ship flies around (thrust + inertia, like the
-// asteroids gods intended) and shoots the actual page to pieces. Everything
-// it destroys is only visibility:hidden, so ending the mode repairs the site.
+// Destroy mode: an Asteroids-style ship — rotate with ←→, thrust forward with
+// ↑, fire with space — flies the page and shoots the actual DOM to pieces.
+// Momentum is heavy (slow to speed up, slow to shed), so you commit to a
+// heading rather than snapping between directions. Everything it destroys is
+// only visibility:hidden, so ending the mode repairs the site.
 
 const { destructActive } = useSiteEffects()
 
@@ -27,29 +29,37 @@ interface Bullet { x: number, y: number, dx: number, dy: number }
 let particles: Particle[] = []
 let bullets: Bullet[] = []
 let destroyed: { el: HTMLElement, visibility: string }[] = []
-let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 3 }
 let raf = 0
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// ---- ship physics: thrust ramps the speed up, drag eases it back down ----
-const ACCEL = 2600 // thrust, px/s²
-const DRAG = 3.2 // exponential drag, 1/s — also sets the top speed (~ACCEL/DRAG)
+// ---- ship physics ----
+// low thrust + low drag = heavy momentum: slow acceleration, a long glide, and
+// direction changes that take real commitment (à la kickassapp.com / Asteroids)
+const ACCEL = 900 // forward thrust, px/s²
+const DRAG = 0.7 // exponential drag, 1/s — top speed ≈ ACCEL/DRAG, and the glide is long
+const ROT_SPEED = 3.2 // turn rate while a rotate key is held, rad/s
 const BULLET_SPEED = 1400 // px/s
 const BULLET_STEP = 9 // collision sampling distance, px
 const SCROLL_EDGE = 130 // px from top/bottom where the ship starts flying the page
+const EDGE_PUSH = 5 // px/s of intent needed before the ship drives the page scroll
+const FIRE_CADENCE = 170 // ms between shots while space (or the pointer) is held
 
-const ship = { x: window.innerWidth / 2, y: window.innerHeight - 80, vx: 0, vy: 0 }
+// heading 0 points right; the ship starts nose-up
+const ship = { x: window.innerWidth / 2, y: window.innerHeight - 80, vx: 0, vy: 0, angle: -Math.PI / 2 }
 
-// held movement keys (wasd + arrows), mapped to thrust directions
-const THRUST: Record<string, [number, number]> = {
-  w: [0, -1], arrowup: [0, -1],
-  s: [0, 1], arrowdown: [0, 1],
-  a: [-1, 0], arrowleft: [-1, 0],
-  d: [1, 0], arrowright: [1, 0]
-}
+// held controls: forward thrust and rotation (wasd + arrows)
+const FORWARD = new Set(['w', 'arrowup'])
+const LEFT = new Set(['a', 'arrowleft'])
+const RIGHT = new Set(['d', 'arrowright'])
+const CONTROL_KEYS = new Set([...FORWARD, ...LEFT, ...RIGHT])
 const held = new Set<string>()
+const anyHeld = (keys: Set<string>) => [...keys].some((key) => held.has(key))
 
-// touch flies by dragging: the ship thrusts toward the finger (a tap fires)
+// firing: space (held → auto-fire cadence) or a pointer press
+let firing = false
+let lastShot = 0
+
+// touch flies by dragging: the ship turns toward the finger and thrusts (a tap fires)
 let touchSteer: { id: number, startX: number, startY: number, moved: boolean } | null = null
 let touchPoint = { x: 0, y: 0 }
 
@@ -92,13 +102,10 @@ const destroy = (el: HTMLElement) => {
   explode(rect)
 }
 
-const aimAngle = () => Math.atan2(mouse.y - ship.y, mouse.x - ship.x)
-
-const shoot = (event: MouseEvent) => {
-  const angle = Math.atan2(event.clientY - ship.y, event.clientX - ship.x)
-  const dx = Math.cos(angle)
-  const dy = Math.sin(angle)
-  // spawn at the nose so the ship doesn't shoot itself in the thruster
+// fire a bullet straight out of the nose, along the ship's heading
+const shootForward = () => {
+  const dx = Math.cos(ship.angle)
+  const dy = Math.sin(ship.angle)
   bullets.push({ x: ship.x + dx * 24, y: ship.y + dy * 24, dx, dy })
 }
 
@@ -133,49 +140,44 @@ const flyBullet = (bullet: Bullet, dt: number): boolean => {
   return false
 }
 
-const thrusting = () => held.size > 0 || touchSteer?.moved === true
+// smallest signed angle difference, normalized to [-π, π]
+const angleDelta = (from: number, to: number): number => {
+  let diff = (to - from + Math.PI) % (Math.PI * 2)
+  if (diff < 0) diff += Math.PI * 2
+  return diff - Math.PI
+}
+
+const thrustingForward = () => anyHeld(FORWARD) || touchSteer?.moved === true
 
 const moveShip = (dt: number) => {
-  // thrust: sum of held directions (normalized, so diagonals aren't faster)
-  let tx = 0
-  let ty = 0
+  // rotation: hold ← / → to turn (touch aims toward the finger instead)
   if (touchSteer?.moved) {
-    // touch: seek the finger (with a deadzone so the ship doesn't jitter)
-    const dx = touchPoint.x - ship.x
-    const dy = touchPoint.y - ship.y
-    const dist = Math.hypot(dx, dy)
-    if (dist > 24) {
-      tx = dx / dist
-      ty = dy / dist
-    }
+    const desired = Math.atan2(touchPoint.y - ship.y, touchPoint.x - ship.x)
+    const turn = Math.max(-ROT_SPEED * dt, Math.min(ROT_SPEED * dt, angleDelta(ship.angle, desired)))
+    ship.angle += turn
   } else {
-    for (const key of held) {
-      const dir = THRUST[key]
-      if (dir) {
-        tx += dir[0]
-        ty += dir[1]
-      }
-    }
+    if (anyHeld(LEFT)) ship.angle -= ROT_SPEED * dt
+    if (anyHeld(RIGHT)) ship.angle += ROT_SPEED * dt
   }
-  const mag = Math.hypot(tx, ty)
-  if (mag > 0) {
-    ship.vx += (tx / mag) * ACCEL * dt
-    ship.vy += (ty / mag) * ACCEL * dt
+
+  // thrust only ever pushes forward along the heading
+  if (thrustingForward()) {
+    ship.vx += Math.cos(ship.angle) * ACCEL * dt
+    ship.vy += Math.sin(ship.angle) * ACCEL * dt
   }
-  // drag eases the ship up to speed and coasts it back down after release
+
+  // low drag → a long, heavy glide that resists sudden direction changes
   const drag = Math.exp(-DRAG * dt)
   ship.vx *= drag
   ship.vy *= drag
   ship.x += ship.vx * dt
   ship.y += ship.vy * dt
 
-  // the ship drives the page scroll: FLYING into the top/bottom edge zone
-  // scrolls the page until the document runs out — the whole page is the
-  // arena, the viewport just the camera. Gated on moving toward the edge, so a
-  // ship merely resting in the zone (e.g. at spawn) doesn't auto-scroll.
-  // (behavior: instant — the site's smooth scroll-behavior would turn these
-  // per-frame nudges into competing animations that barely move)
-  const EDGE_PUSH = 5 // px/s of intent needed to start driving the page
+  // FLYING into the top/bottom edge zone scrolls the page until the document
+  // runs out — the whole page is the arena, the viewport just the camera.
+  // Gated on moving toward the edge, so a ship resting in the zone (e.g. at
+  // spawn) doesn't auto-scroll. (behavior: instant — the site's smooth
+  // scroll-behavior would fight these per-frame nudges.)
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight
   if (ship.y > window.innerHeight - SCROLL_EDGE && ship.vy > EDGE_PUSH && window.scrollY < maxScroll - 0.5) {
     const overshoot = ship.y - (window.innerHeight - SCROLL_EDGE)
@@ -187,7 +189,7 @@ const moveShip = (dt: number) => {
     ship.y = SCROLL_EDGE
   }
 
-  // the document ends here — bump the walls, don't leave
+  // the document ends here — bump the walls, shedding velocity into them
   const margin = 18
   if (ship.x < margin) { ship.x = margin; ship.vx = 0 }
   if (ship.x > window.innerWidth - margin) { ship.x = window.innerWidth - margin; ship.vx = 0 }
@@ -206,6 +208,10 @@ const draw = (time: number) => {
   lastTime = time
 
   moveShip(dt)
+  if (firing && time - lastShot >= FIRE_CADENCE) {
+    shootForward()
+    lastShot = time
+  }
   bullets = bullets.filter((bullet) => !flyBullet(bullet, dt))
 
   context.clearRect(0, 0, canvas.width, canvas.height)
@@ -234,13 +240,12 @@ const draw = (time: number) => {
   context.globalAlpha = 1
   particles = particles.filter((particle) => particle.life > 0)
 
-  // the ship: a small triangle aimed at the crosshair
-  const angle = aimAngle()
+  // the ship: a small triangle pointing along its heading
   context.save()
   context.translate(ship.x, ship.y)
-  context.rotate(angle + Math.PI / 2)
+  context.rotate(ship.angle + Math.PI / 2) // the triangle is drawn nose-up
   // a little exhaust flame while thrusting, flickering with speed
-  if (thrusting() && !reduced) {
+  if (thrustingForward() && !reduced) {
     const flame = 8 + Math.random() * 8
     context.fillStyle = 'rgba(255, 107, 53, 0.85)'
     context.beginPath()
@@ -273,8 +278,10 @@ onMounted(() => {
   raf = requestAnimationFrame(draw)
 })
 useEventListener('resize', fit)
+
+// pointer: mouse click fires along the current heading (no mouse-aiming); touch
+// drags to steer, a tap fires
 useEventListener('pointermove', (event: PointerEvent) => {
-  mouse = { x: event.clientX, y: event.clientY }
   if (touchSteer && event.pointerId === touchSteer.id) {
     touchPoint = { x: event.clientX, y: event.clientY }
     if (Math.hypot(event.clientX - touchSteer.startX, event.clientY - touchSteer.startY) > 12) {
@@ -289,25 +296,20 @@ useEventListener('pointerdown', (event: PointerEvent) => {
     // wait and see: a drag flies the ship, a tap fires (decided on release)
     touchSteer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false }
     touchPoint = { x: event.clientX, y: event.clientY }
-    mouse = { x: event.clientX, y: event.clientY }
     return
   }
-  shoot(event)
+  shootForward() // mouse: one shot straight ahead
 })
 const endTouch = (event: PointerEvent) => {
   if (!touchSteer || event.pointerId !== touchSteer.id) return
-  if (!touchSteer.moved) shoot(event) // it was a tap
+  if (!touchSteer.moved) shootForward() // it was a tap
   touchSteer = null
 }
 useEventListener('pointerup', endTouch)
 useEventListener('pointercancel', endTouch)
-// while the ship flies, it owns the scroll completely — wheel and touch are
-// grounded; reaching anything below the fold means flying there
-useEventListener(window, 'wheel', (event: Event) => event.preventDefault(), { passive: false })
-useEventListener(window, 'touchmove', (event: Event) => event.preventDefault(), { passive: false })
 
 // keys the browser would scroll with, beyond the ship's own controls
-const SCROLL_KEYS = new Set([' ', 'pageup', 'pagedown', 'home', 'end'])
+const SCROLL_KEYS = new Set(['pageup', 'pagedown', 'home', 'end'])
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
@@ -316,18 +318,30 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     return
   }
   const key = event.key.toLowerCase()
-  if (key in THRUST) {
-    event.preventDefault() // arrows must fly the ship, not scroll the wreckage
+  if (key === ' ' || key === 'spacebar') {
+    event.preventDefault() // space fires, never scrolls the wreckage
+    firing = true
+  } else if (CONTROL_KEYS.has(key)) {
+    event.preventDefault() // arrows fly the ship, not the page
     held.add(key)
   } else if (SCROLL_KEYS.has(key)) {
     event.preventDefault()
   }
 })
 useEventListener('keyup', (event: KeyboardEvent) => {
-  held.delete(event.key.toLowerCase())
+  const key = event.key.toLowerCase()
+  if (key === ' ' || key === 'spacebar') firing = false
+  else held.delete(key)
 })
-// a lost window drops the throttle, so no stuck keys fly the ship forever
-useEventListener(window, 'blur', () => held.clear())
+// while the ship flies, it owns the scroll — wheel and touch are grounded
+useEventListener(window, 'wheel', (event: Event) => event.preventDefault(), { passive: false })
+useEventListener(window, 'touchmove', (event: Event) => event.preventDefault(), { passive: false })
+// a lost window drops every control, so nothing stays stuck flying/firing
+useEventListener(window, 'blur', () => {
+  held.clear()
+  firing = false
+  touchSteer = null
+})
 onUnmounted(() => {
   cancelAnimationFrame(raf)
   repair() // never leave the site broken behind us
