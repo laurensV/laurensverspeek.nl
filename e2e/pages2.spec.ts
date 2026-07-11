@@ -481,3 +481,16 @@ test('the pixel world shows a minimap, live coords and a time-lapse', async ({ p
   })
   await expect(page.locator('.world-lapse-count')).toContainText('recent')
 })
+
+test('the keyboard reference lists shortcuts and offers a print button', async ({ page }) => {
+  await page.goto('/keyboard')
+  await expect(page.locator('h1')).toHaveText('Keyboard reference')
+  // groups from the shared shortcut dataset render
+  await expect(page.locator('.keyboard-group-title', { hasText: 'global' })).toBeVisible()
+  await expect(page.locator('.keyboard-group-title', { hasText: 'lvOS desktop' })).toBeVisible()
+  // a real shortcut row is present (kbd + label)
+  await expect(page.locator('.shortcut-row', { hasText: 'command palette' }).locator('kbd', { hasText: 'k' })).toBeVisible()
+  await expect(page.locator('.keyboard-print')).toBeVisible()
+  // the og:image is the rasterized PNG, not an SVG
+  await expect(page.locator('head meta[property="og:image"]')).toHaveAttribute('content', /og\/page-keyboard\.png/)
+})
