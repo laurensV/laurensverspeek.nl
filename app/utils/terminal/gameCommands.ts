@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createAdventureGame } from '~/utils/terminalGames'
+import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createAdventureGame, createAquarium } from '~/utils/terminalGames'
 
 // The terminal mini-games (the game engines live in utils/games/).
 
@@ -69,6 +69,14 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       exec: () => {
         muted('Starting top... q to quit.')
         ctx.startGame((callbacks) => createTopGame(callbacks, topProcs), 'top')
+      }
+    },
+    asciiquarium: {
+      category: 'toys',
+      description: 'A tiny ASCII fish tank swims in your terminal',
+      exec: () => {
+        muted('Filling the tank... q to surface.')
+        ctx.startGame(createAquarium, 'asciiquarium')
       }
     },
     life: {
