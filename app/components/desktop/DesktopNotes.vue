@@ -2,26 +2,26 @@
   <div class="notes is-family-code">
     <div class="notes-bar">
       <button class="notes-new" @click="addNote">+ new note</button>
-      <span class="notes-meta">{{ notes.length }} note{{ notes.length === 1 ? '' : 's' }} · saved in this browser</span>
+      <span class="notes-meta">{{ notes.length }} note{{ notes.length === 1 ? '' : 's' }} · these are real files in ~/stickies</span>
     </div>
 
     <p v-if="!notes.length" class="notes-empty">
-      the corkboard is empty.<br>jot a thought — it stays on this device.
+      the corkboard is empty.<br>jot a thought — it lands in ~/stickies, the terminal sees it too.
     </p>
 
     <div v-else class="notes-board">
-      <article v-for="note in notes" :key="note.id" class="note">
+      <article v-for="note in notes" :key="note.path" class="note">
         <header class="note-head">
-          <span class="note-time">{{ formatTime(note.updated) }}</span>
-          <button class="note-del" :aria-label="`Delete note (${formatTime(note.updated)})`" @click="removeNote(note.id)">×</button>
+          <span class="note-time">{{ note.name }}</span>
+          <button class="note-del" :aria-label="`Move ${note.name} to the recycle bin`" @click="removeNote(note)">×</button>
         </header>
         <textarea
-          v-model="note.text"
+          :value="note.text"
           class="note-text"
           rows="5"
           placeholder="type here…"
           spellcheck="false"
-          @input="note.updated = Date.now()"
+          @input="writeNote(note, ($event.target as HTMLTextAreaElement).value)"
         />
       </article>
     </div>
@@ -29,42 +29,74 @@
 </template>
 
 <script setup lang="ts">
-// Sticky notes: a little corkboard that persists to localStorage, so scribbles
-// survive logging out of lvOS (and closing the tab). State lives in useState so
-// it's shared if the window is reopened during a session.
+// Sticky notes: a corkboard view over real files in ~/stickies — the same
+// shared filesystem the terminal and the Files app walk. `echo hi >
+// stickies/idea.txt` pins a note; deleting one here goes to the recycle bin.
 
-import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
+import { storageGetJson, storageRemove } from '~/utils/safeStorage'
+import { dirEntries, writeFileAt } from '~/utils/terminal/filesystem'
 
-interface StickyNote { id: number, text: string, updated: number }
+const NOTES_DIR = 'stickies'
+const LEGACY_KEY = 'lvos-notes'
 
-const STORAGE_KEY = 'lvos-notes'
-const notes = useState<StickyNote[]>(STATE_KEYS.lvosNotes, () => [])
+const { files } = useTerminal()
+const trash = useTrash()
 
-const isNoteArray = (value: unknown): value is StickyNote[] =>
+interface LegacyNote { id: number, text: string, updated: number }
+const isLegacyNotes = (value: unknown): value is LegacyNote[] =>
   Array.isArray(value) && value.every((n) =>
-    !!n && typeof n === 'object'
-    && typeof (n as StickyNote).id === 'number'
-    && typeof (n as StickyNote).text === 'string'
-    && typeof (n as StickyNote).updated === 'number')
+    !!n && typeof n === 'object' && typeof (n as LegacyNote).text === 'string')
 
-// hydrate from storage the first time the board is opened this session
-if (import.meta.client && !notes.value.length) {
-  notes.value = storageGetJson(STORAGE_KEY, isNoteArray) ?? []
+const ensureDir = () => {
+  if (!files.value[NOTES_DIR]?.dir) {
+    files.value = { ...files.value, [NOTES_DIR]: { dir: true, content: '' } }
+  }
 }
 
-watch(notes, () => storageSetJson(STORAGE_KEY, notes.value), { deep: true })
+const writeNote = (note: { path: string }, text: string) => {
+  const written = writeFileAt(files.value, '', note.path, text)
+  if (!('error' in written)) files.value = written.files
+}
 
-// ids only need to be unique within the session; seed past any restored ids
-let seed = Date.now()
+// migrate the pre-filesystem corkboard once: each old note becomes a file
+if (import.meta.client) {
+  const legacy = storageGetJson(LEGACY_KEY, isLegacyNotes)
+  if (legacy?.length) {
+    ensureDir()
+    legacy.forEach((note, i) => {
+      const path = `${NOTES_DIR}/note-${legacy.length - i}.txt`
+      if (!files.value[path]) {
+        const written = writeFileAt(files.value, '', path, note.text)
+        if (!('error' in written)) files.value = written.files
+      }
+    })
+  }
+  storageRemove(LEGACY_KEY)
+}
+
+const notes = computed(() =>
+  dirEntries(files.value, NOTES_DIR)
+    .filter((entry) => !entry.dir)
+    .sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }))
+    .map((entry) => ({
+      name: entry.name,
+      path: `${NOTES_DIR}/${entry.name}`,
+      text: files.value[`${NOTES_DIR}/${entry.name}`]?.content ?? ''
+    }))
+)
+
 const addNote = () => {
-  notes.value.unshift({ id: seed++, text: '', updated: Date.now() })
-}
-const removeNote = (id: number) => {
-  notes.value = notes.value.filter((note) => note.id !== id)
+  ensureDir()
+  // first free note-N name (numeric-aware, so note-10 comes after note-9)
+  let n = 1
+  while (files.value[`${NOTES_DIR}/note-${n}.txt`]) n++
+  const written = writeFileAt(files.value, '', `${NOTES_DIR}/note-${n}.txt`, '')
+  if (!('error' in written)) files.value = written.files
 }
 
-const formatTime = (ts: number) =>
-  new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+const removeNote = (note: { path: string }) => {
+  trash.discard(note.path)
+}
 </script>
 
 <style scoped lang="scss">

@@ -164,6 +164,7 @@
 import { useIdle } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
+import { dirEntries } from '~/utils/terminal/filesystem'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 
@@ -441,15 +442,15 @@ const takeScreenshot = async () => {
 // the real battery feeds the boot nudge (and the taskbar tray)
 const battery = useBattery()
 
-// live icon badges from the shared state the apps themselves use
+// live icon badges from the shared state the apps themselves use — sticky
+// notes are files in ~/stickies, so their count is right from boot
 const { unread: mailUnread } = useLvosMail()
 const { entries: trashEntries } = useTrash()
 const { unseen: rssUnseen } = useLvosRss()
-const notes = useState<{ id: number }[]>(STATE_KEYS.lvosNotes, () => [])
 const iconBadges = computed<Record<string, number>>(() => ({
   mail: mailUnread.value,
   trash: trashEntries.value.length,
-  notes: notes.value.length,
+  notes: dirEntries(terminal.files.value, 'stickies').filter((entry) => !entry.dir).length,
   rss: rssUnseen.value
 }))
 

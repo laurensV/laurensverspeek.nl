@@ -42,7 +42,6 @@ export const STATE_KEYS = {
   liveSayOutbox: 'live-say-outbox',
   // lvOS
   lvosWindows: 'lvos-windows',
-  lvosNotes: 'lvos-notes',
   lvosWallpaper: 'lvos-wallpaper',
   lvosTrash: 'lvos-trash',
   lvosWallpaperCustom: 'lvos-wallpaper-custom'
