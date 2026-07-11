@@ -11,6 +11,7 @@ import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
 import type { ChainOp } from '~/utils/terminal/chain'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
 import { applySeeds, siteSeeds, blogSeeds } from '~/utils/terminal/siteFs'
+import { storageDegraded } from '~/utils/terminal/storageHealth'
 import { paneOrder, canSplit, nextFocus, focusAfterClose } from '~/utils/terminal/panes'
 import type { SplitDir } from '~/utils/terminal/panes'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
@@ -29,6 +30,8 @@ let paneIdCounter = 1
 let savedTitle: string | null = null
 // the site pages are seeded into the home filesystem once per visit
 let seededSite = false
+// the storage-full warning prints once, not once per useTerminal() caller
+let warnedStorageFull = false
 
 // Game state lives at module scope: only ever touched client-side,
 // and shared by every useTerminal() caller.
@@ -257,6 +260,15 @@ export function useTerminal() {
   // ... and $PWD in sync with cd
   watch(cwd, (dir) => {
     ctx.env.value = { ...ctx.env.value, PWD: dir }
+  })
+
+  // a full localStorage must never be silent: the moment a filesystem or
+  // tombstone write gets dropped, say so in the transcript
+  watch(storageDegraded, (degraded) => {
+    if (!degraded || warnedStorageFull) return
+    warnedStorageFull = true
+    error('lvsh: browser storage is full (or blocked) — your file changes are NOT being saved!')
+    muted(`free some space: 'df' shows usage, the gallery hoards screenshots, 'factory-reset' nukes it all`)
   })
 
   const commands: Record<string, TerminalCommand> = {

@@ -6,6 +6,7 @@
 // persisted; editing one replaces it with a plain (persisted) user node.
 
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
+import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 
 export interface FsNode {
   dir: boolean
@@ -45,7 +46,9 @@ export const stripSysNodes = (fs: Filesystem): Filesystem =>
 
 export function saveFs(fs: Filesystem): void {
   if (!import.meta.client) return
-  storageSetJson(FS_KEY, stripSysNodes(fs))
+  // a dropped write here means the visitor's files silently stop persisting —
+  // flag it so the terminal/lvOS can say so
+  reportStorageWrite(storageSetJson(FS_KEY, stripSysNodes(fs)))
 }
 
 /**

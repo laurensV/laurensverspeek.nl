@@ -10,6 +10,7 @@
 import type { Filesystem } from '~/utils/terminal/filesystem'
 import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 import { uses } from '~/data/uses'
@@ -36,7 +37,8 @@ const loadTombstones = (): Set<string> => {
   return tombstones
 }
 const saveTombstones = () => {
-  if (tombstones) storageSetJson(DELETED_KEY, [...tombstones])
+  // a dropped tombstone would resurrect a deleted page next visit — surface it
+  if (tombstones) reportStorageWrite(storageSetJson(DELETED_KEY, [...tombstones]))
 }
 
 /** Record deliberately deleted site paths, so seeding skips them next visit. */

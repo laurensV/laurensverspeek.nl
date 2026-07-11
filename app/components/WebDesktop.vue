@@ -165,6 +165,7 @@ import { useIdle } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { dirEntries } from '~/utils/terminal/filesystem'
+import { storageDegraded } from '~/utils/terminal/storageHealth'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 
@@ -441,6 +442,11 @@ const takeScreenshot = async () => {
 
 // the real battery feeds the boot nudge (and the taskbar tray)
 const battery = useBattery()
+
+// when storage fills up, file writes silently die — make it loud
+watch(storageDegraded, (degraded) => {
+  if (degraded) notify('⚠', 'Disk full', 'browser storage is full — file changes are not being saved')
+})
 
 // live icon badges from the shared state the apps themselves use — sticky
 // notes are files in ~/stickies, so their count is right from boot
