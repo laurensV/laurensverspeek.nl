@@ -12,12 +12,10 @@ import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
 import type { ChainOp } from '~/utils/terminal/chain'
-import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
-import { applySeeds, siteSeeds, blogSeeds } from '~/utils/terminal/siteFs'
-import { storageDegraded } from '~/utils/terminal/storageHealth'
+import { writeFileAt } from '~/utils/terminal/filesystem'
+import { wireTerminalStorage } from '~/utils/terminal/terminalStorage'
 import { paneOrder, canSplit, nextFocus, focusAfterClose } from '~/utils/terminal/panes'
 import type { SplitDir } from '~/utils/terminal/panes'
-import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
 import { greetingLine } from '~/utils/terminal/greeting'
 import { shellError } from '~/utils/terminal/errors'
 import type { Filesystem } from '~/utils/terminal/filesystem'
@@ -31,10 +29,6 @@ let paneIdCounter = 1
 // the page title saved before the terminal started reflecting commands into it;
 // module-scoped so the run-instance and the close-instance share it
 let savedTitle: string | null = null
-// the site pages are seeded into the home filesystem once per visit
-let seededSite = false
-// the storage-full warning prints once, not once per useTerminal() caller
-let warnedStorageFull = false
 
 // Game state lives at module scope: only ever touched client-side,
 // and shared by every useTerminal() caller.
@@ -234,52 +228,9 @@ export function useTerminal() {
     getCommands: () => commands
   }
 
-  // restore the saved home filesystem once, then persist changes across visits
-  const savedFs = loadFs()
-  if (savedFs && Object.keys(savedFs).length) ctx.files.value = savedFs
-  if (import.meta.client) watch(ctx.files, (fs) => saveFs(fs), { deep: true })
-
-  // the site's pages are real folders in that filesystem: seeded fresh each
-  // visit (sys nodes, never persisted), with the visitor's edits layered on top
-  if (import.meta.client && !seededSite) {
-    seededSite = true
-    ctx.files.value = applySeeds(ctx.files.value, siteSeeds())
-    void ctx.fetchPosts()
-      .then((posts) => {
-        ctx.files.value = applySeeds(ctx.files.value, blogSeeds(posts))
-      })
-      .catch(() => {
-        seededSite = false // let a later terminal open retry the posts
-      })
-  }
-
-  // aliases and exported env vars get the same treatment
-  const savedAliases = loadAliases()
-  if (savedAliases) ctx.aliases.value = savedAliases
-  const savedEnv = loadEnvExtras()
-  if (savedEnv) ctx.env.value = { ...ctx.env.value, ...savedEnv }
-  if (import.meta.client) {
-    watch(ctx.aliases, (aliases) => saveAliases(aliases), { deep: true })
-    watch(ctx.env, (env) => saveEnvExtras(env), { deep: true })
-  }
-
-  // keep $USER / $HOME in sync when the visitor renames themselves
-  watch(identityName, (n) => {
-    ctx.env.value = { ...ctx.env.value, USER: n, HOME: `/home/${n}` }
-  })
-  // ... and $PWD in sync with cd
-  watch(cwd, (dir) => {
-    ctx.env.value = { ...ctx.env.value, PWD: dir }
-  })
-
-  // a full localStorage must never be silent: the moment a filesystem or
-  // tombstone write gets dropped, say so in the transcript
-  watch(storageDegraded, (degraded) => {
-    if (!degraded || warnedStorageFull) return
-    warnedStorageFull = true
-    error('lvsh: browser storage is full (or blocked) — your file changes are NOT being saved!')
-    muted(`free some space: 'df' shows usage, the gallery hoards screenshots, 'factory-reset' nukes it all`)
-  })
+  // restore + persist the fs/aliases/env, seed the site pages, sync $PWD/$USER,
+  // and warn on a full localStorage (see terminalStorage)
+  wireTerminalStorage(ctx, { identityName, cwd })
 
   const commands: Record<string, TerminalCommand> = {
     ...createSystemCommands(ctx),
