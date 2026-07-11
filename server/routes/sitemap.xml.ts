@@ -31,7 +31,8 @@ const PAGE_SOURCES: Record<string, string[]> = {
   '/desktop': ['app/pages/desktop.vue'],
   '/changelog': ['app/pages/changelog.vue'],
   '/stats': ['app/pages/stats.vue'],
-  '/museum': ['app/pages/museum.vue', 'app/data/museum.ts']
+  '/museum': ['app/pages/museum.vue', 'app/data/museum.ts'],
+  '/keyboard': ['app/pages/keyboard.vue', 'app/data/shortcuts.ts']
   // (/world is intentionally omitted: it's noindex)
 }
 

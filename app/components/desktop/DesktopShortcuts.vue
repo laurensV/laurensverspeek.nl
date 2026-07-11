@@ -14,20 +14,11 @@
 </template>
 
 <script setup lang="ts">
+import { desktopShortcuts } from '~/data/shortcuts'
+
 const emit = defineEmits<{ close: [] }>()
 
-const ROWS = [
-  { keys: ['~'], label: 'open a terminal window' },
-  { keys: ['alt', 'r'], label: 'run… launch any app by name' },
-  { keys: ['alt', 'tab'], label: 'switch between windows' },
-  { keys: ['drag', 'edge'], label: 'snap a window to a half or corner' },
-  { keys: ['ctrl', 'alt', '←→↑↓'], label: 'snap the top window from the keyboard' },
-  { keys: ['dbl-click'], label: 'maximize / restore a window (title bar)' },
-  { keys: ['right-click', 'title'], label: 'window menu: pin, minimize, close' },
-  { keys: ['right-click', 'desktop'], label: 'new terminal · change wallpaper' },
-  { keys: ['esc'], label: 'dismiss menus and popups' },
-  { keys: ['?'], label: 'this cheat sheet' }
-]
+const ROWS = desktopShortcuts
 </script>
 
 <style scoped lang="scss">

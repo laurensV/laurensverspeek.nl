@@ -34,49 +34,11 @@
 import { onKeyStroke } from '@vueuse/core'
 
 // Press ? anywhere to see every shortcut and trick. Mounted globally.
+import { siteShortcuts } from '~/data/shortcuts'
+
 const isOpen = ref(false)
 
-const GROUPS = [
-  {
-    title: 'global',
-    rows: [
-      { keys: ['~'], label: 'open the interactive terminal' },
-      { keys: ['ctrl', 'k'], label: 'open the command palette' },
-      { keys: ['?'], label: 'show this help' },
-      { keys: ['esc'], label: 'close any overlay' },
-      { keys: ['j', 'k'], label: 'scroll the page, vim style' },
-      { keys: ['gg', 'G'], label: 'jump to top / bottom' },
-      { keys: ['gh', 'gb', 'gp'], label: 'go to home / blog / projects' }
-    ]
-  },
-  {
-    title: 'terminal',
-    rows: [
-      { keys: ['↑', '↓'], label: 'walk through command history' },
-      { keys: ['tab'], label: 'autocomplete commands & arguments' },
-      { keys: ['ctrl', 'r'], label: 'reverse history search' },
-      { keys: ['ctrl', 'l'], label: 'clear the screen' },
-      { keys: ['|', 'grep'], label: 'pipe output through grep / head / tail / wc' }
-    ]
-  },
-  {
-    title: 'try typing',
-    rows: [
-      { keys: ['help'], label: 'list every command' },
-      { keys: ['tree'], label: 'the whole site as a directory tree' },
-      { keys: ['desktop'], label: 'boot the lvOS desktop environment' },
-      { keys: ['snake'], label: 'also: tetris · 2048 · hangman · top' },
-      { keys: ['secrets'], label: 'reveal the hidden commands' }
-    ]
-  },
-  {
-    title: 'secrets',
-    rows: [
-      { keys: ['↑', '↑', '↓', '↓', '←', '→', '←', '→', 'b', 'a'], label: 'you know what this does' },
-      { keys: ['/', '?desktop'], label: 'a URL that boots straight into lvOS' }
-    ]
-  }
-]
+const GROUPS = siteShortcuts
 
 onKeyStroke('?', (event) => {
   const target = event.target as HTMLElement
