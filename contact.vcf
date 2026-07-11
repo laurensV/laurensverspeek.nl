@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Verspeek;Laurens;;;
+FN:Laurens Verspeek
+TITLE:head of development @ Nosana
+EMAIL;TYPE=INTERNET:contact@laurensverspeek.nl
+URL:https://laurensverspeek.nl
+URL;TYPE=GitHub:https://github.com/laurensV
+END:VCARD

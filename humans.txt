@@ -1,0 +1,28 @@
+/* TEAM */
+
+  Developer: Laurens Verspeek
+  Contact: contact@laurensverspeek.nl
+  GitHub: https://github.com/laurensV
+  Location: The Netherlands
+
+/* SITE */
+
+  Language: English
+  Doctype: HTML5
+  Stack: Nuxt 4, TypeScript, Bulma 1
+  Hosting: GitHub Pages (fully static)
+  Fonts: Inter, JetBrains Mono
+
+/* NOTE */
+
+  Yes, there is a terminal. Press ~ and type `secrets`.
+
+                          _..._
+                        .'     '.
+                       /  _   _  \
+                       | (o)_(o) |
+                        \(     ) /
+                        //'._.'\ \
+                       //   .   \ \
+                            |
+        built by a human (with a robot pair programmer)

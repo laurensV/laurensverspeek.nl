@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>laurensverspeek.nl — blog</title>
     <link>https://laurensverspeek.nl/blog</link>
@@ -11,6 +11,66 @@
       <guid>https://laurensverspeek.nl/blog/a-window-manager-in-a-div</guid>
       <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[dragging, snapping and alt-tab for lvOS — the fake desktop hiding in my portfolio — with one pointermove listener and a z-index counter.]]></description>
+      <content:encoded><![CDATA[<p>Type <code>desktop</code> in <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">the terminal</a> and my site boots <strong>lvOS</strong>: a pretend operating system with draggable windows, a taskbar and a start menu. None of it is real. Every &quot;window&quot; is a <code>&lt;div&gt;</code>, and the whole window manager is about 150 lines of composable. Here's how it holds together.</p>
+<h2>a window is just data</h2>
+<p>There is no window object, only a row in an array:</p>
+<pre><code class="language-ts">interface DesktopWindow {
+  id: string
+  title: string
+  x: number
+  y: number
+  z: number
+  width?: number
+  height?: number
+  minimized: boolean
+  maximized: boolean
+  // rect to restore after un-maximizing/un-snapping
+  restore?: { x: number, y: number, width?: number, height?: number }
+}</code></pre>
+<p>The template <code>v-for</code>s over the array and positions each window with an inline <code>style</code>. Rendering is Vue's problem; the composable only ever mutates numbers.</p>
+<h2>focus is a z-index counter</h2>
+<p>&quot;Bring to front&quot; is the oldest trick in the book: keep a monotonic counter and hand the focused window the next value.</p>
+<pre><code class="language-ts">let zCounter = 10
+const focusWindow = (win: DesktopWindow) =&gt; {
+  win.z = ++zCounter
+}</code></pre>
+<p>That single line also powers <strong>alt-tab</strong>. If focus is just &quot;highest z&quot;, switching windows is sorting the open ones by <code>z</code> and bumping whichever comes next:</p>
+<pre><code class="language-ts">const cycleWindows = (dir = 1) =&gt; {
+  const open = windows.value.filter((w) =&gt; !w.minimized)
+  if (open.length &lt; 2) return
+  const byStack = [...open].sort((a, b) =&gt; a.z - b.z)
+  const top = byStack.length - 1
+  focusWindow(byStack[(top + dir + byStack.length) % byStack.length])
+}</code></pre>
+<p>(Caveat: the OS usually eats real Alt+Tab before the page sees it. The taskbar stays the reliable switcher — this is a bonus for whoever's window manager doesn't grab it.)</p>
+<h2>one listener drags every window</h2>
+<p>Each titlebar's <code>pointerdown</code> records which window is being dragged and the grab offset. Then a <em>single</em> window-level <code>pointermove</code> does the math for whichever window is currently active — no per-window listeners to add and tear down:</p>
+<pre><code class="language-ts">useEventListener('pointermove', (event) =&gt; {
+  if (!dragging) return
+  dragging.x = clamp(event.clientX - dragOffset.x, 0, innerWidth - 120)
+  dragging.y = clamp(event.clientY - dragOffset.y, 0, innerHeight - 80)
+  snapHint.value = edgeZone(event.clientX, event.clientY)
+})</code></pre>
+<h2>snapping needs a ghost</h2>
+<p>Aero-snap has a secret: the preview. Drag a window to the edge and Windows shows a translucent rectangle of where it will land <em>before</em> you let go. Without it, snapping feels like the app twitching.</p>
+<p>So <code>edgeZone()</code> returns <code>'left' | 'right' | 'top' | null</code> based on how close the pointer is to a screen edge, and a computed turns that into a rectangle:</p>
+<pre><code class="language-ts">const snapPreview = computed(() =&gt; {
+  if (!snapHint.value) return null
+  const half = Math.floor(innerWidth / 2)
+  const height = innerHeight - TASKBAR_PX
+  if (snapHint.value === 'left') return { x: 0, y: 0, width: half, height }
+  if (snapHint.value === 'right') return { x: half, y: 0, width: half, height }
+  return { x: 0, y: 0, width: innerWidth, height } // top → maximize
+})</code></pre>
+<p>The desktop renders one ghost <code>&lt;div&gt;</code> at that rect with a CSS transition on <code>left/top/width/height</code>, so it glides as you slide along the edge. On <code>pointerup</code>, the same <code>edgeZone</code> decides whether to actually snap — the preview never lies, because it runs the exact function the drop does.</p>
+<h2>the restore rect</h2>
+<p>Maximizing and snapping both need an undo. Before either, we stash the current geometry; restoring pops it back:</p>
+<pre><code class="language-ts">const toggleMaximize = (win) =&gt; {
+  if (win.maximized) { win.maximized = false; restoreRect(win) }
+  else { saveRestoreRect(win); win.maximized = true }
+}</code></pre>
+<p>Dragging a maximized window &quot;peels&quot; it off under the cursor — clear <code>maximized</code>, restore the old size, re-centre it on the pointer, keep dragging. Little touches like that are the difference between &quot;divs that move&quot; and something that feels like a desktop.</p>
+<p>None of this is load-bearing. It's a portfolio easter egg. But building a window manager is one of those exercises where the real thing turns out to be a surprisingly small pile of good ideas — a counter, an array, and one honest preview.</p>]]></content:encoded>
     </item>
     <item>
       <title><![CDATA[giving my fake OS its own route]]></title>
@@ -18,6 +78,44 @@
       <guid>https://laurensverspeek.nl/blog/an-os-on-its-own-route</guid>
       <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[lvOS was a fixed overlay with a dead scrollbar and no shareable URL. moving it to /desktop fixed both — and taught me where overlays quietly lie.]]></description>
+      <content:encoded><![CDATA[<p><a href="https://laurensverspeek.nl/blog/a-window-manager-in-a-div">lvOS</a> — the pretend desktop hiding in this site — started life as an <em>overlay</em>. Type <code>desktop</code> in the terminal, a <code>useState</code> flag flips to <code>true</code>, and a <code>position: fixed</code> <code>&lt;div&gt;</code> slams over the whole page at <code>z-index: 95</code>. It worked. It also had two tells that it wasn't really a screen of its own.</p>
+<h2>the dead scrollbar</h2>
+<p>The overlay covered the viewport, but the <em>page underneath it was still there</em> — hero, footer, all of it, taller than the screen. So the browser still showed a scrollbar. You could scroll a page you couldn't see, behind an OS that didn't move. A tiny thing, but it broke the illusion every time.</p>
+<p>The honest fix isn't &quot;hide the scrollbar.&quot; It's to stop having a tall page behind the desktop at all. That means the desktop shouldn't be an overlay on a page — it should <em>be</em> the page.</p>
+<h2>overlay → route</h2>
+<p>So lvOS moved to a real route, <code>/desktop</code>, with a bare layout that renders nothing but the desktop:</p>
+<pre><code class="language-vue">&lt;!-- layouts/desktop.vue --&gt;
+&lt;template&gt;
+  &lt;div class=&quot;lvos-shell&quot;&gt;&lt;slot /&gt;&lt;/div&gt;
+&lt;/template&gt;</code></pre>
+<pre><code class="language-vue">&lt;!-- pages/desktop.vue --&gt;
+&lt;template&gt;
+  &lt;ClientOnly&gt;
+    &lt;WebDesktop /&gt;
+  &lt;/ClientOnly&gt;
+&lt;/template&gt;
+
+&lt;script setup lang=&quot;ts&quot;&gt;
+definePageMeta({ layout: 'desktop' })
+useHead({ title: 'lvOS — Laurens Verspeek', htmlAttrs: { class: 'is-lvos' } })
+&lt;/script&gt;</code></pre>
+<p>No navbar, no footer, no background field — so there's no tall content to scroll. The <code>is-lvos</code> class on <code>&lt;html&gt;</code> locks it down for good:</p>
+<pre><code class="language-scss">html.is-lvos,
+html.is-lvos body {
+  overflow: hidden;
+}</code></pre>
+<p>Scrollbar gone, because there's genuinely nothing to scroll.</p>
+<h2>the flag becomes a URL</h2>
+<p>The nicest part is what <em>disappeared</em>. The old model needed a global <code>desktopActive</code> flag, a plugin to read <code>?desktop</code> from the query string, a watcher to lazy-mount the component, and <code>desktopActive.value = false</code> sprinkled through every &quot;log out&quot; and &quot;open this project&quot; handler. All of it existed to fake navigation.</p>
+<p>Once <code>/desktop</code> is a real route, navigation is navigation:</p>
+<pre><code class="language-ts">// booting the desktop is now just... going there
+const logout = () =&gt; router.push('/')
+const openProject = (slug: string) =&gt; router.push(`/projects/${slug}`)</code></pre>
+<p>The terminal's <code>desktop</code> command, the command palette, and the footer link all <code>navigateTo('/desktop')</code>. The <code>?desktop</code> plugin got deleted. A whole piece of shared state evaporated, replaced by the router — which was always the right tool for &quot;show a different screen.&quot;</p>
+<p>And because it's a route, it's shareable: <a href="https://laurensverspeek.nl/desktop">laurensverspeek.nl/desktop</a> boots you straight in. A taskbar button hands it to the real Fullscreen API for the full effect:</p>
+<pre><code class="language-ts">const { isFullscreen, toggle } = useFullscreen()</code></pre>
+<h2>the lesson</h2>
+<p>An overlay is a screen you're <em>pretending</em> is on top. Most of the time the pretense is free. But the moment the thing underneath can still scroll, or someone wants to link to it, the seams show. If a view is really its own place, give it its own route — the framework already knows how to get there.</p>]]></content:encoded>
     </item>
     <item>
       <title><![CDATA[one Game of Life, four places]]></title>
@@ -25,6 +123,45 @@
       <guid>https://laurensverspeek.nl/blog/game-of-life-everywhere</guid>
       <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[the hero, a full page, an ASCII terminal toy and a desktop window all run the same 30-line Conway engine. a small lesson in keeping the rules pure.]]></description>
+      <content:encoded><![CDATA[<p>The centerpiece on my <a href="https://laurensverspeek.nl/">home page</a> is Conway's Game of Life — a field of amber cells quietly evolving, that you can draw into and click to open <a href="https://laurensverspeek.nl/life">full-screen</a>. It also runs as an ASCII toy in the <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">terminal</a> (<code>life</code>) and as a window inside <a href="https://laurensverspeek.nl/blog/a-window-manager-in-a-div">lvOS</a>. Four surfaces, one engine.</p>
+<p>The trick to that isn't cleverness — it's <em>refusing to mix the rules with the pixels</em>.</p>
+<h2>the rules are 30 lines and no canvas</h2>
+<p>The simulation knows nothing about drawing, DOM, or Vue. It's a <code>Uint8Array</code> and one function:</p>
+<pre><code class="language-ts">export function step(grid: Grid, cols: number, rows: number, next = new Uint8Array(grid.length)): Grid {
+  for (let y = 0; y &lt; rows; y++) {
+    for (let x = 0; x &lt; cols; x++) {
+      let n = 0
+      for (let dy = -1; dy &lt;= 1; dy++) {
+        for (let dx = -1; dx &lt;= 1; dx++) {
+          if (!dx &amp;&amp; !dy) continue
+          const nx = (x + dx + cols) % cols   // wrap: a toroidal board
+          const ny = (y + dy + rows) % rows
+          n += grid[ny * cols + nx]!
+        }
+      }
+      const alive = grid[y * cols + x]!
+      next[y * cols + x] = (alive &amp;&amp; (n === 2 || n === 3)) || (!alive &amp;&amp; n === 3) ? 1 : 0
+    }
+  }
+  return next
+}</code></pre>
+<p>Because it's pure, it's <em>testable</em> — a blinker oscillates with period two, a block stays put, a lone cell dies. Those are unit tests, not something I eyeball in the browser:</p>
+<pre><code class="language-ts">it('oscillates a blinker with period 2', () =&gt; {
+  const gen1 = step(horizontal, 5, 5)
+  expect([...gen1]).toEqual([...vertical])
+  expect([...step(gen1, 5, 5)]).toEqual([...horizontal])
+})</code></pre>
+<p>The board wraps at the edges (<code>% cols</code>), which is why gliders sail off one side and reappear on the other instead of dying in a corner.</p>
+<h2>the canvas boilerplate is a composable</h2>
+<p>Every on-screen version needs the same tedious ceremony: size the canvas to its container, scale for the device pixel ratio, pause the loop when the tab is hidden or the visitor prefers reduced motion, and clean up on unmount. That's <code>useCanvasScene</code>:</p>
+<pre><code class="language-ts">const { redraw } = useCanvasScene(canvasRef, containerRef, {
+  onResize: (ctx, w, h) =&gt; { /* size the grid, seed, draw one frame */ },
+  onFrame:  (ctx, dt)   =&gt; { acc += dt; if (acc &gt;= STEP_MS) { acc = 0; advance() } }
+})</code></pre>
+<p>The hero and the <code>/life</code> page hand it different <code>onFrame</code> callbacks — the hero ticks on a fixed interval, the page paces itself off a speed slider — but neither re-implements resize or the animation loop. The ASCII terminal version skips the composable entirely; its &quot;canvas&quot; is a <code>&lt;pre&gt;</code>, so it just joins <code>█</code> and space into strings.</p>
+<h2>the payoff</h2>
+<p>When I wanted Life in a fourth place — a draggable lvOS window — it was an afternoon, not a project. Import the engine, hand <code>useCanvasScene</code> a draw function, add three buttons. No rules were rewritten, so no rules could drift out of sync between the hero and the window.</p>
+<p>The general shape keeps showing up: the <em>interesting</em> part (Conway's four rules) is tiny and pure; the <em>bulky</em> part (canvas lifecycles) is boring and shared. Keep those two apart and the same idea renders anywhere you point it — even at a <code>&lt;pre&gt;</code>.</p>]]></content:encoded>
     </item>
     <item>
       <title><![CDATA[putting a playable snake game in a fake terminal]]></title>
@@ -32,6 +169,37 @@
       <guid>https://laurensverspeek.nl/blog/snake-in-the-terminal</guid>
       <pubDate>Tue, 07 Jul 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[a game loop, a <pre> tag, and stealing the keyboard from vue — no canvas required.]]></description>
+      <content:encoded><![CDATA[<p>My site has a <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">terminal</a> — so obviously it needed <code>snake</code>. The fun constraint: the &quot;screen&quot; is just a <code>&lt;pre&gt;</code> element in a Vue component. No canvas, no WebGL, just monospace text re-rendered 8 times per second.</p>
+<h2>the game is a string factory</h2>
+<p>A game here is a function that receives two callbacks: one to draw a frame, one to report the final output when the game ends.</p>
+<pre><code class="language-ts">export interface GameCallbacks {
+  onFrame(frame: string): void
+  onEnd(lines: string[]): void
+}</code></pre>
+<p>Every tick, snake builds the whole board as a string — box-drawing characters for the walls, <code>█</code> for the body, <code>●</code> for the food — and hands it to <code>onFrame</code>. Vue re-renders the <code>&lt;pre&gt;</code>, and because the font is monospace, the &quot;pixels&quot; line up perfectly:</p>
+<pre><code class="language-ts">function render() {
+  const grid = buildGrid()          // 26 × 12 characters
+  grid[food.y][food.x] = '●'
+  snake.forEach((cell, i) =&gt; {
+    grid[cell.y][cell.x] = i === 0 ? '▓' : '█'
+  })
+  onFrame(header + grid.map((row) =&gt; row.join(' ')).join('\n'))
+}</code></pre>
+<p>Diffing a full-frame string sounds wasteful, but the frame is ~700 characters. The DOM update is nothing; your GPU yawns.</p>
+<h2>stealing the keyboard</h2>
+<p>The terminal normally routes keys to an <code>&lt;input&gt;</code>. While a game is active, the input is hidden and a window-level listener feeds keys to the game instead:</p>
+<pre><code class="language-ts">useEventListener('keydown', (event) =&gt; {
+  if (!isOpen.value || !activeGame.value) return
+  if (activeGame.value.onKey(event.key)) event.preventDefault()
+})</code></pre>
+<p>The game returns <code>true</code> for keys it consumed, so arrows stop scrolling the page but <code>F5</code> still works. <code>q</code> and <code>Escape</code> end the game instead of closing the terminal — that one took a bug report from myself to get right.</p>
+<h2>the segfault</h2>
+<p>When you die, the terminal prints:</p>
+<pre><code class="language-bash">game over — the snake has encountered a segfault
+final score: 120
+new high score! previous best: 80</code></pre>
+<p>High scores persist in <code>localStorage</code>, because if you're going to lose to a snake made of Unicode blocks, the least I can do is remember it.</p>
+<p>Try it: press <code>~</code>, type <code>snake</code>. My high score is embarrassing, please beat it.</p>]]></content:encoded>
     </item>
     <item>
       <title><![CDATA[rebuilding my portfolio after 4 years of "coming soon(ish)"]]></title>
@@ -39,6 +207,28 @@
       <guid>https://laurensverspeek.nl/blog/rebuilding-this-site</guid>
       <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[from an unfinished nuxt 2 page to a nuxt 4 site with a terminal, games and too many easter eggs.]]></description>
+      <content:encoded><![CDATA[<p>For four years, my personal website consisted of a hero, six project cards, and the sentence <em>&quot;My personal slice of the web is still under construction and will be live if I can find some time to finish it ;)&quot;</em>.</p>
+<p>I never found the time. So instead of finishing v1, I deleted it.</p>
+<h2>the stack</h2>
+<p>The rebuild is <a href="https://nuxt.com">Nuxt 4</a> + TypeScript + <a href="https://bulma.io">Bulma 1</a>. Bulma might seem like an odd choice next to the utility-css crowd, but v1 moved everything to CSS variables, which makes theming almost free:</p>
+<pre><code class="language-scss">@use &quot;bulma/sass&quot; with (
+  $family-primary: '&quot;Inter&quot;, sans-serif',
+  $family-code: '&quot;JetBrains Mono&quot;, monospace',
+  $primary: #ffba00
+);</code></pre>
+<p>Dark mode is just <code>data-theme=&quot;dark&quot;</code> on the <code>&lt;html&gt;</code> element — Bulma swaps every variable, and anything custom reads <code>var(--bulma-*)</code> so it follows along. Even the canvas animations read their colors from the CSS variables at runtime.</p>
+<h2>the terminal</h2>
+<p>The gimmick I actually wanted to build: press <code>~</code> and you get a terminal. It's not an emulator — it's a Vue component and a composable with a command map:</p>
+<pre><code class="language-ts">const commands: Record&lt;string, TerminalCommand&gt; = {
+  help:     { description: 'List available commands', exec: () =&gt; ... },
+  projects: { description: 'List projects', exec: (args) =&gt; ... },
+  cd:       { description: 'Go to a page', exec: (args) =&gt; navigate(args[0]) },
+  // ...30 or so more
+}</code></pre>
+<p>State lives in <code>useState</code> so the navbar button, the footer link and the overlay all talk to the same terminal. Commands can navigate the router, toggle the theme, fetch the GitHub API, or take over the keyboard entirely — which is how <a href="https://laurensverspeek.nl/blog/snake-in-the-terminal">snake ended up in there</a>.</p>
+<h2>the easter eggs</h2>
+<p>I won't list them all (run <code>secrets</code>), but the rule I set myself: every easter egg has to be discoverable from a hint somewhere else. The console hints at the terminal, the terminal hints at the hidden commands, the hidden commands hint at... you get it.</p>
+<p>If you find one that isn't hinted at anywhere, that's a bug. Or is it?</p>]]></content:encoded>
     </item>
   </channel>
 </rss>

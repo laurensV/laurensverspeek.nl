@@ -1,1 +1,0 @@
-import{_ as s,f as o,g as t,V as c}from"./DeS3__nq.js";const r={},n={class:"lvos-shell"};function a(e,l){return o(),t("div",n,[c(e.$slots,"default")])}const d=s(r,[["render",a]]);export{d as default};

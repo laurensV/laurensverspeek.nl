@@ -1,0 +1,1 @@
+import{_ as s,g as o,h as t,P as c}from"./CqaweMyd.js";const r={},n={class:"lvos-shell"};function a(e,l){return o(),t("div",n,[c(e.$slots,"default")])}const d=s(r,[["render",a]]);export{d as default};
