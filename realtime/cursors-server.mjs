@@ -55,6 +55,11 @@ const scheduleSave = () => {
 }
 
 const cooldowns = new CooldownGate(COOLDOWN_MS)
+// broadcasts (chat + cursor moves) are throttled per connection too, so a
+// scripted client can't flood the fan-out. Moves are lenient (the client
+// already throttles to ~90ms); chat is slower.
+const moveGate = new CooldownGate(45)
+const chatGate = new CooldownGate(400)
 /** placements in the trailing 10 minutes, for the activity counter */
 /** @type {number[]} */
 let activity = []
@@ -79,8 +84,10 @@ const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
 
 wss.on('connection', (socket) => {
+  // clients.size already counts this socket, so reject once it would exceed the
+  // cap — MAX_CLIENTS stay connected, the next one is turned away immediately
   if (wss.clients.size > MAX_CLIENTS) {
-    socket.close()
+    socket.close(1013, 'server full')
     return
   }
   const id = nextId++
@@ -98,6 +105,7 @@ wss.on('connection', (socket) => {
     if (msg.type === 'say' && typeof msg.text === 'string') {
       const text = msg.text.slice(0, 80)
       if (!text.trim()) return
+      if (chatGate.check(id, Date.now()) > 0) return // drop flooded chat
       const payload = JSON.stringify({ type: 'say', id, text })
       for (const client of wss.clients) {
         if (client !== socket && client.readyState === 1) client.send(payload)
@@ -153,6 +161,7 @@ wss.on('connection', (socket) => {
     // world cursors: board-coordinate positions relayed to other members
     if (msg.type === 'world-cursor') {
       if (!worldMembers.has(socket) || typeof msg.x !== 'number' || typeof msg.y !== 'number') return
+      if (moveGate.check(id, Date.now()) > 0) return // throttle the fan-out
       const payload = JSON.stringify({ type: 'world-cursor', id, hue, x: msg.x, y: msg.y })
       for (const member of worldMembers) {
         if (member !== socket && member.readyState === 1) member.send(payload)
@@ -161,6 +170,7 @@ wss.on('connection', (socket) => {
     }
 
     if (typeof msg.x !== 'number' || typeof msg.y !== 'number' || typeof msg.page !== 'string') return
+    if (moveGate.check(id, Date.now()) > 0) return // throttle the cursor fan-out
     // relay the visitor's chosen display name (sanitized, length-capped)
     const name = typeof msg.name === 'string'
       ? msg.name.replace(/[^a-z0-9_-]/gi, '').slice(0, 24) || 'visitor'
@@ -181,6 +191,11 @@ wss.on('connection', (socket) => {
 
   socket.on('close', () => {
     if (worldMembers.delete(socket)) broadcastWorldCount()
+    // drop this connection's cooldown state, or the maps grow for the relay's
+    // whole uptime (one entry per id that ever placed/moved/chatted)
+    cooldowns.last.delete(id)
+    moveGate.last.delete(id)
+    chatGate.last.delete(id)
     const payload = JSON.stringify({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
