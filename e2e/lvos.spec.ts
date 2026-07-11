@@ -364,3 +364,42 @@ test('titlebar right-click menu pins a window on top and closes it', async ({ pa
   await menu.locator('button', { hasText: 'close' }).click()
   await expect(readme).toHaveCount(0)
 })
+
+test('the files app is keyboard-navigable and drags files into folders', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  // set up a folder and a file via the terminal
+  await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'mkdir inbox')
+  await page.keyboard.press('Enter')
+  await page.fill('#desktop-terminal-input', 'echo hi > memo.txt')
+  await page.keyboard.press('Enter')
+
+  await page.locator('.lvos-icon', { hasText: /^files$/ }).click()
+  const files = page.locator('.files')
+  await files.waitFor()
+  // keyboard: ArrowDown moves the selection highlight
+  await files.locator('.files-list').focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(files.locator('.files-row.is-selected')).toHaveCount(1)
+  // open the inbox folder (click), then Backspace climbs back up via keyboard
+  await files.locator('.files-file', { hasText: 'inbox/' }).click()
+  await expect(files.locator('.files-crumb:disabled')).toHaveText('inbox')
+  await files.locator('.files-list').focus()
+  await page.keyboard.press('Backspace')
+  await expect(files.locator('.files-crumb')).toHaveCount(0)
+
+  // drag memo.txt onto the inbox folder → it moves (terminal sees it too).
+  // dispatch the HTML5 drag events with a shared DataTransfer — Playwright's
+  // mouse-based dragTo doesn't drive native drag-and-drop reliably
+  const dt = await page.evaluateHandle(() => new DataTransfer())
+  await files.locator('.files-file', { hasText: 'memo.txt' }).dispatchEvent('dragstart', { dataTransfer: dt })
+  await files.locator('.files-file', { hasText: 'inbox/' }).dispatchEvent('dragover', { dataTransfer: dt })
+  await files.locator('.files-file', { hasText: 'inbox/' }).dispatchEvent('drop', { dataTransfer: dt })
+  await expect(files.locator('.files-file', { hasText: 'memo.txt' })).toHaveCount(0)
+  await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
+  await page.fill('#desktop-terminal-input', 'cat inbox/memo.txt')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.lvos-window[data-win="terminal"]')).toContainText('hi')
+})

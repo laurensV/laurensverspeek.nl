@@ -5,23 +5,55 @@
         <button
           v-for="shortcut in SIDEBAR"
           :key="shortcut.label"
-          :class="{ 'is-active': shortcut.dir === vfsDir }"
+          :class="{ 'is-active': shortcut.dir === vfsDir, 'is-drop': dropTarget === shortcut.dir }"
           @click="switchDir(shortcut.dir)"
+          @dragover.prevent="dropTarget = shortcut.dir"
+          @dragleave="dropTarget = null"
+          @drop.prevent="dropInto(shortcut.dir)"
         >
           {{ shortcut.label }}/
         </button>
       </div>
-      <div class="files-list">
+      <!-- the list is a keyboard listbox: ↑↓ move, Enter opens, Del bins,
+           Backspace/← goes up; files drag onto folders to move -->
+      <div
+        ref="listRef"
+        class="files-list"
+        tabindex="0"
+        role="listbox"
+        aria-label="Files"
+        @keydown="onListKeydown"
+      >
         <nav v-if="vfsDir" class="files-crumbs" aria-label="Current folder path">
-          <button class="files-crumb" @click="vfsDir = ''">~</button>
+          <button
+            class="files-crumb"
+            :class="{ 'is-drop': dropTarget === '' }"
+            @click="vfsDir = ''"
+            @dragover.prevent="dropTarget = ''"
+            @dragleave="dropTarget = null"
+            @drop.prevent="dropInto('')"
+          >~</button>
           <template v-for="crumb in crumbs" :key="crumb.path">
             <span class="files-crumb-sep" aria-hidden="true">/</span>
-            <button class="files-crumb" :disabled="crumb.path === vfsDir" @click="vfsDir = crumb.path">
+            <button
+              class="files-crumb"
+              :class="{ 'is-drop': dropTarget === crumb.path }"
+              :disabled="crumb.path === vfsDir"
+              @click="vfsDir = crumb.path"
+              @dragover.prevent="dropTarget = crumb.path"
+              @dragleave="dropTarget = null"
+              @drop.prevent="dropInto(crumb.path)"
+            >
               {{ crumb.name }}
             </button>
           </template>
         </nav>
-        <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
+        <div
+          v-for="(entry, i) in vfsEntries"
+          :key="entry.name"
+          class="files-row"
+          :class="{ 'is-selected': i === selected, 'is-drop': entry.dir && dropTarget === entryPath(entry.name) }"
+        >
           <template v-if="renaming === entry.name">
             <input
               ref="renameRef"
@@ -38,8 +70,15 @@
             <button
               class="files-file"
               :class="{ 'is-dir': entry.dir }"
-              @click="openVfsEntry(entry)"
+              :aria-selected="i === selected"
+              draggable="true"
+              @click="selected = i; openVfsEntry(entry)"
               @contextmenu.prevent.stop="openFileMenu(entry, $event)"
+              @dragstart="onDragStart(entry, $event)"
+              @dragend="dragPath = null; dropTarget = null"
+              @dragover="entry.dir ? (dropTarget = entryPath(entry.name)) : null"
+              @dragleave="entry.dir ? (dropTarget = null) : null"
+              @drop.prevent="entry.dir ? dropInto(entryPath(entry.name)) : null"
             >
               <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
               <AppIcon v-else name="file" :size="13" />
@@ -265,6 +304,98 @@ const openVfsEntry = (entry: VfsEntry) => {
   if (path === 'notes.txt') return emit('edit', path)
   preview.value = { name: entry.name, content: files.value[path]?.content ?? '' }
 }
+
+// ---- keyboard navigation (the list is a listbox) ----
+const listRef = ref<HTMLElement>()
+const selected = ref(0)
+// keep the selection in range as the directory's contents change
+watch(vfsEntries, (entries) => {
+  if (selected.value >= entries.length) selected.value = Math.max(0, entries.length - 1)
+})
+watch(vfsDir, () => (selected.value = 0))
+
+const parentDir = () => vfsDir.value.split('/').slice(0, -1).join('/')
+
+const onListKeydown = (event: KeyboardEvent) => {
+  // ignore keys while an inline rename input is focused (its Enter/arrows are
+  // for editing the name, and they bubble up to this listbox handler)
+  if (renaming.value) return
+  const entries = vfsEntries.value
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      selected.value = Math.min(selected.value + 1, entries.length - 1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      selected.value = Math.max(selected.value - 1, 0)
+      break
+    case 'Enter':
+    case 'ArrowRight': {
+      event.preventDefault()
+      const entry = entries[selected.value]
+      if (entry) openVfsEntry(entry)
+      break
+    }
+    case 'Backspace':
+    case 'ArrowLeft':
+      if (vfsDir.value) {
+        event.preventDefault()
+        vfsDir.value = parentDir()
+      }
+      break
+    case 'Delete': {
+      event.preventDefault()
+      const entry = entries[selected.value]
+      if (entry) deleteVfsEntry(entry)
+      break
+    }
+  }
+}
+
+// ---- drag to move files/folders between directories ----
+const dragPath = ref<string | null>(null)
+const dropTarget = ref<string | null>(null)
+
+const onDragStart = (entry: VfsEntry, event: DragEvent) => {
+  dragPath.value = entryPath(entry.name)
+  event.dataTransfer?.setData('text/plain', dragPath.value)
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+
+const dropInto = (destDir: string) => {
+  const from = dragPath.value
+  dragPath.value = null
+  dropTarget.value = null
+  if (!from) return
+  const name = from.split('/').pop()!
+  const fromParent = from.split('/').slice(0, -1).join('/')
+  if (destDir === fromParent) return // already there
+  if (destDir === from || destDir.startsWith(`${from}/`)) {
+    actionError.value = `can't move ${name} into itself`
+    return
+  }
+  const target = destDir ? `${destDir}/${name}` : name
+  if (files.value[target]) {
+    actionError.value = `${name} already exists in that folder`
+    return
+  }
+  // remap the node (and any subtree) to the new path; a moved copy is the
+  // visitor's own (drops the sys flag), and moving site content tombstones it
+  const moved: typeof files.value = {}
+  const origins: string[] = []
+  for (const [key, node] of Object.entries(files.value)) {
+    if (key === from || key.startsWith(`${from}/`)) {
+      moved[`${target}${key.slice(from.length)}`] = { dir: node.dir, content: node.content }
+      origins.push(key)
+    } else {
+      moved[key] = node
+    }
+  }
+  files.value = moved
+  markSeedsDeleted(origins)
+  actionError.value = ''
+}
 </script>
 
 <style scoped lang="scss">
@@ -306,6 +437,12 @@ const openVfsEntry = (entry: VfsEntry) => {
       background-color: hsla(var(--lv-primary-hsl), 0.15);
       color: var(--bulma-primary);
     }
+
+    // a folder lit up as a drop target while dragging a file over it
+    &.is-drop {
+      background-color: hsla(var(--lv-primary-hsl), 0.28);
+      color: var(--bulma-primary);
+    }
   }
 }
 
@@ -314,6 +451,13 @@ const openVfsEntry = (entry: VfsEntry) => {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+  outline: none;
+
+  // keyboard focus on the listbox itself gets a faint frame
+  &:focus-visible {
+    box-shadow: inset 0 0 0 1px hsla(var(--lv-primary-hsl), 0.4);
+    border-radius: var(--bulma-radius-small);
+  }
 }
 
 .files-file {
@@ -351,6 +495,17 @@ const openVfsEntry = (entry: VfsEntry) => {
 .files-row {
   display: flex;
   align-items: center;
+  border-radius: var(--bulma-radius-small);
+
+  // the keyboard-selected row, and a folder-row lit up as a drop target
+  &.is-selected {
+    background-color: hsla(var(--lv-primary-hsl), 0.12);
+  }
+
+  &.is-drop .files-file {
+    background-color: hsla(var(--lv-primary-hsl), 0.28);
+    color: var(--bulma-primary);
+  }
 
   .files-file {
     flex: 1;
