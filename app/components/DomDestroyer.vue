@@ -3,7 +3,7 @@
     <canvas ref="fxRef" class="destroyer-fx" aria-hidden="true" />
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
-      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> fly · click to fire · <kbd>esc</kbd> ends &amp; repairs the site</span>
+      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> fly (the page scrolls with you) · click to fire · <kbd>esc</kbd> ends &amp; repairs the site</span>
     </div>
   </div>
 </template>
@@ -35,6 +35,7 @@ const ACCEL = 2600 // thrust, px/s²
 const DRAG = 3.2 // exponential drag, 1/s — also sets the top speed (~ACCEL/DRAG)
 const BULLET_SPEED = 1400 // px/s
 const BULLET_STEP = 9 // collision sampling distance, px
+const SCROLL_EDGE = 130 // px from top/bottom where the ship starts flying the page
 
 const ship = { x: window.innerWidth / 2, y: window.innerHeight - 80, vx: 0, vy: 0 }
 
@@ -149,7 +150,24 @@ const moveShip = (dt: number) => {
   ship.vy *= drag
   ship.x += ship.vx * dt
   ship.y += ship.vy * dt
-  // the viewport is the arena — bump the walls, don't leave
+
+  // the ship drives the page scroll: pushing into the top/bottom edge zone
+  // scrolls the page at flight speed until the document runs out — the whole
+  // page is the arena, the viewport is just the camera
+  // (behavior: instant — the site's smooth scroll-behavior would turn these
+  // per-frame nudges into competing animations that barely move)
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+  if (ship.y > window.innerHeight - SCROLL_EDGE && window.scrollY < maxScroll - 0.5) {
+    const overshoot = ship.y - (window.innerHeight - SCROLL_EDGE)
+    window.scrollBy({ top: Math.min(overshoot, maxScroll - window.scrollY), behavior: 'instant' })
+    ship.y = window.innerHeight - SCROLL_EDGE
+  } else if (ship.y < SCROLL_EDGE && window.scrollY > 0.5) {
+    const overshoot = SCROLL_EDGE - ship.y
+    window.scrollBy({ top: -Math.min(overshoot, window.scrollY), behavior: 'instant' })
+    ship.y = SCROLL_EDGE
+  }
+
+  // the document ends here — bump the walls, don't leave
   const margin = 18
   if (ship.x < margin) { ship.x = margin; ship.vx = 0 }
   if (ship.x > window.innerWidth - margin) { ship.x = window.innerWidth - margin; ship.vx = 0 }
@@ -243,6 +261,14 @@ useEventListener('pointerdown', (event: PointerEvent) => {
   if ((event.target as HTMLElement).closest('.destroyer-hud')) return
   shoot(event)
 })
+// while the ship flies, it owns the scroll completely — wheel and touch are
+// grounded; reaching anything below the fold means flying there
+useEventListener(window, 'wheel', (event: Event) => event.preventDefault(), { passive: false })
+useEventListener(window, 'touchmove', (event: Event) => event.preventDefault(), { passive: false })
+
+// keys the browser would scroll with, beyond the ship's own controls
+const SCROLL_KEYS = new Set([' ', 'pageup', 'pagedown', 'home', 'end'])
+
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     event.preventDefault()
@@ -253,6 +279,8 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   if (key in THRUST) {
     event.preventDefault() // arrows must fly the ship, not scroll the wreckage
     held.add(key)
+  } else if (SCROLL_KEYS.has(key)) {
+    event.preventDefault()
   }
 })
 useEventListener('keyup', (event: KeyboardEvent) => {

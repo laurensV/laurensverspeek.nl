@@ -135,6 +135,31 @@ test('destroy mode shoots real dom elements and esc repairs the site', async ({ 
   await expect(hero).toBeVisible()
 })
 
+test('the destroyer ship flies the page: diving scrolls it, manual scrolling is grounded', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'destroy')
+  await expect(page.locator('.destroyer')).toBeVisible()
+  // manual scrolling is disabled while the ship owns the page
+  await page.waitForTimeout(300)
+  const initial = await page.evaluate(() => window.scrollY)
+  await page.mouse.move(640, 360)
+  await page.mouse.wheel(0, 600)
+  await page.waitForTimeout(300)
+  expect(await page.evaluate(() => window.scrollY)).toBe(initial)
+  // diving into the bottom edge drives the page scroll at flight speed
+  await page.keyboard.down('ArrowDown')
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeGreaterThan(150)
+  await page.keyboard.up('ArrowDown')
+  // climbing scrolls back up (give the dive's inertia a moment to settle)
+  await page.waitForTimeout(1200)
+  const low = await page.evaluate(() => window.scrollY)
+  await page.keyboard.down('ArrowUp')
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeLessThan(low)
+  await page.keyboard.up('ArrowUp')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.destroyer')).toHaveCount(0)
+})
+
 test('five quick clicks on the status bar version arm destroy mode', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
