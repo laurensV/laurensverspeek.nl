@@ -1,1 +1,0 @@
-import{_ as o,h as t,i as s,W as c}from"./CEi0GdEx.js";const r={};function n(e,a){return t(),s("blockquote",null,[c(e.$slots,"default")])}const _=Object.assign(o(r,[["render",n]]),{__name:"ProseBlockquote"});export{_ as default};
