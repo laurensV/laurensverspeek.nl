@@ -204,14 +204,14 @@ export function useTerminal() {
       nuxtApp.runWithContext(() => queryCollection('blog').order('date', 'DESC').all()),
     fetchSearchSections: () =>
       nuxtApp.runWithContext(() => queryCollectionSearchSections('blog')),
-    env: useState<Record<string, string>>('terminal-env', () => ({
+    env: useState<Record<string, string>>(STATE_KEYS.terminalEnv, () => ({
       USER: identityName.value,
       HOME: `/home/${identityName.value}`,
       PWD: '~',
       SHELL: 'lvsh',
       HOST: profile.domain
     })),
-    aliases: useState<Record<string, string>>('terminal-aliases', () => ({
+    aliases: useState<Record<string, string>>(STATE_KEYS.terminalAliases, () => ({
       ll: 'ls',
       cls: 'clear'
     })),
