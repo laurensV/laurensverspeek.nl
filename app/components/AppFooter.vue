@@ -17,8 +17,8 @@
       <p class="mb-1">&copy; {{ new Date().getFullYear() }} <b>{{ profile.domain }}</b></p>
       <p class="is-family-code is-size-7 has-text-weight-normal terminal-hint">
         press <kbd>~</kbd> or
-        <a class="is-family-code" @click.prevent="open">click here</a> for terminal mode
-        · <a class="is-family-code" @click.prevent="bootDesktop">boot lvOS</a>
+        <button type="button" class="is-family-code footer-action" @click="open">click here</button> for terminal mode
+        · <button type="button" class="is-family-code footer-action" @click="bootDesktop">boot lvOS</button>
       </p>
       <p class="is-family-code is-size-7 build-stamp">
         built {{ config.public.buildDate }} ·
@@ -64,6 +64,16 @@ const showBuild = () => {
 
   .terminal-hint {
     color: var(--bulma-text-weak);
+  }
+
+  // link-styled buttons, so keyboards can reach the terminal and lvOS too;
+  // the dotted-underline affordance comes from the global .content link style
+  .footer-action {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    cursor: pointer;
   }
 
   .build-stamp {

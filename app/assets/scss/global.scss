@@ -97,7 +97,7 @@ kbd {
 // underline sitting a little below the text that cross-fades into a solid amber
 // line on hover. Scoped to `.content` (prose blocks + the footer) and excluding
 // icon/button links, so nav, buttons and cards keep their own treatments.
-.content a:not(.social-link, .button) {
+.content :is(a:not(.social-link, .button), button.footer-action) {
   position: relative;
   color: var(--bulma-primary-on-scheme);
   text-decoration: none;

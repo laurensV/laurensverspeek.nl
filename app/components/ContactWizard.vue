@@ -40,7 +40,7 @@
           </button>
         </p>
         <p class="line muted mt-2">
-          <a @click.prevent="reset">$ ./contact.sh --again</a>
+          <button type="button" class="wizard-again" @click="reset">$ ./contact.sh --again</button>
         </p>
       </template>
 
@@ -255,8 +255,13 @@ onMounted(focusInput)
     color: var(--bulma-success);
   }
 
-  a {
+  a,
+  .wizard-again {
+    padding: 0;
+    border: none;
+    background: none;
     color: var(--bulma-primary);
+    font: inherit;
     text-decoration: underline;
     cursor: pointer;
   }

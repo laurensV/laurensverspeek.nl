@@ -99,8 +99,9 @@ test('footer text links use the dotted style; see-all links have an arrow', asyn
   await page.locator('.hero-name').waitFor()
   // see-all link on the home page carries its animated arrow
   await expect(page.locator('.see-all .see-all-arrow').first()).toBeVisible()
-  // footer text link gets the dotted underline (icon social links do not)
-  const footerLink = page.locator('.app-footer .terminal-hint a').first()
+  // footer text affordance gets the dotted underline (icon social links do
+  // not) — it's a link-styled button now, so keyboards can operate it too
+  const footerLink = page.locator('.app-footer .terminal-hint .footer-action').first()
   await footerLink.scrollIntoViewIfNeeded()
   const styles = await footerLink.evaluate((el) => ({
     line: getComputedStyle(el).textDecorationLine,
@@ -144,7 +145,7 @@ test('footer link boots the desktop', async ({ page }) => {
   await page.locator('.hero-name').waitFor()
   // the boot splash covers the page briefly; let it clear before clicking
   await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
-  const bootLink = page.locator('.app-footer a', { hasText: 'boot lvOS' })
+  const bootLink = page.locator('.app-footer .footer-action', { hasText: 'boot lvOS' })
   await bootLink.waitFor()
   // the footer sits behind the fixed status bar and shifts while stats load, so
   // dispatch the click directly on the link — it still fires its @click handler
