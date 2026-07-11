@@ -19,7 +19,7 @@ export interface DesktopApp {
    * How the desktop icon acts. 'window' just opens the window (the default);
    * the named actions are wired to bespoke handlers in WebDesktop.
    */
-  action?: 'window' | 'blog' | 'terminal' | 'cv' | 'logout'
+  action?: 'window' | 'blog' | 'terminal' | 'logout'
 }
 
 export const DESKTOP_APPS: DesktopApp[] = [
@@ -45,7 +45,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'rss', title: 'feed reader', label: 'rss', icon: 'sparkles', wide: true },
   { id: 'scores', title: 'hall of fame', label: 'scores', icon: 'zap' },
   { id: 'world', title: 'the pixel world', label: 'world', icon: 'globe', wide: true },
-  { id: 'cv', title: 'resume.pdf', label: 'resume.pdf', icon: 'mail', action: 'cv' },
+  { id: 'cv', title: 'resume.pdf — viewer', label: 'resume.pdf', icon: 'file', wide: true },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

@@ -190,6 +190,7 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   browser: defineAsyncComponent(() => import('~/components/desktop/DesktopBrowser.vue')),
   settings: defineAsyncComponent(() => import('~/components/desktop/DesktopSettings.vue')),
   paint: defineAsyncComponent(() => import('~/components/desktop/DesktopPaint.vue')),
+  cv: defineAsyncComponent(() => import('~/components/desktop/DesktopResume.vue')),
   calc: defineAsyncComponent(() => import('~/components/desktop/DesktopCalculator.vue')),
   clock: defineAsyncComponent(() => import('~/components/desktop/DesktopClock.vue')),
   notes: defineAsyncComponent(() => import('~/components/desktop/DesktopNotes.vue')),
@@ -361,8 +362,6 @@ const openProject = (slug: string) => router.push(`/projects/${slug}`)
 
 const openRoute = (path: string) => router.push(path)
 
-const openCv = () => void router.push('/cv')
-
 // session, lock screen and the CRT power-off live in useDesktopPower
 const { locked, lock, logout, poweringOff, shutdown, reboot } = useDesktopPower({ booting, startOpen, calendarOpen })
 const shortcutsOpen = ref(false)
@@ -370,7 +369,6 @@ const shortcutsOpen = ref(false)
 const iconActions: Record<string, () => void> = {
   blog: openBlogApp,
   terminal: openTerminal,
-  cv: openCv,
   logout
 }
 const icons = DESKTOP_APPS.map((app) => ({
