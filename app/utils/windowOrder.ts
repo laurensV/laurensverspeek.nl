@@ -62,8 +62,13 @@ export function clampDragPosition(
   }
 }
 
-/** Cascade for freshly opened windows, capped so they never spawn off-screen. */
-export function spawnPosition(openCount: number, viewportW: number) {
+/** Cascade for freshly opened windows, capped so they never spawn off-screen
+ * (both axes — an off-bottom spawn hides the titlebar, the only drag handle). */
+export function spawnPosition(openCount: number, viewportW: number, viewportH = 800) {
   const offset = openCount * 34
-  return { x: Math.min(90 + offset, viewportW / 3), y: 70 + offset }
+  return {
+    x: Math.min(90 + offset, viewportW / 3),
+    // keep the titlebar well within the viewport (minus the taskbar)
+    y: Math.min(70 + offset, Math.max(70, viewportH - 220))
+  }
 }

@@ -51,7 +51,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       focusWindow(existing)
       return
     }
-    const spawn = spawnPosition(windows.value.length, window.innerWidth)
+    const spawn = spawnPosition(windows.value.length, window.innerWidth, window.innerHeight)
     windows.value.push({
       id,
       title: titles[id] ?? id,
@@ -65,6 +65,10 @@ export function useWindowManager(titles: Record<string, string> = {}) {
 
   const closeWindow = (id: string) => {
     windows.value = windows.value.filter((w) => w.id !== id)
+    // focus the next-highest window, so keyboard actions (snap, Alt+Tab) don't
+    // operate off the just-closed one
+    const top = [...windows.value].filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0]
+    if (top) focusWindow(top)
   }
 
   const togglePin = (win: DesktopWindow) => {

@@ -58,8 +58,15 @@ describe('clampDragPosition', () => {
 
 describe('spawnPosition', () => {
   it('cascades new windows and caps x at a third of the viewport', () => {
-    expect(spawnPosition(0, 1280)).toEqual({ x: 90, y: 70 })
-    expect(spawnPosition(2, 1280)).toEqual({ x: 158, y: 138 })
-    expect(spawnPosition(20, 1280).x).toBe(1280 / 3)
+    expect(spawnPosition(0, 1280, 800)).toEqual({ x: 90, y: 70 })
+    expect(spawnPosition(2, 1280, 800)).toEqual({ x: 158, y: 138 })
+    expect(spawnPosition(20, 1280, 800).x).toBe(1280 / 3)
+  })
+
+  it('caps y so a late window never spawns with its titlebar off the bottom', () => {
+    // 20 windows would put y at 750; clamp keeps it within viewportH − 220
+    expect(spawnPosition(20, 1280, 700).y).toBe(700 - 220)
+    // a tiny viewport still yields a sane minimum
+    expect(spawnPosition(20, 1280, 200).y).toBe(70)
   })
 })
