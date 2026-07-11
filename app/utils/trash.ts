@@ -1,4 +1,5 @@
 import type { Filesystem } from '~/utils/terminal/filesystem'
+import { seedFor } from '~/utils/terminal/siteFs'
 
 // The lvOS recycle bin's pure logic: removing a path bundles the node and its
 // subtree into a restorable entry instead of destroying it. The reactive side
@@ -52,7 +53,13 @@ export function restoreEntry(files: Filesystem, entry: TrashEntry): Filesystem {
     const segments = path.split('/')
     for (let i = 1; i < segments.length; i++) {
       const parent = segments.slice(0, i).join('/')
-      if (!restored[parent]) restored[parent] = { dir: true, content: '' }
+      // a recreated parent that is really a seeded site folder keeps its sys
+      // flag, so it stays seed-tracked instead of becoming a persisted override
+      if (!restored[parent]) {
+        restored[parent] = seedFor(parent) === null
+          ? { dir: true, content: '', sys: true }
+          : { dir: true, content: '' }
+      }
     }
     // never clobber a file the visitor made after the delete — but a seeded
     // site copy (sys) yields, so restoring a binned edit brings the edit back

@@ -2,7 +2,7 @@ import {
   WORLD_SIZE, WORLD_COOLDOWN_MS, WORLD_PALETTE,
   inWorld, validColor, plotAt, CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from '../../realtime/world-core.mjs'
-import { storageGet, storageSet } from '~/utils/safeStorage'
+import { storageGet, storageSet, storageGetJson } from '~/utils/safeStorage'
 
 // The Pixel World's client brain: one websocket to the cursors relay when the
 // site is built with NUXT_PUBLIC_CURSORS_WS, or a solo local world when not —
@@ -28,6 +28,14 @@ let wired = false
 let socket: WebSocket | null = null
 let offlineGate: CooldownGate | null = null
 let offlineMeta: Record<string, { by: string, at: number }> = {}
+
+// provenance is keyed "x,y" → {by, at}; anything else in storage is discarded
+const isPixelMeta = (value: unknown): value is Record<string, { by: string, at: number }> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+  && Object.values(value).every((entry) =>
+    !!entry && typeof entry === 'object'
+    && typeof (entry as { by: unknown }).by === 'string'
+    && typeof (entry as { at: unknown }).at === 'number')
 
 export function useWorld() {
   const board = useState<Uint8Array | null>('world-board', () => null)
@@ -63,9 +71,7 @@ export function useWorld() {
     const saved = storageGet(OFFLINE_KEY)
     board.value = saved ? decodeBoard(saved) : createSeedBoard()
     if (board.value.length !== WORLD_SIZE * WORLD_SIZE) board.value = createSeedBoard()
-    try {
-      offlineMeta = JSON.parse(storageGet(OFFLINE_META_KEY) ?? '{}') as typeof offlineMeta
-    } catch { offlineMeta = {} }
+    offlineMeta = storageGetJson(OFFLINE_META_KEY, isPixelMeta) ?? {}
     offlineGate ??= new CooldownGate(cooldownMs.value)
     version.value++
   }
