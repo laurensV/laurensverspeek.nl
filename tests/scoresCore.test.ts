@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { validSubmission, addScore, cleanName, emptyBoards, MAX_SCORES, LEADERBOARD_GAMES } from '../realtime/scores-core.mjs'
 
+type ScoreEntry = import('../realtime/scores-core.mjs').ScoreEntry
+
 describe('validSubmission', () => {
   it('accepts an in-range integer score for a known game', () => {
     expect(validSubmission({ game: 'snake', score: 120 })).toBe(true)
@@ -20,15 +22,15 @@ describe('validSubmission', () => {
 
 describe('addScore', () => {
   it('keeps the board sorted descending and capped at the top N', () => {
-    let board = []
+    let board: ScoreEntry[] = []
     for (let i = 1; i <= MAX_SCORES + 3; i++) board = addScore(board, { name: `p${i}`, score: i * 10, at: 0 })
     expect(board).toHaveLength(MAX_SCORES)
-    expect(board[0].score).toBe((MAX_SCORES + 3) * 10) // biggest first
-    expect(board.at(-1).score).toBeGreaterThan(0)
+    expect(board[0]!.score).toBe((MAX_SCORES + 3) * 10) // biggest first
+    expect(board.at(-1)!.score).toBeGreaterThan(0)
     // a tiny score doesn't displace the full board
-    const before = board.at(-1).score
+    const before = board.at(-1)!.score
     board = addScore(board, { name: 'low', score: 5, at: 0 })
-    expect(board.at(-1).score).toBe(before)
+    expect(board.at(-1)!.score).toBe(before)
   })
 })
 

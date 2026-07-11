@@ -30,10 +30,11 @@ export const cleanName = (raw) =>
  * @param {unknown} msg @returns {boolean} */
 export function validSubmission(msg) {
   if (!msg || typeof msg !== 'object') return false
-  if (!LEADERBOARD_GAMES.includes(msg.game)) return false
-  const score = msg.score
+  const { game, score } = /** @type {{ game?: unknown, score?: unknown }} */ (msg)
+  if (typeof game !== 'string' || !LEADERBOARD_GAMES.includes(game)) return false
   if (typeof score !== 'number' || !Number.isFinite(score)) return false
-  if (score < 0 || score > (SCORE_CAP[msg.game] ?? 0)) return false
+  const cap = /** @type {Record<string, number>} */ (SCORE_CAP)[game] ?? 0
+  if (score < 0 || score > cap) return false
   return Number.isInteger(score)
 }
 
