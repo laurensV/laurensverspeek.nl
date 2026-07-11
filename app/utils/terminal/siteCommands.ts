@@ -2,6 +2,7 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
+import { buildContribGraph } from '~/utils/terminal/contribGraph'
 
 // Commands about me and the site itself: profile, contact, live stats.
 
@@ -163,6 +164,33 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
             link(`profile    github.com/${GITHUB_USER}`, `https://github.com/${GITHUB_USER}`)
           })
           .catch(() => error('github: API unreachable (rate limit or offline)'))
+          .finally(stopSpin)
+      }
+    },
+    contributions: {
+      category: 'content',
+      description: 'Recent GitHub activity as a heatmap',
+      examples: ['contributions', 'contributions | less'],
+      exec: () => {
+        const stopSpin = ctx.spin('fetching public events from api.github.com ...')
+        // the events API is keyless but only covers ~90 days / 300 events, so
+        // this is an honest recent-activity graph, not the full-year calendar
+        return $fetch<{ type: string, created_at: string, payload?: { size?: number } }[]>(
+          `https://api.github.com/users/${GITHUB_USER}/events/public?per_page=100`
+        )
+          .then((events) => {
+            const perDay = new Map<string, number>()
+            for (const event of events) {
+              const day = event.created_at.slice(0, 10)
+              const weight = event.type === 'PushEvent' ? (event.payload?.size ?? 1) : 1
+              perDay.set(day, (perDay.get(day) ?? 0) + weight)
+            }
+            const days = [...perDay].map(([date, count]) => ({ date, count }))
+            push('primary', `${GITHUB_USER} — recent contributions`)
+            for (const gline of buildContribGraph(days, new Date())) out(gline)
+            muted(`(GitHub's public events feed — the last ~90 days, not the full calendar)`)
+          })
+          .catch(() => error('contributions: API unreachable (rate limit or offline)'))
           .finally(stopSpin)
       }
     }
