@@ -363,6 +363,9 @@ test('the hall of fame gathers every high score in one board', async ({ page }) 
   await expect(scores.locator('tr', { hasText: 'snake' })).toContainText('42')
   await expect(scores.locator('tr', { hasText: 'beginner' })).toContainText('31')
   await expect(scores.locator('tr', { hasText: 'tetris' })).toContainText('no entry yet')
+  // no relay is configured in the build, so the online leaderboard degrades away
+  // gracefully — the local board still works, the global section is absent
+  await expect(scores.locator('.scores-global-title')).toHaveCount(0)
 })
 
 test('desktop icons wear live badges for unread mail and binned files', async ({ page }) => {
@@ -468,4 +471,11 @@ test('the code playground runs edited html/css/js in a sandboxed preview', async
   // the iframe is sandboxed without same-origin
   await expect(page.locator('.play-frame')).toHaveAttribute('sandbox', /allow-scripts/)
   await expect(page.locator('.play-frame')).not.toHaveAttribute('sandbox', /allow-same-origin/)
+
+  // the edit persists: close the window, reopen the app, the HTML is still there
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lv-playground'))).toContain('edited live')
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^playground$/ }) }).click()
+  await page.locator('.play').waitFor()
+  await expect(page.frameLocator('.play-frame').locator('h1')).toHaveText('edited live', { timeout: 4000 })
 })
