@@ -1,6 +1,6 @@
 import { PAGES, type TerminalCommand, type TerminalContext } from '~/utils/terminal/types'
 import { projects, categories, type ProjectCategory } from '~/data/projects'
-import { dirEntries } from '~/utils/terminal/filesystem'
+import { dirEntries, resolvePath, pathCandidates } from '~/utils/terminal/filesystem'
 import { searchSections } from '~/utils/terminal/search'
 import { postSlug, postSlugCandidates, createPostTools } from '~/utils/terminal/postHelpers'
 
@@ -147,10 +147,12 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
       category: 'files',
       usage: 'tree [dir]',
       description: 'Draw the filesystem as a tree (site pages and your files)',
+      argCandidates: (partial) => pathCandidates(ctx.files.value, ctx.fsCwd.value, partial, { dirsOnly: true }),
       exec: (args) => {
-        const root = args[0] ? args[0].replace(/^~\/?|\/+$/g, '') : ''
+        // resolve against the cwd, exactly like ls/cd/cat do
+        const root = resolvePath(ctx.fsCwd.value, args[0] ?? '.')
         if (root && ctx.files.value[root]?.dir !== true) {
-          return error(`tree: ${args[0]}: No such directory`)
+          return error(`tree: ${args[0] ?? root}: No such directory`)
         }
         let dirs = 0
         let fileCount = 0
