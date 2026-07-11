@@ -759,3 +759,13 @@ test('the screenshot tool files a snapshot into the gallery', async ({ page }) =
   await expect(gallery.locator('.gallery-label')).toContainText('screenshot 1')
   await expect(gallery.locator('.gallery-image')).toHaveAttribute('src', /^data:image\/png/)
 })
+
+test('the taskbar tray and boot nudge tell the truth about the battery', async ({ page }) => {
+  await bootDesktop(page)
+  // headless chromium reports a full, charging battery → tray shows it
+  await expect(page.locator('.lvos-battery')).toContainText('%')
+  // the battery toast is the honest variant, not the canned "Battery low"
+  const toast = page.locator('.lvos-toast', { hasText: /Battery/ })
+  await expect(toast).toBeVisible({ timeout: 10000 })
+  await expect(toast).toContainText(/Battery at \d+%/)
+})

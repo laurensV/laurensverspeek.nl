@@ -863,3 +863,11 @@ test('kill 7 terminates your own shell', async ({ page }) => {
   await pressTerminalKey(page)
   await expect(page.locator('.terminal-output')).toContainText('terminating your own shell. bold.')
 })
+
+test('battery reports the real charge state (or honest mains power)', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'battery')
+  const out = page.locator('.terminal-output')
+  // chromium exposes the Battery API; other engines get the mains joke
+  await expect(out).toContainText(/(%\s—\s(charging|discharging))|mains and optimism/)
+})

@@ -2,6 +2,7 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
 import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
 import { profile } from '~/data/profile'
+import { batteryGauge } from '~/composables/useBattery'
 
 // The lv "logo", shared by neofetch and sysinfo.
 const ASCII_LOGO = String.raw`
@@ -17,6 +18,8 @@ const ASCII_LOGO = String.raw`
 // keep each factory focused.
 export function createInfoCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted } = ctx
+  // captured at factory time; exec runs outside the Nuxt instance
+  const battery = useBattery()
 
   return {
     id: {
@@ -115,6 +118,22 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
           if (row) push('output', `<span class="term-accent">${art}${row[0].padEnd(12)}</span> ${row[1]}`, true)
           else push('primary', art)
         }
+      }
+    },
+    battery: {
+      category: 'system',
+      description: 'Charge state of the machine running all this',
+      exec: () => {
+        if (!battery.supported.value || battery.percent.value === null) {
+          muted('battery: no battery reported — this machine runs on mains and optimism.')
+          return
+        }
+        const pct = battery.percent.value
+        const state = battery.charging.value ? 'charging' : 'discharging'
+        push('output', `<span class="term-accent">${batteryGauge(battery.level.value ?? 0)}</span> ${pct}% — ${state}`, true)
+        if (pct <= 20 && !battery.charging.value) muted('(plug in your creativity. and the laptop.)')
+        else if (pct === 100) muted('(fully charged. no excuses now.)')
+        else muted(`(the lvOS taskbar keeps an eye on it too)`)
       }
     },
     df: {

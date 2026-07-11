@@ -56,6 +56,12 @@
       <span class="lvos-task-preview is-family-code">{{ win.title }}</span>
     </div>
 
+    <span
+      v-if="battery.supported.value && battery.percent.value !== null"
+      class="lvos-tray-btn lvos-battery"
+      :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
+    >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
+
     <button
       class="lvos-tray-btn lvos-fullscreen"
       :aria-pressed="isFullscreen"
@@ -125,6 +131,9 @@ const toggleNotifications = () => {
   notifOpen.value = !notifOpen.value
   if (notifOpen.value) emit('read') // opening the panel clears the unread badge
 }
+
+// real battery in the tray, when the browser admits to having one
+const battery = useBattery()
 
 // browser fullscreen for the whole desktop page
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
@@ -345,4 +354,10 @@ const clock = computed(() =>
   }
 }
 
+
+.lvos-battery {
+  color: hsl(var(--lv-scheme-hs), 70%);
+  font-size: 0.68rem;
+  cursor: default;
+}
 </style>

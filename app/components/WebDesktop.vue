@@ -305,8 +305,18 @@ const windowStyle = (win: DesktopWindow) =>
 const onBootDone = () => {
   booting.value = false
   notify('⚡', 'Welcome to lvOS 2.0', 'right-click the desktop for a menu')
-  // a playful nudge a moment later
-  setTimeout(() => notify('🔋', 'Battery low', 'plug in your creativity'), 6000)
+  // the battery nudge tells the truth where the Battery API exists, and
+  // keeps the classic bit where it doesn't
+  setTimeout(() => {
+    const pct = battery.percent.value
+    if (!battery.supported.value || pct === null) {
+      notify('🔋', 'Battery low', 'plug in your creativity')
+    } else if (!battery.charging.value && pct <= 30) {
+      notify('🔋', `Battery low (${pct}%)`, 'plug in your creativity — and the charger')
+    } else {
+      notify('🔋', `Battery at ${pct}%${battery.charging.value ? ', charging' : ''}`, 'plug in your creativity anyway')
+    }
+  }, 6000)
 }
 
 // About This Computer (DesktopAbout) shows uptime since this mount
@@ -436,6 +446,9 @@ const takeScreenshot = () => {
   storageSetJson('lvos-shots', [shot, ...existing].slice(0, 6))
   notify('⌜⌟', 'Screenshot saved', 'open the gallery to admire your desktop')
 }
+
+// the real battery feeds the boot nudge (and the taskbar tray)
+const battery = useBattery()
 
 // live icon badges from the shared state the apps themselves use
 const { unread: mailUnread } = useLvosMail()
