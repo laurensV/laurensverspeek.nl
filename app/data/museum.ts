@@ -45,7 +45,9 @@ export const museum: Wing[] = [
       { name: 'paint → wallpaper', how: 'lvpaint, then set as wallpaper', blurb: 'Your masterpiece becomes the desktop background. The museum does not judge.' },
       { name: 'about this computer', how: 'the start menu', blurb: 'Real uptime, your real resolution and browser, and exactly how much localStorage this whole circus uses.' },
       { name: 'the lock screen', how: 'start menu → lock', blurb: 'Any password unlocks it. The security is ceremonial; the commitment is real.' },
-      { name: 'the boot sequence', how: 'reboot from the start menu', blurb: 'A BIOS POST screen with a memory check that has never once found a problem.' }
+      { name: 'the boot sequence', how: 'reboot from the start menu', blurb: 'A BIOS POST screen with a memory check that has never once found a problem.' },
+      { name: 'mail & the feed reader', how: 'the mail and rss icons', blurb: 'An inbox of lovingly fake mail (the prince remains hopeful) and an RSS reader subscribed to this very site. Dog food: eaten.' },
+      { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' }
     ]
   },
   {
@@ -81,7 +83,8 @@ export const museum: Wing[] = [
     intro: 'Pieces you have to earn. This label is already too generous.',
     exhibits: [
       { name: 'the console hunt', how: 'open devtools, follow window.lv', blurb: 'A three-step riddle that ends in a party and a job-application command.' },
-      { name: 'the tamagotchi', how: 'pet adopt <name>', blurb: 'Lives in the status bar, hatches within the hour, sleeps at night, sulks when unfed. Forgives instantly.' },
+      { name: 'the tamagotchi', how: 'pet adopt <name>', blurb: 'Lives in the status bar, wanders the lvOS desktop, hatches within the hour, sleeps at night, sulks when unfed. Forgives instantly.' },
+      { name: 'the 418 teapot', how: 'ask the terminal for coffee', blurb: 'RFC 2324, implemented: an ASCII teapot in real 3D, rendered with arithmetic and stubbornness. Drag it to pour.' },
       { name: 'status bar toys', how: 'click everything down there', blurb: 'A presence dot, cycling line endings, language modes, a live clock — and five rapid clicks on v2.0.0 arm something regrettable.' },
       { name: 'secrets', how: 'type secrets', blurb: 'The self-aware index of everything this wing refuses to spell out.' },
       { name: 'sudo', how: 'try it', blurb: 'This incident will be reported.' },
@@ -99,7 +102,8 @@ export const museum: Wing[] = [
       { name: 'view transitions', how: 'click a project card', blurb: 'Titles and thumbnails morph between list and detail using the native View Transitions API.' },
       { name: 'both themes, all of it', how: 'the sun/moon toggle', blurb: 'Every exhibit works in light and dark, keys off one data-theme attribute, and respects prefers-reduced-motion.' },
       { name: 'the test battery', how: 'the repo', blurb: 'Three hundred unit tests and nearly two hundred end-to-end tests boot this museum nightly, so the exhibits stay dusted.' },
-      { name: 'privacy', how: 'check /stats', blurb: 'No cookies, no fingerprints; the visitor counters are public and the analytics are optional at build time.' }
+      { name: 'privacy', how: 'check /stats', blurb: 'No cookies, no fingerprints; the visitor counters are public and the analytics are optional at build time.' },
+      { name: 'this very floor', how: '[walk the floor], above', blurb: 'The museum you are standing in: rooms generated from this catalog, plaques mounted by code, one @ to walk them. The exhibit is the building.' }
     ]
   }
 ]
