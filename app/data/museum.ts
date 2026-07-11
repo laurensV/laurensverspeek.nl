@@ -94,6 +94,16 @@ export const museum: Wing[] = [
     ]
   },
   {
+    title: 'the multiplayer wing',
+    intro: 'The site is not always empty. Sometimes there are other people in it.',
+    exhibits: [
+      { name: 'the pixel world', how: 'world open', blurb: 'A shared 128×128 canvas: place one pixel every few seconds, pan and zoom a founding landscape, and watch it change under other visitors\' hands. A minimap, named districts and a time-lapse of recent pixels come standard.' },
+      { name: 'live cursors', how: 'when the relay is on', blurb: 'Other visitors\' cursors drift across the same page you are reading, each a colored dot with a name. Toggle them from the status bar.' },
+      { name: 'say', how: 'say hello', blurb: 'A speech bubble blooms over your live cursor for everyone browsing right now — the smallest possible chat, and somehow the friendliest.' },
+      { name: 'the relay', how: 'realtime/cursors-server.mjs', blurb: 'One tiny Node websocket server behind all of it: authoritative pixel board, rate limits, provenance, no accounts, no tracking. The whole multiplayer layer is optional and off by default.' }
+    ]
+  },
+  {
     title: 'the craft annex',
     intro: 'Engineering exhibits — invisible when they work, which is the point.',
     exhibits: [

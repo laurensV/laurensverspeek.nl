@@ -39,6 +39,9 @@ Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot, then a windowing env
 The guided tour — terminal internals, the shared process table, lvOS, and the
 build pipeline — lives in [docs/architecture.md](docs/architecture.md).
 
+The optional realtime server (live cursors + the Pixel World) has its own guide:
+[docs/world-server.md](docs/world-server.md).
+
 ## Development
 
 ```bash

@@ -26,8 +26,13 @@ useHead({
   title: 'The Pixel World — Laurens Verspeek',
   meta: [{ name: 'robots', content: 'noindex' }]
 })
+const ogImage = `${SITE_URL}/og/page-world.svg`
 useSeoMeta({
-  description: 'A hidden, shared pixel canvas. One pixel at a time.'
+  description: 'A hidden, shared pixel canvas. One pixel at a time.',
+  ogTitle: 'The Pixel World',
+  ogImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
 })
 </script>
 
