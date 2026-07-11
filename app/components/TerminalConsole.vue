@@ -1,6 +1,8 @@
 <template>
   <div class="terminal-console is-family-code" :style="{ '--term-font-scale': fontScale.scale.value }" @click="focusInput">
-    <div ref="outputRef" class="terminal-output">
+    <!-- role=log lets screen readers announce command results; the game frame
+         and spinner repaint every tick, so they stay out of the live region -->
+    <div ref="outputRef" class="terminal-output" role="log" aria-live="polite" aria-label="Terminal output">
       <template v-for="line in paneLines" :key="line.id">
         <div v-if="line.type === 'input'" class="terminal-line">
           <span class="term-prompt">{{ prompt }}</span> {{ line.text }}
@@ -8,8 +10,8 @@
         <pre v-else-if="line.html" class="terminal-line" :class="`is-${line.type}`" v-html="line.text" />
         <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
       </template>
-      <pre v-if="activeGame && active" class="terminal-line game-frame">{{ gameFrame }}</pre>
-      <pre v-if="spinnerLabel && !activeGame && active" class="terminal-line is-muted terminal-spinner">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
+      <pre v-if="activeGame && active" class="terminal-line game-frame" aria-hidden="true">{{ gameFrame }}</pre>
+      <pre v-if="spinnerLabel && !activeGame && active" class="terminal-line is-muted terminal-spinner" aria-hidden="true">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
     </div>
 
     <!-- reverse history search (ctrl+r) -->

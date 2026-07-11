@@ -5,6 +5,8 @@
         ref="canvasRef"
         class="world-canvas"
         :class="{ 'is-panning': panning }"
+        role="img"
+        aria-label="The shared pixel canvas — drag to pan, scroll to zoom, click to place a pixel"
         @pointerdown.prevent="onDown"
         @pointermove="onMove"
         @pointerup="onUp"
