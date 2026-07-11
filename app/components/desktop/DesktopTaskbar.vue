@@ -5,7 +5,7 @@
       :class="{ 'is-open': startOpen }"
       :aria-expanded="startOpen"
       aria-label="Start menu"
-      @click="startOpen = !startOpen"
+      @click="toggleStart"
     >
       ⚡ lvOS
     </button>
@@ -56,55 +56,68 @@
       <span class="lvos-task-preview is-family-code">{{ win.title }}</span>
     </div>
 
-    <span
-      v-if="weather.temp.value !== null"
-      class="lvos-tray-btn lvos-weather"
-      :title="`Amsterdam · live from open-meteo`"
-    >{{ weather.glyph.value }} {{ weather.temp.value }}°</span>
+    <!-- the tray: weather, battery, tiling, fullscreen, bell and clock sit
+         together at the right, like every desktop since 1995 -->
+    <div class="lvos-tray">
+      <span
+        v-if="weather.temp.value !== null"
+        class="lvos-tray-btn lvos-weather"
+        :title="`Amsterdam · live from open-meteo`"
+      >{{ weather.glyph.value }} {{ weather.temp.value }}°</span>
 
-    <span
-      v-if="battery.supported.value && battery.percent.value !== null"
-      class="lvos-tray-btn lvos-battery"
-      :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
-    >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
+      <span
+        v-if="battery.supported.value && battery.percent.value !== null"
+        class="lvos-tray-btn lvos-battery"
+        :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
+      >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
 
-    <button
-      class="lvos-tray-btn lvos-fullscreen"
-      :aria-pressed="isFullscreen"
-      :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-      aria-label="Toggle fullscreen"
-      @click="toggleFullscreen"
-    >
-      <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
-    </button>
+      <button
+        class="lvos-tray-btn lvos-tile"
+        title="Tile windows"
+        aria-label="Tile windows into a grid"
+        @click="emit('tile')"
+      >
+        <AppIcon name="grid" :size="14" />
+      </button>
 
-    <button
-      class="lvos-tray-btn lvos-bell"
-      :class="{ 'is-open': notifOpen }"
-      :aria-expanded="notifOpen"
-      aria-label="Notifications"
-      @click="toggleNotifications"
-    >
-      <AppIcon name="bell" :size="14" />
-      <span v-if="unread > 0" class="lvos-bell-badge">{{ unread > 9 ? '9+' : unread }}</span>
-    </button>
-    <DesktopNotifCenter v-if="notifOpen" :notifications="notifications" @clear="emit('clear')" />
+      <button
+        class="lvos-tray-btn lvos-fullscreen"
+        :aria-pressed="isFullscreen"
+        :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+        aria-label="Toggle fullscreen"
+        @click="toggleFullscreen"
+      >
+        <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
+      </button>
 
-    <button
-      class="lvos-clock"
-      :class="{ 'is-open': calendarOpen }"
-      :aria-expanded="calendarOpen"
-      aria-label="Toggle calendar"
-      @click="calendarOpen = !calendarOpen"
-    >
-      {{ clock }}
-    </button>
-    <DesktopCalendarPopover v-if="calendarOpen" />
+      <button
+        class="lvos-tray-btn lvos-bell"
+        :class="{ 'is-open': notifOpen }"
+        :aria-expanded="notifOpen"
+        aria-label="Notifications"
+        @click="toggleNotifications"
+      >
+        <AppIcon name="bell" :size="14" />
+        <span v-if="unread > 0" class="lvos-bell-badge">{{ unread > 9 ? '9+' : unread }}</span>
+      </button>
+      <DesktopNotifCenter v-if="notifOpen" :notifications="notifications" @clear="emit('clear')" />
+
+      <button
+        class="lvos-clock"
+        :class="{ 'is-open': calendarOpen }"
+        :aria-expanded="calendarOpen"
+        aria-label="Toggle calendar"
+        @click="toggleCalendar"
+      >
+        {{ clock }}
+      </button>
+      <DesktopCalendarPopover v-if="calendarOpen" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useNow, useFullscreen } from '@vueuse/core'
+import { useNow, useFullscreen, useEventListener } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
 import type { Toast } from '~/composables/useDesktopToasts'
@@ -133,10 +146,37 @@ const calendarOpen = defineModel<boolean>('calendarOpen', { default: false })
 const notifOpen = defineModel<boolean>('notifOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
 
-const toggleNotifications = () => {
-  notifOpen.value = !notifOpen.value
-  if (notifOpen.value) emit('read') // opening the panel clears the unread badge
+// the taskbar popovers behave like popovers: opening one closes the others,
+// and clicking anywhere outside the taskbar dismisses them all
+const closePopovers = () => {
+  startOpen.value = false
+  calendarOpen.value = false
+  notifOpen.value = false
 }
+
+const toggleNotifications = () => {
+  const next = !notifOpen.value
+  closePopovers()
+  notifOpen.value = next
+  if (next) emit('read') // opening the panel clears the unread badge
+}
+
+const toggleCalendar = () => {
+  const next = !calendarOpen.value
+  closePopovers()
+  calendarOpen.value = next
+}
+
+const toggleStart = () => {
+  const next = !startOpen.value
+  closePopovers()
+  startOpen.value = next
+}
+
+useEventListener(document, 'pointerdown', (event: PointerEvent) => {
+  if ((event.target as HTMLElement).closest('.lvos-taskbar')) return
+  closePopovers()
+})
 
 // real battery in the tray, when the browser admits to having one
 const battery = useBattery()
@@ -303,7 +343,15 @@ const clock = computed(() =>
   }
 }
 
-// tray buttons (fullscreen, …) sit at the right, next to the clock
+// the tray absorbs the free space so everything in it right-aligns
+.lvos-tray {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+// tray buttons (tile, fullscreen, …) sit at the right, next to the clock
 .lvos-tray-btn {
   display: inline-flex;
   align-items: center;
@@ -317,11 +365,6 @@ const clock = computed(() =>
   &[aria-pressed='true'] {
     color: var(--bulma-primary);
   }
-}
-
-// the first right-aligned element absorbs the free space
-.lvos-fullscreen {
-  margin-left: auto;
 }
 
 .lvos-bell {
