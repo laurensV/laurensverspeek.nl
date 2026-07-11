@@ -34,13 +34,19 @@ const finish = () => {
   }, 250)
 }
 
+// nuxtApp.hook returns an unsubscribe — keep them so a layout switch (this
+// component only lives in the default layout, not /desktop) doesn't leave the
+// hooks registered and re-registered on every round-trip
 const nuxtApp = useNuxtApp()
-nuxtApp.hook('page:start', start)
-nuxtApp.hook('page:finish', finish)
-// content-heavy pages resolve via app:suspense too
-nuxtApp.hook('app:suspense:resolve', finish)
+const unhooks = [
+  nuxtApp.hook('page:start', start),
+  nuxtApp.hook('page:finish', finish),
+  // content-heavy pages resolve via app:suspense too
+  nuxtApp.hook('app:suspense:resolve', finish)
+]
 
 onUnmounted(() => {
+  unhooks.forEach((off) => off())
   clearInterval(creepTimer)
   clearTimeout(doneTimer)
 })

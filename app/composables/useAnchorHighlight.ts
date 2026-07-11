@@ -6,7 +6,7 @@
 export function useAnchorHighlight() {
   const route = useRoute()
   let clearTimer: ReturnType<typeof setTimeout> | undefined
-  let retryTimer: ReturnType<typeof setTimeout> | undefined
+  const retryTimers: ReturnType<typeof setTimeout>[] = []
 
   const flash = () => {
     const id = decodeURIComponent(route.hash.slice(1))
@@ -22,13 +22,13 @@ export function useAnchorHighlight() {
   }
 
   onMounted(() => {
-    // content (blog bodies) renders async; try again once it likely exists
-    retryTimer = setTimeout(flash, 350)
-    setTimeout(flash, 1400)
+    // content (blog bodies) renders async; try again once it likely exists —
+    // track BOTH retries so a quick navigation clears them (no post-unmount flash)
+    retryTimers.push(setTimeout(flash, 350), setTimeout(flash, 1400))
   })
   watch(() => route.hash, () => nextTick(flash))
   onUnmounted(() => {
     clearTimeout(clearTimer)
-    clearTimeout(retryTimer)
+    retryTimers.forEach(clearTimeout)
   })
 }
