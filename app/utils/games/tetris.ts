@@ -112,6 +112,9 @@ export function createTetrisGame({ onFrame, onEnd }: GameCallbacks): GameHandle 
     px = Math.floor((TETRIS_W - current.shape[0]!.length) / 2)
     py = 0
     holdUsed = true
+    // holding with the stack at the top tops out, like spawning does — the
+    // incoming piece must have room
+    if (collides(current.shape, px, py)) end('game over — the stack reached the top of the heap')
   }
 
   // the row the piece would land on if hard-dropped now (for the ghost)

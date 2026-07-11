@@ -35,7 +35,11 @@ export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
     dir = nextDir
     const head = { x: snake[0]!.x + dir.x, y: snake[0]!.y + dir.y }
     const hitWall = head.x <= 0 || head.x >= SNAKE_W - 1 || head.y <= 0 || head.y >= SNAKE_H - 1
-    const hitSelf = snake.some((c) => c.x === head.x && c.y === head.y)
+    // the tail vacates its cell this tick (unless we eat), so following your own
+    // tail is legal — exclude the last segment from the self-collision test
+    const eating = head.x === food.x && head.y === food.y
+    const body = eating ? snake : snake.slice(0, -1)
+    const hitSelf = body.some((c) => c.x === head.x && c.y === head.y)
     if (hitWall || hitSelf) {
       end('game over — the snake has encountered a segfault')
       return
