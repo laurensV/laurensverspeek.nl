@@ -4,6 +4,11 @@
 
 import { storageGet, storageSet } from '~/utils/safeStorage'
 
+// an optional sink the leaderboard composable registers, so a finished game's
+// score can be submitted online without the pure games knowing about the relay
+let scoreSink: ((game: string, score: number) => void) | null = null
+export const setScoreSink = (fn: ((game: string, score: number) => void) | null) => { scoreSink = fn }
+
 /** A high score backed by localStorage under a single key. */
 export function useHighScore(key: string) {
   const get = () => Number(storageGet(key) ?? 0) || 0
@@ -11,6 +16,9 @@ export function useHighScore(key: string) {
   /** Record a score; returns whether it was a new best and the best so far. */
   const record = (score: number) => {
     const best = get()
+    // offer the achieved score to the leaderboard (the game id lives in the key)
+    const game = /lv-([a-z0-9]+)-highscore/.exec(key)?.[1]
+    if (game && scoreSink) scoreSink(game, score)
     if (score > best) {
       storageSet(key, String(score))
       return { isNew: true, best }

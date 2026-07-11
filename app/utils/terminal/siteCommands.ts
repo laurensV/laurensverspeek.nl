@@ -11,6 +11,7 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
   // captured at factory time (inside the composable), since command exec
   // handlers run outside the Nuxt instance
   const { nowUpdated, goatcounter } = useRuntimeConfig().public
+  const leaderboard = useLeaderboard()
 
   return {
     about: {
@@ -165,6 +166,33 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
           })
           .catch(() => error('github: API unreachable (rate limit or offline)'))
           .finally(stopSpin)
+      }
+    },
+    leaderboard: {
+      category: 'games',
+      usage: 'leaderboard [game]',
+      description: 'Global high scores (when a relay is configured)',
+      argCandidates: () => [...leaderboard.GAMES],
+      exec: (args) => {
+        if (!leaderboard.enabled.value) {
+          muted('leaderboard: no relay on this build — scores stay local.')
+          muted(`(the lvOS 'scores' app shows your personal hall of fame)`)
+          return
+        }
+        leaderboard.enter()
+        const games = args[0] && leaderboard.GAMES.includes(args[0]) ? [args[0]] : leaderboard.GAMES
+        if (!leaderboard.connected.value) muted('connecting to the leaderboard ...')
+        for (const game of games) {
+          push('primary', `## ${game}`)
+          const board = leaderboard.boards.value[game] ?? []
+          if (!board.length) {
+            muted('  no scores yet — be the first')
+            continue
+          }
+          board.slice(0, 10).forEach((entry, i) => {
+            out(`${String(i + 1).padStart(2)}. ${entry.name.padEnd(16)} ${entry.score}`)
+          })
+        }
       }
     },
     contributions: {

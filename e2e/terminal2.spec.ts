@@ -541,3 +541,13 @@ test('| less pages long output and q quits the pager', async ({ page }) => {
   await page.keyboard.press('q')
   await expect(frame).toHaveCount(0)
 })
+
+test('leaderboard explains itself when no relay is configured', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'leaderboard')
+  await expect(page.locator('.terminal-output')).toContainText('no relay on this build')
+  // tab-completes the game names
+  await page.fill('#terminal-input', 'leaderboard sn')
+  await page.keyboard.press('Tab')
+  await expect(page.locator('#terminal-input')).toHaveValue('leaderboard snake')
+})

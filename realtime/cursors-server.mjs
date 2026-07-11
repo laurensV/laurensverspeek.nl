@@ -14,9 +14,33 @@ import {
   WORLD_SIZE, WORLD_COOLDOWN_MS, inWorld, validColor,
   CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from './world-core.mjs'
+import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
+
+// ---- the game leaderboard: top scores per game, persisted ----
+const SCORES_FILE = process.env.SCORES_FILE
+  ?? fileURLToPath(new URL('./scores.json', import.meta.url))
+/** @type {Record<string, { name: string, score: number, at: number }[]>} */
+let scoreBoards = emptyBoards()
+try {
+  const saved = JSON.parse(readFileSync(SCORES_FILE, 'utf8'))
+  scoreBoards = { ...emptyBoards(), ...saved }
+} catch { /* no saved scores yet */ }
+let scoresSaveTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined)
+const scheduleScoresSave = () => {
+  clearTimeout(scoresSaveTimer)
+  scoresSaveTimer = setTimeout(() => {
+    try {
+      writeFileSync(SCORES_FILE, JSON.stringify(scoreBoards))
+    } catch (error) {
+      console.warn('[scores] save failed:', error)
+    }
+  }, 2000)
+}
+// submissions are rate-limited per connection
+const scoreGate = new CooldownGate(1500)
 
 // ---- the pixel world: one persistent board, server-authoritative ----
 const WORLD_FILE = process.env.WORLD_FILE
@@ -112,6 +136,24 @@ wss.on('connection', (socket) => {
       }
       return
     }
+    // ---- leaderboard protocol (server-authoritative) ----
+    if (msg.type === 'scores-get') {
+      socket.send(JSON.stringify({ type: 'scores', boards: scoreBoards }))
+      return
+    }
+    if (msg.type === 'score-submit') {
+      if (!validSubmission(msg)) return
+      if (scoreGate.check(id, Date.now()) > 0) return
+      const entry = { name: cleanName(msg.name), score: msg.score, at: Date.now() }
+      scoreBoards[msg.game] = addScore(scoreBoards[msg.game], entry)
+      scheduleScoresSave()
+      // broadcast the updated board for that game to everyone
+      const payload = JSON.stringify({ type: 'score-board', game: msg.game, board: scoreBoards[msg.game] })
+      for (const client of wss.clients) {
+        if (client.readyState === 1) client.send(payload)
+      }
+      return
+    }
     // ---- pixel world protocol (server-authoritative) ----
     if (msg.type === 'world-join') {
       worldMembers.add(socket)
@@ -196,6 +238,7 @@ wss.on('connection', (socket) => {
     cooldowns.last.delete(id)
     moveGate.last.delete(id)
     chatGate.last.delete(id)
+    scoreGate.last.delete(id)
     const payload = JSON.stringify({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
