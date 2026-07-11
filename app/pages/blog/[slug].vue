@@ -8,9 +8,9 @@
         <p class="overline mb-4">blog $ cat {{ route.params.slug }}.md</p>
 
         <template v-if="post">
-          <h1 class="title is-2 mb-2" :style="{ viewTransitionName: `post-${route.params.slug}` }">{{ post.title }}</h1>
+          <h1 class="title is-2 mb-2" :style="{ viewTransitionName: `post-${route.params.slug}` }">{{ override?.title ?? post.title }}</h1>
           <p class="is-family-code is-size-7 has-text-grey mb-6">
-            {{ formatDate(post.date) }} · {{ readingTime }} min read
+            {{ formatDate(override?.date || post.date) }} · {{ readingTime }} min read
             <template v-if="updatedDate"> · <span class="post-updated" title="last edited">updated {{ formatDate(updatedDate) }}</span></template>
             <template v-if="post.tags?.length">
               · <span
@@ -25,8 +25,17 @@
             </button>
           </p>
 
+          <p v-if="override" class="post-edited-note is-family-code is-size-7">
+            ✎ you edited this post in the terminal — this is your copy.
+            <code>rm blog/{{ slugParam }}.md</code> brings the original back.
+          </p>
+
           <div ref="bodyRef" class="content is-medium post-body">
-            <ContentRenderer :value="post" />
+            <!-- an override is the visitor's own markdown, rendered by
+                 markdownLite: every text node is escaped before any tag is
+                 added, so this stays authored markup over inert text -->
+            <div v-if="override" v-html="override.html" />
+            <ContentRenderer v-else :value="post" />
           </div>
 
           <section v-if="related.length" class="post-related mt-6 pt-5">
@@ -91,6 +100,11 @@ const updatedDate = computed(() => {
 const { data: post } = await useAsyncData(`blog-${slugParam}`, () =>
   queryCollection('blog').path(route.path).first()
 )
+
+// a post edited through the terminal (vim blog/<slug>.md) really replaces the
+// rendered one for this visitor — see useBlogOverrides
+const { overrideFor } = useBlogOverrides()
+const override = computed(() => overrideFor(slugParam))
 
 if (!post.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
@@ -168,8 +182,12 @@ const share = async () => {
   await copy(url)
 }
 
-const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+const formatDate = (date: string) => {
+  const parsed = new Date(date)
+  // an override's frontmatter is hand-typed — show it verbatim if unparsable
+  if (Number.isNaN(parsed.getTime())) return date
+  return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+}
 
 // ---- table of contents (flattened, h2 + h3) ----
 interface TocEntry { id: string, text: string, depth: number }
@@ -366,6 +384,19 @@ onMounted(() => {
 
 .post-tag {
   color: hsl(var(--tag-h, 44), 45%, 52%);
+}
+
+// the "you edited this" banner for terminal-overridden posts
+.post-edited-note {
+  margin: -1rem 0 1.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed hsla(var(--lv-primary-hsl), 0.5);
+  border-radius: var(--bulma-radius);
+  color: var(--bulma-text-weak);
+
+  code {
+    background-color: var(--bulma-scheme-main-bis);
+  }
 }
 
 .post-share {

@@ -1,10 +1,18 @@
 // A tiny persistent "home" filesystem for the terminal: a flat namespace of
 // files and directories the visitor can create with mkdir/touch/echo>, read
-// with cat, and remove with rm. Persisted to localStorage so it survives visits.
+// with cat, and remove with rm. Persisted to localStorage so it survives
+// visits. The site's own pages live in it too, as seeded `sys` nodes (see
+// utils/terminal/siteFs) — those are rebuilt fresh every visit and never
+// persisted; editing one replaces it with a plain (persisted) user node.
 
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 
-interface FsNode { dir: boolean, content: string }
+export interface FsNode {
+  dir: boolean
+  content: string
+  /** Seeded site content: refreshed each visit, protected from rm/mv */
+  sys?: boolean
+}
 export type Filesystem = Record<string, FsNode>
 
 const FS_KEY = 'lv-terminal-fs'
@@ -30,9 +38,14 @@ export function loadFs(): Filesystem | null {
   return fs
 }
 
+/** Seeded site content is rebuilt every visit — only the visitor's own files
+ * (and their edits of site files, which drop the sys flag) persist. */
+export const stripSysNodes = (fs: Filesystem): Filesystem =>
+  Object.fromEntries(Object.entries(fs).filter(([, node]) => !node.sys))
+
 export function saveFs(fs: Filesystem): void {
   if (!import.meta.client) return
-  storageSetJson(FS_KEY, fs)
+  storageSetJson(FS_KEY, stripSysNodes(fs))
 }
 
 /**
@@ -158,6 +171,30 @@ export function formatLongListing(
   })
   const total = entries.reduce((sum, e) => sum + (e.dir ? 4096 : e.size), 0)
   return [`total ${Math.ceil(total / 1024)}`, ...rows]
+}
+
+/**
+ * Tab-completion candidates for a path argument: completes one segment at a
+ * time, descending into directories the way a real shell does. `partial` is
+ * whatever the visitor typed so far ('', 'bl', 'blog/', 'blog/reb', '../x').
+ * Directory candidates end in '/', so another Tab keeps descending.
+ */
+export function pathCandidates(
+  files: Filesystem,
+  cwd: string,
+  partial = '',
+  opts: { dirsOnly?: boolean } = {}
+): string[] {
+  const slash = partial.lastIndexOf('/')
+  const prefix = slash === -1 ? '' : partial.slice(0, slash + 1)
+  const base = slash === -1 ? partial : partial.slice(slash + 1)
+  const dir = prefix ? resolvePath(cwd, prefix) : cwd
+  if (prefix && dir !== '' && files[dir]?.dir !== true) return []
+  return dirEntries(files, dir)
+    .filter((entry) => (opts.dirsOnly ? entry.dir : true))
+    .filter((entry) => entry.name.startsWith(base))
+    .map((entry) => `${prefix}${entry.name}${entry.dir ? '/' : ''}`)
+    .sort()
 }
 
 /**

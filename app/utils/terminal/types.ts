@@ -22,8 +22,10 @@ export interface TerminalCommand {
   hidden?: boolean
   /** Longer explanation + examples, shown by `man <cmd>` */
   examples?: string[]
-  /** Candidates for tab-completing this command's first argument */
-  argCandidates?: () => string[]
+  /** Candidates for tab-completing this command's argument. Receives the
+   * partial argument typed so far, so path completion can descend into
+   * directories one segment at a time. */
+  argCandidates?: (partial: string) => string[]
   /** Async commands return their promise so pipes can wait for the output */
   exec: (args: string[]) => void | Promise<void>
 }
@@ -35,7 +37,10 @@ interface TerminalBlogPost {
   path: string
   title: string
   date: string
+  description?: string
   tags?: string[] | null
+  /** Raw markdown source (kept by the collection schema's rawbody field) */
+  rawbody?: string
   body: unknown
 }
 

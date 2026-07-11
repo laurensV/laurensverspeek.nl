@@ -8,7 +8,10 @@ export default defineContentConfig({
       schema: z.object({
         date: z.string(),
         description: z.string(),
-        tags: z.array(z.string()).optional()
+        tags: z.array(z.string()).optional(),
+        // declaring rawbody makes Nuxt Content keep the raw markdown source —
+        // the terminal's virtual filesystem serves posts as real .md files
+        rawbody: z.string().optional()
       })
     })
   }

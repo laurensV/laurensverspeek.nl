@@ -28,7 +28,8 @@ export function removeToTrash(
   const nodes: TrashEntry['nodes'] = {}
   const remaining: Filesystem = {}
   for (const [key, value] of Object.entries(files)) {
-    if (key === path || key.startsWith(`${path}/`)) nodes[key] = { ...value }
+    // the trashed copy is the visitor's — never carry a sys (seed) flag along
+    if (key === path || key.startsWith(`${path}/`)) nodes[key] = { dir: value.dir, content: value.content }
     else remaining[key] = value
   }
   return {
@@ -53,8 +54,9 @@ export function restoreEntry(files: Filesystem, entry: TrashEntry): Filesystem {
       const parent = segments.slice(0, i).join('/')
       if (!restored[parent]) restored[parent] = { dir: true, content: '' }
     }
-    // never clobber a file the visitor made after the delete
-    if (!restored[path]) restored[path] = { ...node }
+    // never clobber a file the visitor made after the delete — but a seeded
+    // site copy (sys) yields, so restoring a binned edit brings the edit back
+    if (!restored[path] || restored[path].sys) restored[path] = { ...node }
   }
   return restored
 }

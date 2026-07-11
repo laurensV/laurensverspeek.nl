@@ -3,65 +3,62 @@
     <div class="files-body">
       <div class="files-dirs">
         <button
-          v-for="dir in SIDEBAR"
-          :key="dir"
-          :class="{ 'is-active': dir === activeDir }"
-          @click="switchDir(dir)"
+          v-for="shortcut in SIDEBAR"
+          :key="shortcut.label"
+          :class="{ 'is-active': shortcut.dir === vfsDir }"
+          @click="switchDir(shortcut.dir)"
         >
-          {{ dir }}/
+          {{ shortcut.label }}/
         </button>
       </div>
       <div class="files-list">
-        <template v-if="activeDir === '~'">
-          <nav v-if="vfsDir" class="files-crumbs" aria-label="Current folder path">
-            <button class="files-crumb" @click="vfsDir = ''">~</button>
-            <template v-for="crumb in crumbs" :key="crumb.path">
-              <span class="files-crumb-sep" aria-hidden="true">/</span>
-              <button class="files-crumb" :disabled="crumb.path === vfsDir" @click="vfsDir = crumb.path">
-                {{ crumb.name }}
-              </button>
-            </template>
-          </nav>
-          <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
-            <template v-if="renaming === entry.name">
-              <input
-                ref="renameRef"
-                v-model="renameValue"
-                class="files-rename is-family-code"
-                :aria-label="`New name for ${entry.name}`"
-                spellcheck="false"
-                @keydown.enter.prevent="applyRename(entry)"
-                @keydown.esc.prevent="renaming = null"
-                @blur="renaming = null"
-              >
-            </template>
-            <template v-else>
-              <button
-                class="files-file"
-                :class="{ 'is-dir': entry.dir }"
-                @click="openVfsEntry(entry)"
-                @contextmenu.prevent.stop="openFileMenu(entry, $event)"
-              >
-                <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
-                <AppIcon v-else name="file" :size="13" />
-                <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
-              </button>
-              <button
-                class="files-delete"
-                :aria-label="`Move ${entry.name} to the recycle bin`"
-                title="Move to recycle bin"
-                @click="deleteVfsEntry(entry)"
-              >×</button>
-            </template>
-          </div>
-          <p v-if="renameError" class="files-error">{{ renameError }}</p>
-        </template>
-        <button v-for="file in curated" :key="file.name" class="files-file" @click="file.open()">
-          <AppIcon name="file" :size="13" />
-          <span>{{ file.name }}</span>
-        </button>
-        <p v-if="activeDir === '~' && !vfsDir" class="files-hint">
-          files you create in the terminal (touch, echo &gt;, mkdir) show up here
+        <nav v-if="vfsDir" class="files-crumbs" aria-label="Current folder path">
+          <button class="files-crumb" @click="vfsDir = ''">~</button>
+          <template v-for="crumb in crumbs" :key="crumb.path">
+            <span class="files-crumb-sep" aria-hidden="true">/</span>
+            <button class="files-crumb" :disabled="crumb.path === vfsDir" @click="vfsDir = crumb.path">
+              {{ crumb.name }}
+            </button>
+          </template>
+        </nav>
+        <div v-for="entry in vfsEntries" :key="entry.name" class="files-row">
+          <template v-if="renaming === entry.name">
+            <input
+              ref="renameRef"
+              v-model="renameValue"
+              class="files-rename is-family-code"
+              :aria-label="`New name for ${entry.name}`"
+              spellcheck="false"
+              @keydown.enter.prevent="applyRename(entry)"
+              @keydown.esc.prevent="renaming = null"
+              @blur="renaming = null"
+            >
+          </template>
+          <template v-else>
+            <button
+              class="files-file"
+              :class="{ 'is-dir': entry.dir }"
+              @click="openVfsEntry(entry)"
+              @contextmenu.prevent.stop="openFileMenu(entry, $event)"
+            >
+              <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
+              <AppIcon v-else name="file" :size="13" />
+              <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
+              <span v-if="entry.edited" class="files-badge" title="Edited by you — rm restores the original">edited</span>
+            </button>
+            <button
+              v-if="!entry.sys"
+              class="files-delete"
+              :aria-label="`Move ${entry.name} to the recycle bin`"
+              title="Move to recycle bin"
+              @click="deleteVfsEntry(entry)"
+            >×</button>
+          </template>
+        </div>
+        <p v-if="actionError" class="files-error">{{ actionError }}</p>
+        <p v-if="!vfsDir" class="files-hint">
+          the site's pages live here as real folders — and files you create in
+          the terminal (touch, echo &gt;, mkdir) show up alongside them
         </p>
       </div>
     </div>
@@ -106,26 +103,26 @@
 
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
-import { projects } from '~/data/projects'
 import { dirEntries, renamePath } from '~/utils/terminal/filesystem'
+import { removalPlan, isSysPath } from '~/utils/terminal/siteFs'
 
-// lvOS file explorer over the site's content AND the terminal's persistent
-// home filesystem — the same one mkdir/touch/echo> write to (shared useState).
+// lvOS file explorer over THE filesystem — the same one the terminal's
+// cd/ls/cat/vim walk, which holds the site's pages as seeded folders next to
+// whatever the visitor created. Blog posts open in the blog reader, the
+// resume opens the PDF viewer, everything else previews inline.
 
 const emit = defineEmits<{
-  route: [path: string]
   window: [id: string]
   post: [path: string]
 }>()
 
-interface FileEntry {
-  name: string
-  open: () => void
-}
+const SIDEBAR = [
+  { label: '~', dir: '' },
+  { label: '~/blog', dir: 'blog' },
+  { label: '~/projects', dir: 'projects' }
+]
 
-const SIDEBAR = ['~', '~/projects', '~/blog']
-const activeDir = ref('~')
-// current position inside the home filesystem while browsing `~`
+// current position inside the home filesystem
 const vfsDir = ref('')
 const preview = ref<{ name: string, content: string } | null>(null)
 
@@ -134,18 +131,31 @@ const trash = useTrash()
 
 const entryPath = (name: string) => (vfsDir.value ? `${vfsDir.value}/${name}` : name)
 
-// deleting from the explorer goes through the same recycle bin as `rm`
-const deleteVfsEntry = (entry: { name: string, dir: boolean }) => {
-  trash.discard(entryPath(entry.name))
+const actionError = ref('')
+
+// deleting from the explorer follows the same rules as `rm`: user files go to
+// the bin, site content is protected, deleting an edit restores the original
+const deleteVfsEntry = (entry: VfsEntry) => {
+  const path = entryPath(entry.name)
+  const plan = removalPlan(files.value, path)
+  if (plan === 'missing') return
+  if (plan === 'protected') {
+    actionError.value = `${entry.name}: site content — edit it instead, edits do stick`
+    return
+  }
+  actionError.value = ''
+  trash.discard(path)
+  if (plan.restoreSeed !== null) {
+    files.value = { ...files.value, [path]: { dir: false, content: plan.restoreSeed, sys: true } }
+  }
   if (preview.value?.name === entry.name) preview.value = null
 }
 
 // ---- right-click menu + inline rename ----
-interface VfsEntry { name: string, dir: boolean }
+interface VfsEntry { name: string, dir: boolean, sys: boolean, edited: boolean }
 const fileMenu = ref<{ entry: VfsEntry, x: number, y: number } | null>(null)
 const renaming = ref<string | null>(null)
 const renameValue = ref('')
-const renameError = ref('')
 const renameRef = ref<HTMLInputElement[]>()
 
 const openFileMenu = (entry: VfsEntry, event: MouseEvent) => {
@@ -182,16 +192,23 @@ const menuProperties = () => {
     size: bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`,
     lines: entry.dir ? null : (content ? content.split('\n').length : 0),
     path,
-    perms: entry.dir ? 'drwxr-xr-x  (yours, all of it)' : '-rw-r--r--  (read, write, dream)'
+    perms: entry.sys
+      ? 'r--r--r--  (site content — yours to read and edit, not to rm)'
+      : entry.dir ? 'drwxr-xr-x  (yours, all of it)' : '-rw-r--r--  (read, write, dream)'
   }
   fileMenu.value = null
 }
 
 const menuRename = () => {
   if (!fileMenu.value) return
+  if (fileMenu.value.entry.sys) {
+    actionError.value = `${fileMenu.value.entry.name}: site content keeps its name`
+    fileMenu.value = null
+    return
+  }
   renaming.value = fileMenu.value.entry.name
   renameValue.value = fileMenu.value.entry.name
-  renameError.value = ''
+  actionError.value = ''
   fileMenu.value = null
   void nextTick(() => renameRef.value?.[0]?.select())
 }
@@ -199,22 +216,17 @@ const menuRename = () => {
 const applyRename = (entry: VfsEntry) => {
   const result = renamePath(files.value, entryPath(entry.name), renameValue.value)
   if ('error' in result) {
-    renameError.value = `rename: ${result.error}`
+    actionError.value = `rename: ${result.error}`
     renaming.value = null
     return
   }
   files.value = result.files
-  renameError.value = ''
+  actionError.value = ''
   renaming.value = null
 }
 
-const { data: posts } = useLazyAsyncData('desktop-posts', () =>
-  queryCollection('blog').order('date', 'DESC').all()
-)
-
 const switchDir = (dir: string) => {
-  activeDir.value = dir
-  vfsDir.value = ''
+  vfsDir.value = dir
   preview.value = null
 }
 
@@ -224,46 +236,36 @@ const crumbs = computed(() => {
   return segments.map((name, i) => ({ name, path: segments.slice(0, i + 1).join('/') }))
 })
 
-const vfsEntries = computed(() => {
-  if (activeDir.value !== '~') return []
-  return dirEntries(files.value, vfsDir.value)
+const vfsEntries = computed<VfsEntry[]>(() =>
+  dirEntries(files.value, vfsDir.value)
+    .map((entry) => {
+      const path = entryPath(entry.name)
+      const sys = isSysPath(files.value, path)
+      const plan = removalPlan(files.value, path)
+      return {
+        ...entry,
+        sys,
+        // a user-owned node where a seed exists is a local edit of site content
+        edited: !entry.dir && !sys && typeof plan === 'object' && plan.restoreSeed !== null
+      }
+    })
     .sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name))
-})
+)
 
-const openVfsEntry = (entry: { name: string, dir: boolean }) => {
-  const path = vfsDir.value ? `${vfsDir.value}/${entry.name}` : entry.name
+const openVfsEntry = (entry: VfsEntry) => {
+  const path = entryPath(entry.name)
   if (entry.dir) {
     vfsDir.value = path
     preview.value = null
     return
   }
+  // blog posts open in the reader app; the resume opens the PDF viewer
+  const post = /^blog\/(.+)\.md$/.exec(path)
+  if (post) return emit('post', `/blog/${post[1]}`)
+  if (path.endsWith('.pdf')) return emit('window', 'cv')
+  if (path === 'notes.txt') return emit('window', 'vim')
   preview.value = { name: entry.name, content: files.value[path]?.content ?? '' }
 }
-
-const curated = computed<FileEntry[]>(() => {
-  if (activeDir.value === '~/projects') {
-    return projects.map((p) => ({
-      name: `${p.slug}.md`,
-      open: () => emit('route', `/projects/${p.slug}`)
-    }))
-  }
-  if (activeDir.value === '~/blog') {
-    return (posts.value ?? []).map((post) => ({
-      name: `${post.path.split('/').pop()}.md`,
-      open: () => emit('post', post.path)
-    }))
-  }
-  // home shows the curated site files only at the top level; a curated name
-  // yields to a real VFS file of the same name (notes.txt after a vim :w)
-  if (vfsDir.value) return []
-  return [
-    { name: 'readme.md', open: () => emit('window', 'readme') },
-    { name: 'notes.txt', open: () => emit('window', 'vim') },
-    { name: 'uses.txt', open: () => emit('route', '/uses') },
-    { name: 'now.txt', open: () => emit('route', '/now') },
-    { name: 'resume.pdf', open: () => emit('route', '/cv') }
-  ].filter((file) => !files.value[file.name])
-})
 </script>
 
 <style scoped lang="scss">
@@ -334,6 +336,16 @@ const curated = computed<FileEntry[]>(() => {
 
   &.is-dir {
     color: var(--bulma-primary);
+  }
+
+  .files-badge {
+    margin-left: 0.3rem;
+    padding: 0 0.3rem;
+    border: 1px solid hsla(var(--lv-primary-hsl), 0.5);
+    border-radius: 0.5rem;
+    color: var(--bulma-primary);
+    font-size: 0.6rem;
+    line-height: 1.4;
   }
 }
 

@@ -168,7 +168,8 @@ test('tab-completes command names and arguments', async ({ page }) => {
   await expect(page.locator('#terminal-input')).toHaveValue('colorscheme ')
   await page.fill('#terminal-input', 'cd ab')
   await page.keyboard.press('Tab')
-  await expect(page.locator('#terminal-input')).toHaveValue('cd about')
+  // directories complete with a trailing slash, so Tab can keep descending
+  await expect(page.locator('#terminal-input')).toHaveValue('cd about/')
 })
 
 test('Tab cycles through multiple completion candidates', async ({ page }) => {
@@ -186,16 +187,23 @@ test('Tab cycles through multiple completion candidates', async ({ page }) => {
   await expect(field).toHaveValue('colorscheme ')
 })
 
-test('pwd reflects the current route and prompt shows the cwd', async ({ page }) => {
+test('the prompt and pwd follow the filesystem cwd, not the route', async ({ page }) => {
   await page.goto('/projects')
   await page.locator('.filter-flags').waitFor()
   await expect(page.locator('.project-card').first()).toBeVisible()
   await pressTerminalKey(page)
-  // prompt is route-derived, so it should read ~/projects immediately
+  // the shell always opens in the home directory, whatever page it's on
+  await expect(page.locator('.terminal-input-row .term-prompt')).toContainText(':~$')
+  // the site's pages are real folders — cd moves the shell, not the browser
+  await run(page, 'cd projects')
   await expect(page.locator('.terminal-input-row .term-prompt')).toContainText('~/projects')
+  await expect(page).toHaveURL(/\/projects/)
   await run(page, 'pwd')
   // pwd resolves ~ against $HOME (/home/<handle>) and ends in /projects
   await expect(page.locator('.terminal-output')).toContainText('/projects')
+  // its files are the actual project write-ups
+  await run(page, 'ls')
+  await expect(page.locator('.terminal-output')).toContainText('.md')
 })
 
 test('whoami and nick change the identity', async ({ page }) => {

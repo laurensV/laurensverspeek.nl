@@ -10,6 +10,7 @@ import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
 import type { ChainOp } from '~/utils/terminal/chain'
 import { loadFs, saveFs, writeFileAt } from '~/utils/terminal/filesystem'
+import { applySeeds, siteSeeds, blogSeeds } from '~/utils/terminal/siteFs'
 import { paneOrder, canSplit, nextFocus, focusAfterClose } from '~/utils/terminal/panes'
 import type { SplitDir } from '~/utils/terminal/panes'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from '~/utils/terminal/shellState'
@@ -26,6 +27,8 @@ let paneIdCounter = 1
 // the page title saved before the terminal started reflecting commands into it;
 // module-scoped so the run-instance and the close-instance share it
 let savedTitle: string | null = null
+// the site pages are seeded into the home filesystem once per visit
+let seededSite = false
 
 // Game state lives at module scope: only ever touched client-side,
 // and shared by every useTerminal() caller.
@@ -53,17 +56,13 @@ export function useTerminal() {
   const paneDir = useState<SplitDir>(STATE_KEYS.terminalPaneDir, () => 'cols')
 
   const router = useRouter()
-  const route = useRoute()
   const nuxtApp = useNuxtApp()
 
-  // current directory inside the home filesystem ('' = home). When set, it wins
-  // over the route for the prompt; otherwise the cwd tracks the route.
+  // current directory inside the home filesystem ('' = home). The prompt is
+  // purely filesystem-driven — the same shell shows the same place whether it
+  // opened as the site overlay or inside an lvOS window.
   const fsCwd = useState(STATE_KEYS.terminalFsCwd, () => '')
-  const cwd = computed(() => {
-    if (fsCwd.value) return `~/${fsCwd.value}`
-    const path = route.path.replace(/\/+$/, '')
-    return path === '' ? '~' : `~${path}`
-  })
+  const cwd = computed(() => (fsCwd.value ? `~/${fsCwd.value}` : '~'))
   const colorMode = useColorMode()
   const effectFlags = useEffectFlags()
   const { accent, accents, setAccent } = useAccent()
@@ -227,6 +226,20 @@ export function useTerminal() {
   if (savedFs && Object.keys(savedFs).length) ctx.files.value = savedFs
   if (import.meta.client) watch(ctx.files, (fs) => saveFs(fs), { deep: true })
 
+  // the site's pages are real folders in that filesystem: seeded fresh each
+  // visit (sys nodes, never persisted), with the visitor's edits layered on top
+  if (import.meta.client && !seededSite) {
+    seededSite = true
+    ctx.files.value = applySeeds(ctx.files.value, siteSeeds())
+    void ctx.fetchPosts()
+      .then((posts) => {
+        ctx.files.value = applySeeds(ctx.files.value, blogSeeds(posts))
+      })
+      .catch(() => {
+        seededSite = false // let a later terminal open retry the posts
+      })
+  }
+
   // aliases and exported env vars get the same treatment
   const savedAliases = loadAliases()
   if (savedAliases) ctx.aliases.value = savedAliases
@@ -240,6 +253,10 @@ export function useTerminal() {
   // keep $USER / $HOME in sync when the visitor renames themselves
   watch(identityName, (n) => {
     ctx.env.value = { ...ctx.env.value, USER: n, HOME: `/home/${n}` }
+  })
+  // ... and $PWD in sync with cd
+  watch(cwd, (dir) => {
+    ctx.env.value = { ...ctx.env.value, PWD: dir }
   })
 
   const commands: Record<string, TerminalCommand> = {

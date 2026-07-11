@@ -21,6 +21,41 @@ test('| copy sends piped output to the clipboard', async ({ page, context }) => 
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('blog')
 })
 
+test('the site pages are real folders, and editing a blog post changes the site', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  // the pages are seeded as directories at home
+  await run(page, 'ls')
+  await expect(out).toContainText('blog/')
+  await expect(out).toContainText('about/')
+  // blog posts arrive from the content layer — poll until they land
+  await expect(async () => {
+    await run(page, 'ls blog')
+    await expect(out).toContainText('rebuilding-this-site.md')
+  }).toPass({ timeout: 15000 })
+  // cat reads the actual markdown source, frontmatter and all
+  await run(page, 'cat blog/rebuilding-this-site.md')
+  await expect(out).toContainText('title:')
+  // site content is rm-protected...
+  await run(page, 'rm about/bio.md')
+  await expect(out).toContainText('site content')
+  // ...but editable: overwrite a post, and the rendered page shows the edit
+  await run(page, 'echo # hijacked by the shell > blog/rebuilding-this-site.md')
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('lv-terminal-fs') ?? ''))
+    .toContain('hijacked by the shell')
+  await page.goto('/blog/rebuilding-this-site')
+  await expect(page.locator('.post-edited-note')).toBeVisible()
+  await expect(page.locator('.post-body')).toContainText('hijacked by the shell')
+  // rm on the edit restores the original post
+  await pressTerminalKey(page)
+  await run(page, 'rm blog/rebuilding-this-site.md')
+  await expect(page.locator('.terminal-output')).toContainText('the original blog/rebuilding-this-site.md is back')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.post-edited-note')).toHaveCount(0)
+  await expect(page.locator('.post-body')).not.toContainText('hijacked by the shell')
+})
+
 test('cd - and pushd/popd remember directories', async ({ page }) => {
   await openTerminal(page)
   const out = page.locator('.terminal-output')

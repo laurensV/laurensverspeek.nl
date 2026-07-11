@@ -110,7 +110,6 @@
              one registry-driven <component :is> (each still its own lazy chunk) -->
         <LazyDesktopFiles
           v-else-if="win.id === 'files'"
-          @route="openRoute"
           @window="openWindow"
           @post="openBlogPost"
         />
@@ -362,8 +361,6 @@ const openBlogApp = () => {
 // leaving the /desktop route unmounts the desktop; the window layout is kept in
 // useState, so returning restores the session (after another quick boot).
 const openProject = (slug: string) => router.push(`/projects/${slug}`)
-
-const openRoute = (path: string) => router.push(path)
 
 // session, lock screen and the CRT power-off live in useDesktopPower
 const { locked, lock, logout, poweringOff, shutdown, reboot } = useDesktopPower({ booting, startOpen, calendarOpen })

@@ -1,6 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { groupCommands, relatedCommands } from '~/utils/terminal/helpGroups'
-import { resolvePath, dirEntries } from '~/utils/terminal/filesystem'
+import { resolvePath, pathCandidates } from '~/utils/terminal/filesystem'
 
 // Shell housekeeping: help, aliases, environment, history, panes and scripts.
 
@@ -183,9 +183,7 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
         `echo 'fortune' >> hello.sh    (>> appends more lines)`,
         'sh hello.sh                   (runs it line by line; # comments and && work)'
       ],
-      argCandidates: () => dirEntries(ctx.files.value, ctx.fsCwd.value)
-        .filter((entry) => !entry.dir)
-        .map((entry) => entry.name),
+      argCandidates: (partial) => pathCandidates(ctx.files.value, ctx.fsCwd.value, partial),
       exec: (args) => {
         const name = args[0]
         if (!name) return error('sh: usage: sh <script> — write one with echo and >')

@@ -23,7 +23,7 @@ export function completeInput(
   // complete the current argument from the command's own candidates
   const [name = '', ...rest] = raw.split(/\s+/)
   const partial = rest.join(' ')
-  const candidates = commands[name]?.argCandidates?.() ?? []
+  const candidates = commands[name]?.argCandidates?.(partial) ?? []
   return candidates
     .filter((candidate) => candidate.toLowerCase().startsWith(partial))
     .sort()

@@ -1,9 +1,13 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { parseRedirect, resolvePath, dirEntries, expandFileArgs, writeFileAt } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, expandFileArgs, writeFileAt, pathCandidates } from '~/utils/terminal/filesystem'
+import { removalPlan } from '~/utils/terminal/siteFs'
 import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
 
 // The writing half of the virtual filesystem: creating, copying, removing and
 // editing files. (The reading half — cat/ls/cd — lives in fileCommands.)
+// Site pages live here as seeded `sys` nodes: editable (the edit becomes a
+// persisted override), but rm/mv-protected; removing an override restores
+// the original underneath.
 
 export function createFileWriteCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { out, muted, error } = ctx
@@ -15,8 +19,8 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     const parent = path.split('/').slice(0, -1).join('/')
     return parent === '' || ctx.files.value[parent]?.dir === true
   }
-  // names in the current directory, for tab-completing rm
-  const hereEntries = () => dirEntries(ctx.files.value, ctx.fsCwd.value).map((entry) => entry.name)
+  // path completion for the file-writing commands
+  const completePaths = (partial: string) => pathCandidates(ctx.files.value, ctx.fsCwd.value, partial)
 
   // file access for the editors (nano/vim) over the home filesystem
   const editorIo = (name: string): EditorIO | { error: string } => {
@@ -52,6 +56,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     const node = ctx.files.value[src]
     if (!node) return error(`${cmd}: cannot stat '${srcName}': No such file or directory`)
     if (node.dir) return error(`${cmd}: omitting directory '${srcName}'`)
+    if (cmd === 'mv' && node.sys) return error(`mv: cannot move '${srcName}': site content is welded down (cp works, or just edit it)`)
     let dst = resolvePath(ctx.fsCwd.value, dstName)
     // a directory destination keeps the source's filename
     if (ctx.files.value[dst]?.dir) dst = `${dst}/${src.split('/').pop()}`
@@ -116,7 +121,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       hidden: true,
       usage: 'chmod <mode> <file>',
       description: 'Change file permissions (in spirit)',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: (args) => {
         const [mode, name] = args
         if (!mode || !name) return error('chmod: usage: chmod <mode> <file>')
@@ -146,7 +151,7 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       category: 'files',
       usage: 'rm <file>',
       description: 'Remove a file or directory (into the lvOS recycle bin)',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: (args) => {
         const rawName = args.find((arg) => !arg.startsWith('-'))
         // keep the classic joke for the classic mistake (checked pre-expansion)
@@ -157,12 +162,23 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
         if (!names.length) return error('rm: missing operand')
         for (const name of names) {
           const path = resolvePath(ctx.fsCwd.value, name)
-          if (!path || !(path in ctx.files.value)) {
+          const plan = removalPlan(ctx.files.value, path || '/')
+          if (!path || plan === 'missing') {
             error(`rm: cannot remove '${name}': No such file or directory`)
+            continue
+          }
+          // the site's own pages are welded down (edits, however, are welcome)
+          if (plan === 'protected') {
+            error(`rm: cannot remove '${name}': site content — edit it instead, edits do stick`)
             continue
           }
           // removed things land in the recycle bin (restorable on the desktop)
           trash.discard(path)
+          // deleting an edit of a site file brings the original back
+          if (plan.restoreSeed !== null) {
+            ctx.files.value = { ...ctx.files.value, [path]: { dir: false, content: plan.restoreSeed, sys: true } }
+            muted(`rm: your edit moved to the recycle bin — the original ${name} is back`)
+          }
           // if we removed the directory we're standing in, walk back to home
           if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
         }
@@ -172,34 +188,34 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
       category: 'files',
       usage: 'cp <source> <dest>',
       description: 'Copy a file',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: (args) => copyOrMove('cp', args)
     },
     mv: {
       category: 'files',
       usage: 'mv <source> <dest>',
       description: 'Move or rename a file',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: (args) => copyOrMove('mv', args)
     },
     vim: {
       category: 'files',
       usage: 'vim <file>',
       description: 'A real modal editor. You can even quit it',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: openVim
     },
     vi: {
       hidden: true,
       description: 'Alias for vim',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: openVim
     },
     nano: {
       category: 'files',
       usage: 'nano <file>',
       description: 'Edit a file, the friendly way',
-      argCandidates: hereEntries,
+      argCandidates: completePaths,
       exec: (args) => {
         const name = args[0]
         if (!name) return error('nano: usage: nano <file>')

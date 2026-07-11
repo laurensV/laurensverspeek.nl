@@ -1,7 +1,11 @@
 import { PAGES, type TerminalCommand, type TerminalContext } from '~/utils/terminal/types'
 import { projects, categories, type ProjectCategory } from '~/data/projects'
+import { dirEntries } from '~/utils/terminal/filesystem'
 import { searchSections } from '~/utils/terminal/search'
 import { postSlug, postSlugCandidates, createPostTools } from '~/utils/terminal/postHelpers'
+
+// pages cd used to warp to; now `goto` does, plus the deeper cuts
+const GOTO_PAGES: string[] = [...PAGES, 'stats', 'changelog', 'museum', 'life', 'world', 'desktop']
 
 // Commands for browsing the site's content: projects, blog posts, search.
 
@@ -26,6 +30,22 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
   }
 
   return {
+    goto: {
+      category: 'content',
+      usage: 'goto <page>',
+      description: `Navigate the site (${PAGES.join(', ')}, …)`,
+      examples: ['goto blog', 'goto uses', `goto desktop  (cd stays in the shell — goto is the door)`],
+      argCandidates: () => [...GOTO_PAGES],
+      exec: (args) => {
+        const arg = args[0]
+        if (!arg) return error(`goto: where to? Try: ${GOTO_PAGES.join(', ')}`)
+        const page = arg.replace(/^\/|\/$/g, '').toLowerCase()
+        if (!GOTO_PAGES.includes(page)) {
+          return error(`goto: no such page: ${arg} — try: ${GOTO_PAGES.join(', ')}`)
+        }
+        ctx.navigate(page)
+      }
+    },
     projects: {
       category: 'content',
       usage: 'projects [category]',
@@ -93,7 +113,7 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
                 true
               )
             }
-            muted(`\nUse 'blog <name>' to read a post here, or 'cd blog' for the styled version.`)
+            muted(`\nUse 'blog <name>' to read a post here, or 'goto blog' for the styled version.`)
           })
           .catch(() => error('blog: failed to load posts'))
       }
@@ -125,40 +145,32 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
     },
     tree: {
       category: 'files',
-      description: 'Show the whole site as a directory tree',
-      exec: () => {
-        push('primary', '~')
-        // top-level pages, then projects/ and blog/ as expandable branches
-        const topPages = PAGES.filter((p) => p !== 'home' && p !== 'projects' && p !== 'blog')
-        const branches = ['projects', 'blog', ...topPages]
-
-        const projectLines = projects.map((p, i, arr) => {
-          const last = i === arr.length - 1
-          return `│   ${last ? '└──' : '├──'} ${p.slug}.md`
-        })
-        out('├── projects/')
-        projectLines.forEach(out)
-
-        fetchPosts()
-          .then((posts) => {
-            out('├── blog/')
-            posts.forEach((post, i) => {
-              const last = i === posts.length - 1
-              out(`│   ${last ? '└──' : '├──'} ${postSlug(post.path)}.md`)
-            })
-            topPages.forEach((page, i) => {
-              const last = i === topPages.length - 1
-              out(`${last ? '└──' : '├──'} ${page}/`)
-            })
-            const fileCount = projects.length + posts.length
-            muted(`\n${branches.length} directories, ${fileCount} files`)
+      usage: 'tree [dir]',
+      description: 'Draw the filesystem as a tree (site pages and your files)',
+      exec: (args) => {
+        const root = args[0] ? args[0].replace(/^~\/?|\/+$/g, '') : ''
+        if (root && ctx.files.value[root]?.dir !== true) {
+          return error(`tree: ${args[0]}: No such directory`)
+        }
+        let dirs = 0
+        let fileCount = 0
+        const walk = (dir: string, indent: string) => {
+          const entries = dirEntries(ctx.files.value, dir)
+            .sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name))
+          entries.forEach((entry, i) => {
+            const last = i === entries.length - 1
+            out(`${indent}${last ? '└──' : '├──'} ${entry.name}${entry.dir ? '/' : ''}`)
+            if (entry.dir) {
+              dirs++
+              walk(dir ? `${dir}/${entry.name}` : entry.name, `${indent}${last ? '    ' : '│   '}`)
+            } else {
+              fileCount++
+            }
           })
-          .catch(() => {
-            topPages.forEach((page, i) => {
-              const last = i === topPages.length - 1
-              out(`${last ? '└──' : '├──'} ${page}/`)
-            })
-          })
+        }
+        push('primary', root ? `~/${root}` : '~')
+        walk(root, '')
+        muted(`\n${dirs} directories, ${fileCount} files`)
       }
     }
   }

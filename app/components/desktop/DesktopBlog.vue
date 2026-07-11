@@ -6,12 +6,16 @@
         <button class="blog-back" @click="selectedPath = null">&lt;- cd ..</button>
         <span class="blog-file">{{ slugOf(post.path) }}.md</span>
       </div>
-      <p class="is-family-code has-text-primary-on-scheme mb-1"># {{ post.title }}</p>
+      <p class="is-family-code has-text-primary-on-scheme mb-1"># {{ override?.title ?? post.title }}</p>
       <p class="is-family-code blog-meta mb-3">
-        {{ post.date }}<template v-if="post.tags?.length"> · {{ post.tags.map((t) => `#${t}`).join(' ') }}</template>
+        {{ override?.date || post.date }}<template v-if="post.tags?.length"> · {{ post.tags.map((t) => `#${t}`).join(' ') }}</template>
+        <template v-if="override"> · ✎ your edit (rm blog/{{ slugOf(post.path) }}.md restores)</template>
       </p>
       <div class="content is-small blog-body">
-        <ContentRenderer :value="post" />
+        <!-- overrides come from markdownLite, which escapes every text node
+             before adding markup — same trust story as the terminal output -->
+        <div v-if="override" v-html="override.html" />
+        <ContentRenderer v-else :value="post" />
       </div>
     </template>
 
@@ -28,7 +32,7 @@
         >
           <AppIcon name="book" :size="14" />
           <span class="blog-entry-title">
-            <span>{{ slugOf(entry.path) }}.md</span>
+            <span>{{ slugOf(entry.path) }}.md<span v-if="editedSlugs.includes(slugOf(entry.path))" class="blog-entry-edited"> ✎ edited</span></span>
             <span class="blog-entry-desc">{{ entry.description }}</span>
           </span>
           <span class="blog-entry-date">{{ entry.date }}</span>
@@ -59,6 +63,12 @@ const post = computed(
 )
 
 const slugOf = (path: string) => path.split('/').pop() ?? path
+
+// posts edited via the terminal replace the rendered copy here too
+const { overrideFor, editedSlugs } = useBlogOverrides()
+const override = computed(() =>
+  post.value ? overrideFor(slugOf(post.value.path)) : null
+)
 </script>
 
 <style scoped lang="scss">
@@ -94,6 +104,11 @@ const slugOf = (path: string) => path.split('/').pop() ?? path
 .blog-meta {
   font-size: 0.72rem;
   color: hsl(var(--lv-scheme-hs), 55%);
+}
+
+.blog-entry-edited {
+  color: var(--bulma-primary);
+  font-size: 0.65rem;
 }
 
 .blog-entry {

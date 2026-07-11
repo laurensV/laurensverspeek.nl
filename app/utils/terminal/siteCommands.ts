@@ -95,7 +95,7 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
           }
           out('')
         }
-        muted(`Full list at /uses — or run 'cd uses'.`)
+        muted(`Full list at /uses — or run 'goto uses'.`)
       }
     },
     contact: {
@@ -140,7 +140,7 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
           ).catch(() => null)
           if (here) push('output', `<span class="term-accent">this page</span>   ${here.count} views`, true)
           muted('(public counters — no cookies, no fingerprints)')
-          muted(`the /stats page draws these as bars — try 'cd stats'`)
+          muted(`the /stats page draws these as bars — try 'goto stats'`)
         } catch {
           error('stats: could not reach goatcounter (are public counters switched on?)')
         } finally {
