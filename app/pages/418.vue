@@ -60,14 +60,19 @@ let last = 0
 const loop = (t: number) => {
   const dt = Math.min(t - last, 100)
   last = t
-  if (!dragging.value && spinning.value) angleY.value += dt * 0.0008
-  frame.value = renderTeapot(points, angleY.value, angleX.value)
+  // nothing to redraw when idle (not dragging, not spinning, or tab hidden) —
+  // don't re-project the point cloud 60×/s for an unchanged frame
+  if (dragging.value || (spinning.value && document.visibilityState === 'visible')) {
+    if (!dragging.value) angleY.value += dt * 0.0008
+    frame.value = renderTeapot(points, angleY.value, angleX.value)
+  }
   raf = requestAnimationFrame(loop)
 }
 
 onMounted(() => {
   spinning.value = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   last = performance.now()
+  frame.value = renderTeapot(points, angleY.value, angleX.value) // always show one
   // under reduced motion there's no idle spin, but drags still re-render
   raf = requestAnimationFrame(loop)
 })

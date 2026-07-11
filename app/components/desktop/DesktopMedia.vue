@@ -101,7 +101,19 @@ const draw = () => {
   }
 }
 
-onMounted(() => draw())
+// the visualizer only animates while the music plays — a paused player is a
+// still canvas, not a 60fps clear-loop
+watch(() => playing.value, (isPlaying) => {
+  if (isPlaying) {
+    if (!rafId) rafId = requestAnimationFrame(draw)
+  } else {
+    cancelAnimationFrame(rafId)
+    rafId = 0
+    const canvas = canvasRef.value
+    canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+  }
+}, { immediate: true })
+
 onBeforeUnmount(() => {
   cancelAnimationFrame(rafId)
   stop() // the window is the player: closing it ends the concert

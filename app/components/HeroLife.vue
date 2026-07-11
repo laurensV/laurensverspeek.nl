@@ -80,6 +80,11 @@ const drawTrail = () => {
   const canvas = trailRef.value
   const context = canvas?.getContext('2d')
   if (!canvas || !context) return
+  // a hidden tab paints nothing — keep the loop alive but skip the work
+  if (document.visibilityState === 'hidden') {
+    trailRaf = requestAnimationFrame(drawTrail)
+    return
+  }
   context.clearRect(0, 0, canvas.width, canvas.height)
   for (const spark of sparks) {
     context.globalAlpha = spark.life * 0.5
