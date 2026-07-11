@@ -116,7 +116,7 @@
         />
         <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
         <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
-        <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
+        <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" />
         <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
         <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />

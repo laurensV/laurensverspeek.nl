@@ -1,20 +1,17 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import type { DesktopWindow } from '~/composables/useWindowManager'
 import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createAdventureGame } from '~/utils/terminalGames'
-import { effectProcs, windowPid } from '~/utils/terminal/effectProcs'
 
 // The terminal mini-games (the game engines live in utils/games/).
 
 export function createGameCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { muted } = ctx
 
-  // top shows the real process table too: lvOS windows and running effects
-  const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
-  const liveProcs = () => [
-    ...windows.value.map((win) => ({ pid: windowPid(win.id), cmd: `lvos:${win.id}` })),
-    ...effectProcs(ctx.effects)
-      .filter((proc) => proc.running())
-      .map((proc) => ({ pid: proc.pid, cmd: proc.name }))
+  // top renders the same unified process table as ps and the lvOS task
+  // manager: system daemons plus whatever is really running right now
+  const table = useProcessTable({ effects: ctx.effects, game: ctx.game, closeShell: ctx.close })
+  const topProcs = () => [
+    ...table.system.map((proc) => ({ pid: proc.pid, cmd: proc.name, system: true })),
+    ...table.running().map((proc) => ({ pid: proc.pid, cmd: proc.name, system: false }))
   ]
 
   return {
@@ -71,7 +68,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Live process monitor',
       exec: () => {
         muted('Starting top... q to quit.')
-        ctx.startGame((callbacks) => createTopGame(callbacks, liveProcs), 'top')
+        ctx.startGame((callbacks) => createTopGame(callbacks, topProcs), 'top')
       }
     },
     life: {

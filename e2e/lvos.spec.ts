@@ -263,14 +263,15 @@ test('task manager lists windows as processes and kill closes them', async ({ pa
   }
   await page.locator('.lvos-icon', { hasText: /^calculator$/ }).click()
   await page.locator('.calc').waitFor()
-  // real windows and system daemons both appear
-  const calcRow = mgr.locator('tr', { hasText: 'calculator' })
+  // real windows and system daemons both appear (window procs carry the same
+  // lvos:<id> names the terminal's ps/top print)
+  const calcRow = mgr.locator('tr', { hasText: 'lvos:calc' })
   await expect(calcRow).toHaveCount(1)
   await expect(mgr.locator('tr', { hasText: 'init' })).toHaveCount(1)
   // killing the calculator really closes its window
   await calcRow.locator('.taskmgr-kill').click()
   await expect(page.locator('.calc')).toHaveCount(0)
-  await expect(mgr.locator('tr', { hasText: 'calculator' })).toHaveCount(0)
+  await expect(mgr.locator('tr', { hasText: 'lvos:calc' })).toHaveCount(0)
   // system processes refuse to die
   await mgr.locator('tr', { hasText: 'init' }).locator('.taskmgr-kill').click()
   await expect(mgr).toContainText('not permitted')

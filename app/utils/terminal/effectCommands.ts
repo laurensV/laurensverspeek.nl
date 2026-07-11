@@ -1,30 +1,16 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import type { DesktopWindow } from '~/composables/useWindowManager'
-import { effectProcs, windowProcs, gameProc, lvshProc, lvosSessionProc, SYSTEM_PROCS, LVSH_PID, LVOS_SESSION_PID, killByPid } from '~/utils/terminal/effectProcs'
+import { LVSH_PID, LVOS_SESSION_PID, killByPid } from '~/utils/terminal/effectProcs'
 
 // Site-wide effects and easter eggs, plus the ps/kill process theater.
 
 export function createEffectCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error, close } = ctx
 
-  // one process table across the whole site: effects, lvOS windows, the
-  // running game/editor and the shell itself (factory-time state captures)
-  const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
-  const route = useRoute()
-  const closeWindow = (id: string) => {
-    windows.value = windows.value.filter((win) => win.id !== id)
-  }
-  const allProcs = () => {
-    const gameName = ctx.game.name()
-    return [
-      ...effectProcs(ctx.effects),
-      ...windowProcs(windows.value, closeWindow),
-      ...(gameName ? [gameProc(gameName, ctx.game.stop)] : []),
-      ...(route.path.startsWith('/desktop') ? [lvosSessionProc(() => ctx.navigate('home'))] : []),
-      lvshProc(close)
-    ]
-  }
-  const systemProcs = SYSTEM_PROCS
+  // one process table across the whole site (shared with top and the lvOS
+  // task manager — factory-time capture, exec runs outside the Nuxt instance)
+  const table = useProcessTable({ effects: ctx.effects, game: ctx.game, closeShell: close })
+  const allProcs = table.all
+  const systemProcs = table.system
 
   // how many times someone has asked for the other editor this session
   let insistence = 0

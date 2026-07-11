@@ -65,7 +65,7 @@ export function useTerminal() {
     return path === '' ? '~' : `~${path}`
   })
   const colorMode = useColorMode()
-  const { matrixActive, crtActive, destructActive, fireworksActive, toggleCrt } = useSiteEffects()
+  const effectFlags = useEffectFlags()
   const { accent, accents, setAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
@@ -190,17 +190,7 @@ export function useTerminal() {
       names: accents.map((a) => a.name),
       set: (name: string) => setAccent(name) !== undefined
     },
-    effects: {
-      matrix: matrixActive,
-      train: useState(STATE_KEYS.fxTrain, () => false),
-      bootReplay: useState(STATE_KEYS.bootReplay, () => false),
-      party: useState(STATE_KEYS.fxParty, () => false),
-      crt: crtActive,
-      destruct: destructActive,
-      boss: useState(STATE_KEYS.fxBoss, () => false),
-      fireworks: fireworksActive,
-      toggleCrt
-    },
+    effects: effectFlags,
     // commands run from event handlers, outside the Nuxt instance — wrap
     // queryCollection so it still finds the app context
     fetchPosts: () =>

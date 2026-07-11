@@ -17,10 +17,13 @@ export interface SystemProc {
   name: string
 }
 
-// init and the easter eggs stay unkillable; lvsh (pid 7) is killable now —
-// killing your own shell closes the terminal, like it should.
+// init and the daemons stay unkillable; lvsh (pid 7) is killable now —
+// killing your own shell closes the terminal, like it should. This one list is
+// the set dressing for ps, top AND the lvOS task manager, so they can't drift.
 export const SYSTEM_PROCS: SystemProc[] = [
   { pid: 1, name: 'init' },
+  { pid: 6, name: 'flow-field.service' },
+  { pid: 23, name: 'dot-grid.css' },
   { pid: 77, name: 'easter_eggs.service' }
 ]
 

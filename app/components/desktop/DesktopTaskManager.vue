@@ -31,37 +31,20 @@
 </template>
 
 <script setup lang="ts">
-import type { DesktopWindow } from '~/composables/useWindowManager'
-import { effectProcs, windowPid, GAME_PID } from '~/utils/terminal/effectProcs'
+import { windowPid } from '~/utils/terminal/effectProcs'
 
-// htop cosplay over real state: lvOS windows, the terminal's running effects
-// and its active game/editor are all processes here — same pids as `ps`, and
-// kill actually stops them. The system daemons are load-bearing set dressing.
+// htop cosplay over real state: the exact same unified process table the
+// terminal's ps/top render — system daemons, lvOS windows, running effects,
+// the active game/editor, the shell — and kill actually stops each of them.
 
-const emit = defineEmits<{ kill: [id: string] }>()
-
-const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
-const siteEffects = useSiteEffects()
 const terminal = useTerminal()
 
-// the same effect procs the terminal's ps/kill sees (shared useState flags)
-const effectTable = effectProcs({
-  matrix: siteEffects.matrixActive,
-  crt: siteEffects.crtActive,
-  destruct: siteEffects.destructActive,
-  fireworks: siteEffects.fireworksActive,
-  train: useState(STATE_KEYS.fxTrain, () => false),
-  party: useState(STATE_KEYS.fxParty, () => false),
-  boss: useState(STATE_KEYS.fxBoss, () => false),
-  bootReplay: useState(STATE_KEYS.bootReplay, () => false),
-  toggleCrt: siteEffects.toggleCrt
+// the same table (and the same pids) ps and top see
+const table = useProcessTable({
+  effects: useEffectFlags(),
+  game: terminal.game,
+  closeShell: terminal.close
 })
-
-const SYSTEM = [
-  { pid: 1, name: 'init', mem: 1 },
-  { pid: 6, name: 'flow-field.service', mem: 12 },
-  { pid: 77, name: 'easter_eggs.service', mem: 7 }
-]
 
 // smooth fake load per process, reseeded gently every tick
 const jitter = ref(0)
@@ -84,50 +67,31 @@ interface Proc {
   cpu: number
   mem: number
   system: boolean
-  winId?: string
   stop?: () => void
 }
 
 const processes = computed<Proc[]>(() => [
-  ...SYSTEM.map((proc) => ({
-    ...proc,
+  ...table.system.map((proc) => ({
+    pid: proc.pid,
+    name: proc.name,
     state: 'S',
     cpu: fakeCpu(proc.name),
+    mem: 4 + (proc.pid % 12),
     system: true
   })),
-  ...windows.value.map((win) => ({
-    pid: windowPid(win.id),
-    name: win.title,
-    state: win.minimized ? 'T' : 'R',
-    cpu: fakeCpu(win.id) + (win.minimized ? 0 : 2),
-    mem: 24 + (win.id.length * 7) % 40,
-    system: false,
-    winId: win.id
-  })),
-  // the terminal's running effects, same pids as `ps` — kill really stops them
-  ...effectTable
-    .filter((proc) => proc.running())
-    .map((proc) => ({
+  ...table.running().map((proc) => {
+    // a minimized window is stopped (T), everything else runs
+    const win = table.windows.value.find((candidate) => windowPid(candidate.id) === proc.pid)
+    return {
       pid: proc.pid,
       name: proc.name,
-      state: 'R',
-      cpu: fakeCpu(proc.name) + 3,
+      state: win?.minimized ? 'T' : 'R',
+      cpu: fakeCpu(proc.name) + (win?.minimized ? 0 : 2),
       mem: 18 + (proc.pid % 30),
       system: false,
       stop: proc.stop
-    })),
-  // and the game/editor currently holding the terminal, if any
-  ...(terminal.game.name()
-    ? [{
-        pid: GAME_PID,
-        name: terminal.game.name()!,
-        state: 'R',
-        cpu: fakeCpu('game') + 5,
-        mem: 32,
-        system: false,
-        stop: terminal.game.stop
-      }]
-    : [])
+    }
+  })
 ])
 
 const meters = computed(() => {
@@ -148,8 +112,7 @@ const kill = (proc: Proc) => {
     deniedTimer = setTimeout(() => (denied.value = ''), 2500)
     return
   }
-  if (proc.winId) emit('kill', proc.winId)
-  else proc.stop?.()
+  proc.stop?.()
 }
 onUnmounted(() => clearTimeout(deniedTimer))
 </script>
