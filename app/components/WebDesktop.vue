@@ -166,7 +166,6 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { dirEntries } from '~/utils/terminal/filesystem'
 import { storageDegraded } from '~/utils/terminal/storageHealth'
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 
 // Prop-less window apps render through one <component :is>, each still its own
@@ -370,79 +369,13 @@ const icons = DESKTOP_APPS.map((app) => ({
   action: app.action && app.action !== 'window' ? iconActions[app.action]! : () => openWindow(app.id)
 }))
 
-// the lvos.iso "download": a tiny, very real file with very unreal contents
-const downloadIso = () => {
-  const iso = [
-    '            ⚡ lvOS 2.0 — installation media ⚡',
-    '',
-    '  congratulations on downloading an operating system that',
-    '  only runs inside a portfolio website.',
-    '',
-    '  RELEASE NOTES',
-    '  • everything is a process, including your regrets (kill 7)',
-    '  • the recycle bin forgives; the grue does not',
-    '  • a tamagotchi may imprint on you. this is permanent.',
-    '',
-    '  INSTALLATION',
-    '  1. do not burn this to a disc',
-    '  2. visit https://laurensverspeek.nl/desktop instead',
-    '  3. that was the whole installation',
-    '',
-    '  md5: d41d8cd98f00b204e9800998ecf8427e (of nothing, fittingly)',
-    ''
-  ].join('\n')
-  const url = URL.createObjectURL(new Blob([iso], { type: 'application/octet-stream' }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'lvos-2.0.iso'
-  a.click()
-  URL.revokeObjectURL(url)
-  notify('⤓', 'lvos-2.0.iso downloaded', 'boot media for a computer that lives in a browser')
-}
-
-// the "screenshot" tool: renders the desktop's real state — the active
-// wallpaper, icons, every window (the terminal with its actual transcript)
-// and the taskbar — and files it into the Gallery via localStorage
-const takeScreenshot = async () => {
-  const measure = (id: string, fallbackW: number, fallbackH: number) => {
-    const el = document.querySelector<HTMLElement>(`.lvos-window[data-win="${id}"]`)
-    return { width: el?.offsetWidth ?? fallbackW, height: el?.offsetHeight ?? fallbackH }
-  }
-  const shot = await renderDesktopShot({
-    viewport: { width: window.innerWidth, height: window.innerHeight },
-    windows: windows.value.map((win) => ({
-      id: win.id,
-      title: win.title,
-      x: win.x,
-      y: win.y,
-      z: win.z + (win.pinned ? 1000 : 0),
-      minimized: win.minimized,
-      maximized: win.maximized,
-      ...measure(win.id, win.width ?? 420, win.height ?? 320)
-    })),
-    icons: icons.map((icon) => icon.label),
-    wallpaper: wallpapers.value[wallpaper.value]?.name ?? 'amber void',
-    customWallpaper: wallpapers.value[wallpaper.value]?.name === 'your masterpiece'
-      ? wallpapers.value[wallpaper.value]?.css.match(/url\("(.+?)"\)/)?.[1]
-      : undefined,
-    accent: getComputedStyle(document.documentElement).getPropertyValue('--bulma-primary').trim() || '#ffba00',
-    clock: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-    battery: battery.supported.value && battery.percent.value !== null
-      ? `${battery.charging.value ? '⚡' : '▮'}${battery.percent.value}%`
-      : '',
-    terminalLines: terminal.lines.value.slice(-40).map((line) =>
-      line.type === 'input' ? `$ ${line.text}` : line.text.replace(/<[^>]+>/g, ''))
-  })
-  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
-  if (!storageSetJson('lvos-shots', [shot, ...existing].slice(0, 6))) {
-    notify('⌜⌟', 'Screenshot failed', 'localStorage is full — empty the gallery a little')
-    return
-  }
-  notify('⌜⌟', 'Screenshot saved', 'open the gallery to admire your desktop')
-}
-
 // the real battery feeds the boot nudge (and the taskbar tray)
 const battery = useBattery()
+
+// the lvos.iso joke download and the desktop screenshot → Gallery (see composable)
+const { downloadIso, takeScreenshot } = useDesktopIo({
+  windows, icons, wallpapers, wallpaper, battery, terminal, notify
+})
 
 // when storage fills up, file writes silently die — make it loud
 watch(storageDegraded, (degraded) => {
