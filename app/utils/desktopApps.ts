@@ -49,9 +49,8 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 
-// windows opened by ids not in the icon grid still need titles (projects/about)
+// windows opened by ids not in the icon grid still need titles
 export const EXTRA_TITLES: Record<string, string> = {
-  projects: '~/projects — files',
   'about-os': 'about this computer'
 }
 

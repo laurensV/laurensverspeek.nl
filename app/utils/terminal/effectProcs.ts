@@ -45,7 +45,7 @@ export function effectProcs(effects: TerminalContext['effects']): EffectProc[] {
 
 // stable pid per lvOS app id, derived from the app registry's order
 const APP_PIDS = new Map<string, number>(DESKTOP_APPS.map((app, i) => [app.id, 2001 + i]))
-const EXTRA_PIDS: Record<string, number> = { 'projects': 2101, 'about-os': 2102 }
+const EXTRA_PIDS: Record<string, number> = { 'about-os': 2102 }
 
 export function windowPid(id: string): number {
   const known = APP_PIDS.get(id) ?? EXTRA_PIDS[id]

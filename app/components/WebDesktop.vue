@@ -91,19 +91,6 @@
           </p>
         </template>
 
-        <template v-else-if="win.id === 'projects'">
-          <button
-            v-for="project in projects"
-            :key="project.slug"
-            class="lvos-file is-family-code"
-            @click="openProject(project.slug)"
-          >
-            <AppIcon name="file" :size="14" />
-            <span>{{ project.slug }}.md</span>
-            <span class="lvos-file-meta">[{{ project.category }}]</span>
-          </button>
-        </template>
-
         <LazyDesktopAbout v-else-if="win.id === 'about-os'" :since="sessionStart" />
 
         <!-- apps with bespoke props/events stay explicit; the rest go through
@@ -178,7 +165,6 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
-import { projects } from '~/data/projects'
 
 // Prop-less window apps render through one <component :is>, each still its own
 // lazy chunk via defineAsyncComponent. Apps with bespoke props/events (files,
@@ -210,7 +196,6 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
 // inside the windows. Titles come from the app registry (utils/desktopApps).
 
 const terminal = useTerminal()
-const router = useRouter()
 
 const {
   windows,
@@ -357,10 +342,6 @@ const openBlogApp = () => {
   blogOpenPath.value = null
   openWindow('blog')
 }
-
-// leaving the /desktop route unmounts the desktop; the window layout is kept in
-// useState, so returning restores the session (after another quick boot).
-const openProject = (slug: string) => router.push(`/projects/${slug}`)
 
 // session, lock screen and the CRT power-off live in useDesktopPower
 const { locked, lock, logout, poweringOff, shutdown, reboot } = useDesktopPower({ booting, startOpen, calendarOpen })
@@ -607,31 +588,6 @@ useDesktopShortcuts({
 @media (prefers-reduced-motion: reduce) {
   .lvos.is-powering-off {
     animation: none;
-  }
-}
-
-.lvos-file {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.35rem 0.5rem;
-  border: none;
-  border-radius: var(--bulma-radius-small);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.78rem;
-  text-align: left;
-  cursor: pointer;
-
-  .lvos-file-meta {
-    margin-left: auto;
-    color: hsl(var(--lv-scheme-hs), 55%);
-  }
-
-  &:hover {
-    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 
