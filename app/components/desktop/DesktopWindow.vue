@@ -14,7 +14,10 @@
   >
     <header
       class="lvos-window-titlebar is-family-code"
-      @pointerdown.prevent="emit('drag', $event)"
+      @pointerdown.prevent="onTitlebarDown"
+      @pointermove="onTitlebarMove"
+      @pointerup="cancelPress"
+      @pointercancel="cancelPress"
       @dblclick="emit('maximize')"
       @contextmenu.prevent.stop="emit('menu', $event)"
     >
@@ -82,6 +85,40 @@ const emit = defineEmits<{
   menu: [event: MouseEvent]
   resize: [event: PointerEvent, dir: ResizeDir]
 }>()
+
+// touch has no right-click: long-pressing the titlebar (still, ~½s) opens the
+// same window menu. The drag that pointerdown started is ended with a
+// synthetic centre-screen pointerup, so releasing can't snap the window.
+let pressTimer: ReturnType<typeof setTimeout> | undefined
+let pressStart = { x: 0, y: 0 }
+
+const onTitlebarDown = (event: PointerEvent) => {
+  emit('drag', event)
+  if (event.pointerType !== 'touch') return
+  pressStart = { x: event.clientX, y: event.clientY }
+  clearTimeout(pressTimer)
+  pressTimer = setTimeout(() => {
+    window.dispatchEvent(new PointerEvent('pointerup', {
+      clientX: window.innerWidth / 2,
+      clientY: window.innerHeight / 2
+    }))
+    emit('menu', new MouseEvent('contextmenu', { clientX: pressStart.x, clientY: pressStart.y }))
+  }, 550)
+}
+
+const onTitlebarMove = (event: PointerEvent) => {
+  if (event.pointerType !== 'touch') return
+  // a real drag cancels the long-press
+  if (Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y) > 10) {
+    clearTimeout(pressTimer)
+  }
+}
+
+const cancelPress = (event: PointerEvent) => {
+  if (event.pointerType === 'touch') clearTimeout(pressTimer)
+}
+
+onUnmounted(() => clearTimeout(pressTimer))
 </script>
 
 <style scoped lang="scss">
@@ -220,7 +257,8 @@ const emit = defineEmits<{
   touch-action: none;
   z-index: 3;
 
-  // edges (kept just inside the window so overflow:hidden doesn't clip them)
+  // edges (kept just inside the window so overflow:hidden doesn't clip them);
+  // kept slim for mice — a fatter top edge would swallow titlebar drags
   &.is-n, &.is-s { left: 0.6rem; right: 0.6rem; height: 6px; cursor: ns-resize; }
   &.is-e, &.is-w { top: 0.6rem; bottom: 0.6rem; width: 6px; cursor: ew-resize; }
   &.is-n { top: 0; }
@@ -230,6 +268,13 @@ const emit = defineEmits<{
 
   // corners sit above the edges
   &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 14px; height: 14px; z-index: 4; }
+
+  // fingers need bigger targets than mouse pointers (WCAG 2.5.8)
+  @media (pointer: coarse) {
+    &.is-n, &.is-s { height: 20px; }
+    &.is-e, &.is-w { width: 20px; }
+    &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 28px; height: 28px; }
+  }
   &.is-ne { top: 0; right: 0; cursor: nesw-resize; }
   &.is-nw { top: 0; left: 0; cursor: nwse-resize; }
   &.is-sw { bottom: 0; left: 0; cursor: nesw-resize; }

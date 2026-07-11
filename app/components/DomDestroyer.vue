@@ -169,17 +169,19 @@ const moveShip = (dt: number) => {
   ship.x += ship.vx * dt
   ship.y += ship.vy * dt
 
-  // the ship drives the page scroll: pushing into the top/bottom edge zone
-  // scrolls the page at flight speed until the document runs out — the whole
-  // page is the arena, the viewport is just the camera
+  // the ship drives the page scroll: FLYING into the top/bottom edge zone
+  // scrolls the page until the document runs out — the whole page is the
+  // arena, the viewport just the camera. Gated on moving toward the edge, so a
+  // ship merely resting in the zone (e.g. at spawn) doesn't auto-scroll.
   // (behavior: instant — the site's smooth scroll-behavior would turn these
   // per-frame nudges into competing animations that barely move)
+  const EDGE_PUSH = 5 // px/s of intent needed to start driving the page
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-  if (ship.y > window.innerHeight - SCROLL_EDGE && window.scrollY < maxScroll - 0.5) {
+  if (ship.y > window.innerHeight - SCROLL_EDGE && ship.vy > EDGE_PUSH && window.scrollY < maxScroll - 0.5) {
     const overshoot = ship.y - (window.innerHeight - SCROLL_EDGE)
     window.scrollBy({ top: Math.min(overshoot, maxScroll - window.scrollY), behavior: 'instant' })
     ship.y = window.innerHeight - SCROLL_EDGE
-  } else if (ship.y < SCROLL_EDGE && window.scrollY > 0.5) {
+  } else if (ship.y < SCROLL_EDGE && ship.vy < -EDGE_PUSH && window.scrollY > 0.5) {
     const overshoot = SCROLL_EDGE - ship.y
     window.scrollBy({ top: -Math.min(overshoot, window.scrollY), behavior: 'instant' })
     ship.y = SCROLL_EDGE

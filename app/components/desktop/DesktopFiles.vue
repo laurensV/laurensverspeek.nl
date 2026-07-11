@@ -356,7 +356,8 @@ const openVfsEntry = (entry: VfsEntry) => {
     flex: 1;
   }
 
-  // the delete affordance only surfaces on hover, keeping the list calm
+  // the delete affordance stays faint until hover/focus — visible enough for
+  // touch (which has no hover), calm enough for the list
   .files-delete {
     padding: 0 0.4rem;
     border: none;
@@ -366,7 +367,7 @@ const openVfsEntry = (entry: VfsEntry) => {
     font-size: 0.9rem;
     line-height: 1;
     cursor: pointer;
-    opacity: 0;
+    opacity: 0.35;
   }
 
   &:hover .files-delete,
