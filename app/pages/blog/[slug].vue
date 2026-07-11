@@ -189,6 +189,27 @@ const formatDate = (date: string) => {
   return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
 }
 
+// ---- swipe between posts on touch (the surround nav already exists) ----
+// a mostly-horizontal swipe past a threshold goes prev/next, matching the
+// on-screen order (left arrow ← older on the left, newer on the right)
+let touchStart: { x: number, y: number } | null = null
+const onTouchStart = (event: TouchEvent) => {
+  const t = event.changedTouches[0]
+  touchStart = t ? { x: t.clientX, y: t.clientY } : null
+}
+const onTouchEnd = (event: TouchEvent) => {
+  const t = event.changedTouches[0]
+  if (!touchStart || !t) return
+  const dx = t.clientX - touchStart.x
+  const dy = t.clientY - touchStart.y
+  touchStart = null
+  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return // not a horizontal swipe
+  const target = dx < 0 ? surround.value?.[1] : surround.value?.[0]
+  if (target?.path) void navigateTo(target.path)
+}
+useEventListener('touchstart', onTouchStart, { passive: true })
+useEventListener('touchend', onTouchEnd, { passive: true })
+
 // ---- table of contents (flattened, h2 + h3) ----
 interface TocEntry { id: string, text: string, depth: number }
 
