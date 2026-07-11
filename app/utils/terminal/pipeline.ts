@@ -45,6 +45,30 @@ export function splitOutputRedirect(input: string): { command: string, file: str
 }
 
 /**
+ * Split a command line on `|` pipe separators, but only OUTSIDE quotes — so
+ * `echo "a | b"` stays one stage and prints its literal pipe (matching the
+ * quote-aware `>` and chain-operator parsers).
+ */
+export function splitPipes(input: string): string[] {
+  const parts: string[] = []
+  let quote: '"' | "'" | null = null
+  let start = 0
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i]!
+    if (quote) {
+      if (ch === quote) quote = null
+    } else if (ch === '"' || ch === "'") {
+      quote = ch
+    } else if (ch === '|') {
+      parts.push(input.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(input.slice(start))
+  return parts
+}
+
+/**
  * Split a command line into command + pipe stages, resolving a leading alias.
  * Assumes env expansion already happened.
  */
@@ -52,7 +76,7 @@ export function parseCommandLine(
   input: string,
   aliases: Record<string, string>
 ): ParsedCommandLine {
-  const [rawCommandPart = '', ...pipeStages] = input.split('|').map((part) => part.trim())
+  const [rawCommandPart = '', ...pipeStages] = splitPipes(input).map((part) => part.trim())
   const [firstWord = '', ...restWords] = rawCommandPart.split(/\s+/).filter(Boolean)
   const alias = aliases[firstWord.toLowerCase()]
   const commandPart = alias ? [alias, ...restWords].join(' ') : rawCommandPart
@@ -97,9 +121,12 @@ export function applyFilter<T extends { text: string }>(
     }
     case 'head':
     case 'tail': {
-      const raw = rest[0] === '-n' ? rest[1] : rest[0]
-      const n = Number(raw ?? 10)
-      const count = Number.isFinite(n) && n > 0 ? n : 10
+      // accept `-n N`, the short `-N`, the combined `-nN`, or a bare `N`
+      const token = rest[0] === '-n' ? rest[1] : rest[0]
+      const n = Number((token ?? '10').replace(/^-/, '').replace(/^n/, ''))
+      const count = Number.isFinite(n) && n >= 0 ? n : 10
+      // count 0 means none; guard tail's slice(-0) which would keep everything
+      if (count === 0) return { lines: [] }
       return { lines: name === 'head' ? input.slice(0, count) : input.slice(-count) }
     }
     case 'wc':

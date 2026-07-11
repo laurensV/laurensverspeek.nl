@@ -43,6 +43,20 @@ describe('parseCommandLine', () => {
   it('handles a bare command with no args or pipes', () => {
     expect(parseCommandLine('help', {})).toEqual({ name: 'help', args: [], pipeStages: [] })
   })
+
+  it('does not split a pipe inside quotes', () => {
+    const parsed = parseCommandLine('echo "a | b"', {})
+    expect(parsed.name).toBe('echo')
+    // the pipe survives as a literal token instead of splitting into a stage
+    expect(parsed.args).toEqual(['"a', '|', 'b"'])
+    expect(parsed.pipeStages).toEqual([])
+  })
+
+  it('still splits real pipes outside quotes alongside quoted ones', () => {
+    const parsed = parseCommandLine('echo "x|y" | grep x', {})
+    expect(parsed.args).toEqual(['"x|y"'])
+    expect(parsed.pipeStages).toEqual(['grep x'])
+  })
 })
 
 describe('splitOutputRedirect', () => {
@@ -106,6 +120,16 @@ describe('applyFilter', () => {
   it('strips html before matching', () => {
     const out = applyFilter([line('<span class="term-accent">snake</span> game')], 'grep snake', line)
     expect('lines' in out && out.lines.length).toBe(1)
+  })
+
+  it('accepts head/tail short -N and -nN forms, and count 0 yields none', () => {
+    const t = (out: ReturnType<typeof applyFilter>) => ('lines' in out ? out.lines.map((l) => l.text) : out)
+    expect(t(applyFilter(lines, 'head -2', line))).toEqual(['alpha', 'beta'])
+    expect(t(applyFilter(lines, 'head -n2', line))).toEqual(['alpha', 'beta'])
+    expect(t(applyFilter(lines, 'tail -1', line))).toEqual(['delta'])
+    expect(t(applyFilter(lines, 'head 0', line))).toEqual([])
+    // tail 0 must NOT keep everything (slice(-0) trap)
+    expect(t(applyFilter(lines, 'tail 0', line))).toEqual([])
   })
 
   it('head and tail slice the list', () => {
