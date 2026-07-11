@@ -12,7 +12,7 @@
         </tr>
       </tbody>
     </table>
-    <p class="scores-note">scores live in your browser — beat them in the terminal (or mines.exe)</p>
+    <p class="scores-note">scores live in your browser — set them in the terminal games, snake or mines.exe</p>
   </div>
 </template>
 

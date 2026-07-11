@@ -10,10 +10,11 @@
       <span class="hero-terminal-title">laurens@{{ profile.domain }}</span>
     </span>
     <span class="hero-terminal-body">
+      <!-- every command here really works in the terminal it opens -->
       <span class="line"><span class="prompt">$</span> whoami</span>
       <span class="line output">{{ profile.name }} — full-stack &amp; blockchain dev</span>
-      <span class="line"><span class="prompt">$</span> ls ./work</span>
-      <span class="line output">nosana/&nbsp;&nbsp;effect-ai/</span>
+      <span class="line"><span class="prompt">$</span> ls projects</span>
+      <span class="line output">nosana.md&nbsp;&nbsp;effect-network.md&nbsp;&nbsp;…</span>
       <span class="line"><span class="prompt">$</span> cat mission.txt</span>
       <span class="line output">decentralize compute, ship cool things</span>
       <span class="line"><span class="prompt">$</span> <span class="blink-cursor" /></span>

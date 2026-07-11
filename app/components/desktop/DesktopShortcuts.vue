@@ -18,6 +18,7 @@ const emit = defineEmits<{ close: [] }>()
 
 const ROWS = [
   { keys: ['~'], label: 'open a terminal window' },
+  { keys: ['alt', 'r'], label: 'run… launch any app by name' },
   { keys: ['alt', 'tab'], label: 'switch between windows' },
   { keys: ['drag', 'edge'], label: 'snap a window to a half or corner' },
   { keys: ['ctrl', 'alt', '←→↑↓'], label: 'snap the top window from the keyboard' },
