@@ -10,7 +10,7 @@ const cmd = (extra: Partial<TerminalCommand> = {}): TerminalCommand => ({
 
 const commands: Record<string, TerminalCommand> = {
   help: cmd(),
-  cat: cmd(),
+  cat: cmd({ argCandidates: (partial) => ['TODO.md', 'notes.txt'].filter((n) => n.startsWith(partial)) }),
   cd: cmd({ argCandidates: () => ['about', 'blog', 'contact'] }),
   colorscheme: cmd({ argCandidates: () => ['amber', 'cyan', 'emerald'] })
 }
@@ -41,5 +41,12 @@ describe('completeInput', () => {
   it('returns nothing for a command without matching candidates', () => {
     expect(completeInput('cd zzz', names, commands)).toEqual([])
     expect(completeInput('help anything', names, commands)).toEqual([])
+  })
+
+  it('preserves the argument case (uppercase filenames complete)', () => {
+    // the partial reaches argCandidates unlowered, so TODO.md is findable
+    expect(completeInput('cat TO', names, commands)).toEqual(['cat TODO.md'])
+    // and the command name still folds
+    expect(completeInput('CAT TO', names, commands)).toEqual(['cat TODO.md'])
   })
 })
