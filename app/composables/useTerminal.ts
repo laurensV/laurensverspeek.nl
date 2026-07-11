@@ -5,6 +5,7 @@ import { createSystemCommands } from '~/utils/terminal/systemCommands'
 import { createFunCommands } from '~/utils/terminal/funCommands'
 import { applyFilter, stripHtml } from '~/utils/terminal/pipeline'
 import { completeInput } from '~/utils/terminal/completion'
+import { escapeHtml } from '~/utils/escapeHtml'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
@@ -94,8 +95,12 @@ export function useTerminal() {
   const out = (text: string) => push('output', text)
   const muted = (text: string) => push('muted', text)
   const error = (text: string) => push('error', text)
-  const link = (label: string, url: string) =>
-    push('output', `<a href="${url}" target="_blank" rel="noopener">${label}</a>`, true)
+  const link = (label: string, url: string) => {
+    // callers pass authored data today, but escape anyway so a future caller
+    // handing us a fetched title or url can't inject
+    const href = /^(https?:)?\/\//i.test(url) || url.startsWith('/') || url.startsWith('mailto:') || url.startsWith('#') ? url : '#'
+    push('output', `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(label)}</a>`, true)
+  }
 
   const greet = () => {
     push('primary', `Welcome to ${profile.domain} v2.0.0`)

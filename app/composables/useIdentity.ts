@@ -29,7 +29,9 @@ export function useIdentity() {
   if (import.meta.client && name.value === 'visitor') {
     const saved = storageGet(STORAGE_KEY)
     if (saved) {
-      name.value = saved
+      // re-sanitize on load: a hand-edited localStorage value shouldn't be
+      // trusted just because it was there last time (defense in depth)
+      name.value = sanitizeName(saved) || 'visitor'
     } else {
       name.value = `${pick(ADJECTIVES)}-${pick(NOUNS)}`
       storageSet(STORAGE_KEY, name.value)

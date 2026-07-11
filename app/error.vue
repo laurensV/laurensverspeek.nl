@@ -29,7 +29,10 @@
       <div class="error-log">
         <template v-for="line in lines" :key="line.id">
           <p v-if="line.type === 'input'" class="line"><span class="prompt">{{ prompt }}</span> {{ line.text }}</p>
-          <p v-else class="line" :class="`is-${line.type}`" v-html="line.text" />
+          <!-- only lines we author carry html:true; everything else (echo, the
+               user's own text) renders as escaped text -->
+          <p v-else-if="line.html" class="line" :class="`is-${line.type}`" v-html="line.text" />
+          <p v-else class="line" :class="`is-${line.type}`">{{ line.text }}</p>
         </template>
       </div>
 
@@ -118,11 +121,11 @@ const trace = computed(() =>
   ].join('\n')
 )
 
-interface Line { id: number, type: 'input' | 'output' | 'muted' | 'error', text: string }
+interface Line { id: number, type: 'input' | 'output' | 'muted' | 'error', text: string, html?: boolean }
 let lineId = 0
 const lines = ref<Line[]>([])
-const push = (type: Line['type'], text: string): void => {
-  lines.value.push({ id: lineId++, type, text })
+const push = (type: Line['type'], text: string, html = false): void => {
+  lines.value.push({ id: lineId++, type, text, html })
 }
 
 const focusInput = () => inputRef.value?.focus()
@@ -135,7 +138,7 @@ const commands: Record<string, TerminalCommand> = {
   help: {
     description: 'List available commands',
     exec: () =>
-      push('output', 'available: <b>ls</b> · <b>cd &lt;page&gt;</b> · <b>open &lt;page&gt;</b> · <b>whoami</b> · <b>echo</b> · <b>pwd</b> · <b>clear</b> (Tab completes, ↑/↓ history)')
+      push('output', 'available: <b>ls</b> · <b>cd &lt;page&gt;</b> · <b>open &lt;page&gt;</b> · <b>whoami</b> · <b>echo</b> · <b>pwd</b> · <b>clear</b> (Tab completes, ↑/↓ history)', true)
   },
   ls: {
     description: 'List the pages that do exist',

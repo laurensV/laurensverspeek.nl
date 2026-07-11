@@ -2,6 +2,7 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { groupCommands, relatedCommands } from '~/utils/terminal/helpGroups'
 import { resolvePath, pathCandidates } from '~/utils/terminal/filesystem'
 import { storageWipe } from '~/utils/safeStorage'
+import { escapeHtml } from '~/utils/escapeHtml'
 
 // Shell housekeeping: help, aliases, environment, history, panes and scripts.
 
@@ -75,7 +76,8 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
             return
           }
           for (const [name, target] of entries) {
-            push('output', `<span class="term-accent">${name.padEnd(12, ' ')}</span> ${target}`, true)
+            // name/target are visitor-defined and persisted — escape before html
+            push('output', `<span class="term-accent">${escapeHtml(name.padEnd(12, ' '))}</span> ${escapeHtml(target)}`, true)
           }
           return
         }
@@ -111,7 +113,8 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
       description: 'List environment variables',
       exec: () => {
         for (const [key, value] of Object.entries(ctx.env.value)) {
-          push('output', `<span class="term-accent">${key}</span>=${value}`, true)
+          // $USER etc. are safe, but exported vars are visitor input — escape
+          push('output', `<span class="term-accent">${escapeHtml(key)}</span>=${escapeHtml(value)}`, true)
         }
       }
     },
