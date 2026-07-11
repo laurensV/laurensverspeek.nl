@@ -317,9 +317,10 @@ watch(vfsDir, () => (selected.value = 0))
 const parentDir = () => vfsDir.value.split('/').slice(0, -1).join('/')
 
 const onListKeydown = (event: KeyboardEvent) => {
-  // ignore keys while an inline rename input is focused (its Enter/arrows are
-  // for editing the name, and they bubble up to this listbox handler)
-  if (renaming.value) return
+  // ignore keys that came from the inline rename input — its own handlers own
+  // them, and by the time this bubbled handler runs `renaming` may already be
+  // cleared (applyRename ran first), so guard on the event target, not state
+  if (event.target instanceof HTMLElement && event.target.closest('.files-rename')) return
   const entries = vfsEntries.value
   switch (event.key) {
     case 'ArrowDown':
