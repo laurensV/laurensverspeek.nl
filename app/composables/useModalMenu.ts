@@ -12,6 +12,34 @@ import type { Ref } from 'vue'
  */
 const FOCUSABLE = 'a[href], a[role], button, input, textarea, [tabindex]:not([tabindex="-1"])'
 
+// Scroll locking is shared and reference-counted across every modal on the page
+// (terminal, palette, mobile menu). Two overlapping modals would otherwise each
+// stash their own scrollY and the inner one's unlock — running while the outer
+// is still open — would clear the fixed styles and scroll to the wrong offset.
+let lockCount = 0
+let lockedScrollY = 0
+const acquireScrollLock = () => {
+  if (lockCount++ === 0) {
+    lockedScrollY = window.scrollY
+    const { style } = document.body
+    style.position = 'fixed'
+    style.top = `-${lockedScrollY}px`
+    style.left = '0'
+    style.right = '0'
+    style.width = '100%'
+  }
+}
+const releaseScrollLock = () => {
+  if (lockCount === 0 || --lockCount > 0) return
+  const { style } = document.body
+  style.position = ''
+  style.top = ''
+  style.left = ''
+  style.right = ''
+  style.width = ''
+  window.scrollTo(0, lockedScrollY)
+}
+
 export function useModalMenu(
   open: Ref<boolean>,
   container: Ref<HTMLElement | null>,
@@ -22,24 +50,17 @@ export function useModalMenu(
     closeOnEscape?: boolean
   } = {}
 ) {
-  let lockedScrollY = 0
+  // this instance's share of the shared lock, so it releases exactly once
+  let holding = false
   const lockScroll = () => {
-    lockedScrollY = window.scrollY
-    const { style } = document.body
-    style.position = 'fixed'
-    style.top = `-${lockedScrollY}px`
-    style.left = '0'
-    style.right = '0'
-    style.width = '100%'
+    if (holding) return
+    holding = true
+    acquireScrollLock()
   }
   const unlockScroll = () => {
-    const { style } = document.body
-    style.position = ''
-    style.top = ''
-    style.left = ''
-    style.right = ''
-    style.width = ''
-    window.scrollTo(0, lockedScrollY)
+    if (!holding) return
+    holding = false
+    releaseScrollLock()
   }
 
   let lastFocused: HTMLElement | null = null
@@ -59,7 +80,7 @@ export function useModalMenu(
     }
   })
   onUnmounted(() => {
-    if (import.meta.client && open.value) unlockScroll()
+    if (import.meta.client) unlockScroll()
   })
 
   const onKeydown = (e: KeyboardEvent) => {
