@@ -74,7 +74,7 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
       hidden: true,
       description: 'Enough talk. Shoot the website.',
       exec: () => {
-        muted('Arming ship... click to fire. Esc ends the rampage and repairs the site.')
+        muted('Arming ship... wasd/arrows fly, click to fire. Esc ends the rampage and repairs the site.')
         ctx.effects.destruct.value = true
         setTimeout(close, 500)
       }

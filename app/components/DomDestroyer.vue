@@ -3,7 +3,7 @@
     <canvas ref="fxRef" class="destroyer-fx" aria-hidden="true" />
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
-      <span class="destroyer-hint">click to fire · <kbd>esc</kbd> ends &amp; repairs the site</span>
+      <span class="destroyer-hint"><kbd>wasd</kbd>/<kbd>↑←↓→</kbd> fly · click to fire · <kbd>esc</kbd> ends &amp; repairs the site</span>
     </div>
   </div>
 </template>
@@ -11,8 +11,9 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 
-// Destroy mode: a little ship shoots the actual page to pieces. Everything it
-// destroys is only visibility:hidden, so ending the mode repairs the site.
+// Destroy mode: a little ship flies around (thrust + inertia, like the
+// asteroids gods intended) and shoots the actual page to pieces. Everything
+// it destroys is only visibility:hidden, so ending the mode repairs the site.
 
 const { destructActive } = useSiteEffects()
 
@@ -20,16 +21,31 @@ const fxRef = ref<HTMLCanvasElement>()
 const score = ref(0)
 
 interface Particle { x: number, y: number, vx: number, vy: number, life: number, color: string }
-interface Beam { x1: number, y1: number, x2: number, y2: number, life: number }
+interface Bullet { x: number, y: number, dx: number, dy: number }
 
 let particles: Particle[] = []
-let beams: Beam[] = []
+let bullets: Bullet[] = []
 let destroyed: { el: HTMLElement, visibility: string }[] = []
 let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 3 }
 let raf = 0
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-const shipPos = () => ({ x: window.innerWidth / 2, y: window.innerHeight - 64 })
+// ---- ship physics: thrust ramps the speed up, drag eases it back down ----
+const ACCEL = 2600 // thrust, px/s²
+const DRAG = 3.2 // exponential drag, 1/s — also sets the top speed (~ACCEL/DRAG)
+const BULLET_SPEED = 1400 // px/s
+const BULLET_STEP = 9 // collision sampling distance, px
+
+const ship = { x: window.innerWidth / 2, y: window.innerHeight - 80, vx: 0, vy: 0 }
+
+// held movement keys (wasd + arrows), mapped to thrust directions
+const THRUST: Record<string, [number, number]> = {
+  w: [0, -1], arrowup: [0, -1],
+  s: [0, 1], arrowdown: [0, 1],
+  a: [-1, 0], arrowleft: [-1, 0],
+  d: [1, 0], arrowright: [1, 0]
+}
+const held = new Set<string>()
 
 // something worth shooting: visible, not our overlay, not a page-sized container
 const findTarget = (x: number, y: number): HTMLElement | null => {
@@ -62,16 +78,22 @@ const explode = (rect: DOMRect) => {
   }
 }
 
-const shoot = (event: MouseEvent) => {
-  const target = findTarget(event.clientX, event.clientY)
-  const ship = shipPos()
-  beams.push({ x1: ship.x, y1: ship.y - 18, x2: event.clientX, y2: event.clientY, life: 1 })
-  if (!target) return
-  const rect = target.getBoundingClientRect()
-  destroyed.push({ el: target, visibility: target.style.visibility })
-  target.style.visibility = 'hidden'
+const destroy = (el: HTMLElement) => {
+  const rect = el.getBoundingClientRect()
+  destroyed.push({ el, visibility: el.style.visibility })
+  el.style.visibility = 'hidden'
   score.value++
   explode(rect)
+}
+
+const aimAngle = () => Math.atan2(mouse.y - ship.y, mouse.x - ship.x)
+
+const shoot = (event: MouseEvent) => {
+  const angle = Math.atan2(event.clientY - ship.y, event.clientX - ship.x)
+  const dx = Math.cos(angle)
+  const dy = Math.sin(angle)
+  // spawn at the nose so the ship doesn't shoot itself in the thruster
+  bullets.push({ x: ship.x + dx * 24, y: ship.y + dy * 24, dx, dy })
 }
 
 const repair = () => {
@@ -84,23 +106,82 @@ const endMode = () => {
   destructActive.value = false
 }
 
-const draw = () => {
+// advance a bullet, sampling the path so fast shots can't tunnel through
+// a target between frames; true when the bullet is spent
+const flyBullet = (bullet: Bullet, dt: number): boolean => {
+  let distance = BULLET_SPEED * dt
+  while (distance > 0) {
+    const step = Math.min(BULLET_STEP, distance)
+    bullet.x += bullet.dx * step
+    bullet.y += bullet.dy * step
+    distance -= step
+    if (bullet.x < 0 || bullet.y < 0 || bullet.x > window.innerWidth || bullet.y > window.innerHeight) {
+      return true
+    }
+    const target = findTarget(bullet.x, bullet.y)
+    if (target) {
+      destroy(target)
+      return true
+    }
+  }
+  return false
+}
+
+const moveShip = (dt: number) => {
+  // thrust: sum of held directions (normalized, so diagonals aren't faster)
+  let tx = 0
+  let ty = 0
+  for (const key of held) {
+    const dir = THRUST[key]
+    if (dir) {
+      tx += dir[0]
+      ty += dir[1]
+    }
+  }
+  const mag = Math.hypot(tx, ty)
+  if (mag > 0) {
+    ship.vx += (tx / mag) * ACCEL * dt
+    ship.vy += (ty / mag) * ACCEL * dt
+  }
+  // drag eases the ship up to speed and coasts it back down after release
+  const drag = Math.exp(-DRAG * dt)
+  ship.vx *= drag
+  ship.vy *= drag
+  ship.x += ship.vx * dt
+  ship.y += ship.vy * dt
+  // the viewport is the arena — bump the walls, don't leave
+  const margin = 18
+  if (ship.x < margin) { ship.x = margin; ship.vx = 0 }
+  if (ship.x > window.innerWidth - margin) { ship.x = window.innerWidth - margin; ship.vx = 0 }
+  if (ship.y < margin) { ship.y = margin; ship.vy = 0 }
+  if (ship.y > window.innerHeight - margin) { ship.y = window.innerHeight - margin; ship.vy = 0 }
+}
+
+let lastTime = 0
+const draw = (time: number) => {
+  raf = requestAnimationFrame(draw)
   const canvas = fxRef.value
   const context = canvas?.getContext('2d')
   if (!canvas || !context) return
+  // clamp dt so a background tab doesn't teleport everything on return
+  const dt = lastTime ? Math.min((time - lastTime) / 1000, 0.05) : 0.016
+  lastTime = time
+
+  moveShip(dt)
+  bullets = bullets.filter((bullet) => !flyBullet(bullet, dt))
+
   context.clearRect(0, 0, canvas.width, canvas.height)
 
-  // beams fade fast
-  for (const beam of beams) {
-    context.strokeStyle = `rgba(255, 186, 0, ${beam.life})`
-    context.lineWidth = 2.5
+  // bullets: short tracers along their direction of travel
+  context.strokeStyle = '#ffba00'
+  context.lineWidth = 3
+  context.lineCap = 'round'
+  for (const bullet of bullets) {
     context.beginPath()
-    context.moveTo(beam.x1, beam.y1)
-    context.lineTo(beam.x2, beam.y2)
+    context.moveTo(bullet.x - bullet.dx * 12, bullet.y - bullet.dy * 12)
+    context.lineTo(bullet.x, bullet.y)
     context.stroke()
-    beam.life -= 0.12
   }
-  beams = beams.filter((beam) => beam.life > 0)
 
   // debris
   for (const particle of particles) {
@@ -116,11 +197,21 @@ const draw = () => {
   particles = particles.filter((particle) => particle.life > 0)
 
   // the ship: a small triangle aimed at the crosshair
-  const ship = shipPos()
-  const angle = Math.atan2(mouse.y - ship.y, mouse.x - ship.x)
+  const angle = aimAngle()
   context.save()
   context.translate(ship.x, ship.y)
   context.rotate(angle + Math.PI / 2)
+  // a little exhaust flame while thrusting, flickering with speed
+  if (held.size && !reduced) {
+    const flame = 8 + Math.random() * 8
+    context.fillStyle = 'rgba(255, 107, 53, 0.85)'
+    context.beginPath()
+    context.moveTo(-4, 12)
+    context.lineTo(0, 12 + flame)
+    context.lineTo(4, 12)
+    context.closePath()
+    context.fill()
+  }
   context.fillStyle = '#ffba00'
   context.beginPath()
   context.moveTo(0, -18)
@@ -130,8 +221,6 @@ const draw = () => {
   context.closePath()
   context.fill()
   context.restore()
-
-  raf = requestAnimationFrame(draw)
 }
 
 const fit = () => {
@@ -158,8 +247,19 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     event.preventDefault()
     endMode()
+    return
+  }
+  const key = event.key.toLowerCase()
+  if (key in THRUST) {
+    event.preventDefault() // arrows must fly the ship, not scroll the wreckage
+    held.add(key)
   }
 })
+useEventListener('keyup', (event: KeyboardEvent) => {
+  held.delete(event.key.toLowerCase())
+})
+// a lost window drops the throttle, so no stuck keys fly the ship forever
+useEventListener(window, 'blur', () => held.clear())
 onUnmounted(() => {
   cancelAnimationFrame(raf)
   repair() // never leave the site broken behind us
