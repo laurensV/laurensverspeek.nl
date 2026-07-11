@@ -39,8 +39,8 @@
         </div>
       </div>
 
-      <!-- desktop icons -->
-      <DesktopIcons :icons="icons" />
+      <!-- desktop icons (with live badges: unread mail, binned files) -->
+      <DesktopIcons :icons="icons" :badges="iconBadges" />
 
       <!-- the tamagotchi wanders the desktop, if one has been adopted -->
       <DesktopPetWidget />
@@ -389,6 +389,14 @@ const downloadIso = () => {
   URL.revokeObjectURL(url)
   notify('⤓', 'lvos-2.0.iso downloaded', 'boot media for a computer that lives in a browser')
 }
+
+// live icon badges from the shared state the apps themselves use
+const { unread: mailUnread } = useLvosMail()
+const { entries: trashEntries } = useTrash()
+const iconBadges = computed(() => ({
+  mail: mailUnread.value,
+  trash: trashEntries.value.length
+}))
 
 // ---- run dialog (Alt+R): launches by app id through the same actions ----
 const runOpen = ref(false)

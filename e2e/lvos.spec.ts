@@ -456,7 +456,7 @@ test('rm moves files to the recycle bin, which restores or empties them', async 
   // minimize the terminal so the icon column is clickable again
   await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
   // the bin lists it, restore brings it back
-  await page.locator('.lvos-icon', { hasText: /^recycle bin$/ }).click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^recycle bin$/ }) }).click()
   const trash = page.locator('.trash')
   await trash.waitFor()
   await expect(trash.locator('.trash-row', { hasText: 'doomed.txt' })).toBeVisible()
@@ -680,7 +680,7 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await bootDesktop(page)
   await page.locator('.lvos-window-actions button[title="Close"]').first().click()
   // mail: everything starts unread; opening one marks it read, persistently
-  await page.locator('.lvos-icon', { hasText: /^mail$/ }).click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
   const mail = page.locator('.mail')
   await mail.waitFor()
   await expect(mail.locator('.mail-count')).toContainText('5 unread')
@@ -688,7 +688,7 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await expect(mail.locator('.mail-body')).toContainText('very convincing spreadsheet')
   await expect(mail.locator('.mail-count')).toContainText('4 unread')
   await page.locator('.lvos-window[data-win="mail"] .lvos-window-actions button[title="Close"]').click()
-  await page.locator('.lvos-icon', { hasText: /^mail$/ }).click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
   await expect(page.locator('.mail .mail-count')).toContainText('4 unread')
   await page.locator('.lvos-window[data-win="mail"] .lvos-window-actions button[title="Close"]').click()
   // rss: the reader lists the site's real feed and opens posts in the blog app
@@ -722,4 +722,26 @@ test('the hall of fame gathers every high score in one board', async ({ page }) 
   await expect(scores.locator('tr', { hasText: 'snake' })).toContainText('42')
   await expect(scores.locator('tr', { hasText: 'beginner' })).toContainText('31')
   await expect(scores.locator('tr', { hasText: 'tetris' })).toContainText('no entry yet')
+})
+
+test('desktop icons wear live badges for unread mail and binned files', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  // five unread mails out of the box
+  const mailBadge = page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).locator('.lvos-icon-badge')
+  await expect(mailBadge).toHaveText('5')
+  // rm a file: the recycle bin icon counts it
+  await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'echo bye > gone.txt')
+  await page.keyboard.press('Enter')
+  await page.fill('#desktop-terminal-input', 'rm gone.txt')
+  await page.keyboard.press('Enter')
+  await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
+  const trashBadge = page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^recycle bin$/ }) }).locator('.lvos-icon-badge')
+  await expect(trashBadge).toHaveText('1')
+  // reading a mail drops the mail badge
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
+  await page.locator('.mail .mail-row', { hasText: 'prince' }).click()
+  await expect(mailBadge).toHaveText('4')
 })

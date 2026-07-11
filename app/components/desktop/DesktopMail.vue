@@ -29,10 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
-
-// The lvOS mail client: a lovingly fake inbox. Read state persists, replies
-// do not exist, the prince remains hopeful.
+// The lvOS mail client: a lovingly fake inbox. Read state lives in
+// useLvosMail (shared with the desktop icon's badge); replies do not exist,
+// the prince remains hopeful.
 
 interface Mail {
   id: string
@@ -120,19 +119,14 @@ const mails: Mail[] = [
   }
 ]
 
-const READ_KEY = 'lvos-mail-read'
-const read = ref(new Set<string>(storageGetJson(READ_KEY, isStringArray) ?? []))
+const { read, markRead, unread } = useLvosMail()
 const openId = ref<string | null>(null)
 
 const current = computed(() => mails.find((msg) => msg.id === openId.value))
-const unread = computed(() => mails.filter((msg) => !read.value.has(msg.id)).length)
 
 const openMail = (id: string) => {
   openId.value = id
-  if (!read.value.has(id)) {
-    read.value = new Set(read.value).add(id)
-    storageSetJson(READ_KEY, [...read.value])
-  }
+  markRead(id)
 }
 </script>
 
