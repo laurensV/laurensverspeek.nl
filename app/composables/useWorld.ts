@@ -28,6 +28,8 @@ let wired = false
 let socket: WebSocket | null = null
 let offlineGate: CooldownGate | null = null
 let offlineMeta: Record<string, { by: string, at: number }> = {}
+// the last optimistic placement, so a server denial can roll it back
+let pendingPlace: { x: number, y: number, prev: number } | null = null
 
 // provenance is keyed "x,y" → {by, at}; anything else in storage is discarded
 const isPixelMeta = (value: unknown): value is Record<string, { by: string, at: number }> =>
@@ -110,13 +112,22 @@ export function useWorld() {
         connected.value = true
         version.value++
       } else if (msg.type === 'pixel') {
-        applyPixel(Number(msg.x), Number(msg.y), Number(msg.c))
-        pushHistory(Number(msg.x), Number(msg.y), Number(msg.c))
+        const px = Number(msg.x)
+        const py = Number(msg.y)
+        applyPixel(px, py, Number(msg.c))
+        pushHistory(px, py, Number(msg.c))
+        // our optimistic pixel came back confirmed — nothing to revert
+        if (pendingPlace && pendingPlace.x === px && pendingPlace.y === py) pendingPlace = null
       } else if (msg.type === 'world-count') {
         online.value = Number(msg.online) || 0
         recent.value = Number(msg.recent) || 0
       } else if (msg.type === 'pixel-denied') {
         nextPlaceAt.value = Date.now() + (Number(msg.waitMs) || 0)
+        // the server refused our optimistic pixel — roll it back to its old colour
+        if (pendingPlace) {
+          applyPixel(pendingPlace.x, pendingPlace.y, pendingPlace.prev)
+          pendingPlace = null
+        }
       } else if (msg.type === 'pixel-info') {
         lastInfo.value = {
           x: Number(msg.x),
@@ -149,8 +160,10 @@ export function useWorld() {
     if (connected.value && socket?.readyState === 1) {
       const wait = nextPlaceAt.value - Date.now()
       if (wait > 0) return Math.ceil(wait)
+      // optimistic paint, remembering the prior colour so a denial can revert
+      pendingPlace = { x, y, prev: board.value[y * WORLD_SIZE + x] ?? 0 }
       socket.send(JSON.stringify({ type: 'pixel', x, y, c, name: name.value }))
-      applyPixel(x, y, c) // optimistic; a denial only delays the next one
+      applyPixel(x, y, c)
       nextPlaceAt.value = Date.now() + cooldownMs.value
       return 0
     }

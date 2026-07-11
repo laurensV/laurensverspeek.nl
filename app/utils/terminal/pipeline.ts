@@ -19,17 +19,29 @@ export interface ParsedCommandLine {
 
 /**
  * Split a trailing `> file` / `>> file` output redirect off a command line,
- * leaving the command (and any pipes) intact. Requires whitespace before the
- * operator so a quoted `>` in an argument isn't mistaken for a redirect.
+ * leaving the command (and any pipes) intact. The `>` must sit OUTSIDE quotes,
+ * so `echo "a > b"` prints its literal string instead of writing a file.
  */
 export function splitOutputRedirect(input: string): { command: string, file: string | null, append: boolean } {
-  const match = input.match(/\s(>>?)\s*(\S+)\s*$/)
-  if (!match) return { command: input.trim(), file: null, append: false }
-  return {
-    command: input.slice(0, match.index).trim(),
-    file: match[2]!,
-    append: match[1] === '>>'
+  // find the last unquoted '>' run, scanning with quote awareness
+  let quote: '"' | "'" | null = null
+  let redirectAt = -1
+  let append = false
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i]!
+    if (quote) {
+      if (ch === quote) quote = null
+    } else if (ch === '"' || ch === "'") {
+      quote = ch
+    } else if (ch === '>' && input[i - 1] === ' ') {
+      redirectAt = i
+      append = input[i + 1] === '>'
+    }
   }
+  if (redirectAt === -1) return { command: input.trim(), file: null, append: false }
+  const file = input.slice(redirectAt + (append ? 2 : 1)).trim().split(/\s+/)[0] ?? ''
+  if (!file) return { command: input.trim(), file: null, append: false }
+  return { command: input.slice(0, redirectAt).trim(), file, append }
 }
 
 /**

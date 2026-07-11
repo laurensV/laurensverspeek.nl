@@ -61,6 +61,15 @@ describe('splitOutputRedirect', () => {
   it('returns no redirect when there is none', () => {
     expect(splitOutputRedirect('ls -la')).toEqual({ command: 'ls -la', file: null, append: false })
   })
+
+  it('ignores a > that sits inside quotes', () => {
+    expect(splitOutputRedirect('echo "a > b"')).toEqual({ command: 'echo "a > b"', file: null, append: false })
+    expect(splitOutputRedirect("echo 'x >> y'")).toEqual({ command: "echo 'x >> y'", file: null, append: false })
+  })
+
+  it('still redirects when the > is outside the quotes', () => {
+    expect(splitOutputRedirect('echo "hi there" > out.txt')).toEqual({ command: 'echo "hi there"', file: 'out.txt', append: false })
+  })
 })
 
 describe('applyFilter', () => {

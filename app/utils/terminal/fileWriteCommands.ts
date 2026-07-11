@@ -161,9 +161,15 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
         const names = expandFileArgs(ctx.files.value, ctx.fsCwd.value, args).filter((arg) => !arg.startsWith('-'))
         if (!names.length) return error('rm: missing operand')
         let removedSiteContent = false
+        // snapshot what existed at the start: removing a directory also removes
+        // its children, so a later operand naming one of them is silently
+        // skipped (already gone this call) rather than "No such file"
+        const initial = new Set(Object.keys(ctx.files.value))
+        const gone = new Set<string>()
         for (const name of names) {
           const path = resolvePath(ctx.fsCwd.value, name)
-          if (!path || !(path in ctx.files.value)) {
+          if (path && gone.has(path)) continue // an earlier operand took it
+          if (!path || !initial.has(path)) {
             error(`rm: cannot remove '${name}': No such file or directory`)
             continue
           }
@@ -171,6 +177,9 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
           // removed things land in the recycle bin (restorable on the desktop);
           // deleted site content stays deleted — the bin or `reseed` undoes it
           trash.discard(path)
+          for (const key of initial) {
+            if (key === path || key.startsWith(`${path}/`)) gone.add(key)
+          }
           // if we removed the directory we're standing in, walk back to home
           if (ctx.fsCwd.value === path || ctx.fsCwd.value.startsWith(`${path}/`)) ctx.fsCwd.value = ''
         }
