@@ -176,11 +176,13 @@ test('Tab cycles through multiple completion candidates', async ({ page }) => {
   await openTerminal(page)
   const field = page.locator('#terminal-input')
   await page.fill('#terminal-input', 'co')
-  // "co" matches colorscheme, contact, cowsay (sorted) — Tab rotates through them
+  // "co" matches colorscheme, contact, contributions, cowsay (sorted) — Tab rotates
   await page.keyboard.press('Tab')
   await expect(field).toHaveValue('colorscheme ')
   await page.keyboard.press('Tab')
   await expect(field).toHaveValue('contact ')
+  await page.keyboard.press('Tab')
+  await expect(field).toHaveValue('contributions ')
   await page.keyboard.press('Tab')
   await expect(field).toHaveValue('cowsay ')
   await page.keyboard.press('Tab')
