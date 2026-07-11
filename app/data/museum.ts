@@ -103,7 +103,8 @@ export const museum: Wing[] = [
       { name: 'both themes, all of it', how: 'the sun/moon toggle', blurb: 'Every exhibit works in light and dark, keys off one data-theme attribute, and respects prefers-reduced-motion.' },
       { name: 'the test battery', how: 'the repo', blurb: 'Three hundred unit tests and nearly two hundred end-to-end tests boot this museum nightly, so the exhibits stay dusted.' },
       { name: 'privacy', how: 'check /stats', blurb: 'No cookies, no fingerprints; the visitor counters are public and the analytics are optional at build time.' },
-      { name: 'this very floor', how: '[walk the floor], above', blurb: 'The museum you are standing in: rooms generated from this catalog, plaques mounted by code, one @ to walk them. The exhibit is the building.' }
+      { name: 'this very floor', how: '[walk the floor], above', blurb: 'The museum you are standing in: rooms generated from this catalog, plaques mounted by code, one @ to walk them. The exhibit is the building.' },
+      { name: 'the pixel world', how: 'world open, in the terminal', blurb: 'A hidden shared canvas: place one pixel at a time on a 128×128 board, see who placed what, watch strangers build a landscape together. The server keeps the peace; the visitors keep the paint.' }
     ]
   }
 ]
