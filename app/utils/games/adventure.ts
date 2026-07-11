@@ -35,13 +35,14 @@ interface Item {
 const ROOMS: Record<string, Room> = {
   hall: {
     name: 'the home directory',
-    desc: 'a wide hall of soft dark pixels. a prompt blinks patiently on the far wall. corridors lead north, east, south and west; a staircase descends into the dark.',
+    desc: 'a wide hall of soft dark pixels. a prompt blinks patiently on the far wall. corridors lead north, east, south and west; a staircase descends into the dark, and a loft ladder climbs to a hatch in the ceiling.',
     exits: {
       north: { to: 'observatory' },
       west: { to: 'workshop' },
       east: { to: 'library' },
       south: { to: 'gallery' },
-      down: { to: 'basement' }
+      down: { to: 'basement' },
+      up: { to: 'attic' }
     },
     items: ['readme'],
     fixtures: ['prompt']
@@ -101,6 +102,20 @@ const ROOMS: Record<string, Room> = {
     exits: { south: { to: 'basement' } },
     items: [],
     fixtures: ['slot']
+  },
+  attic: {
+    name: 'the attic',
+    desc: 'dust motes drift through a shaft of light. a steamer trunk sits under the eaves, and a skylight opens onto a ladder to the roof. the hatch leads back down.',
+    exits: { down: { to: 'hall' }, up: { to: 'roof' } },
+    items: [],
+    fixtures: ['trunk']
+  },
+  roof: {
+    name: 'the roof',
+    desc: 'you emerge onto a flat pixel roof under an enormous amber moon. a weathervane creaks. a guestbook rests on a lectern, its pages riffling in the wind. the skylight goes back down.',
+    exits: { down: { to: 'attic' } },
+    items: [],
+    fixtures: ['guestbook', 'weathervane']
   }
 }
 
@@ -129,6 +144,11 @@ const ITEMS: Record<string, Item> = {
   resume: {
     desc: 'a neatly typeset resume scroll. the skills section is honest, which is the impressive part.',
     takeText: 'taken. never leave home without a spare.'
+  },
+  lantern: {
+    desc: 'a brass lantern with a warm amber flame that never seems to gutter.',
+    takeText: 'taken. the dark just got a little less committed.',
+    useText: 'the lantern is already lit. it politely continues to be lit.'
   }
 }
 
@@ -145,17 +165,23 @@ export const initialAdvState = (): AdvState => ({ room: 'hall', inv: [], flags: 
 /** Items currently visible in a room, accounting for takes and reveals. */
 const roomItems = (state: AdvState, roomId: string): string[] => {
   const base = ROOMS[roomId]?.items ?? []
-  const extra = roomId === 'workshop' && state.flags.keyRevealed && !state.flags.keyTaken ? ['key'] : []
+  const extra: string[] = []
+  if (roomId === 'workshop' && state.flags.keyRevealed && !state.flags.keyTaken) extra.push('key')
+  // the trunk gives up the lantern once it's been opened
+  if (roomId === 'attic' && state.flags.trunkOpen && !state.flags['gone:lantern'] && !state.inv.includes('lantern')) extra.push('lantern')
   return [...base.filter((item) => !state.inv.includes(item) && !state.flags[`gone:${item}`]), ...extra]
 }
 
-const isDark = (state: AdvState) => state.room === 'basement' && !state.inv.includes('monitor')
+// a lit lantern chases the grue out of any dark room; the CRT still works too
+const hasLight = (state: AdvState) => state.inv.includes('monitor') || state.inv.includes('lantern')
+const isDark = (state: AdvState) => (state.room === 'basement' || state.room === 'attic') && !hasLight(state)
 
 const describeRoom = (state: AdvState): string[] => {
   if (isDark(state)) {
+    const escape = state.room === 'attic' ? 'going back down seems wise' : 'going back up seems wise'
     return [
-      'it is pitch black down here. you are likely to be eaten by a grue.',
-      '(something breathes politely nearby. going back up seems wise.)'
+      `it is pitch black ${state.room === 'attic' ? 'up here' : 'down here'}. you are likely to be eaten by a grue.`,
+      `(something breathes politely nearby. ${escape}.)`
     ]
   }
   const room = ROOMS[state.room]!
@@ -170,6 +196,8 @@ const score = (state: AdvState) =>
   + (state.flags.keyRevealed ? 10 : 0)
   + (state.flags.unlocked ? 20 : 0)
   + (state.flags.mailed ? 15 : 0)
+  + (state.flags.trunkOpen ? 10 : 0)
+  + (state.flags.act2won ? 30 : 0)
   + (state.flags.won ? 50 : 0)
 
 export interface AdvResult {
@@ -187,9 +215,11 @@ export function advCommand(prev: AdvState, input: string): AdvResult {
   if (!verb) return { lines: ['(say something. "help" lists the verbs.)'], state }
   state.moves++
 
-  // the grue: doing anything physical in the dark except leaving is a commitment
+  // the grue: doing anything physical in the dark except leaving is a commitment.
+  // the way out of the basement is up; out of the attic, down
   if (isDark(state) && prev.moves > 0 && isDark(prev)) {
-    const fleeing = (verb === 'go' && DIRS[noun] === 'up') || DIRS[verb] === 'up'
+    const escapeDir = state.room === 'attic' ? 'down' : 'up'
+    const fleeing = (verb === 'go' && DIRS[noun] === escapeDir) || DIRS[verb] === escapeDir
       || ['quit', 'exit', 'restart', 'help', '?', 'look', 'l', 'inventory', 'inv', 'i', 'score'].includes(verb)
     if (!fleeing) {
       return {
@@ -210,7 +240,7 @@ export function advCommand(prev: AdvState, input: string): AdvResult {
       return {
         lines: [
           'verbs: look · go <dir> (n/s/e/w/up/down) · take/drop <item> · examine <thing>',
-          '       inventory · use <item> · talk <someone> · score · restart · quit',
+          '       inventory · use <item> · open <thing> · sign · talk <someone> · score · restart · quit',
           'progress saves itself. Esc also quits.'
         ],
         state
@@ -290,7 +320,49 @@ export function advCommand(prev: AdvState, input: string): AdvResult {
     if (noun === 'telescope' && state.room === 'observatory') return { lines: ['through the eyepiece: a kanban column labeled "someday", stretching to the horizon.'], state }
     if (noun === 'tubes' && state.room === 'postoffice') return { lines: ['the mail tube smells faintly of unread newsletters.'], state }
     if (noun === 'slot' && state.room === 'serverroom') return { lines: ['a floppy-shaped absence. it yearns.'], state }
+    if (noun === 'trunk' && state.room === 'attic') {
+      return { lines: [state.flags.trunkOpen ? 'the trunk lid is up; a brass lantern nestles in the felt lining.' : 'a steamer trunk, latched but not locked. it wants to be opened.'], state }
+    }
+    if (noun === 'weathervane' && state.room === 'roof') return { lines: ['a pixel rooster spins to point, unwaveringly, at the amber moon. good taste.'], state }
+    if (noun === 'guestbook' && state.room === 'roof') {
+      return {
+        lines: [
+          'the guestbook, in a hundred hands: "was here", "found the grue", "quit vim eventually",',
+          '"deployed the site", "read every plaque". the last printed line, in amber:',
+          '"the whole collection is on display — type museum, or visit /museum."',
+          state.flags.act2won ? '(your name is already here, near the top.)' : '(there is a blank line, and a pen. try: sign guestbook.)'
+        ],
+        state
+      }
+    }
     return { lines: [`you see no ${noun} worth examining here.`], state }
+  }
+
+  if (verb === 'open') {
+    if (noun === 'trunk' && state.room === 'attic') {
+      if (state.flags.trunkOpen) return { lines: ['the trunk is already open. the lantern waits inside.'], state }
+      state.flags.trunkOpen = true
+      return { lines: ['the latch gives with a puff of dust. inside, cradled in old felt: a brass lantern.'], state }
+    }
+    if (noun === 'door' || noun === 'trunk') return { lines: [`there's nothing like that to open here.`], state }
+    return { lines: [`you can't open the ${noun || 'nothing'}.`], state }
+  }
+
+  if (verb === 'sign') {
+    if (noun !== 'guestbook' && noun !== '') return { lines: [`you can only sign the guestbook — and only on the roof.`], state }
+    if (state.room !== 'roof') return { lines: ['there is nothing to sign here. the guestbook is up on the roof.'], state }
+    if (state.flags.act2won) return { lines: ['you already signed. the ink is dry, the sentiment stands.'], state }
+    state.flags.act2won = true
+    return {
+      lines: [
+        'you take up the pen and add your line to the guestbook.',
+        'the amber moon brightens by one notch, as if acknowledging it.',
+        '',
+        `*** the roof remembers you — +30 points (${score(state)} total) ***`,
+        `the last line was right: the whole collection is on display. type 'museum' any time.`
+      ],
+      state
+    }
   }
 
   if (verb === 'talk' || verb === 'ask') {

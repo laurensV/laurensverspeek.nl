@@ -107,3 +107,50 @@ describe('adventure', () => {
     expect(restarted.state).toEqual(initialAdvState())
   })
 })
+
+describe('adventure act 2 — the attic', () => {
+  it('the attic is dark without a light and the grue enforces it', () => {
+    const dark = play(initialAdvState(), 'up')
+    expect(dark.lines.join('\n')).toContain('pitch black up here')
+    const eaten = play(dark.state, 'open trunk')
+    expect(eaten.done).toBe('dead')
+    // fleeing back down is safe
+    const fled = play(initialAdvState(), 'up', 'down')
+    expect(fled.done).toBeUndefined()
+    expect(fled.state.room).toBe('hall')
+  })
+
+  it('lets you open the trunk with light and take the lantern', () => {
+    // fetch the monitor for light, climb to the attic, open the trunk
+    const lit = play(initialAdvState(), 's', 'take monitor', 'n', 'up', 'open trunk')
+    expect(lit.lines.join('\n')).toContain('brass lantern')
+    const look = play(lit.state, 'look')
+    expect(look.lines.join('\n')).toContain('lantern')
+    const taken = play(lit.state, 'take lantern', 'i')
+    expect(taken.lines[0]).toContain('lantern')
+    expect(taken.state.flags.trunkOpen).toBe(true)
+  })
+
+  it('the lantern is a portable light: the attic stays lit once carried', () => {
+    const withLantern = play(initialAdvState(), 's', 'take monitor', 'n', 'up', 'open trunk', 'take lantern', 'drop monitor')
+    // back in the attic carrying only the lantern, it is not dark
+    const look = play(withLantern.state, 'look')
+    expect(look.lines.join('\n')).toContain('the attic')
+    expect(look.lines.join('\n')).not.toContain('pitch black')
+  })
+
+  it('signing the roof guestbook ties into the museum and scores', () => {
+    const signed = play(
+      initialAdvState(),
+      's', 'take monitor', 'n', 'up', 'open trunk', 'take lantern', 'up', // to the roof
+      'examine guestbook', 'sign guestbook'
+    )
+    expect(signed.state.flags.act2won).toBe(true)
+    expect(signed.lines.join('\n')).toContain('museum')
+    const scoreLine = play(signed.state, 'score')
+    expect(scoreLine.lines[0]).toMatch(/score: \d+ points/)
+    // signing twice is idempotent
+    const again = play(signed.state, 'sign guestbook')
+    expect(again.lines[0]).toContain('already signed')
+  })
+})
