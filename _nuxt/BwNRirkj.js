@@ -1,1 +1,0 @@
-import{_ as s,g as o,h as r,P as n}from"./DuEUv6II.js";const t={};function a(e,c){return o(),r("ol",null,[n(e.$slots,"default")])}const _=Object.assign(s(t,[["render",a]]),{__name:"ProseOl"});export{_ as default};

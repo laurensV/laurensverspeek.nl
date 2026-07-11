@@ -1,1 +1,0 @@
-import{_ as s,g as r,h as n,P as o}from"./DuEUv6II.js";const t={};function a(e,c){return r(),n("p",null,[o(e.$slots,"default")])}const l=Object.assign(s(t,[["render",a]]),{__name:"ProseP"});export{l as default};
