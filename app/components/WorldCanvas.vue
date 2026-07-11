@@ -239,7 +239,19 @@ const drawMini = () => {
   context.strokeRect(from.x * scale, from.y * scale, (to.x - from.x) * scale, (to.y - from.y) * scale)
 }
 
-watch([version, cursors, lapsePos, () => cam.x, () => cam.y, () => cam.zoom], draw)
+// coalesce redraws into one frame: panning mutates cam on every pointermove,
+// and a full 128×128 minimap scan per move drops frames — so mark dirty and
+// let one rAF flush it
+let redrawQueued = false
+const scheduleDraw = () => {
+  if (redrawQueued) return
+  redrawQueued = true
+  requestAnimationFrame(() => {
+    redrawQueued = false
+    draw()
+  })
+}
+watch([version, cursors, lapsePos, () => cam.x, () => cam.y, () => cam.zoom], scheduleDraw)
 
 // ---- pointer ----
 let down: { x: number, y: number, moved: boolean } | null = null
