@@ -454,9 +454,13 @@ const battery = useBattery()
 // live icon badges from the shared state the apps themselves use
 const { unread: mailUnread } = useLvosMail()
 const { entries: trashEntries } = useTrash()
-const iconBadges = computed(() => ({
+const { unseen: rssUnseen } = useLvosRss()
+const notes = useState<{ id: number }[]>(STATE_KEYS.lvosNotes, () => [])
+const iconBadges = computed<Record<string, number>>(() => ({
   mail: mailUnread.value,
-  trash: trashEntries.value.length
+  trash: trashEntries.value.length,
+  notes: notes.value.length,
+  rss: rssUnseen.value
 }))
 
 // ---- run dialog (Alt+R): launches by app id through the same actions ----

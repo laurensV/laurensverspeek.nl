@@ -8,6 +8,9 @@
       <span class="gallery-label">{{ current.label }} · {{ index + 1 }}/{{ images.length }}</span>
       <button class="gallery-nav" aria-label="Next" @click="step(1)">›</button>
     </div>
+    <button class="gallery-wallpaper" @click="setAsWallpaper">
+      {{ wallpaperSet ? '✓ set as wallpaper' : 'set as wallpaper' }}
+    </button>
     <div class="gallery-thumbs">
       <button
         v-for="(img, i) in images"
@@ -40,8 +43,15 @@ const images = [
   ...projects.map((p) => ({ src: `/og/project-${p.slug}.svg`, label: p.title }))
 ]
 
+const { setCustomWallpaper } = useWallpaper()
+const wallpaperSet = ref(false)
+const setAsWallpaper = () => {
+  wallpaperSet.value = setCustomWallpaper(current.value.src)
+}
+
 const index = ref(0)
 const current = computed(() => images[index.value]!)
+watch(index, () => (wallpaperSet.value = false))
 const step = (delta: number) => {
   index.value = (index.value + delta + images.length) % images.length
 }
@@ -120,6 +130,23 @@ const step = (delta: number) => {
     &.is-active {
       border-color: var(--bulma-primary);
     }
+  }
+}
+
+.gallery-wallpaper {
+  align-self: center;
+  margin-top: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius-small);
+  background: none;
+  color: var(--bulma-primary);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
 }
 </style>

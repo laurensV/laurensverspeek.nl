@@ -16,6 +16,7 @@
     <CommandPalette />
     <ShortcutsHelp />
     <BootSplash />
+    <WhatsNew />
     <!-- terminal-only easter eggs: loaded only once triggered -->
     <LazyMatrixRain v-if="matrixActive" />
     <LazyDomDestroyer v-if="destructActive" />

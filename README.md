@@ -1,5 +1,7 @@
 # laurensverspeek.nl
 
+[![Deploy on gh-pages](https://github.com/laurensV/laurensverspeek.nl/actions/workflows/deploy_gh-pages.yml/badge.svg)](https://github.com/laurensV/laurensverspeek.nl/actions/workflows/deploy_gh-pages.yml)
+
 Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com), TypeScript and [Bulma 1](https://bulma.io).
 
 A minimalist developer portfolio on the surface, with an unusual amount hidden a keystroke away.

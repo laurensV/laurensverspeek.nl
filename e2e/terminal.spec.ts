@@ -871,3 +871,9 @@ test('battery reports the real charge state (or honest mains power)', async ({ p
   // chromium exposes the Battery API; other engines get the mains joke
   await expect(out).toContainText(/(%\s—\s(charging|discharging))|mains and optimism/)
 })
+
+test('tips deals a random usage tip', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'tips')
+  await expect(page.locator('.terminal-output')).toContainText('💡')
+})

@@ -57,6 +57,12 @@
     </div>
 
     <span
+      v-if="weather.temp.value !== null"
+      class="lvos-tray-btn lvos-weather"
+      :title="`Amsterdam · live from open-meteo`"
+    >{{ weather.glyph.value }} {{ weather.temp.value }}°</span>
+
+    <span
       v-if="battery.supported.value && battery.percent.value !== null"
       class="lvos-tray-btn lvos-battery"
       :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
@@ -134,6 +140,8 @@ const toggleNotifications = () => {
 
 // real battery in the tray, when the browser admits to having one
 const battery = useBattery()
+// a live temperature chip (Amsterdam)
+const weather = useWeatherChip()
 
 // browser fullscreen for the whole desktop page
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
@@ -355,7 +363,8 @@ const clock = computed(() =>
 }
 
 
-.lvos-battery {
+.lvos-battery,
+.lvos-weather {
   color: hsl(var(--lv-scheme-hs), 70%);
   font-size: 0.68rem;
   cursor: default;

@@ -840,3 +840,13 @@ test('the pixel world works offline: place, persist, provenance, terminal', asyn
   await page.keyboard.press('Enter')
   await expect(page.locator('.terminal-output')).toContainText(/placed \(3, 3\)|cooldown/)
 })
+
+test('typing on the hero terminal opens the real one with the keystroke', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
+  await page.locator('.hero-terminal').focus()
+  await page.keyboard.press('h')
+  await expect(page.locator('#terminal-input')).toBeVisible()
+  await expect(page.locator('#terminal-input')).toHaveValue('h')
+})

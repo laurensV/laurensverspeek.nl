@@ -31,6 +31,8 @@ interface FeedItem {
 const items = ref<FeedItem[]>([])
 const pending = ref(true)
 const error = ref(false)
+const { setCount, markSeen } = useLvosRss()
+onMounted(markSeen) // opening the reader clears the badge
 
 onMounted(async () => {
   try {
@@ -46,6 +48,8 @@ onMounted(async () => {
         description: (item.querySelector('description')?.textContent ?? '').split('\n')[0]!.slice(0, 120)
       }
     })
+    setCount(items.value.length)
+    markSeen()
   } catch {
     error.value = true
   } finally {

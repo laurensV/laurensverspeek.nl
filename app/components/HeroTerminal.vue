@@ -1,5 +1,10 @@
 <template>
-  <button class="hero-terminal is-family-code" title="Open interactive terminal" @click="open">
+  <button
+    class="hero-terminal is-family-code"
+    title="Open interactive terminal — or just start typing"
+    @click="open"
+    @keydown="onKey"
+  >
     <span class="hero-terminal-bar">
       <span class="dot" /><span class="dot" /><span class="dot" />
       <span class="hero-terminal-title">laurens@{{ profile.domain }}</span>
@@ -12,7 +17,7 @@
       <span class="line"><span class="prompt">$</span> cat mission.txt</span>
       <span class="line output">decentralize compute, ship cool things</span>
       <span class="line"><span class="prompt">$</span> <span class="blink-cursor" /></span>
-      <span class="line hint">// click to open the interactive terminal</span>
+      <span class="line hint">// click — or just start typing — to open the terminal</span>
     </span>
   </button>
 </template>
@@ -21,6 +26,23 @@
 import { profile } from '~/data/profile'
 
 const { open } = useTerminal()
+
+// typing a printable key on the focused hero card opens the real terminal and
+// carries the keystroke in as the start of a command
+const onKey = (event: KeyboardEvent) => {
+  if (event.key === 'Enter' || event.key === ' ') return // let the button click
+  if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
+  event.preventDefault()
+  open()
+  void nextTick(() => {
+    const input = document.querySelector<HTMLInputElement>('#terminal-input')
+    if (input) {
+      input.value = event.key
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.focus()
+    }
+  })
+}
 </script>
 
 <style scoped lang="scss">

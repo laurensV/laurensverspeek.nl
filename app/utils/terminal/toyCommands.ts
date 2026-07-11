@@ -117,6 +117,27 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
         muted(`'pet feed' · 'pet play' · 'pet release'`)
       }
     },
+    tips: {
+      category: 'toys',
+      description: 'A random tip — the site has more than fits in help',
+      exec: () => {
+        const deck = [
+          'chain commands with && / || / ; — cd blog && ls',
+          'ctrl+b then % or " splits the terminal into tmux panes',
+          'pipe anything: help | grep game | sort',
+          '| copy sends a command\'s output to your clipboard',
+          'write a script with echo and run it: echo fortune > x.sh; sh x.sh',
+          'secrets lists the hidden commands. there are a lot.',
+          'ctrl+r searches your command history, shell-style',
+          'the desktop lives at startx — and its terminal is this one',
+          'adventure is a whole text game. so is the museum you can walk.',
+          'ps and kill are real: kill 7 ends this very shell',
+          'ask for coffee. the site is, technically, a teapot.',
+          'world open drops you into a shared pixel canvas'
+        ]
+        muted('💡 ' + deck[Math.floor(Math.random() * deck.length)]!)
+      }
+    },
     cowsay: {
       category: 'toys',
       usage: 'cowsay <text>',

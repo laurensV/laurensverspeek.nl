@@ -73,7 +73,25 @@
     >
       <button @click="menuOpenEntry">open</button>
       <button @click="menuRename">rename</button>
+      <button @click="menuProperties">properties</button>
       <button class="is-danger" @click="menuDelete">move to bin</button>
+    </div>
+
+    <!-- file properties dialog -->
+    <div v-if="properties" class="files-props is-family-code">
+      <div class="files-props-head">
+        <span>{{ properties.name }}</span>
+        <button aria-label="Close" @click="properties = null">×</button>
+      </div>
+      <table class="files-props-table">
+        <tbody>
+          <tr><th>kind</th><td>{{ properties.kind }}</td></tr>
+          <tr><th>size</th><td>{{ properties.size }}</td></tr>
+          <tr v-if="properties.lines !== null"><th>lines</th><td>{{ properties.lines }}</td></tr>
+          <tr><th>path</th><td>~/{{ properties.path }}</td></tr>
+          <tr><th>perms</th><td>{{ properties.perms }}</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div v-if="preview" class="files-preview">
@@ -149,6 +167,26 @@ const menuDelete = () => {
   if (fileMenu.value) deleteVfsEntry(fileMenu.value.entry)
   fileMenu.value = null
 }
+interface Props { name: string, kind: string, size: string, lines: number | null, path: string, perms: string }
+const properties = ref<Props | null>(null)
+const menuProperties = () => {
+  if (!fileMenu.value) return
+  const entry = fileMenu.value.entry
+  const path = entryPath(entry.name)
+  const node = files.value[path]
+  const content = node?.content ?? ''
+  const bytes = content.length
+  properties.value = {
+    name: entry.name,
+    kind: entry.dir ? 'directory' : (entry.name.match(/\.(\w+)$/)?.[1] ?? 'file') + ' file',
+    size: bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`,
+    lines: entry.dir ? null : (content ? content.split('\n').length : 0),
+    path,
+    perms: entry.dir ? 'drwxr-xr-x  (yours, all of it)' : '-rw-r--r--  (read, write, dream)'
+  }
+  fileMenu.value = null
+}
+
 const menuRename = () => {
   if (!fileMenu.value) return
   renaming.value = fileMenu.value.entry.name
@@ -394,6 +432,52 @@ const curated = computed<FileEntry[]>(() => {
   padding: 0.2rem 0.5rem;
   color: var(--bulma-danger);
   font-size: 0.7rem;
+}
+
+.files-props {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 31;
+  min-width: 14rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+  box-shadow: 0 10px 26px hsla(var(--lv-scheme-hs), 2%, 0.5);
+  font-size: 0.72rem;
+
+  .files-props-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+    color: var(--bulma-primary);
+
+    button {
+      border: none;
+      background: none;
+      color: inherit;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+  }
+
+  .files-props-table {
+    th {
+      padding: 0.1rem 0.8rem 0.1rem 0;
+      color: hsl(var(--lv-scheme-hs), 55%);
+      font-weight: normal;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    td {
+      padding: 0.1rem 0;
+      color: hsl(var(--lv-scheme-hs), 88%);
+      word-break: break-all;
+    }
+  }
 }
 
 .files-menu {
