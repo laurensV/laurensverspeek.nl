@@ -63,6 +63,12 @@ export function markSeedsDeleted(paths: string[]): void {
   if (changed) saveTombstones()
 }
 
+/** Adopt another tab's tombstone set verbatim (cross-tab sync; no re-save). */
+export function adoptTombstones(paths: string[]): ReadonlySet<string> {
+  tombstones = new Set(paths)
+  return tombstones
+}
+
 /** Forget tombstones (a trash restore brought the paths back). */
 export function unmarkSeedsDeleted(paths: string[]): void {
   const deleted = loadTombstones()

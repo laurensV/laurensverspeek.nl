@@ -16,18 +16,15 @@ export interface FsNode {
 }
 export type Filesystem = Record<string, FsNode>
 
-const FS_KEY = 'lv-terminal-fs'
+export const FS_KEY = 'lv-terminal-fs'
 let restored = false
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value)
 
-/** Restore the saved filesystem once per session (null afterwards / off-client). */
-export function loadFs(): Filesystem | null {
-  if (!import.meta.client || restored) return null
-  restored = true
-  const saved = storageGetJson(FS_KEY, isRecord)
-  if (!saved) return {}
+/** Validate an untrusted storage payload into a clean user-layer map. */
+export function sanitizeFs(saved: unknown): Filesystem {
+  if (!isRecord(saved)) return {}
   const fs: Filesystem = {}
   for (const [name, node] of Object.entries(saved)) {
     if (node && typeof node === 'object'
@@ -37,6 +34,14 @@ export function loadFs(): Filesystem | null {
     }
   }
   return fs
+}
+
+/** Restore the saved filesystem once per session (null afterwards / off-client). */
+export function loadFs(): Filesystem | null {
+  if (!import.meta.client || restored) return null
+  restored = true
+  const saved = storageGetJson(FS_KEY, isRecord)
+  return saved ? sanitizeFs(saved) : {}
 }
 
 /** Seeded site content is rebuilt every visit — only the visitor's own files
