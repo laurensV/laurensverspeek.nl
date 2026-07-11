@@ -31,6 +31,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'minesweeper', title: 'minesweeper.exe', label: 'mines.exe', icon: 'cpu' },
   { id: 'vim', title: 'vim — ~/notes.txt', label: 'vim', icon: 'braces' },
   { id: 'paint', title: 'lvpaint.exe', label: 'lvpaint', icon: 'pen' },
+  { id: 'playground', title: 'code playground', label: 'playground', icon: 'code', wide: true },
   { id: 'settings', title: 'settings', label: 'settings', icon: 'settings' },
   { id: 'media', title: 'media player', label: 'media', icon: 'play', wide: true },
   { id: 'calc', title: 'calculator', label: 'calculator', icon: 'hash' },

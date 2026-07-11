@@ -451,3 +451,21 @@ test('the notes icon badges the number of sticky notes', async ({ page }) => {
   const notesBadge = page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^notes$/ }) }).locator('.lvos-icon-badge')
   await expect(notesBadge).toHaveText('1')
 })
+
+test('the code playground runs edited html/css/js in a sandboxed preview', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^playground$/ }) }).click()
+  const play = page.locator('.play')
+  await play.waitFor()
+  // the demo renders in the sandboxed iframe
+  const frame = page.frameLocator('.play-frame')
+  await expect(frame.locator('h1')).toHaveText('hello, world')
+  // edit the HTML → the preview updates (debounced)
+  await play.locator('.play-tabs button', { hasText: 'html' }).click()
+  await play.locator('.play-code').fill('<h1>edited live</h1>')
+  await expect(frame.locator('h1')).toHaveText('edited live', { timeout: 4000 })
+  // the iframe is sandboxed without same-origin
+  await expect(page.locator('.play-frame')).toHaveAttribute('sandbox', /allow-scripts/)
+  await expect(page.locator('.play-frame')).not.toHaveAttribute('sandbox', /allow-same-origin/)
+})
