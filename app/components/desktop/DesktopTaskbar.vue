@@ -16,6 +16,7 @@
       <button @click="emit('tile'); startOpen = false">▦ tile windows</button>
       <button @click="emit('run'); startOpen = false">▷ run… (alt+r)</button>
       <button @click="emit('iso'); startOpen = false">⤓ download lvos.iso</button>
+      <button @click="emit('screenshot'); startOpen = false">⌜⌟ screenshot</button>
       <p class="lvos-start-label">wallpaper</p>
       <div class="lvos-wallpapers">
         <button
@@ -111,6 +112,7 @@ const emit = defineEmits<{
   tile: []
   run: []
   iso: []
+  screenshot: []
 }>()
 
 // these are v-models so the parent can dismiss them on Escape

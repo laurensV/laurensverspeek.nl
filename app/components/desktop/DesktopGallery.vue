@@ -25,11 +25,15 @@
 
 <script setup lang="ts">
 import { projects } from '~/data/projects'
+import { storageGetJson, isStringArray } from '~/utils/safeStorage'
 
 // A small image viewer over the site's own generated art (OG cards + project
-// covers) — every one of these is a real prerendered asset in /og.
+// covers) — plus any screenshots the start menu's camera has taken.
+
+const shots = storageGetJson('lvos-shots', isStringArray) ?? []
 
 const images = [
+  ...shots.map((src, i) => ({ src, label: `screenshot ${shots.length - i}` })),
   { src: '/og/default.svg', label: 'laurensverspeek.nl' },
   { src: '/og/life.svg', label: 'game of life' },
   { src: '/og/desktop.svg', label: 'lvOS' },

@@ -745,3 +745,17 @@ test('desktop icons wear live badges for unread mail and binned files', async ({
   await page.locator('.mail .mail-row', { hasText: 'prince' }).click()
   await expect(mailBadge).toHaveText('4')
 })
+
+test('the screenshot tool files a snapshot into the gallery', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'screenshot' }).click()
+  await expect(page.locator('.lvos-toast', { hasText: 'Screenshot saved' })).toBeVisible()
+  // the gallery lists it first
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^gallery$/ }) }).click()
+  const gallery = page.locator('.gallery')
+  await gallery.waitFor()
+  await expect(gallery.locator('.gallery-label')).toContainText('screenshot 1')
+  await expect(gallery.locator('.gallery-image')).toHaveAttribute('src', /^data:image\/png/)
+})

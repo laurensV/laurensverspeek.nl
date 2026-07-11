@@ -179,6 +179,7 @@
         @tile="tileAll"
         @run="runOpen = true"
         @iso="downloadIso"
+        @screenshot="takeScreenshot"
       />
     </div>
   </Teleport>
@@ -188,6 +189,7 @@
 import { useIdle } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -388,6 +390,51 @@ const downloadIso = () => {
   a.click()
   URL.revokeObjectURL(url)
   notify('⤓', 'lvos-2.0.iso downloaded', 'boot media for a computer that lives in a browser')
+}
+
+// the "screenshot" tool: draws the desktop's *state* (wallpaper, window
+// frames, taskbar) onto a canvas — a stylized polaroid, not pixel capture —
+// and files it into the Gallery via localStorage
+const takeScreenshot = () => {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1200
+  canvas.height = 630
+  const ctx2d = canvas.getContext('2d')!
+  const sx = 1200 / window.innerWidth
+  const sy = 630 / window.innerHeight
+  // wallpaper-ish backdrop
+  const bg = ctx2d.createLinearGradient(0, 0, 1200, 630)
+  bg.addColorStop(0, '#17171d')
+  bg.addColorStop(1, '#0c0c10')
+  ctx2d.fillStyle = bg
+  ctx2d.fillRect(0, 0, 1200, 630)
+  // windows, back to front
+  const frames = [...windows.value].filter((w) => !w.minimized).sort((a, b) => a.z - b.z)
+  for (const win of frames) {
+    const x = win.maximized ? 0 : win.x * sx
+    const y = win.maximized ? 0 : win.y * sy
+    const w = win.maximized ? 1200 : (win.width ?? 420) * sx
+    const h = win.maximized ? 630 - 24 : (win.height ?? 320) * sy
+    ctx2d.fillStyle = 'rgba(20, 20, 26, 0.97)'
+    ctx2d.strokeStyle = 'rgba(255, 186, 0, 0.5)'
+    ctx2d.fillRect(x, y, w, h)
+    ctx2d.strokeRect(x, y, w, h)
+    ctx2d.fillStyle = 'rgba(255, 186, 0, 0.12)'
+    ctx2d.fillRect(x, y, w, 22)
+    ctx2d.fillStyle = '#e8e8ea'
+    ctx2d.font = '12px monospace'
+    ctx2d.fillText(win.title.slice(0, 40), x + 8, y + 15)
+  }
+  // taskbar
+  ctx2d.fillStyle = 'rgba(14, 14, 18, 0.95)'
+  ctx2d.fillRect(0, 630 - 24, 1200, 24)
+  ctx2d.fillStyle = '#ffba00'
+  ctx2d.font = 'bold 12px monospace'
+  ctx2d.fillText('⚡ lvOS', 10, 630 - 8)
+  const shot = canvas.toDataURL('image/png')
+  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
+  storageSetJson('lvos-shots', [shot, ...existing].slice(0, 6))
+  notify('⌜⌟', 'Screenshot saved', 'open the gallery to admire your desktop')
 }
 
 // live icon badges from the shared state the apps themselves use
