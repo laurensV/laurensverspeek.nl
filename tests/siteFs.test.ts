@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applySeeds, siteSeeds, blogSeeds, restoreSeeds, hasSeedsUnder, isSysPath, minimarkToMarkdown } from '~/utils/terminal/siteFs'
+import { applySeeds, siteSeeds, blogSeeds, restoreSeeds, hasSeedsUnder, isSysPath, markSeedsDeleted, minimarkToMarkdown } from '~/utils/terminal/siteFs'
 import { pathCandidates, stripSysNodes } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
@@ -71,6 +71,16 @@ describe('applySeeds / restoreSeeds', () => {
     expect(hasSeedsUnder('blog/post.md')).toBe(true)
     expect(hasSeedsUnder('notes.txt')).toBe(false)
     expect(hasSeedsUnder('')).toBe(true)
+  })
+
+  it('tombstones paths under a seeded dir even before their own seed lands', () => {
+    // only the blog DIR is registered — the post seed hasn't arrived yet
+    // (mirrors the async fetchPosts window)
+    applySeeds({}, { 'blog': null })
+    markSeedsDeleted(['blog/late-post.md'])
+    // now the async blog seed lands: the tombstone must hold it back
+    const fs = applySeeds({}, { 'blog/late-post.md': '# original' }, new Set(['blog/late-post.md']))
+    expect(fs['blog/late-post.md']).toBeUndefined()
   })
 })
 

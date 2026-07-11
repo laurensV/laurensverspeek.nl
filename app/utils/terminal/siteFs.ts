@@ -41,12 +41,21 @@ const saveTombstones = () => {
   if (tombstones) reportStorageWrite(storageSetJson(DELETED_KEY, [...tombstones]))
 }
 
+// blog seeds arrive asynchronously, so a just-deleted post may not be in the
+// registry yet — anything under a registered seed DIRECTORY still counts
+const underSeededDir = (path: string): boolean => {
+  for (const [seedPath, content] of SEED_REGISTRY) {
+    if (content === null && path.startsWith(`${seedPath}/`)) return true
+  }
+  return false
+}
+
 /** Record deliberately deleted site paths, so seeding skips them next visit. */
 export function markSeedsDeleted(paths: string[]): void {
   const deleted = loadTombstones()
   let changed = false
   for (const path of paths) {
-    if (SEED_REGISTRY.has(path) && !deleted.has(path)) {
+    if ((SEED_REGISTRY.has(path) || underSeededDir(path)) && !deleted.has(path)) {
       deleted.add(path)
       changed = true
     }
