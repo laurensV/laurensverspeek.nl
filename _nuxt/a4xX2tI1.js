@@ -1,1 +1,0 @@
-import{_ as s,g as r,h as t,P as n}from"./CqaweMyd.js";const o={};function a(e,c){return r(),t("td",null,[n(e.$slots,"default")])}const l=Object.assign(s(o,[["render",a]]),{__name:"ProseTd"});export{l as default};
