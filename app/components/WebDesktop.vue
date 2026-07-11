@@ -106,34 +106,21 @@
 
         <LazyDesktopAbout v-else-if="win.id === 'about-os'" :since="sessionStart" />
 
-        <!-- Lazy: each app is its own chunk, loaded only when first opened -->
-        <LazyDesktopMinesweeper v-else-if="win.id === 'minesweeper'" />
-        <LazyDesktopMedia v-else-if="win.id === 'media'" />
+        <!-- apps with bespoke props/events stay explicit; the rest go through
+             one registry-driven <component :is> (each still its own lazy chunk) -->
         <LazyDesktopFiles
           v-else-if="win.id === 'files'"
           @route="openRoute"
           @window="openWindow"
           @post="openBlogPost"
         />
-        <LazyDesktopBrowser v-else-if="win.id === 'browser'" />
         <LazyDesktopBlog v-else-if="win.id === 'blog'" :open-path="blogOpenPath" />
         <LazyDesktopVim v-else-if="win.id === 'vim'" @close="closeWindow('vim')" />
-        <LazyDesktopSettings v-else-if="win.id === 'settings'" />
-        <LazyDesktopPaint v-else-if="win.id === 'paint'" />
-        <LazyDesktopVisualizer v-else-if="win.id === 'visualizer'" />
-        <LazyDesktopCalculator v-else-if="win.id === 'calc'" />
-        <LazyDesktopClock v-else-if="win.id === 'clock'" />
-        <LazyDesktopNotes v-else-if="win.id === 'notes'" />
-        <LazyDesktopLife v-else-if="win.id === 'life'" />
-        <LazyDesktopSnake v-else-if="win.id === 'snake'" />
-        <LazyDesktopGallery v-else-if="win.id === 'gallery'" />
         <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" @kill="closeWindow" />
-        <LazyDesktopTrash v-else-if="win.id === 'trash'" />
-        <LazyDesktopMail v-else-if="win.id === 'mail'" />
         <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
-        <LazyDesktopScores v-else-if="win.id === 'scores'" />
         <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
+        <component :is="SIMPLE_APPS[win.id]" v-else-if="SIMPLE_APPS[win.id]" />
       </DesktopWindow>
 
       <!-- window titlebar context menu -->
@@ -193,6 +180,27 @@ import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
+
+// Prop-less window apps render through one <component :is>, each still its own
+// lazy chunk via defineAsyncComponent. Apps with bespoke props/events (files,
+// blog, vim, taskmgr, rss, terminal, world) stay explicit in the template.
+const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
+  minesweeper: defineAsyncComponent(() => import('~/components/desktop/DesktopMinesweeper.vue')),
+  media: defineAsyncComponent(() => import('~/components/desktop/DesktopMedia.vue')),
+  browser: defineAsyncComponent(() => import('~/components/desktop/DesktopBrowser.vue')),
+  settings: defineAsyncComponent(() => import('~/components/desktop/DesktopSettings.vue')),
+  paint: defineAsyncComponent(() => import('~/components/desktop/DesktopPaint.vue')),
+  visualizer: defineAsyncComponent(() => import('~/components/desktop/DesktopVisualizer.vue')),
+  calc: defineAsyncComponent(() => import('~/components/desktop/DesktopCalculator.vue')),
+  clock: defineAsyncComponent(() => import('~/components/desktop/DesktopClock.vue')),
+  notes: defineAsyncComponent(() => import('~/components/desktop/DesktopNotes.vue')),
+  life: defineAsyncComponent(() => import('~/components/desktop/DesktopLife.vue')),
+  snake: defineAsyncComponent(() => import('~/components/desktop/DesktopSnake.vue')),
+  gallery: defineAsyncComponent(() => import('~/components/desktop/DesktopGallery.vue')),
+  trash: defineAsyncComponent(() => import('~/components/desktop/DesktopTrash.vue')),
+  mail: defineAsyncComponent(() => import('~/components/desktop/DesktopMail.vue')),
+  scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue'))
+}
 
 // lvOS: the operating-system-in-a-browser easter egg. Boot with `desktop` in
 // the terminal. Window mechanics live in useWindowManager, per-window chrome
