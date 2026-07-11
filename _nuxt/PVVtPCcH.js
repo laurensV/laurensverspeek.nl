@@ -1,0 +1,1 @@
+import{_ as s,h as a,i as r,W as t}from"./CEi0GdEx.js";const n={};function o(e,c){return a(),r("thead",null,[t(e.$slots,"default")])}const l=Object.assign(s(n,[["render",o]]),{__name:"ProseThead"});export{l as default};

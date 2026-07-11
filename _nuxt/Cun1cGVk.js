@@ -1,0 +1,1 @@
+import{_ as r,h as n,i as o,W as s}from"./CEi0GdEx.js";const t={};function a(e,c){return n(),o("strong",null,[s(e.$slots,"default")])}const l=Object.assign(r(t,[["render",a]]),{__name:"ProseStrong"});export{l as default};

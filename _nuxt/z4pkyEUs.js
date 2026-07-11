@@ -1,0 +1,1 @@
+import{_ as s,h as r,i as n,W as o}from"./CEi0GdEx.js";const t={};function a(e,c){return r(),n("li",null,[o(e.$slots,"default")])}const _=Object.assign(s(t,[["render",a]]),{__name:"ProseLi"});export{_ as default};
