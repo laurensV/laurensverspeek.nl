@@ -36,6 +36,8 @@ interface RemoteCursor {
   x: number
   y: number
   page: string
+  /** UTC offset in minutes, for the visitor globe */
+  tz: number
   seen: number
   say?: string | undefined
   sayUntil?: number | undefined
@@ -44,10 +46,14 @@ interface RemoteCursor {
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
 const { name } = useIdentity()
-const { count, showCursors, enabled, outbox } = useLiveVisitors()
+const { count, showCursors, enabled, outbox, geo } = useLiveVisitors()
 
 const cursors = ref(new Map<number, RemoteCursor>())
 const tick = ref(0)
+
+// the viewer's own UTC offset in minutes, sent with each move for the globe.
+// getTimezoneOffset returns minutes to add to reach UTC (inverted from ours).
+const myTz = -new Date().getTimezoneOffset()
 
 let releaseLease: (() => void) | undefined
 const connected = ref(false)
@@ -65,8 +71,10 @@ const visibleCursors = computed(() => {
 watchEffect(() => {
   void tick.value
   const now = Date.now()
-  const others = [...cursors.value.values()].filter((c) => now - c.seen < 15000).length
-  count.value = connected.value ? others + 1 : 0
+  const live = [...cursors.value.values()].filter((c) => now - c.seen < 15000)
+  count.value = connected.value ? live.length + 1 : 0
+  // the visitor globe reads this: every live visitor's id, hue and UTC offset
+  geo.value = live.map((c) => ({ id: c.id, hue: c.hue, tz: c.tz }))
 })
 
 // the shared relay-socket core: parse guards, drop detection and a capped
@@ -99,6 +107,7 @@ const conn = cursorsWs
 
 const send = useThrottleFn((event: PointerEvent) => {
   conn?.send({
+    tz: myTz,
     x: event.clientX / window.innerWidth,
     y: event.clientY / window.innerHeight,
     page: route.path,

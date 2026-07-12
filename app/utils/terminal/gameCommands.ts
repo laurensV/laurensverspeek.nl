@@ -13,6 +13,8 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
   // online pong needs the relay url and the visitor's display name
   const cursorsWs = useRuntimeConfig().public.cursorsWs
   const { name: identityName } = useIdentity()
+  // the visitor globe reads the shared live-visitor geo (captured here)
+  const globe = useVisitorGlobe()
   // the chess command opens the lvOS app when the desktop is up
   const route = useRoute()
   const windowManager = useWindowManager(WINDOW_TITLES)
@@ -129,6 +131,17 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       exec: () => {
         muted('Filling the tank... q to surface.')
         return import('~/utils/games/asciiquarium').then(({ createAquarium }) => ctx.startGame(createAquarium, 'asciiquarium'))
+      }
+    },
+    globe: {
+      category: 'toys',
+      description: 'A spinning ASCII earth plotting live visitors by timezone',
+      exec: () => {
+        muted(globe.enabled.value
+          ? 'Spinning up the earth... ◉ is you, ● are other visitors. space pauses, q quits.'
+          : 'Spinning up the earth... no relay on this build, so it\'s just you (◉). q quits.')
+        return import('~/utils/games/globe').then(({ createGlobeGame }) =>
+          ctx.startGame((callbacks) => createGlobeGame(() => globe.markers.value, callbacks), 'globe'))
       }
     },
     life: {

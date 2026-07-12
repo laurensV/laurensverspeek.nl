@@ -530,6 +530,10 @@ wss.on('connection', (socket) => {
     const name = typeof msg.name === 'string'
       ? msg.name.replace(/[^a-z0-9_-]/gi, '').slice(0, 24) || 'visitor'
       : 'visitor'
+    // UTC offset in minutes, for the visitor globe (clamped to the real range)
+    const tz = typeof msg.tz === 'number' && Number.isFinite(msg.tz)
+      ? Math.max(-840, Math.min(840, Math.round(msg.tz)))
+      : 0
     const payload = wire({
       type: 'move',
       id,
@@ -537,7 +541,8 @@ wss.on('connection', (socket) => {
       name,
       x: Math.min(1, Math.max(0, msg.x)),
       y: Math.min(1, Math.max(0, msg.y)),
-      page: String(msg.page).slice(0, 100)
+      page: String(msg.page).slice(0, 100),
+      tz
     })
     for (const client of wss.clients) {
       if (client !== socket && client.readyState === 1) client.send(payload)

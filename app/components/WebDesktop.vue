@@ -205,7 +205,8 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   chat: defineAsyncComponent(() => import('~/components/desktop/DesktopChat.vue')),
   scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue')),
   sysmon: defineAsyncComponent(() => import('~/components/desktop/DesktopSysMon.vue')),
-  displays: defineAsyncComponent(() => import('~/components/desktop/DesktopDisplays.vue'))
+  displays: defineAsyncComponent(() => import('~/components/desktop/DesktopDisplays.vue')),
+  globe: defineAsyncComponent(() => import('~/components/desktop/DesktopGlobe.vue'))
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 

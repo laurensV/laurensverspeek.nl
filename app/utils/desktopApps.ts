@@ -52,6 +52,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'world', title: 'the pixel world', label: 'world', icon: 'globe', wide: true },
   { id: 'cv', title: 'resume.pdf — viewer', label: 'resume.pdf', icon: 'file', wide: true },
   { id: 'chat', title: 'chat — #lounge', label: 'chat', icon: 'chat' },
+  { id: 'globe', title: 'visitor globe', label: 'globe', icon: 'globe' },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

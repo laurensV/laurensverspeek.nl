@@ -10,8 +10,9 @@ export type { ScoreEntry, ScoreBoards }
 
 // ---- client → server ----
 
-/** Viewport-relative cursor position; the one legacy frame with no `type`. */
-export interface CursorMoveIn { type?: undefined, x: number, y: number, page: string, name?: string }
+/** Viewport-relative cursor position; the one legacy frame with no `type`.
+ * `tz` is the sender's UTC offset in minutes (for the visitor globe). */
+export interface CursorMoveIn { type?: undefined, x: number, y: number, page: string, name?: string, tz?: number }
 export interface SayIn { type: 'say', text: string }
 export interface ScoresGetIn { type: 'scores-get' }
 export interface ScoreSubmitIn { type: 'score-submit', game: string, score: number, name?: string }
@@ -67,7 +68,7 @@ export type ClientMessage =
 // ---- server → client ----
 
 export interface HelloMsg { type: 'hello', id: number, hue: number }
-export interface MoveMsg { type: 'move', id: number, hue: number, name: string, x: number, y: number, page: string }
+export interface MoveMsg { type: 'move', id: number, hue: number, name: string, x: number, y: number, page: string, tz: number }
 export interface LeaveMsg { type: 'leave', id: number }
 export interface SayMsg { type: 'say', id: number, text: string }
 

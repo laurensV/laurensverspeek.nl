@@ -45,6 +45,7 @@ export const STATE_KEYS = {
   liveVisitorCount: 'live-visitor-count',
   liveCursorsVisible: 'live-cursors-visible',
   liveSayOutbox: 'live-say-outbox',
+  liveVisitorGeo: 'live-visitor-geo',
   // lvOS
   lvosWindows: 'lvos-windows',
   lvosWallpaper: 'lvos-wallpaper',
