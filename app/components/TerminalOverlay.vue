@@ -74,6 +74,13 @@ onKeyStroke(['`', '~'], (event) => {
   padding: 1rem;
   background-color: hsla(var(--lv-scheme-hs), 4%, 0.6);
   backdrop-filter: blur(6px);
+
+  // phones: a bottom sheet instead of a floating window, so the input sits
+  // right above the on-screen keyboard and the transcript gets the full width
+  @media (max-width: 768px) {
+    align-items: flex-end;
+    padding: 0;
+  }
 }
 
 .terminal-window {
@@ -88,6 +95,16 @@ onKeyStroke(['`', '~'], (event) => {
     0 0 60px hsla(var(--lv-primary-hsl), 0.12),
     0 24px 48px hsla(var(--lv-scheme-hs), 2%, 0.6);
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    // dvh tracks the browser chrome and the keyboard-resized viewport
+    height: min(78dvh, 34rem);
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: var(--bulma-radius-large) var(--bulma-radius-large) 0 0;
+  }
 }
 
 .terminal-titlebar {

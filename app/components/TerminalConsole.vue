@@ -44,6 +44,29 @@
         @keydown.esc="onEscape"
       >
     </div>
+
+    <!-- touch quick keys (coarse pointers only, via CSS): Tab/history for the
+         shell, and the arrow/quit keys games need but phone keyboards lack.
+         pointerdown.prevent keeps focus in the input while tapping. -->
+    <div v-if="active" class="terminal-quickkeys" aria-label="Terminal quick keys">
+      <template v-if="activeGame">
+        <button @pointerdown.prevent @click="gameKey('ArrowLeft')">←</button>
+        <button @pointerdown.prevent @click="gameKey('ArrowUp')">↑</button>
+        <button @pointerdown.prevent @click="gameKey('ArrowDown')">↓</button>
+        <button @pointerdown.prevent @click="gameKey('ArrowRight')">→</button>
+        <button @pointerdown.prevent @click="gameKey(' ')">space</button>
+        <button @pointerdown.prevent @click="gameKey('Enter')">↵</button>
+        <button @pointerdown.prevent @click="gameKey('q')">q</button>
+      </template>
+      <template v-else>
+        <button @pointerdown.prevent @click="autocomplete">tab</button>
+        <button @pointerdown.prevent @click="historyUp">↑ hist</button>
+        <button @pointerdown.prevent @click="historyDown">↓</button>
+        <button @pointerdown.prevent @click="typeChar('|')">|</button>
+        <button @pointerdown.prevent @click="typeChar('~')">~</button>
+        <button @pointerdown.prevent @click="onEscape">esc</button>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -108,6 +131,15 @@ const historyDown = () => {
 
 // zsh-style Tab completion cycling (see useTerminalConsole)
 const { autocomplete, resetCompletion } = useCompletionCycle(input, complete)
+
+// the touch quick-key row routes into the same handlers the keyboard uses
+const gameKey = (key: string) => {
+  activeGame.value?.onKey(key)
+}
+const typeChar = (char: string) => {
+  input.value += char
+  focusInput()
+}
 
 const clearScreen = () => {
   panes.clear(props.paneId)
@@ -297,5 +329,34 @@ defineExpose({ focusInput })
   font-size: calc(0.9rem * var(--term-font-scale, 1));
   color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
+}
+
+// the quick-key row only exists for fingers
+.terminal-quickkeys {
+  display: none;
+
+  @media (pointer: coarse) {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.12);
+    overflow-x: auto;
+
+    button {
+      flex: 1;
+      min-width: 2.6rem;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid hsla(var(--lv-primary-hsl), 0.3);
+      border-radius: var(--bulma-radius);
+      background-color: hsla(var(--lv-primary-hsl), 0.08);
+      color: hsl(var(--lv-scheme-hs), 85%);
+      font: inherit;
+      font-size: 0.8rem;
+
+      &:active {
+        background-color: hsla(var(--lv-primary-hsl), 0.25);
+      }
+    }
+  }
 }
 </style>
