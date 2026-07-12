@@ -63,25 +63,15 @@
         </template>
       </div>
 
-      <!-- sticky table of contents on wide screens -->
-      <aside v-if="tocLinks.length" class="post-toc is-family-code" aria-label="Table of contents">
-        <p class="toc-title">// contents</p>
-        <ul>
-          <li v-for="item in tocLinks" :key="item.id" :class="`is-depth-${item.depth}`">
-            <a :href="`#${item.id}`" :class="{ 'is-active': activeHeading === item.id }">
-              <span class="toc-hash">{{ '#'.repeat(item.depth) }}</span> {{ item.text }}
-            </a>
-          </li>
-        </ul>
-      </aside>
+      <PostToc v-if="tocLinks.length" :links="tocLinks" :active-id="activeHeading" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
 import { tagHue } from '~/utils/tagHue'
-import type { MinimarkNode, MinimarkRoot } from '~/utils/terminalMarkdown'
+import { readingTimeMinutes } from '~/utils/readingTime'
+import type { MinimarkRoot } from '~/utils/terminalMarkdown'
 
 const route = useRoute()
 
@@ -157,18 +147,7 @@ useJsonLd(() => ({
   mainEntityOfPage: `${SITE_URL}${post.value?.path}`
 }))
 
-// rough reading time from the rendered minimark AST (~200 wpm). A node is either
-// a text string or an element tuple [tag, props, ...children].
-const countWords = (nodes: MinimarkNode[]): number =>
-  nodes.reduce((sum, node) =>
-    typeof node === 'string'
-      ? sum + node.split(/\s+/).filter(Boolean).length
-      : sum + countWords(node.slice(2) as MinimarkNode[]), 0)
-
-const readingTime = computed(() => {
-  const body = post.value?.body as MinimarkRoot | undefined
-  return Math.max(1, Math.round(countWords(body?.value ?? []) / 200))
-})
+const readingTime = computed(() => readingTimeMinutes(post.value?.body as MinimarkRoot | undefined))
 
 // share: the native sheet where it exists, otherwise copy the url
 const { copied: shared, copy } = useCopyFlag()
@@ -189,136 +168,20 @@ const formatDate = (date: string) => {
   return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
 }
 
-// ---- swipe between posts on touch (the surround nav already exists) ----
-// a mostly-horizontal swipe past a threshold goes prev/next, matching the
-// on-screen order (left arrow ← older on the left, newer on the right)
-let touchStart: { x: number, y: number } | null = null
-const onTouchStart = (event: TouchEvent) => {
-  const t = event.changedTouches[0]
-  touchStart = t ? { x: t.clientX, y: t.clientY } : null
-}
-const onTouchEnd = (event: TouchEvent) => {
-  const t = event.changedTouches[0]
-  if (!touchStart || !t) return
-  const dx = t.clientX - touchStart.x
-  const dy = t.clientY - touchStart.y
-  touchStart = null
-  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return // not a horizontal swipe
-  const target = dx < 0 ? surround.value?.[1] : surround.value?.[0]
+// swipe between posts on touch, matching the on-screen order (older on the
+// left, newer on the right)
+useHorizontalSwipe((direction) => {
+  const target = direction === 'left' ? surround.value?.[1] : surround.value?.[0]
   if (target?.path) void navigateTo(target.path)
-}
-useEventListener('touchstart', onTouchStart, { passive: true })
-useEventListener('touchend', onTouchEnd, { passive: true })
-
-// ---- table of contents (flattened, h2 + h3) ----
-interface TocEntry { id: string, text: string, depth: number }
-
-const tocLinks = computed<TocEntry[]>(() => {
-  const links = post.value?.body.toc?.links ?? []
-  const flat: TocEntry[] = []
-  for (const link of links) {
-    flat.push({ id: link.id, text: link.text, depth: link.depth })
-    for (const child of link.children ?? []) {
-      flat.push({ id: child.id, text: child.text, depth: child.depth })
-    }
-  }
-  return flat
 })
 
-// highlight the heading currently on screen
-const activeHeading = ref('')
+// table of contents + on-screen heading highlight, reading progress, and the
+// code-block/heading-anchor garnish all live in composables
 const bodyRef = ref<HTMLElement>()
-let headingObserver: IntersectionObserver | undefined
+const { tocLinks, activeHeading } = usePostToc(computed(() => post.value?.body.toc?.links), bodyRef)
+const { progress } = useReadingProgress()
+usePostEnhancements(bodyRef)
 
-onMounted(() => {
-  const headings = bodyRef.value?.querySelectorAll('h2[id], h3[id]')
-  if (!headings?.length) return
-  headingObserver = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) activeHeading.value = entry.target.id
-      }
-    },
-    { rootMargin: '0px 0px -70% 0px' }
-  )
-  headings.forEach((heading) => headingObserver!.observe(heading))
-})
-
-onUnmounted(() => headingObserver?.disconnect())
-
-// ---- reading progress ----
-const progress = ref(0)
-
-const updateProgress = () => {
-  const doc = document.documentElement
-  const total = doc.scrollHeight - doc.clientHeight
-  progress.value = total > 0 ? Math.min(1, doc.scrollTop / total) : 0
-}
-
-useEventListener('scroll', updateProgress, { passive: true })
-onMounted(updateProgress)
-
-// ---- copy buttons + language labels on code blocks ----
-onMounted(() => {
-  const blocks = bodyRef.value?.querySelectorAll('pre')
-  blocks?.forEach((pre) => {
-    if (pre.querySelector('.code-copy')) return
-
-    const language = /language-(\w+)/.exec(`${pre.className} ${pre.querySelector('code')?.className ?? ''}`)?.[1]
-    if (language) {
-      const label = document.createElement('span')
-      label.className = 'code-lang is-family-code'
-      label.textContent = language
-      pre.appendChild(label)
-    }
-
-    const button = document.createElement('button')
-    button.className = 'code-copy is-family-code'
-    button.type = 'button'
-    button.textContent = '[copy]'
-    button.addEventListener('click', () => {
-      navigator.clipboard
-        .writeText(pre.querySelector('code')?.textContent ?? '')
-        .then(() => {
-          button.textContent = '[copied!]'
-          button.classList.add('is-copied')
-          setTimeout(() => {
-            button.textContent = '[copy]'
-            button.classList.remove('is-copied')
-          }, 1600)
-        })
-        .catch(() => {
-          button.textContent = '[nope :(]'
-        })
-    })
-    pre.appendChild(button)
-  })
-})
-
-// ---- copyable deep-link anchors on section headings ----
-onMounted(() => {
-  const headings = bodyRef.value?.querySelectorAll<HTMLElement>('h2[id], h3[id]')
-  headings?.forEach((heading) => {
-    if (heading.querySelector('.heading-anchor')) return
-    const anchor = document.createElement('a')
-    anchor.className = 'heading-anchor is-family-code'
-    anchor.href = `#${heading.id}`
-    anchor.setAttribute('aria-label', 'Copy a link to this section')
-    anchor.textContent = '#'
-    anchor.addEventListener('click', (event) => {
-      event.preventDefault()
-      history.replaceState(null, '', `#${heading.id}`)
-      navigator.clipboard
-        .writeText(`${location.origin}${location.pathname}#${heading.id}`)
-        .then(() => {
-          anchor.classList.add('is-copied')
-          setTimeout(() => anchor.classList.remove('is-copied'), 1200)
-        })
-        .catch(() => {})
-    })
-    heading.appendChild(anchor)
-  })
-})
 </script>
 
 <style scoped lang="scss">
@@ -345,62 +208,6 @@ onMounted(() => {
   max-width: 44rem;
   min-width: 0;
   flex: 1;
-}
-
-.post-toc {
-  display: none;
-  width: 15rem;
-  flex-shrink: 0;
-  font-size: 0.75rem;
-
-  @media screen and (min-width: 1216px) {
-    display: block;
-  }
-
-  .toc-title {
-    color: var(--bulma-text-weak);
-    margin-bottom: 0.75rem;
-  }
-
-  ul {
-    position: sticky;
-    top: 5.5rem;
-    list-style: none;
-    margin: 0;
-    border-left: 1px solid var(--bulma-border-weak);
-  }
-
-  li a {
-    display: block;
-    padding: 0.3rem 0 0.3rem 0.9rem;
-    margin-left: -1px;
-    border-left: 1px solid transparent;
-    color: var(--bulma-text-weak);
-    transition: color 0.2s ease, border-color 0.2s ease;
-
-    .toc-hash {
-      opacity: 0.5;
-    }
-
-    &:hover {
-      color: var(--bulma-text-strong);
-    }
-
-    &.is-active {
-      color: var(--bulma-primary-on-scheme);
-      border-left-color: var(--bulma-primary);
-    }
-  }
-
-  li.is-depth-3 a {
-    padding-left: 1.8rem;
-  }
-}
-
-// keep the sticky rail working: the ul is the sticky element
-.post-toc .toc-title {
-  position: sticky;
-  top: 3.5rem;
 }
 
 .post-tag {
