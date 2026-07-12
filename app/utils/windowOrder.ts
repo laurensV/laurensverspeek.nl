@@ -63,11 +63,17 @@ export function clampDragPosition(
 }
 
 /** Cascade for freshly opened windows, capped so they never spawn off-screen
- * (both axes — an off-bottom spawn hides the titlebar, the only drag handle). */
+ * (both axes — an off-bottom spawn hides the titlebar, the only drag handle).
+ * The x cap also keeps a default-width window's right edge (and its ✕) on
+ * screen, which matters on phones where 90px + a 330px window ran off-frame. */
 export function spawnPosition(openCount: number, viewportW: number, viewportH = 800) {
   const offset = openCount * 34
+  // the default (non-wide) window renders at min(26rem, 88vw); keep it fully on
+  // screen, but never tighter than the desktop viewportW/3 cascade cap
+  const winW = Math.min(26 * 16, viewportW * 0.88)
+  const maxX = Math.max(8, Math.min(viewportW / 3, viewportW - winW - 8))
   return {
-    x: Math.min(90 + offset, viewportW / 3),
+    x: Math.min(90 + offset, maxX),
     // keep the titlebar well within the viewport (minus the taskbar)
     y: Math.min(70 + offset, Math.max(70, viewportH - 220))
   }

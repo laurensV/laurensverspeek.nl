@@ -69,4 +69,13 @@ describe('spawnPosition', () => {
     // a tiny viewport still yields a sane minimum
     expect(spawnPosition(20, 1280, 200).y).toBe(70)
   })
+
+  it('keeps a default-width window fully on screen on a narrow (phone) viewport', () => {
+    // 375px phone: the window is min(416, 330) = 330 wide, so x must leave room
+    // for its right edge + the ✕ button (never the old off-frame x = 90)
+    const winW = Math.min(26 * 16, 375 * 0.88)
+    const { x } = spawnPosition(0, 375, 667)
+    expect(x + winW).toBeLessThanOrEqual(375)
+    expect(x).toBeLessThan(90)
+  })
 })

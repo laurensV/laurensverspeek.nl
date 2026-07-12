@@ -52,6 +52,9 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       return
     }
     const spawn = spawnPosition(windows.value.length, window.innerWidth, window.innerHeight)
+    // on phones a floating window can't fit with its controls reachable, so open
+    // maximized; the restore rect keeps un-maximizing on-screen too
+    const phone = window.innerWidth <= 640
     windows.value.push({
       id,
       title: titles[id] ?? id,
@@ -59,7 +62,8 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       y: spawn.y,
       z: ++zCounter,
       minimized: false,
-      maximized: false
+      maximized: phone,
+      restore: phone ? { x: spawn.x, y: spawn.y } : undefined
     })
   }
 
