@@ -324,7 +324,9 @@ usePostEnhancements(bodyRef)
   }
 
   :deep(.heading-anchor) {
-    margin-left: 0.4rem;
+    // a wider tap target than the bare "#" (matters most on touch)
+    padding: 0 0.35rem;
+    margin-left: 0.1rem;
     color: var(--bulma-primary);
     text-decoration: none;
     opacity: 0;
@@ -335,6 +337,14 @@ usePostEnhancements(bodyRef)
   :deep(h3:hover) .heading-anchor,
   :deep(.heading-anchor:focus-visible) {
     opacity: 0.75;
+  }
+
+  // touch devices have no hover, so the copy affordance would never appear —
+  // keep it faintly visible and tappable there
+  @media (hover: none) {
+    :deep(.heading-anchor) {
+      opacity: 0.4;
+    }
   }
 
   :deep(.heading-anchor.is-copied) {
