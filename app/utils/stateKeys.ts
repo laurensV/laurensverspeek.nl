@@ -37,6 +37,10 @@ export const STATE_KEYS = {
   paletteRecent: 'palette-recent',
   paletteCounts: 'palette-counts',
   vimPendingKey: 'vim-pending-key',
+  // the chat room (relay)
+  chatMessages: 'chat-messages',
+  chatOnline: 'chat-online',
+  chatStatus: 'chat-status',
   // live visitors
   liveVisitorCount: 'live-visitor-count',
   liveCursorsVisible: 'live-cursors-visible',

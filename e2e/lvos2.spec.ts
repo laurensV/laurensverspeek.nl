@@ -564,6 +564,22 @@ test('chess: you move, the house replies, and the game survives a reopen', async
   await expect(page.locator('.lvos-window', { hasText: 'vs the house' }).locator('button[aria-label="e4 P"]')).toBeVisible()
 })
 
+test('the chat room degrades honestly when no relay is configured', async ({ page }) => {
+  await bootDesktop(page)
+  await page.keyboard.press('Alt+r')
+  await page.locator('.run-input').fill('chat')
+  await page.keyboard.press('Enter')
+  const chat = page.locator('.chat')
+  await chat.waitFor()
+  await expect(chat).toContainText('needs the live relay')
+  // the terminal command says the same thing instead of hanging
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^terminal$/ }) }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'chat')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.lvos-window', { hasText: 'lvsh' })).toContainText('just you and the machines')
+})
+
 test('chess online degrades honestly when no relay is configured', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-icon', { hasText: /^chess$/ }).click()

@@ -7,7 +7,25 @@ import { pgp } from '~/data/pgp'
 export function createNetCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error } = ctx
 
+  // captured at factory time (valid Nuxt context): the chat room feed is the
+  // SAME shared state the lvOS chat app renders
+  const cursorsWs = useRuntimeConfig().public.cursorsWs
+  const chatRoom = useChat()
+  const { name: identityName } = useIdentity()
+
   return {
+    chat: {
+      description: 'The visitor chat room (same #lounge as the lvOS chat app)',
+      exec: () => {
+        if (!cursorsWs) {
+          muted('chat needs the live relay — no relay on this build. just you and the machines today.')
+          return
+        }
+        muted('joining #lounge... enter sends, esc leaves.')
+        return import('~/utils/games/chatRoom').then(({ createChatRoom }) =>
+          ctx.startGame((callbacks) => createChatRoom({ chat: chatRoom, playerName: identityName.value }, callbacks), 'chat'))
+      }
+    },
     ping: {
       usage: 'ping <host>',
       description: 'Send ICMP packets to a host',

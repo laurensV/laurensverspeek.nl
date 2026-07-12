@@ -25,6 +25,10 @@ export interface PongJoinIn { type: 'pong-join', name?: string }
 export interface PongLeaveIn { type: 'pong-leave' }
 export interface PongMoveIn { type: 'pong-move', y: number }
 
+export interface ChatJoinIn { type: 'chat-join' }
+export interface ChatLeaveIn { type: 'chat-leave' }
+export interface ChatSendIn { type: 'chat-send', text: string, name?: string }
+
 export interface ChessJoinIn { type: 'chess-join', name?: string }
 export interface ChessLeaveIn { type: 'chess-leave' }
 /** A move intent: from/to squares only — the server derives promo/castle/ep
@@ -44,6 +48,9 @@ export type ClientMessage =
   | PongJoinIn
   | PongLeaveIn
   | PongMoveIn
+  | ChatJoinIn
+  | ChatLeaveIn
+  | ChatSendIn
   | ChessJoinIn
   | ChessLeaveIn
   | ChessMoveIn
@@ -101,6 +108,14 @@ export interface PongEndMsg { type: 'pong-end', winner: 'l' | 'r', forfeit?: boo
 /** What the online-pong client consumes. */
 export type PongServerMessage = PongWaitMsg | PongStartMsg | PongStateMsg | PongEndMsg
 
+/** One chat-room line. Ephemeral: the relay keeps only a short ring buffer. */
+export interface ChatMessage { name: string, text: string, at: number }
+export interface ChatStateMsg { type: 'chat-state', messages: ChatMessage[], online: number }
+export interface ChatMsgMsg { type: 'chat-msg', name: string, text: string, at: number }
+export interface ChatCountMsg { type: 'chat-count', online: number }
+/** What the chat-room clients (terminal command + lvOS app) consume. */
+export type ChatServerMessage = ChatStateMsg | ChatMsgMsg | ChatCountMsg
+
 export interface ChessWaitMsg { type: 'chess-wait' }
 export interface ChessStartMsg { type: 'chess-start', side: 'w' | 'b', foe: string }
 /** The server's applied, validated move — both clients replay it locally
@@ -114,4 +129,4 @@ export interface ChessEndMsg {
 /** What the online-chess client consumes. */
 export type ChessServerMessage = ChessWaitMsg | ChessStartMsg | ChessMovedMsg | ChessEndMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage

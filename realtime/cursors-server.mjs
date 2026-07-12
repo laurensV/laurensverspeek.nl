@@ -181,6 +181,22 @@ const dropPongPlayer = (socket) => {
   if (match) endPongMatch(match, socket === match.left ? 'r' : 'l', true)
 }
 
+// ---- the chat room: one ephemeral feed, a short ring buffer in memory ----
+const CHAT_LOG_MAX = 50
+/** @type {import('./protocol.js').ChatMessage[]} */
+let chatLog = []
+/** @type {Set<import('ws').WebSocket>} */
+const chatMembers = new Set()
+const chatSendGate = new CooldownGate(1200)
+const broadcastChat = (/** @type {string} */ payload) => {
+  for (const member of chatMembers) {
+    if (member.readyState === 1) member.send(payload)
+  }
+}
+const broadcastChatCount = () => {
+  broadcastChat(wire({ type: 'chat-count', online: chatMembers.size }))
+}
+
 // ---- online chess: turn-based matches, validated by the shared rules ----
 /**
  * @typedef {{
@@ -296,6 +312,28 @@ wss.on('connection', (socket) => {
       if (!match || typeof msg.y !== 'number') return
       if (pongMoveGate.check(id, Date.now()) > 0) return
       movePaddle(match.state, socket === match.left ? 'l' : 'r', msg.y)
+      return
+    }
+    // ---- chat-room protocol (ephemeral, server-sanitized) ----
+    if (msg.type === 'chat-join') {
+      chatMembers.add(socket)
+      socket.send(wire({ type: 'chat-state', messages: chatLog, online: chatMembers.size }))
+      broadcastChatCount()
+      return
+    }
+    if (msg.type === 'chat-leave') {
+      if (chatMembers.delete(socket)) broadcastChatCount()
+      return
+    }
+    if (msg.type === 'chat-send') {
+      if (!chatMembers.has(socket) || typeof msg.text !== 'string') return
+      const text = msg.text.slice(0, 200).trim()
+      if (!text) return
+      if (chatSendGate.check(id, Date.now()) > 0) return // drop flooded sends
+      const entry = { name: cleanName(msg.name) || 'visitor', text, at: Date.now() }
+      chatLog.push(entry)
+      if (chatLog.length > CHAT_LOG_MAX) chatLog = chatLog.slice(-CHAT_LOG_MAX)
+      broadcastChat(wire({ type: 'chat-msg', ...entry }))
       return
     }
     // ---- online chess protocol (server validates with the shared rules) ----
@@ -416,6 +454,7 @@ wss.on('connection', (socket) => {
   socket.on('close', () => {
     dropPongPlayer(socket) // mid-match disconnects forfeit to the opponent
     dropChessPlayer(socket)
+    if (chatMembers.delete(socket)) broadcastChatCount()
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state, or the maps grow for the relay's
     // whole uptime (one entry per id that ever placed/moved/chatted)
@@ -425,6 +464,7 @@ wss.on('connection', (socket) => {
     scoreGate.last.delete(id)
     pongMoveGate.last.delete(id)
     chessMoveGate.last.delete(id)
+    chatSendGate.last.delete(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)

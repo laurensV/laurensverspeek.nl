@@ -202,6 +202,36 @@ try {
     a.close()
   }
 
+  // ---- chat room ---------------------------------------------------------------
+  console.log('chat:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'chat-join' })
+    const state = await a.next('chat-state')
+    check('joining returns the room state', !!state && Array.isArray(state.messages) && state.online === 1)
+    await a.next('chat-count') // a's own join broadcast (online: 1)
+    b.send({ type: 'chat-join' })
+    await b.next('chat-state')
+    check('the member count updates on join', (await a.next('chat-count'))?.online === 2)
+    a.send({ type: 'chat-send', text: 'hello from the checks', name: 'checker' })
+    const seen = await b.next('chat-msg')
+    check('a message reaches the other member', seen?.name === 'checker' && seen?.text === 'hello from the checks' && typeof seen?.at === 'number')
+    await a.next('chat-msg')
+    a.send({ type: 'chat-send', text: 'flooded line', name: 'checker' }) // inside the send gate
+    check('the flood gate drops rapid sends', await b.silent('chat-msg'))
+    const c = new Client(URL)
+    await c.open
+    c.send({ type: 'chat-join' })
+    const late = await c.next('chat-state')
+    const lateLog = /** @type {{ text: string }[]} */ (late?.messages ?? [])
+    check('a late joiner receives the ring buffer', lateLog.some((entry) => entry.text === 'hello from the checks'))
+    a.close()
+    b.close()
+    c.close()
+  }
+
   // ---- fool's mate: the server itself declares checkmate -----------------------
   console.log('chess endgame:')
   {
