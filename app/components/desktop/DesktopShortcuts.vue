@@ -52,7 +52,7 @@ const ROWS = desktopShortcuts
   button {
     border: none;
     background: none;
-    color: var(--bulma-text-weak);
+    color: hsl(var(--lv-scheme-hs), 55%);
     font-size: 1.2rem;
     line-height: 1;
     cursor: pointer;

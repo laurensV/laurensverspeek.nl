@@ -97,7 +97,7 @@ onUnmounted(() => clearInterval(timer))
   justify-content: space-between;
 
   .sysmon-label {
-    color: var(--bulma-text);
+    color: hsl(var(--lv-scheme-hs), 88%);
   }
 
   .sysmon-value {

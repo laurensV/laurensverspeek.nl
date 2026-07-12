@@ -117,7 +117,7 @@ onUnmounted(() => window.removeEventListener('resize', measure))
   }
 
   dd {
-    color: var(--bulma-text);
+    color: hsl(var(--lv-scheme-hs), 88%);
   }
 }
 
@@ -131,7 +131,7 @@ onUnmounted(() => window.removeEventListener('resize', measure))
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: var(--bulma-text);
+  color: hsl(var(--lv-scheme-hs), 88%);
 
   input {
     accent-color: var(--bulma-primary);
@@ -148,7 +148,7 @@ onUnmounted(() => window.removeEventListener('resize', measure))
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 55%);
 
   &.is-disabled {
     opacity: 0.5;

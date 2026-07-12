@@ -214,6 +214,6 @@ onMounted(houseReply)
 }
 
 .chess-hint {
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 55%);
 }
 </style>
