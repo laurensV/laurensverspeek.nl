@@ -339,7 +339,8 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await page.locator('.lvos-window[data-win="blog"] .lvos-window-actions button[title="Close"]').click()
   await page.locator('.lvos-window[data-win="mail"] .lvos-window-actions button[title="Close"]').click()
   // rss: the reader lists the site's real feed and opens posts in the blog app
-  await page.locator('.lvos-icon', { hasText: /^rss$/ }).click()
+  // (the rss icon wears an unread-posts badge now, so match on the label)
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^rss$/ }) }).click()
   const rss = page.locator('.rss')
   await rss.waitFor()
   await expect(rss.locator('.rss-item').first()).toBeVisible()

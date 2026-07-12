@@ -16,10 +16,12 @@ import { storageGet, storageSet, storageRemove } from '~/utils/safeStorage'
 import type { GitCommit } from '~/utils/terminal/gitLog'
 
 // A quiet returning-visitor nudge: how many commits landed since you were last
-// caught up. Reads the SAME marker the lvOS system updater and boot nudge use
-// (lv-updates-hash), so every "N new" number on the site tells one story. The
-// toast itself never advances the marker — installing updates does — it only
-// remembers which tip it already announced.
+// caught up. Reads the SAME marker the lvOS system updater advances when you
+// install updates (lv-updates-hash), so the toast and the updater tell one
+// story — same reference point, same count. The toast never advances the
+// marker itself (only installing does); it just remembers the tip it announced.
+// Before you've ever run the updater there's no reference, so no toast — the
+// updater's own first-run backlog is where you get caught up.
 const MARKER_KEY = 'lv-updates-hash'
 const TOASTED_KEY = 'lv-toasted-hash'
 
@@ -28,25 +30,18 @@ const newCommits = ref(0)
 
 onMounted(async () => {
   storageRemove('lv-last-visit') // pre-r28 private timestamp, superseded by the marker
+  const marker = storageGet(MARKER_KEY)
+  if (!marker) return // no reference yet — the updater hands out the first backlog
   try {
     const commits = await $fetch<GitCommit[]>('/git-log.json')
     const newest = commits[0]?.hash
-    if (!newest) return
-    const marker = storageGet(MARKER_KEY)
-    if (!marker) {
-      // first visit: the whole site is new — you're caught up as of now
-      storageSet(MARKER_KEY, newest)
-      return
-    }
-    if (newest === marker || storageGet(TOASTED_KEY) === newest) return
-    storageSet(TOASTED_KEY, newest)
+    if (!newest || newest === marker || storageGet(TOASTED_KEY) === newest) return
     const idx = commits.findIndex((commit) => commit.hash === marker)
-    const count = idx === -1 ? commits.length : idx
-    if (count > 0) {
-      newCommits.value = count
-      show.value = true
-      setTimeout(() => (show.value = false), 12_000)
-    }
+    if (idx <= 0) return // marker not found or already newest
+    storageSet(TOASTED_KEY, newest)
+    newCommits.value = idx
+    show.value = true
+    setTimeout(() => (show.value = false), 12_000)
   } catch { /* offline or missing feed: stay quiet */ }
 })
 
