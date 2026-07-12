@@ -42,5 +42,11 @@ useSeoMeta({
   border: 1px solid hsla(var(--lv-primary-hsl), 0.35);
   border-radius: var(--bulma-radius-large);
   padding: 0.5rem;
+
+  // shorter on phones so the canvas's own palette/coords row clears the fixed
+  // mobile tab bar riding at the bottom of the viewport
+  @media (max-width: 768px) {
+    height: min(58vh, 40rem);
+  }
 }
 </style>
