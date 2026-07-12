@@ -4,6 +4,8 @@ export function useSiteEffects() {
   const crtActive = useState(STATE_KEYS.fxCrt, () => false)
   const destructActive = useState(STATE_KEYS.fxDestruct, () => false)
   const fireworksActive = useState(STATE_KEYS.fxFireworks, () => false)
+  // a brief confetti burst when a game beats a personal best
+  const celebrateActive = useState(STATE_KEYS.fxCelebrate, () => false)
 
   const toggleCrt = (on?: boolean) => {
     crtActive.value = on ?? !crtActive.value
@@ -13,5 +15,5 @@ export function useSiteEffects() {
     return crtActive.value
   }
 
-  return { matrixActive, crtActive, destructActive, fireworksActive, toggleCrt }
+  return { matrixActive, crtActive, destructActive, fireworksActive, celebrateActive, toggleCrt }
 }

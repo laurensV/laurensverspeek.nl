@@ -23,6 +23,7 @@
     <LazyMatrixRain v-if="matrixActive" />
     <LazyDomDestroyer v-if="destructActive" />
     <LazyFireworksShow v-if="fireworksActive" />
+    <LazyScoreCelebration v-if="celebrateActive" />
     <SlTrain />
     <PartyMode />
     <BossScreen />
@@ -36,7 +37,7 @@
 
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the
 // terminal, so gate it behind its flag to keep it out of the initial bundle.
-const { matrixActive, destructActive, fireworksActive } = useSiteEffects()
+const { matrixActive, destructActive, fireworksActive, celebrateActive } = useSiteEffects()
 
 // j/k · gg/G scrolling everywhere except lvOS, which has its own keyboard world
 useVimScroll()

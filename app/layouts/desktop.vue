@@ -8,6 +8,7 @@
     <LazyMatrixRain v-if="matrixActive" />
     <LazyDomDestroyer v-if="destructActive" />
     <LazyFireworksShow v-if="fireworksActive" />
+    <LazyScoreCelebration v-if="celebrateActive" />
     <SlTrain />
     <PartyMode />
     <BossScreen />
@@ -15,5 +16,5 @@
 </template>
 
 <script setup lang="ts">
-const { matrixActive, destructActive, fireworksActive } = useSiteEffects()
+const { matrixActive, destructActive, fireworksActive, celebrateActive } = useSiteEffects()
 </script>

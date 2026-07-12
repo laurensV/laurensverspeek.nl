@@ -9,6 +9,11 @@ import { storageGet, storageSet, storageRemove } from '~/utils/safeStorage'
 let scoreSink: ((game: string, score: number) => void) | null = null
 export const setScoreSink = (fn: ((game: string, score: number) => void) | null) => { scoreSink = fn }
 
+// an optional sink a client plugin registers, fired when a score beats a real
+// prior best — flips the confetti-burst flag without the pure games importing Vue
+let celebrateSink: (() => void) | null = null
+export const setCelebrateSink = (fn: (() => void) | null) => { celebrateSink = fn }
+
 /** Move a score stored under a legacy key to its current key, keeping the best. */
 export function migrateScoreKey(oldKey: string, newKey: string) {
   const legacy = Number(storageGet(oldKey) ?? 0) || 0
@@ -37,6 +42,9 @@ export function useHighScore(key: string) {
     if (game && scoreSink) scoreSink(game, score)
     if (score > best) {
       storageSet(key, String(score))
+      // celebrate only a genuine improvement over an existing record, so the
+      // very first play of a game doesn't set off confetti
+      if (best > 0) celebrateSink?.()
       return { isNew: true, best }
     }
     return { isNew: false, best }
