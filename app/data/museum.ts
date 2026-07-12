@@ -51,11 +51,12 @@ export const museum: Wing[] = [
       { name: 'system update', how: 'start menu → system update', blurb: 'Ceremonially installs this repo\'s actual recent commits, progress bar and "do not turn off your computer" and all. It remembers what it installed, so the nudge only returns when new work ships.' },
       { name: 'BIOS setup', how: 'press DEL during the POST', blurb: 'Arrow-key menus over the real settings — wallpaper, night light, theme, screensaver. F10 saves and resumes the boot. Nothing here is decorative.' },
       { name: 'the volume tray & jukebox', how: 'the taskbar speaker, or type music', blurb: 'One real volume the chiptune engine obeys, shared by the media app, the terminal music command and the tray. Three tracks, all synthesized, no files.' },
-      { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Both settable across Settings, Displays and BIOS.' },
+      { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Both settable across Settings, Displays, BIOS and the terminal — one shared preference, five ways in.' },
       { name: 'camera, playground & monitors', how: 'the icon grid', blurb: 'A webcam-to-ASCII camera, a sandboxed HTML/CSS/JS code playground, a live system monitor and a GitHub contributions heatmap — the desktop earns its keep.' },
       { name: 'weather & the colour picker', how: 'the weather and colours icons', blurb: 'A five-day Amsterdam forecast over the same source as the tray chip, and an eyedropper colour tool that reads hex/rgb/hsl and pushes any colour to the live site accent.' },
       { name: 'the hall of fame', how: 'the scores icon', blurb: 'Every game\'s persisted best in one board — and those same scores mint the coins your tamagotchi spends. One ledger, no fakes.' },
-      { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' }
+      { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' },
+      { name: 'built for a thumb', how: 'open the desktop on a phone', blurb: 'Windows open maximized so the close button is reachable, the taskbar scrolls instead of hiding its tray, a long-press summons the context menu, and Snake grows a d-pad. The whole desktop folds down to 375 pixels.' }
     ]
   },
   {
