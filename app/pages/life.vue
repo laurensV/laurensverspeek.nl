@@ -207,9 +207,19 @@ watch(useColorMode(), async () => {
 
 .life-presets {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   padding-left: 0.5rem;
   border-left: 1px solid var(--bulma-border-weak);
+}
+
+// full-size control buttons on touch (this is a real content page, not an
+// lvOS window, so it had no coarse-pointer sizing)
+@media (pointer: coarse) {
+  .life-btn {
+    min-width: 2.4rem;
+    min-height: 2.4rem;
+  }
 }
 
 .life-stage {
