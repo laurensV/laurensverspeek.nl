@@ -288,6 +288,11 @@ onMounted(focusInput)
   color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
 
+  // 16px on touch so iOS Safari doesn't zoom the page when the field is focused
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
+
   &::placeholder {
     color: hsl(var(--lv-scheme-hs), 40%);
   }
