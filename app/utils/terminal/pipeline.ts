@@ -49,7 +49,7 @@ export function splitOutputRedirect(input: string): { command: string, file: str
  * `echo "a | b"` stays one stage and prints its literal pipe (matching the
  * quote-aware `>` and chain-operator parsers).
  */
-export function splitPipes(input: string): string[] {
+function splitPipes(input: string): string[] {
   const parts: string[] = []
   let quote: '"' | "'" | null = null
   let start = 0

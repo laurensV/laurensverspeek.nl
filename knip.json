@@ -6,7 +6,8 @@
     "server/routes/*.ts"
   ],
   "ignore": [
-    "content.config.ts"
+    "content.config.ts",
+    "realtime/protocol.d.ts"
   ],
   "ignoreDependencies": [
     "bulma",

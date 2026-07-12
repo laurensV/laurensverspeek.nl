@@ -29,7 +29,7 @@ export const SYSTEM_PROCS: SystemProc[] = [
 
 export const LVSH_PID = 7
 export const LVOS_SESSION_PID = 95
-export const GAME_PID = 4242
+const GAME_PID = 4242
 
 export function effectProcs(effects: TerminalContext['effects']): EffectProc[] {
   return [

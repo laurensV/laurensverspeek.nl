@@ -8,7 +8,7 @@
 import { storageGetJson, storageSetJson } from '~/utils/safeStorage'
 import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 
-export interface FsNode {
+interface FsNode {
   dir: boolean
   content: string
   /** Seeded site content: refreshed each visit, protected from rm/mv */
