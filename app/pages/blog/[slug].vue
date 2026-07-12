@@ -317,6 +317,13 @@ usePostEnhancements(bodyRef)
     overflow-x: auto;
   }
 
+  // a wide markdown table scrolls inside its own box instead of being clipped
+  // by the page-level overflow-x:clip on a narrow phone
+  :deep(table) {
+    display: block;
+    overflow-x: auto;
+  }
+
   // a copyable "#" deep-link that appears on heading hover/focus
   :deep(h2),
   :deep(h3) {
