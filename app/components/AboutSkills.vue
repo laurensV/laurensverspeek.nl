@@ -17,36 +17,13 @@
         </template>
       </p>
     </div>
-
-    <!-- author-declared comfort levels; the bars fill when scrolled in -->
-    <div ref="metersRef" class="skill-meters is-family-code mt-5">
-      <div v-for="skill in profile.proficiencies" :key="skill.name" class="skill-meter">
-        <div class="skill-meter-head">
-          <span>{{ skill.name }}</span>
-          <span class="skill-meter-pct">{{ metersShown ? skill.level : 0 }}%</span>
-        </div>
-        <div class="skill-meter-track">
-          <div
-            class="skill-meter-fill"
-            :style="{ width: `${metersShown ? skill.level : 0}%` }"
-          />
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useElementVisibility } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-// The skills column of /about: an `npm ls` skill tree plus author-declared
-// proficiency meters that fill from 0 once scrolled into view.
-
-const metersRef = ref<HTMLElement | null>(null)
-const metersVisible = useElementVisibility(metersRef)
-const metersShown = ref(false)
-watch(metersVisible, (seen) => { if (seen) metersShown.value = true })
+// The skills column of /about: an `npm ls` skill tree of grouped skills.
 
 // playful semver-ish "version" per skill, derived deterministically so it's
 // stable between renders (this is a package tree, after all)
@@ -144,45 +121,4 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
   }
 }
 
-.skill-meters {
-  font-size: 0.75rem;
-}
-
-.skill-meter {
-  margin-bottom: 0.7rem;
-
-  .skill-meter-head {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.2rem;
-    color: var(--bulma-text);
-  }
-
-  .skill-meter-pct {
-    color: var(--bulma-text-weak);
-    transition: color 0.3s ease;
-  }
-
-  .skill-meter-track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--bulma-border);
-    overflow: hidden;
-  }
-
-  .skill-meter-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, hsla(var(--lv-primary-hsl), 0.55), var(--bulma-primary));
-    box-shadow: 0 0 8px hsla(var(--lv-primary-hsl), 0.4);
-    width: 0;
-    transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skill-meter-fill {
-    transition: none;
-  }
-}
 </style>
