@@ -41,6 +41,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const sound = useVolume()
   // the same wallpaper the lvOS start menu, BIOS and Settings set
   const paper = useWallpaper()
+  // the warm-wash night light, shared with Settings/BIOS/Displays
+  const nightLight = useNightLight()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
 
@@ -185,6 +187,20 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         }
         paper.wallpaper.value = n
         out(`wallpaper: ${paper.wallpapers.value[n]!.name}`)
+      }
+    },
+    nightlight: {
+      category: 'system',
+      usage: 'nightlight [on|off]',
+      description: 'Toggle the lvOS warm night-light wash (same one as Settings)',
+      argCandidates: () => ['on', 'off'],
+      exec: (args) => {
+        const arg = args[0]?.toLowerCase()
+        if (arg === 'on') nightLight.enabled.value = true
+        else if (arg === 'off') nightLight.enabled.value = false
+        else if (!arg) nightLight.enabled.value = !nightLight.enabled.value
+        else return error(`nightlight: expected on or off, got '${args[0]}'`)
+        out(`night light ${nightLight.enabled.value ? 'on' : 'off'} (warmth ${nightLight.warmth.value}%)`)
       }
     },
     reboot: {
