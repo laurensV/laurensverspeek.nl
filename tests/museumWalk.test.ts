@@ -66,7 +66,6 @@ describe('the walkable museum', () => {
     // the floor must stay a perfect monospace grid: every glyph is ASCII, since
     // JetBrains Mono doesn't cover box/block/geometric characters (they fall
     // back to a narrower proportional font and warp the walls)
-    // eslint-disable-next-line no-control-regex
     expect(frame).toMatch(/^[\x20-\x7E·\n]+$/)
   })
 })

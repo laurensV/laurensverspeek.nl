@@ -8,7 +8,7 @@ export interface AdvState {
   moves: number
 }
 
-export interface Exit {
+interface Exit {
   to: string
   lockedBy?: string // flag name that must be true to pass
   lockedText?: string

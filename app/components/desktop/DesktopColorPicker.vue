@@ -72,7 +72,7 @@ const hasEyeDropper = import.meta.client && 'EyeDropper' in window
 const copied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | undefined
 const copyValue = (value: string) => {
-  void navigator.clipboard?.writeText(value)
+  void navigator.clipboard.writeText(value)
   copied.value = true
   clearTimeout(copyTimer)
   copyTimer = setTimeout(() => (copied.value = false), 1200)

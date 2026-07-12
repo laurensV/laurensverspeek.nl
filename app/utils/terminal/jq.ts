@@ -142,8 +142,8 @@ function applyAccess(access: Access[], input: JsonValue): JsonValue[] {
         const i = op.index! < 0 ? value.length + op.index! : op.index!
         next.push(value[i] ?? null)
       } else { // iterate
-        if (Array.isArray(value)) next.push(...value)
-        else if (value && typeof value === 'object') next.push(...Object.values(value))
+        if (Array.isArray(value)) next.push(...(value as JsonValue[]))
+        else if (value && typeof value === 'object') next.push(...Object.values(value as Record<string, JsonValue>))
         else if (!op.optional) throw new JqError(`jq: cannot iterate over ${typeOf(value)}`)
       }
     }
