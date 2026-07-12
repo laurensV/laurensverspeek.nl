@@ -6,9 +6,9 @@ Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com)
 
 A minimalist developer portfolio on the surface, with an unusual amount hidden a keystroke away.
 
-| the terminal | lvOS | the pixel world |
-| --- | --- | --- |
-| ![The terminal open over the homepage](docs/screenshots/terminal.png) | ![The lvOS desktop with tiled windows](docs/screenshots/lvos.png) | ![The shared 128×128 pixel world](docs/screenshots/world.png) |
+| the terminal | lvOS | the pixel world | on a phone |
+| --- | --- | --- | --- |
+| ![The terminal open over the homepage](docs/screenshots/terminal.png) | ![The lvOS desktop with tiled windows](docs/screenshots/lvos.png) | ![The shared 128×128 pixel world](docs/screenshots/world.png) | ![The lvOS desktop at 375px with the start menu open](docs/screenshots/mobile.png) |
 
 ## The terminal
 
@@ -38,6 +38,7 @@ Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot (press <kbd>DEL</kbd>
 - **Details** — an interactive Game of Life hero (with a pointer trail), a working VS Code-style status bar (clock, presence, EOL/language toys, optionally a pet), `pwd` breadcrumbs, a time-aware greeting, theme-aware favicon (which becomes a prompt while the terminal is open), native **view transitions** (project cards morph into their detail pages), an interactive 404 recovery shell (with a hidden `play`), a downloadable vCard + ASCII QR on `/contact`, live GitHub stats that count up on scroll, print-optimized `/cv`, per-page OG cards generated at build time, `humans.txt` + `security.txt`, breadcrumb & article JSON-LD, an offline page with a playable snake, and git-derived "last updated" dates.
 - **Meta pages** — `/museum` catalogs every feature and easter egg as exhibits (and you can walk the floor as an avatar); `/stats` draws the public visitor counters; `/status` reports the multiplayer relay's health; `/changelog` is the real git history; `/keyboard` is the shortcut reference; a PGP scaffold gates `/pgp.txt`.
 - Dark/light theme throughout, reduced-motion respected everywhere, filterable projects with detail pages, `/uses` and `/now`.
+- **Works on a phone** — the whole thing folds down to 375px: a bottom tab bar for the everyday pages, a bottom-sheet terminal with a quick-key row (so the games are thumb-playable), and an lvOS desktop where windows open maximized so their controls stay reachable, the taskbar scrolls to keep its tray, a long-press opens the context menu, and Snake grows a d-pad.
 
 ## Architecture
 
