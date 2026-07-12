@@ -4,6 +4,7 @@
     class="cmd-btn is-family-code"
     :class="[`is-${variant}`, { 'is-medium': size === 'medium' }]"
     v-bind="linkAttrs"
+    @click="emit('click', $event)"
   >
     <span class="cmd-btn-prompt" aria-hidden="true">$</span>
     <span class="cmd-btn-label"><slot /></span>
@@ -26,6 +27,8 @@ const props = withDefaults(
   }>(),
   { to: undefined, href: undefined, download: undefined, variant: 'ghost', size: 'normal' }
 )
+
+const emit = defineEmits<{ click: [event: MouseEvent] }>()
 
 const NuxtLink = resolveComponent('NuxtLink')
 const tag = computed(() => (props.to ? NuxtLink : props.href ? 'a' : 'button'))

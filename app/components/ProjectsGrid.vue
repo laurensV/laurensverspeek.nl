@@ -35,7 +35,6 @@
       name="grid"
       tag="div"
       class="columns is-multiline"
-      @keydown="onGridKey"
     >
       <div
         v-for="project in visibleProjects"
@@ -108,6 +107,9 @@ const onGridKey = (event: KeyboardEvent) => {
   const next = Math.max(0, Math.min(links.length - 1, current + delta))
   links[next]?.focus()
 }
+
+// listen on the rendered element (TransitionGroup takes no native listeners)
+useEventListener(() => gridRoot() ?? null, 'keydown', onGridKey)
 
 const visibleProjects = computed(() =>
   activeCategory.value

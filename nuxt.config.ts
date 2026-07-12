@@ -116,6 +116,12 @@ export default defineNuxtConfig({
         noUncheckedIndexedAccess: true,
         // missing and explicitly-undefined properties are different things
         exactOptionalPropertyTypes: true
+      },
+      // type-check prop/event bindings inside templates too
+      vueCompilerOptions: {
+        strictTemplates: true,
+        // data-* attributes are not typos, they're hooks for e2e and CSS
+        dataAttributes: ['data-*']
       }
     }
   },
