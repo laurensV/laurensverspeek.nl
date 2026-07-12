@@ -1,5 +1,5 @@
 import { createRelayConnection } from '~/utils/relaySocket'
-import { bumpTally } from '~/utils/terminalGameKit'
+import { bumpTally, celebrateNewBest } from '~/utils/terminalGameKit'
 import type { ServerMessage } from '../../../realtime/protocol'
 
 // The plumbing every online duel (pong, chess, wpm-race) repeats: one fresh
@@ -81,6 +81,10 @@ export function createRelayDuel(config: RelayDuelConfig): RelayDuel {
     send: (frame) => conn.send(frame),
     teardown,
     get failed() { return failed },
-    recordWin: (key) => bumpTally(key)
+    recordWin: (key) => {
+      bumpTally(key)
+      // a live duel win sets off the same confetti a solo personal best does
+      celebrateNewBest()
+    }
   }
 }
