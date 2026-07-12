@@ -14,6 +14,13 @@ export const setScoreSink = (fn: ((game: string, score: number) => void) | null)
 let celebrateSink: (() => void) | null = null
 export const setCelebrateSink = (fn: (() => void) | null) => { celebrateSink = fn }
 
+/** Fire the shared high-score confetti burst directly — for a genuine new best
+ * that a game tracks itself (e.g. minesweeper's lower-is-better time) rather
+ * than through useHighScore, so every personal best celebrates the same way. */
+export function celebrateNewBest() {
+  celebrateSink?.()
+}
+
 /** Move a score stored under a legacy key to its current key, keeping the best. */
 export function migrateScoreKey(oldKey: string, newKey: string) {
   const legacy = Number(storageGet(oldKey) ?? 0) || 0

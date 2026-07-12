@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { storageGet, storageSet } from '~/utils/safeStorage'
+import { celebrateNewBest } from '~/utils/terminalGameKit'
 
 // Minesweeper for lvOS: three board sizes, a timer, a persisted best time per
 // level — and the first click is always safe.
@@ -156,8 +157,12 @@ const reveal = (i: number) => {
     status.value = 'won'
     stopTimer()
     if (best.value === null || seconds.value < best.value) {
+      // beating an existing record (not the very first win) sets off the same
+      // confetti burst every other game's personal best does
+      const improved = best.value !== null
       best.value = seconds.value
       storageSet(`lvos-mines-best-${level.value}`, String(seconds.value))
+      if (improved) celebrateNewBest()
     }
   }
 }
