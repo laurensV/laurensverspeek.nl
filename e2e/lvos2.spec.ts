@@ -498,3 +498,21 @@ test('the camera app renders ascii frames and snaps to the gallery', async ({ pa
   expect(shots.length).toBeGreaterThan(0)
   expect(shots[0]).toMatch(/^data:image\/png/)
 })
+
+test('chess: you move, the house replies, and the game survives a reopen', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-icon', { hasText: /^chess$/ }).click()
+  const win = page.locator('.lvos-window', { hasText: 'vs the house' })
+  await expect(win).toContainText('your move.')
+  // 1. e4 — click the pawn, then its double-step square
+  await win.locator('button[aria-label="e2 P"]').click()
+  await win.locator('button[aria-label="e4"]').click()
+  // the house answers and hands the turn back
+  await expect(win).toContainText(/your move|check/, { timeout: 8000 })
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('lv-chess') ?? 'null') as { turn: string } | null)
+  expect(state?.turn).toBe('w')
+  // reopen: the position (our e4 pawn) is still on the board
+  await win.getByRole('button', { name: 'Close chess — vs the house' }).click()
+  await page.locator('.lvos-icon', { hasText: /^chess$/ }).click()
+  await expect(page.locator('.lvos-window', { hasText: 'vs the house' }).locator('button[aria-label="e4 P"]')).toBeVisible()
+})

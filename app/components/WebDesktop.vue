@@ -191,6 +191,7 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   snake: defineAsyncComponent(() => import('~/components/desktop/DesktopSnake.vue')),
   gallery: defineAsyncComponent(() => import('~/components/desktop/DesktopGallery.vue')),
   camera: defineAsyncComponent(() => import('~/components/desktop/DesktopCamera.vue')),
+  chess: defineAsyncComponent(() => import('~/components/desktop/DesktopChess.vue')),
   trash: defineAsyncComponent(() => import('~/components/desktop/DesktopTrash.vue')),
   mail: defineAsyncComponent(() => import('~/components/desktop/DesktopMail.vue')),
   scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue')),

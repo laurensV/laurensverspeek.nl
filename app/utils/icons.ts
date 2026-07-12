@@ -39,6 +39,7 @@ export const icons = {
   play: '<polygon points="5 3 19 12 5 21 5 3"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
   camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  chess: '<path d="M12 3a3 3 0 0 1 3 3c0 1.1-.6 2.1-1.5 2.6L15 12h-6l1.5-3.4A3 3 0 0 1 9 6a3 3 0 0 1 3-3z"/><path d="M9 12h6l1.5 6h-9z"/><line x1="6" y1="21" x2="18" y2="21"/>',
   rss: '<path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/>'
 } as const
 
