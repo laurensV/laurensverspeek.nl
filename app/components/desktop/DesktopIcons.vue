@@ -1,5 +1,5 @@
 <template>
-  <div class="lvos-icons">
+  <div ref="gridRoot" class="lvos-icons" @keydown="onKey">
     <button v-for="icon in icons" :key="icon.id" class="lvos-icon is-family-code" @click="icon.action">
       <span class="lvos-icon-glyph">
         <AppIcon :name="icon.icon" :size="26" />
@@ -16,6 +16,55 @@ import type { IconName } from '~/utils/icons'
 interface DesktopIconItem { id: string, label: string, icon: IconName, action: () => void }
 
 defineProps<{ icons: DesktopIconItem[], badges?: Record<string, number> }>()
+
+// arrow keys walk the icon grid like a real desktop (Files already had this);
+// the column-wrap layout is measured, not assumed, so wrapping still works
+const gridRoot = ref<HTMLElement>()
+
+const moveFocus = (dx: number, dy: number) => {
+  const buttons = [...(gridRoot.value?.querySelectorAll<HTMLButtonElement>('.lvos-icon') ?? [])]
+  if (!buttons.length) return
+  const current = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null
+  if (!current || !buttons.includes(current)) {
+    buttons[0]?.focus()
+    return
+  }
+  const from = current.getBoundingClientRect()
+  let best: HTMLButtonElement | undefined
+  let bestScore = Infinity
+  for (const candidate of buttons) {
+    if (candidate === current) continue
+    const rect = candidate.getBoundingClientRect()
+    const ddx = rect.left - from.left
+    const ddy = rect.top - from.top
+    if (dx && Math.sign(ddx) !== dx) continue
+    if (dy && Math.sign(ddy) !== dy) continue
+    // primary-axis distance plus a heavy penalty for drifting sideways
+    const score = dx
+      ? Math.abs(ddx) + Math.abs(ddy) * 2.5
+      : Math.abs(ddy) + Math.abs(ddx) * 2.5
+    if (score < bestScore) {
+      bestScore = score
+      best = candidate
+    }
+  }
+  best?.focus()
+}
+
+const DIRECTIONS: Record<string, [number, number]> = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0]
+}
+
+const onKey = (event: KeyboardEvent) => {
+  const dir = DIRECTIONS[event.key]
+  if (!dir) return
+  event.preventDefault()
+  event.stopPropagation()
+  moveFocus(dir[0], dir[1])
+}
 </script>
 
 <style scoped lang="scss">
@@ -74,7 +123,8 @@ defineProps<{ icons: DesktopIconItem[], badges?: Record<string, number> }>()
     color: var(--bulma-primary);
   }
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     border-color: hsla(var(--lv-primary-hsl), 0.4);
     background-color: hsla(var(--lv-primary-hsl), 0.08);
   }
