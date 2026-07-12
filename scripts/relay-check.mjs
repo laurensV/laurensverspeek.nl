@@ -81,7 +81,8 @@ const server = spawn('node', ['realtime/cursors-server.mjs'], {
     PORT: String(PORT),
     WORLD_FILE: join(scratch, 'world.json'),
     SCORES_FILE: join(scratch, 'scores.json'),
-    WORLD_COOLDOWN_MS: '1500'
+    WORLD_COOLDOWN_MS: '1500',
+    RACE_COUNTDOWN_MS: '150'
   },
   stdio: ['ignore', 'pipe', 'inherit']
 })
@@ -230,6 +231,59 @@ try {
     a.close()
     b.close()
     c.close()
+  }
+
+  // ---- wpm race -----------------------------------------------------------------
+  console.log('race:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'race-join', name: 'speedy' })
+    check('the first racer waits in the queue', !!(await a.next('race-wait')))
+    b.send({ type: 'race-join', name: 'clacker' })
+    const startA = await a.next('race-start')
+    const startB = await b.next('race-start')
+    check('both racers get the SAME passage and each other\'s names',
+      typeof startA?.text === 'string' && startA.text.length > 0 && startA.text === startB?.text
+      && startA?.foe === 'clacker' && startB?.foe === 'speedy')
+    const text = String(startA?.text ?? '')
+
+    a.send({ type: 'race-progress', chars: 5 }) // typing before the flag drops
+    check('progress before race-go is ignored', await b.silent('race-foe'))
+
+    check('the flag drops for both', !!(await a.next('race-go', 2000)) && !!(await b.next('race-go', 2000)))
+
+    a.send({ type: 'race-progress', chars: 10 })
+    const foeSeen = await b.next('race-foe')
+    check("a racer's progress reaches the opponent", foeSeen?.chars === 10)
+
+    a.send({ type: 'race-progress', chars: 4 }) // running backwards
+    check('non-monotonic progress is rejected', await b.silent('race-foe'))
+    a.send({ type: 'race-progress', chars: text.length + 50 }) // beyond the passage
+    check('progress past the passage is rejected', await b.silent('race-foe'))
+
+    b.send({ type: 'race-progress', chars: text.length }) // the server declares the finish
+    const endA = await a.next('race-end')
+    const endB = await b.next('race-end')
+    check('the server declares the finisher the winner', endB?.youWon === true && endA?.youWon === false && !endA?.forfeit)
+    a.close()
+    b.close()
+  }
+
+  // ---- race forfeit ---------------------------------------------------------------
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'race-join', name: 'stayer' })
+    await a.next('race-wait')
+    b.send({ type: 'race-join', name: 'quitter' })
+    await Promise.all([a.next('race-start'), b.next('race-start')])
+    b.close() // bail mid-countdown
+    const end = await a.next('race-end')
+    check('a disconnect forfeits the race to the opponent', end?.youWon === true && end?.forfeit === true)
+    a.close()
   }
 
   // ---- fool's mate: the server itself declares checkmate -----------------------

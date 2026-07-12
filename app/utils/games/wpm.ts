@@ -1,16 +1,12 @@
 import { finalScoreLines, createTicker } from '~/utils/terminalGameKit'
+import { RACE_PASSAGES } from '../../../realtime/race-core.mjs'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
 
 const WPM_HIGHSCORE_KEY = 'lv-wpm-highscore'
 const WPM_WIDTH = 46
 
-const WPM_PASSAGES = [
-  'the quick brown fox jumps over the lazy dog while the terminal hums quietly in amber',
-  'a static site can still feel alive if you hide enough easter eggs in its corners',
-  'first solve the problem then write the code then delete half of it the next morning',
-  'a good commit message explains why the change exists not what the diff already shows',
-  'somewhere between vim and the browser every developer ends up building a tiny os'
-]
+// one corpus for the solo test AND the online race (realtime/race-core.mjs)
+const WPM_PASSAGES = RACE_PASSAGES
 
 /** Words-per-minute (5 chars = 1 word) and accuracy over all keystrokes. */
 export function wpmStats(correctChars: number, keystrokes: number, errors: number, elapsedMs: number) {
@@ -21,7 +17,7 @@ export function wpmStats(correctChars: number, keystrokes: number, errors: numbe
 }
 
 /** Word-wrap that keeps the join reversible: lines.join(' ') === text. */
-function wrapPassage(text: string, width: number): string[] {
+export function wrapPassage(text: string, width: number): string[] {
   const lines: string[] = []
   let line = ''
   for (const word of text.split(' ')) {

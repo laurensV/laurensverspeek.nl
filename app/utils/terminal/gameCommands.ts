@@ -96,8 +96,20 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
     },
     wpm: {
       category: 'games',
-      description: 'Typing test — how fast are you really?',
-      exec: () => {
+      usage: 'wpm [race]',
+      description: 'Typing test — or `wpm race` against another live visitor',
+      examples: ['wpm', 'wpm race'],
+      argCandidates: () => ['race'],
+      exec: (args) => {
+        if (args[0]?.toLowerCase() === 'race') {
+          if (!cursorsWs) {
+            muted('wpm race needs the live relay — no relay on this build. solo test it is.')
+            return import('~/utils/games/wpm').then(({ createWpmGame }) => ctx.startGame(createWpmGame, 'wpm'))
+          }
+          muted('Entering the racetrack... first other visitor to type `wpm race` is your opponent. q backs out.')
+          return import('~/utils/games/wpmRace').then(({ createWpmRace }) =>
+            ctx.startGame((callbacks) => createWpmRace({ wsUrl: cursorsWs, playerName: identityName.value }, callbacks), 'wpm race'))
+        }
         muted('Starting typing test... just start typing, Backspace fixes, Esc quits.')
         return import('~/utils/games/wpm').then(({ createWpmGame }) => ctx.startGame(createWpmGame, 'wpm'))
       }

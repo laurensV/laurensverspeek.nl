@@ -35,6 +35,12 @@ export interface ChessLeaveIn { type: 'chess-leave' }
  * from its own legal-move list and never trusts the rest. */
 export interface ChessMoveIn { type: 'chess-move', from: number, to: number }
 
+export interface RaceJoinIn { type: 'race-join', name?: string }
+export interface RaceLeaveIn { type: 'race-leave' }
+/** How many leading characters of the passage this player has typed correctly.
+ * The server validates monotonicity and range; the finish is server-declared. */
+export interface RaceProgressIn { type: 'race-progress', chars: number }
+
 export type ClientMessage =
   | CursorMoveIn
   | SayIn
@@ -54,6 +60,9 @@ export type ClientMessage =
   | ChessJoinIn
   | ChessLeaveIn
   | ChessMoveIn
+  | RaceJoinIn
+  | RaceLeaveIn
+  | RaceProgressIn
 
 // ---- server → client ----
 
@@ -129,4 +138,14 @@ export interface ChessEndMsg {
 /** What the online-chess client consumes. */
 export type ChessServerMessage = ChessWaitMsg | ChessStartMsg | ChessMovedMsg | ChessEndMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage
+export interface RaceWaitMsg { type: 'race-wait' }
+/** Both racers get the SAME passage; typing counts only after race-go. */
+export interface RaceStartMsg { type: 'race-start', foe: string, text: string }
+export interface RaceGoMsg { type: 'race-go' }
+/** The opponent's validated progress (leading correct characters). */
+export interface RaceFoeMsg { type: 'race-foe', chars: number }
+export interface RaceEndMsg { type: 'race-end', youWon: boolean, forfeit?: boolean }
+/** What the wpm-race client consumes. */
+export type RaceServerMessage = RaceWaitMsg | RaceStartMsg | RaceGoMsg | RaceFoeMsg | RaceEndMsg
+
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage

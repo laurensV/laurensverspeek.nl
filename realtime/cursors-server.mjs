@@ -16,6 +16,7 @@ import {
 } from './world-core.mjs'
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 import { createPongState, stepPong, movePaddle, PONG_TICK_MS } from './pong-core.mjs'
+import { pickPassage, validProgress, RACE_COUNTDOWN_MS } from './race-core.mjs'
 import { initialState as chessInitial, legalMoves as chessLegalMoves, applyMove as chessApply, gameOver as chessOver } from './chess-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
@@ -239,6 +240,66 @@ const dropChessPlayer = (socket) => {
   if (match) endChessMatch(match, socket === match.white ? 'b' : 'w', 'forfeit')
 }
 
+// ---- wpm race: two typists, one passage, the server holds the stopwatch ----
+/**
+ * @typedef {{
+ *   a: import('ws').WebSocket, b: import('ws').WebSocket,
+ *   text: string, started: boolean,
+ *   progress: Map<import('ws').WebSocket, number>,
+ *   countdown: ReturnType<typeof setTimeout>
+ * }} RaceMatch
+ */
+/** @type {{ socket: import('ws').WebSocket, name: string } | null} */
+let raceWaiting = null
+/** @type {Map<import('ws').WebSocket, RaceMatch>} */
+const raceMatches = new Map()
+// progress reports arrive per keystroke burst; a lenient gate blunts floods
+const raceProgressGate = new CooldownGate(60)
+// the countdown is env-overridable so the relay test doesn't sit out 3s
+const raceCountdownMs = Number(process.env.RACE_COUNTDOWN_MS || RACE_COUNTDOWN_MS)
+
+/** @param {RaceMatch} match @param {import('ws').WebSocket | null} winner @param {boolean} [forfeit] */
+const endRace = (match, winner, forfeit = false) => {
+  clearTimeout(match.countdown)
+  raceMatches.delete(match.a)
+  raceMatches.delete(match.b)
+  for (const player of [match.a, match.b]) {
+    const youWon = player === winner
+    sendTo(player, wire(forfeit ? { type: 'race-end', youWon, forfeit: true } : { type: 'race-end', youWon }))
+  }
+}
+
+/** @param {import('ws').WebSocket} a @param {string} aName @param {import('ws').WebSocket} b @param {string} bName */
+const startRace = (a, aName, b, bName) => {
+  const text = pickPassage()
+  /** @type {RaceMatch} */
+  const match = {
+    a,
+    b,
+    text,
+    started: false,
+    progress: new Map([[a, 0], [b, 0]]),
+    countdown: setTimeout(() => {
+      match.started = true
+      const go = wire({ type: 'race-go' })
+      sendTo(a, go)
+      sendTo(b, go)
+    }, raceCountdownMs)
+  }
+  raceMatches.set(a, match)
+  raceMatches.set(b, match)
+  sendTo(a, wire({ type: 'race-start', foe: bName, text }))
+  sendTo(b, wire({ type: 'race-start', foe: aName, text }))
+}
+
+/** A racer left (message or disconnect): forfeit the match / clear the queue.
+ * @param {import('ws').WebSocket} socket */
+const dropRacePlayer = (socket) => {
+  if (raceWaiting?.socket === socket) raceWaiting = null
+  const match = raceMatches.get(socket)
+  if (match) endRace(match, socket === match.a ? match.b : match.a, true)
+}
+
 const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
 
@@ -374,6 +435,38 @@ wss.on('connection', (socket) => {
       else if (over === 'stalemate') endChessMatch(match, null, 'stalemate')
       return
     }
+    // ---- wpm race protocol (server holds the stopwatch and finish line) ----
+    if (msg.type === 'race-join') {
+      if (raceMatches.has(socket) || raceWaiting?.socket === socket) return
+      const name = cleanName(msg.name) || 'visitor'
+      if (raceWaiting && raceWaiting.socket.readyState === 1) {
+        const foe = raceWaiting
+        raceWaiting = null
+        startRace(foe.socket, foe.name, socket, name)
+      } else {
+        raceWaiting = { socket, name }
+        sendTo(socket, wire({ type: 'race-wait' }))
+      }
+      return
+    }
+    if (msg.type === 'race-leave') {
+      dropRacePlayer(socket)
+      return
+    }
+    if (msg.type === 'race-progress') {
+      const match = raceMatches.get(socket)
+      if (!match || !match.started) return
+      const previous = match.progress.get(socket) ?? 0
+      if (!validProgress(msg.chars, previous, match.text.length)) return
+      // the finishing frame may never be flood-dropped, or nobody could win
+      const finishing = msg.chars >= match.text.length
+      if (!finishing && raceProgressGate.check(id, Date.now()) > 0) return
+      match.progress.set(socket, msg.chars)
+      sendTo(socket === match.a ? match.b : match.a, wire({ type: 'race-foe', chars: msg.chars }))
+      // the server declares the finish — first full passage wins
+      if (msg.chars >= match.text.length) endRace(match, socket)
+      return
+    }
     // ---- pixel world protocol (server-authoritative) ----
     if (msg.type === 'world-join') {
       worldMembers.add(socket)
@@ -454,6 +547,7 @@ wss.on('connection', (socket) => {
   socket.on('close', () => {
     dropPongPlayer(socket) // mid-match disconnects forfeit to the opponent
     dropChessPlayer(socket)
+    dropRacePlayer(socket)
     if (chatMembers.delete(socket)) broadcastChatCount()
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state, or the maps grow for the relay's
@@ -465,6 +559,7 @@ wss.on('connection', (socket) => {
     pongMoveGate.last.delete(id)
     chessMoveGate.last.delete(id)
     chatSendGate.last.delete(id)
+    raceProgressGate.last.delete(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)

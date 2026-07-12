@@ -583,3 +583,16 @@ test('pong online degrades to the house AI when no relay is configured', async (
   await page.keyboard.press('q')
   await expect(page.locator('.terminal-output')).toContainText(/pong aborted|wins/)
 })
+
+test('wpm race degrades to the solo typing test when no relay is configured', async ({ page }) => {
+  await openTerminal(page)
+  await page.fill('#terminal-input', 'wpm ra')
+  await page.keyboard.press('Tab')
+  await expect(page.locator('#terminal-input')).toHaveValue('wpm race')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText('no relay on this build')
+  // the solo test stepped in
+  await expect(page.locator('.game-frame')).toContainText('WPM TEST')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.terminal-output')).toContainText('typing test aborted')
+})
