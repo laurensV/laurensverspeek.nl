@@ -3,7 +3,7 @@
     <NuxtLink v-if="show" to="/changelog" class="whatsnew is-family-code" @click="dismiss">
       <span class="whatsnew-badge">{{ newCommits }}</span>
       <span>
-        {{ newCommits }} commit{{ newCommits === 1 ? '' : 's' }} since your last visit
+        {{ newCommits }} new commit{{ newCommits === 1 ? '' : 's' }} shipped since you were here
         <span class="whatsnew-cta">→ changelog</span>
       </span>
       <button class="whatsnew-close" aria-label="Dismiss" @click.prevent.stop="dismiss">×</button>
@@ -12,28 +12,36 @@
 </template>
 
 <script setup lang="ts">
-import { storageGet, storageSet } from '~/utils/safeStorage'
+import { storageGet, storageSet, storageRemove } from '~/utils/safeStorage'
 import type { GitCommit } from '~/utils/terminal/gitLog'
 
 // A quiet returning-visitor nudge: how many commits landed since you were last
-// here, computed from the baked git log against a stored timestamp. First-ever
-// visit shows nothing; the timestamp updates every visit.
-const SEEN_KEY = 'lv-last-visit'
+// caught up. Reads the SAME marker the lvOS system updater and boot nudge use
+// (lv-updates-hash), so every "N new" number on the site tells one story. The
+// toast itself never advances the marker — installing updates does — it only
+// remembers which tip it already announced.
+const MARKER_KEY = 'lv-updates-hash'
+const TOASTED_KEY = 'lv-toasted-hash'
 
 const show = ref(false)
 const newCommits = ref(0)
 
 onMounted(async () => {
-  const lastSeen = Number(storageGet(SEEN_KEY)) || 0
-  // stamp this visit immediately, so the toast only ever shows once per return
-  storageSet(SEEN_KEY, String(Date.now()))
-  if (!lastSeen) return // first visit: nothing to compare against
+  storageRemove('lv-last-visit') // pre-r28 private timestamp, superseded by the marker
   try {
     const commits = await $fetch<GitCommit[]>('/git-log.json')
-    const count = commits.filter((commit) => {
-      const ms = Date.parse(commit.date)
-      return Number.isFinite(ms) && ms > lastSeen
-    }).length
+    const newest = commits[0]?.hash
+    if (!newest) return
+    const marker = storageGet(MARKER_KEY)
+    if (!marker) {
+      // first visit: the whole site is new — you're caught up as of now
+      storageSet(MARKER_KEY, newest)
+      return
+    }
+    if (newest === marker || storageGet(TOASTED_KEY) === newest) return
+    storageSet(TOASTED_KEY, newest)
+    const idx = commits.findIndex((commit) => commit.hash === marker)
+    const count = idx === -1 ? commits.length : idx
     if (count > 0) {
       newCommits.value = count
       show.value = true

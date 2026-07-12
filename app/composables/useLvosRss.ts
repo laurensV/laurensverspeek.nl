@@ -1,29 +1,24 @@
-import { storageGet, storageSet } from '~/utils/safeStorage'
+import { storageRemove } from '~/utils/safeStorage'
 
-// Shared "unseen items" count for the lvOS RSS reader's desktop badge. The
-// reader records how many items exist; opening it marks them seen. Both
-// numbers persist, so the badge survives across visits without re-fetching.
-let restored = false
+// The RSS badge and the mail app's blog-post mails describe the SAME posts,
+// so they share ONE seen-state: the mail read set. Opening the reader marks
+// every post mail read (mail badge shrinks too); reading a post mail in the
+// inbox shrinks the RSS badge. One set of posts, one number.
+let cleaned = false
 
 export function useLvosRss() {
-  const count = useState('lvos-rss-count', () => 0)
-  const seen = useState('lvos-rss-seen', () => 0)
+  const { mails, read, markRead } = useLvosMail()
 
-  if (import.meta.client && !restored) {
-    restored = true
-    count.value = Number(storageGet('lvos-rss-count')) || 0
-    seen.value = Number(storageGet('lvos-rss-seen')) || 0
+  if (import.meta.client && !cleaned) {
+    cleaned = true
+    // retire the reader's old private counters (they could disagree with mail)
+    storageRemove('lvos-rss-count')
+    storageRemove('lvos-rss-seen')
   }
 
-  const setCount = (n: number) => {
-    count.value = n
-    storageSet('lvos-rss-count', String(n))
-  }
-  const markSeen = () => {
-    seen.value = count.value
-    storageSet('lvos-rss-seen', String(count.value))
-  }
-  const unseen = computed(() => Math.max(0, count.value - seen.value))
+  const postMails = computed(() => mails.value.filter((mail) => mail.postPath))
+  const unseen = computed(() => postMails.value.filter((mail) => !read.value.has(mail.id)).length)
+  const markSeen = () => postMails.value.forEach((mail) => markRead(mail.id))
 
-  return { count, unseen, setCount, markSeen }
+  return { unseen, markSeen }
 }

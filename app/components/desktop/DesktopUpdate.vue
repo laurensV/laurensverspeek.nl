@@ -49,10 +49,13 @@ const kbOf = (hash: string) => String(parseInt(hash.slice(0, 5), 16) % 90000 + 1
 
 let timer: ReturnType<typeof setInterval> | undefined
 let newestHash = ''
+// the true number of commits behind — the animation is capped, the count isn't,
+// so this screen and the boot nudge/what's-new toast always report one number
+let pendingTotal = 0
 
 const finish = () => {
   clearInterval(timer)
-  installedCount.value = queue.value.length
+  installedCount.value = pendingTotal || queue.value.length
   if (newestHash) storageSet(INSTALLED_KEY, newestHash)
   working.value = false
 }
@@ -72,7 +75,9 @@ onMounted(async () => {
   const seen = storageGet(INSTALLED_KEY)
   const seenIndex = seen ? commits.findIndex((c) => c.hash === seen) : -1
   // everything since the last install; first visit gets the latest few
-  queue.value = (seenIndex > 0 ? commits.slice(0, seenIndex) : commits).slice(0, MAX_BATCH)
+  const pending = seenIndex > 0 ? commits.slice(0, seenIndex) : commits
+  pendingTotal = pending.length
+  queue.value = pending.slice(0, MAX_BATCH)
   if (!queue.value.length || newestHash === seen) {
     working.value = false
     return
