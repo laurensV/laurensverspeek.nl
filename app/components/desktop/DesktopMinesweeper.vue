@@ -16,7 +16,7 @@
       </button>
       <span class="mines-time">{{ seconds }}s</span>
     </div>
-    <div class="mines-grid" :style="{ gridTemplateColumns: `repeat(${W}, var(--mines-cell))`, '--mines-cell': W > 16 ? '1.15rem' : W > 9 ? '1.4rem' : '1.7rem' }" @contextmenu.prevent>
+    <div class="mines-grid" :style="{ gridTemplateColumns: `repeat(${W}, var(--mines-cell))`, '--mines-cell': cellSize }" @contextmenu.prevent>
       <button
         v-for="(cell, i) in cells"
         :key="i"
@@ -54,6 +54,11 @@ const level = ref<Level>((storageGet('lvos-mines-level') as Level | null) ?? 'be
 const W = computed(() => LEVELS[level.value].w)
 const H = computed(() => LEVELS[level.value].h)
 const MINES = computed(() => LEVELS[level.value].mines)
+
+// cells shrink to fit a narrow (phone) window instead of overflowing it — the
+// expert board's 22 columns used to run off the right edge with no scroll
+const cellBase = computed(() => (W.value > 16 ? '1.15rem' : W.value > 9 ? '1.4rem' : '1.7rem'))
+const cellSize = computed(() => `min(${cellBase.value}, calc((100vw - 2.5rem) / ${W.value}))`)
 
 interface Cell {
   mine: boolean
