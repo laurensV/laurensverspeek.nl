@@ -244,7 +244,7 @@ const dropChessPlayer = (socket) => {
 /**
  * @typedef {{
  *   a: import('ws').WebSocket, b: import('ws').WebSocket,
- *   text: string, started: boolean,
+ *   text: string, started: boolean, goAt: number,
  *   progress: Map<import('ws').WebSocket, number>,
  *   countdown: ReturnType<typeof setTimeout>
  * }} RaceMatch
@@ -257,6 +257,11 @@ const raceMatches = new Map()
 const raceProgressGate = new CooldownGate(60)
 // the countdown is env-overridable so the relay test doesn't sit out 3s
 const raceCountdownMs = Number(process.env.RACE_COUNTDOWN_MS || RACE_COUNTDOWN_MS)
+// minimum plausible ms per finished character — a full passage that "arrives"
+// faster than this is a forged instant-win. 30ms/char ≈ a superhuman 400 WPM
+// ceiling (real typists top out ~220 WPM), so legit finishes are never caught.
+// Env-overridable so the relay test can use a tiny floor without real waits.
+const raceMinMsPerChar = Number(process.env.RACE_MIN_MS_PER_CHAR || 30)
 
 /** @param {RaceMatch} match @param {import('ws').WebSocket | null} winner @param {boolean} [forfeit] */
 const endRace = (match, winner, forfeit = false) => {
@@ -278,9 +283,11 @@ const startRace = (a, aName, b, bName) => {
     b,
     text,
     started: false,
+    goAt: 0,
     progress: new Map([[a, 0], [b, 0]]),
     countdown: setTimeout(() => {
       match.started = true
+      match.goAt = Date.now() // start the stopwatch to reject instant "wins"
       const go = wire({ type: 'race-go' })
       sendTo(a, go)
       sendTo(b, go)
@@ -461,6 +468,10 @@ wss.on('connection', (socket) => {
       // the finishing frame may never be flood-dropped, or nobody could win
       const finishing = msg.chars >= match.text.length
       if (!finishing && raceProgressGate.check(id, Date.now()) > 0) return
+      // the server can't see keystrokes, but it does hold the stopwatch: a full
+      // passage that "arrives" faster than a superhuman ceiling is a forged
+      // instant-win — drop it rather than mint a bogus victory.
+      if (finishing && Date.now() - match.goAt < match.text.length * raceMinMsPerChar) return
       match.progress.set(socket, msg.chars)
       sendTo(socket === match.a ? match.b : match.a, wire({ type: 'race-foe', chars: msg.chars }))
       // the server declares the finish — first full passage wins

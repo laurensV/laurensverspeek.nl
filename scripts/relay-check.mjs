@@ -254,6 +254,9 @@ try {
 
     check('the flag drops for both', !!(await a.next('race-go', 2000)) && !!(await b.next('race-go', 2000)))
 
+    a.send({ type: 'race-progress', chars: text.length }) // a full passage the instant the flag drops
+    check('an impossibly-fast (no-typing) finish is rejected', await b.silent('race-foe'))
+
     a.send({ type: 'race-progress', chars: 10 })
     const foeSeen = await b.next('race-foe')
     check("a racer's progress reaches the opponent", foeSeen?.chars === 10)
@@ -263,6 +266,9 @@ try {
     a.send({ type: 'race-progress', chars: text.length + 50 }) // beyond the passage
     check('progress past the passage is rejected', await b.silent('race-foe'))
 
+    // now a plausible finish: wait past the server's superhuman-speed floor
+    // (30ms/char) so the full passage isn't dropped as a forged instant-win
+    await new Promise((resolve) => setTimeout(resolve, text.length * 30 + 400))
     b.send({ type: 'race-progress', chars: text.length }) // the server declares the finish
     const endA = await a.next('race-end')
     const endB = await b.next('race-end')
