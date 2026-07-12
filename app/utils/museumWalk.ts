@@ -31,10 +31,15 @@ export interface MuseumMap {
 const INNER_W = 51
 const INNER_H = 7
 
+// each side wall holds at most one plaque per row, so a room must be tall
+// enough for half its exhibits — grow it rather than ever drop a plaque
+const roomHeight = (exhibits: number) => Math.max(INNER_H, Math.ceil(exhibits / 2))
+
 /** Stack one room per wing, doors centered in the shared walls. */
 export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
   const width = INNER_W + 2
-  const height = 1 + wings.length * (INNER_H + 1)
+  const heights = wings.map((wing) => roomHeight(wing.exhibits.length))
+  const height = 1 + heights.reduce((sum, h) => sum + h + 1, 0)
   const grid: Cell[][] = Array.from({ length: height }, () =>
     Array.from({ length: width }, () => ({ ch: ' ', walkable: false }))
   )
@@ -45,9 +50,10 @@ export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
 
   const wingRows: MuseumMap['wingRows'] = []
 
+  let top = 0
   wings.forEach((wing, w) => {
-    const top = w * (INNER_H + 1)
-    const bottom = top + INNER_H + 1
+    const innerH = heights[w]!
+    const bottom = top + innerH + 1
     wingRows.push({ from: top, to: bottom })
     // walls: top (shared), sides, and the final bottom
     for (let x = 0; x < width; x++) wall(x, top)
@@ -65,21 +71,22 @@ export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
     const half = Math.ceil(wing.exhibits.length / 2)
     const place = (count: number, offset: number, x: number) => {
       if (!count) return
-      const step = INNER_H / count
+      const step = innerH / count
       for (let i = 0; i < count; i++) {
-        const y = top + 1 + Math.min(INNER_H - 1, Math.floor(step * (i + 0.5)))
+        const y = top + 1 + Math.min(innerH - 1, Math.floor(step * (i + 0.5)))
         grid[y]![x] = { ch: '▯', walkable: false, plaque: { wing: w, exhibit: offset + i } }
       }
     }
     place(half, 0, 0)
     place(wing.exhibits.length - half, half, width - 1)
+    top = bottom
   })
 
   return {
     grid,
     width,
     height,
-    spawn: { x: doorX, y: Math.floor(INNER_H / 2) + 1 },
+    spawn: { x: doorX, y: Math.floor((heights[0] ?? INNER_H) / 2) + 1 },
     wingRows
   }
 }

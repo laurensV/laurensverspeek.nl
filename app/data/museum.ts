@@ -46,7 +46,13 @@ export const museum: Wing[] = [
       { name: 'about this computer', how: 'the start menu', blurb: 'Real uptime, your real resolution and browser, and exactly how much localStorage this whole circus uses.' },
       { name: 'the lock screen', how: 'start menu → lock', blurb: 'Any password unlocks it. The security is ceremonial; the commitment is real.' },
       { name: 'the boot sequence', how: 'reboot from the start menu', blurb: 'A BIOS POST screen with a memory check that has never once found a problem.' },
-      { name: 'mail & the feed reader', how: 'the mail and rss icons', blurb: 'An inbox of lovingly fake mail (the prince remains hopeful) and an RSS reader subscribed to this very site. Dog food: eaten.' },
+      { name: 'mail & the feed reader', how: 'the mail and rss icons', blurb: 'An inbox where real blog posts arrive as newsletters (and the prince remains hopeful), plus an RSS reader subscribed to this very site. The compose button drafts a real reply. Dog food: eaten.' },
+      { name: 'system update', how: 'start menu → system update', blurb: 'Ceremonially installs this repo\'s actual recent commits, progress bar and "do not turn off your computer" and all. It remembers what it installed, so the nudge only returns when new work ships.' },
+      { name: 'BIOS setup', how: 'press DEL during the POST', blurb: 'Arrow-key menus over the real settings — wallpaper, night light, theme, screensaver. F10 saves and resumes the boot. Nothing here is decorative.' },
+      { name: 'the volume tray & jukebox', how: 'the taskbar speaker, or type music', blurb: 'One real volume the chiptune engine obeys, shared by the media app, the terminal music command and the tray. Three tracks, all synthesized, no files.' },
+      { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Both settable across Settings, Displays and BIOS.' },
+      { name: 'camera, playground & monitors', how: 'the icon grid', blurb: 'A webcam-to-ASCII camera, a sandboxed HTML/CSS/JS code playground, a live system monitor and a GitHub contributions heatmap — the desktop earns its keep.' },
+      { name: 'the hall of fame', how: 'the scores icon', blurb: 'Every game\'s persisted best in one board — and those same scores mint the coins your tamagotchi spends. One ledger, no fakes.' },
       { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' }
     ]
   },
@@ -61,7 +67,9 @@ export const museum: Wing[] = [
       { name: 'the typing test', how: 'type wpm', blurb: 'Measures how fast you type by making you type about typing.' },
       { name: 'conway\'s game of life', how: 'type life, or click the hero', blurb: 'It is in the terminal, it is the homepage hero, it has its own page, and it can be your lvOS wallpaper. The museum has a favorite automaton.' },
       { name: 'ascii star wars', how: 'telnet towel.blinkenlights.nl', blurb: 'An original homage to the greatest telnet server that ever ran.' },
-      { name: 'minesweeper', how: 'mines.exe on the desktop', blurb: 'Right-click flags. The corner cells are as unfair as you remember.' }
+      { name: 'minesweeper', how: 'mines.exe on the desktop', blurb: 'Right-click flags. The corner cells are as unfair as you remember.' },
+      { name: 'chess', how: 'the chess app on the desktop', blurb: 'A full rules engine — castling, en passant, promotion — against a small AI, or against a live visitor over the relay.' },
+      { name: 'the asciiquarium', how: 'type asciiquarium', blurb: 'A tiny fish tank swimming in your terminal. It asks nothing of you. It simply swims.' }
     ]
   },
   {
@@ -84,6 +92,7 @@ export const museum: Wing[] = [
     exhibits: [
       { name: 'the console hunt', how: 'open devtools, follow window.lv', blurb: 'A three-step riddle that ends in a party and a job-application command.' },
       { name: 'the tamagotchi', how: 'pet adopt <name>', blurb: 'Lives in the status bar, wanders the lvOS desktop, hatches within the hour, sleeps at night, sulks when unfed. Forgives instantly.' },
+      { name: 'the pet economy', how: 'pet coins, pet buy', blurb: 'Your game high scores mint coins; the shop spends them on snacks and a bowtie, top hat or pixel crown the sprite actually wears. No second ledger — the coins come from the hall of fame itself.' },
       { name: 'the 418 teapot', how: 'ask the terminal for coffee', blurb: 'RFC 2324, implemented: an ASCII teapot in real 3D, rendered with arithmetic and stubbornness. Drag it to pour.' },
       { name: 'status bar toys', how: 'click everything down there', blurb: 'A presence dot, cycling line endings, language modes, a live clock — and five rapid clicks on v2.0.0 arm something regrettable.' },
       { name: 'secrets', how: 'type secrets', blurb: 'The self-aware index of everything this wing refuses to spell out.' },
@@ -100,7 +109,12 @@ export const museum: Wing[] = [
       { name: 'the pixel world', how: 'world open', blurb: 'A shared 128×128 canvas: place one pixel every few seconds, pan and zoom a founding landscape, and watch it change under other visitors\' hands. A minimap, named districts and a time-lapse of recent pixels come standard.' },
       { name: 'live cursors', how: 'when the relay is on', blurb: 'Other visitors\' cursors drift across the same page you are reading, each a colored dot with a name. Toggle them from the status bar.' },
       { name: 'say', how: 'say hello', blurb: 'A speech bubble blooms over your live cursor for everyone browsing right now — the smallest possible chat, and somehow the friendliest.' },
-      { name: 'the relay', how: 'realtime/cursors-server.mjs', blurb: 'One tiny Node websocket server behind all of it: authoritative pixel board, rate limits, provenance, no accounts, no tracking. The whole multiplayer layer is optional and off by default.' }
+      { name: 'the chat room', how: 'type chat, or open the lvOS app', blurb: 'One #lounge feed shared by the terminal command and the desktop app. Ephemeral by design — the relay keeps only the last fifty lines.' },
+      { name: 'chess online', how: 'the ⚔ button in the chess app', blurb: 'Challenge a live visitor. The relay referees with the exact same rules engine the client draws with, so the boards can never diverge.' },
+      { name: 'pong & the typing race', how: 'pong online, wpm race', blurb: 'Two visitors, one server-authoritative match. Pong physics and the finish line both live on the relay; without one, you quietly fall back to solo play.' },
+      { name: 'the leaderboard', how: 'the hall of fame, when online', blurb: 'Local high scores plus a global top table over the relay — snake, tetris, 2048, wpm and pong, submitted automatically when a game ends.' },
+      { name: 'the visitor globe', how: 'type globe', blurb: 'A spinning ASCII earth plotting everyone online by timezone — ◉ is you. Privacy-safe: only a UTC offset ever crosses the wire, never a location.' },
+      { name: 'the relay', how: 'realtime/cursors-server.mjs', blurb: 'One tiny Node websocket server behind all of it: authoritative pixel board, matchmaking, rate limits, provenance, no accounts, no tracking. The whole multiplayer layer is optional and off by default.' }
     ]
   },
   {
