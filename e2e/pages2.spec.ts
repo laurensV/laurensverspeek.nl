@@ -275,8 +275,13 @@ test('the offline page ships a pocket snake', async ({ page }) => {
 test('the boss key hides everything behind a spreadsheet until Esc', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('b')
-  await page.keyboard.press('b')
+  // fire both b-keydowns in one tick: the arm needs the two taps within 600ms,
+  // and CDP latency between two keyboard.press() calls can blow that window on a
+  // slow/loaded CI runner (the arming logic itself is what this test exercises)
+  await page.evaluate(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
+  })
   const boss = page.locator('.boss')
   await expect(boss).toBeVisible()
   await expect(boss).toContainText('Q3_forecast_v7_FINAL(2).xlsx')
