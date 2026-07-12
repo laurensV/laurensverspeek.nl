@@ -219,6 +219,13 @@ const clock = computed(() =>
     height: 3.1rem;
   }
   background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
+
+  // frosted glass where the browser can afford it; the solid colour above is
+  // the everything-else fallback
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: hsla(var(--lv-scheme-hs), 6%, 0.72);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
   border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
   font-size: 0.75rem;
   color: hsl(var(--lv-scheme-hs), 85%);
@@ -261,6 +268,11 @@ const clock = computed(() =>
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
   background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: hsla(var(--lv-scheme-hs), 8%, 0.8);
+    backdrop-filter: blur(16px) saturate(1.3);
+  }
   z-index: 10000;
 
   button {
@@ -316,6 +328,11 @@ const clock = computed(() =>
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius-small);
   background-color: hsla(var(--lv-scheme-hs), 10%, 0.98);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: hsla(var(--lv-scheme-hs), 10%, 0.82);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
   color: hsl(var(--lv-scheme-hs), 90%);
   font-size: 0.7rem;
   white-space: nowrap;
