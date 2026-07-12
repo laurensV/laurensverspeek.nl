@@ -82,11 +82,20 @@ export function useTerminal() {
   const paneLines = (id: number): TerminalLine[] =>
     id === 0 ? lines.value : extraPanes.value.find((pane) => pane.id === id)?.lines ?? lines.value
 
+  // real terminals don't remember forever either — without a cap the transcript
+  // grows unbounded for the whole session (tail -f alone feeds it ~1.2 lines/s)
+  const SCROLLBACK_MAX = 1500
+
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     const line: TerminalLine = { id: lineId++, type, text, html }
     if (type === 'error') runFailed = true
-    if (sink) sink(line)
-    else paneLines(activePane.value).push(line)
+    if (sink) {
+      sink(line)
+      return
+    }
+    const pane = paneLines(activePane.value)
+    pane.push(line)
+    if (pane.length > SCROLLBACK_MAX) pane.splice(0, pane.length - SCROLLBACK_MAX)
   }
   const out = (text: string) => push('output', text)
   const muted = (text: string) => push('muted', text)
