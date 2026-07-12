@@ -1,17 +1,20 @@
 <template>
-  <div class="boot is-family-code" role="status" aria-label="lvOS boot sequence">
+  <div v-if="!inSetup" class="boot is-family-code" role="status" aria-label="lvOS boot sequence">
     <pre class="boot-logo">{{ LOGO }}</pre>
     <p v-for="(line, i) in visibleLines" :key="i" class="boot-line" :class="`is-${line.type}`">
       {{ line.text }}<span v-if="i === visibleLines.length - 1" class="boot-caret">█</span>
     </p>
+    <p class="boot-setup-hint">Press DEL to enter SETUP</p>
   </div>
+  <DesktopBios v-else @exit="exitSetup" />
 </template>
 
 <script setup lang="ts">
-import { usePreferredReducedMotion } from '@vueuse/core'
+import { usePreferredReducedMotion, useEventListener } from '@vueuse/core'
 
 // lvOS POST / BIOS check. Types out a few boot lines, then emits `done` and
-// hands off to the desktop. Reduced-motion skips straight to the end.
+// hands off to the desktop. Reduced-motion skips straight to the end. Pressing
+// DEL mid-POST pauses the boot and opens the real BIOS setup (DesktopBios).
 
 const emit = defineEmits<{ done: [] }>()
 
@@ -37,25 +40,46 @@ const LINES: BootLine[] = [
 
 const visibleLines = ref<BootLine[]>([])
 const reducedMotion = usePreferredReducedMotion()
+const inSetup = ref(false)
+let timer: ReturnType<typeof setTimeout> | undefined
+let nextLine = 0
+
+const tick = () => {
+  if (inSetup.value) return // paused inside setup; exitSetup resumes
+  if (nextLine >= LINES.length) {
+    timer = setTimeout(() => emit('done'), 450)
+    return
+  }
+  visibleLines.value.push(LINES[nextLine]!)
+  nextLine++
+  timer = setTimeout(tick, nextLine <= 2 ? 260 : 150)
+}
 
 onMounted(() => {
   if (reducedMotion.value === 'reduce') {
     visibleLines.value = LINES
-    setTimeout(() => emit('done'), 300)
+    nextLine = LINES.length
+    timer = setTimeout(() => emit('done'), 300)
     return
-  }
-  let i = 0
-  const tick = () => {
-    if (i >= LINES.length) {
-      setTimeout(() => emit('done'), 450)
-      return
-    }
-    visibleLines.value.push(LINES[i]!)
-    i++
-    setTimeout(tick, i <= 2 ? 260 : 150)
   }
   tick()
 })
+
+// DEL during POST: pause the boot, open the setup
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (inSetup.value || event.key !== 'Delete') return
+  event.preventDefault()
+  clearTimeout(timer)
+  inSetup.value = true
+})
+
+const exitSetup = () => {
+  inSetup.value = false
+  // a real BIOS would reboot; POST resumes where it left off
+  timer = setTimeout(tick, 250)
+}
+
+onUnmounted(() => clearTimeout(timer))
 </script>
 
 <style scoped lang="scss">
@@ -92,6 +116,13 @@ onMounted(() => {
   &.is-primary {
     color: var(--bulma-primary);
   }
+}
+
+.boot-setup-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: clamp(1.5rem, 6vw, 6rem);
+  color: hsl(var(--lv-scheme-hs), 45%);
 }
 
 .boot-caret {

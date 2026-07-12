@@ -516,3 +516,25 @@ test('chess: you move, the house replies, and the game survives a reopen', async
   await page.locator('.lvos-icon', { hasText: /^chess$/ }).click()
   await expect(page.locator('.lvos-window', { hasText: 'vs the house' }).locator('button[aria-label="e4 P"]')).toBeVisible()
 })
+
+test('DEL during POST enters a BIOS setup wired to real settings', async ({ page }) => {
+  await page.goto('/desktop')
+  // catch the POST while it types: keep pressing DEL until setup appears
+  await expect(async () => {
+    await page.keyboard.press('Delete')
+    await expect(page.locator('.bios')).toBeVisible({ timeout: 250 })
+  }).toPass({ timeout: 10000 })
+  const bios = page.locator('.bios')
+  await expect(bios).toContainText('lvOS BIOS Setup Utility')
+  // the wallpaper row is selected; → really cycles the shared wallpaper state
+  await expect(bios).toContainText('[amber void]')
+  await page.keyboard.press('ArrowRight')
+  await expect(bios).not.toContainText('[amber void]')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lvos-wallpaper'))).toBe('1')
+  // toggle night light for good measure, then save & exit — POST resumes into lvOS
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('ArrowRight')
+  await expect(bios).toContainText('[Enabled]')
+  await page.keyboard.press('F10')
+  await page.locator('.lvos').waitFor({ timeout: 16000 })
+})
