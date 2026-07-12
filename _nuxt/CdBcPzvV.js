@@ -1,1 +1,0 @@
-import{_ as s,h as r,i as n,W as o}from"./veVEAvpF.js";const t={};function a(e,c){return r(),n("em",null,[o(e.$slots,"default")])}const l=Object.assign(s(t,[["render",a]]),{__name:"ProseEm"});export{l as default};

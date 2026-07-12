@@ -1,0 +1,1 @@
+function o(e,r="─"){return r.repeat(e)}function $(e,r){return[`┌${o(r)}┐`,...e.map(n=>`│${n}│`),`└${o(r)}┘`]}function a(e,r,n,t,u){return`${e}${Array.from({length:t},()=>o(u)).join(r)}${n}`}export{$ as b,a as r};
