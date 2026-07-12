@@ -28,6 +28,7 @@ export const uses: UsesGroup[] = [
     group: 'Stack',
     items: [
       { name: 'Vue 3 + Nuxt 4', icon: 'layers', note: 'my default for anything with a UI — including this site', url: 'https://nuxt.com' },
+      { name: 'Bulma', icon: 'pen', note: 'the CSS framework this site is themed on, dark mode and all', url: 'https://bulma.io' },
       { name: 'TypeScript', icon: 'braces', note: 'JavaScript that survives past one weekend' },
       { name: 'Node.js', icon: 'server', note: 'backends, tooling, and the odd build script' },
       { name: 'Rust', icon: 'settings', note: 'Solana programs and anything performance-critical', url: 'https://www.rust-lang.org' },

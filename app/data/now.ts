@@ -9,7 +9,7 @@ export const now = {
       title: 'Building',
       items: [
         'Scaling Nosana — more GPUs online, more AI inference jobs, fewer 3am pages',
-        'This site’s ever-growing pile of easter eggs: a real terminal, an OS living on /desktop, and a hero that plays Conway’s Game of Life',
+        'This site’s ever-growing pile of easter eggs: a real terminal, an OS living on /desktop, and a hidden multiplayer layer — a shared pixel world, live chat, and pong/chess/typing races against whoever else is online',
         'Sharper Solana programs — shaving compute units where nobody was looking'
       ]
     },
@@ -24,7 +24,7 @@ export const now = {
     {
       title: 'Tinkering',
       items: [
-        'A tiny in-browser filesystem for the fake shell on this site — mkdir, touch, cat, the works',
+        'A tiny in-browser filesystem shared by the fake shell and the lvOS file explorer on this site — mkdir, touch, cat, the works',
         'Home automation that mostly automates my own frustration',
         'Keyboard layouts I’ll probably abandon in three weeks'
       ]
