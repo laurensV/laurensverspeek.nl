@@ -384,7 +384,7 @@ const nudgeUpdates = async () => {
     const seen = storageGet('lv-updates-hash')
     if (!newest || newest === seen) return
     const pending = seen
-      ? Math.max(1, commits.findIndex((c) => c.hash === seen))
+      ? Math.max(1, commitsSinceMarker(commits, seen))
       : commits.length
     notify('⟳', 'Updates available', `${pending > 99 ? '99+' : pending} pending — start menu → system update`)
   } catch {

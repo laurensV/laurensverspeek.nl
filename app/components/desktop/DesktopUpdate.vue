@@ -73,7 +73,7 @@ onMounted(async () => {
   checking.value = false
   newestHash = commits[0]?.hash ?? ''
   const seen = storageGet(INSTALLED_KEY)
-  const seenIndex = seen ? commits.findIndex((c) => c.hash === seen) : -1
+  const seenIndex = commitsSinceMarker(commits, seen)
   // everything since the last install; first visit gets the latest few
   const pending = seenIndex > 0 ? commits.slice(0, seenIndex) : commits
   pendingTotal = pending.length

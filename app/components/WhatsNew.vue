@@ -36,7 +36,7 @@ onMounted(async () => {
     const commits = await $fetch<GitCommit[]>('/git-log.json')
     const newest = commits[0]?.hash
     if (!newest || newest === marker || storageGet(TOASTED_KEY) === newest) return
-    const idx = commits.findIndex((commit) => commit.hash === marker)
+    const idx = commitsSinceMarker(commits, marker)
     if (idx <= 0) return // marker not found or already newest
     storageSet(TOASTED_KEY, newest)
     newCommits.value = idx
