@@ -30,6 +30,8 @@ jobs:
       - run: npm run typecheck:scripts
       - run: npm run test
       - run: npm run test:nuxt
+      # boots the real relay and drills world / scores / pong / chess / chat / race
+      - run: npm run test:relay
 
       # browser is needed by the resume PDF step (postgenerate) and the E2E run
       - name: Install Playwright browser
