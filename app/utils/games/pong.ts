@@ -1,4 +1,4 @@
-import { createTicker, isQuitKey, useHighScore } from '~/utils/terminalGameKit'
+import { createTicker, isQuitKey, useHighScore, migrateScoreKey } from '~/utils/terminalGameKit'
 import { boxed } from '~/utils/asciiFrame'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
 
@@ -6,11 +6,14 @@ const PONG_W = 41
 const PONG_H = 13
 const PONG_PADDLE = 3
 const PONG_WIN = 5
-const PONG_RALLY_KEY = 'lv-pong-rally'
+// the -highscore suffix keys the shared score surface: hall of fame, pet coins,
+// and the leaderboard sink all discover games through it
+const PONG_RALLY_KEY = 'lv-pong-highscore'
 
 // Classic pong: left paddle is yours, the right one is a slightly fallible AI.
 // First to 5 wins; the ball speeds up as a rally builds.
 export function createPongGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
+  migrateScoreKey('lv-pong-rally', PONG_RALLY_KEY)
   let playerY = Math.floor(PONG_H / 2) - 1
   let aiY = playerY
   let ball = { x: PONG_W / 2, y: PONG_H / 2, vx: -1, vy: 0.5 }

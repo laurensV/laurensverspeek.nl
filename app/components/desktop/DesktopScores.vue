@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { storageGet } from '~/utils/safeStorage'
+import { migrateScoreKey } from '~/utils/terminalGameKit'
 
 // One arcade board over every game's persisted best (local), plus the GLOBAL
 // leaderboard from the relay when one is configured. Reads the same keys the
@@ -45,6 +46,8 @@ import { storageGet } from '~/utils/safeStorage'
 
 const leaderboard = useLeaderboard()
 onMounted(() => leaderboard.enter())
+
+migrateScoreKey('lv-pong-rally', 'lv-pong-highscore')
 
 const readNumber = (key: string): number | null => {
   const value = Number(storageGet(key))
@@ -56,9 +59,12 @@ const rows = [
   { game: 'tetris', value: readNumber('lv-tetris-highscore'), unit: 'points' },
   { game: '2048', value: readNumber('lv-2048-highscore'), unit: 'points' },
   { game: 'typing test', value: readNumber('lv-wpm-highscore'), unit: 'wpm' },
+  { game: 'pong', value: readNumber('lv-pong-highscore'), unit: 'rally hits' },
   { game: 'minesweeper · beginner', value: readNumber('lvos-mines-best-beginner'), unit: 'seconds' },
   { game: 'minesweeper · intermediate', value: readNumber('lvos-mines-best-intermediate'), unit: 'seconds' },
-  { game: 'minesweeper · expert', value: readNumber('lvos-mines-best-expert'), unit: 'seconds' }
+  { game: 'minesweeper · expert', value: readNumber('lvos-mines-best-expert'), unit: 'seconds' },
+  { game: 'pong online', value: readNumber('lv-pong-online-wins'), unit: 'duels won' },
+  { game: 'chess online', value: readNumber('lv-chess-online-wins'), unit: 'duels won' }
 ]
 </script>
 

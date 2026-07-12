@@ -1,4 +1,4 @@
-import { isQuitKey } from '~/utils/terminalGameKit'
+import { isQuitKey, bumpTally } from '~/utils/terminalGameKit'
 import { boxed } from '~/utils/asciiFrame'
 import { PONG_W, PONG_H, PONG_PADDLE, clampPaddle } from '../../../realtime/pong-core.mjs'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
@@ -115,6 +115,8 @@ export function createOnlinePong(
       render()
     } else if (msg.type === 'pong-end') {
       const iWon = msg.winner === side
+      // a win over a real visitor joins the shared tally (hall of fame, pet coins)
+      if (iWon) bumpTally('lv-pong-online-wins')
       const score = side === 'l' ? `${state.ls}–${state.rs}` : `${state.rs}–${state.ls}`
       finish(msg.forfeit
         ? [iWon ? `${foe} rage-quit — you win by forfeit!` : 'you forfeited. the arcade remembers.']

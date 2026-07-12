@@ -126,6 +126,10 @@ export interface ScoreReadings {
   wpm: number
   /** how many minesweeper difficulties have a best time */
   minesBests: number
+  /** longest pong rally */
+  pong: number
+  /** online pong + chess matches won against real visitors */
+  duelWins: number
 }
 
 /** Total coins ever minted by the visitor's high scores. */
@@ -135,6 +139,8 @@ export function coinsEarned(scores: ScoreReadings): number {
     + Math.floor(scores.g2048 / 100)
     + Math.floor(scores.wpm / 5)
     + scores.minesBests * 15
+    + Math.floor(scores.pong / 2)
+    + scores.duelWins * 10
 }
 
 /** Dress the face: head gear in front, neckwear behind. */

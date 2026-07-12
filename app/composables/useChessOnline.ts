@@ -1,4 +1,5 @@
 import { initialState, applyMove } from '~/utils/chess'
+import { bumpTally } from '~/utils/terminalGameKit'
 import type { ChessState, Side } from '~/utils/chess'
 import type { ServerMessage, ChessJoinIn, ChessLeaveIn, ChessMoveIn } from '../../realtime/protocol'
 
@@ -84,6 +85,8 @@ export function useChessOnline() {
         lastMove.value = [msg.move.from, msg.move.to]
       } else if (msg.type === 'chess-end') {
         const { winner, reason } = msg
+        // a win over a real visitor joins the shared tally (hall of fame, pet coins)
+        if (winner === mySide.value) bumpTally('lv-chess-online-wins')
         if (reason === 'forfeit') {
           finish(winner === mySide.value
             ? `${foe.value} disconnected — you win by forfeit`

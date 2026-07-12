@@ -1,12 +1,14 @@
 import { adoptPet, feedPet, playWithPet, petStage, petMood, petFace, petMoodLine, petAge, isPetState, isPetWallet, emptyWallet, coinsEarned, gearFace, buyAccessory, SNACK_COST } from '~/utils/pet'
 import type { PetState, PetWallet, ScoreReadings } from '~/utils/pet'
 import { storageGet, storageGetJson, storageSetJson, storageRemove } from '~/utils/safeStorage'
+import { migrateScoreKey } from '~/utils/terminalGameKit'
 
 const PET_KEY = 'lv-pet'
 const WALLET_KEY = 'lv-pet-wallet'
 
 // coins are minted by the SAME high-score keys the hall of fame reads
 const readScores = (): ScoreReadings => {
+  migrateScoreKey('lv-pong-rally', 'lv-pong-highscore')
   const num = (key: string) => {
     const value = Number(storageGet(key))
     return Number.isFinite(value) && value > 0 ? value : 0
@@ -17,7 +19,9 @@ const readScores = (): ScoreReadings => {
     g2048: num('lv-2048-highscore'),
     wpm: num('lv-wpm-highscore'),
     minesBests: ['beginner', 'intermediate', 'expert']
-      .filter((level) => num(`lvos-mines-best-${level}`) > 0).length
+      .filter((level) => num(`lvos-mines-best-${level}`) > 0).length,
+    pong: num('lv-pong-highscore'),
+    duelWins: num('lv-pong-online-wins') + num('lv-chess-online-wins')
   }
 }
 

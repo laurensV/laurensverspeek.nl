@@ -64,9 +64,9 @@ describe('pet', () => {
 
 describe('pet economy', () => {
   it('mints coins from the hall-of-fame score readings', () => {
-    expect(coinsEarned({ snake: 0, tetris: 0, g2048: 0, wpm: 0, minesBests: 0 })).toBe(0)
-    expect(coinsEarned({ snake: 105, tetris: 1250, g2048: 512, wpm: 62, minesBests: 2 }))
-      .toBe(10 + 12 + 5 + 12 + 30)
+    expect(coinsEarned({ snake: 0, tetris: 0, g2048: 0, wpm: 0, minesBests: 0, pong: 0, duelWins: 0 })).toBe(0)
+    expect(coinsEarned({ snake: 105, tetris: 1250, g2048: 512, wpm: 62, minesBests: 2, pong: 9, duelWins: 3 }))
+      .toBe(10 + 12 + 5 + 12 + 30 + 4 + 30)
   })
 
   it('sells an affordable accessory exactly once', () => {

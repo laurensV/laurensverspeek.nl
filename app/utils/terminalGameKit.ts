@@ -2,12 +2,28 @@
 // render + update logic; the kit removes the boilerplate they all repeated:
 // high-score persistence, the game-over score summary, and the tick timer.
 
-import { storageGet, storageSet } from '~/utils/safeStorage'
+import { storageGet, storageSet, storageRemove } from '~/utils/safeStorage'
 
 // an optional sink the leaderboard composable registers, so a finished game's
 // score can be submitted online without the pure games knowing about the relay
 let scoreSink: ((game: string, score: number) => void) | null = null
 export const setScoreSink = (fn: ((game: string, score: number) => void) | null) => { scoreSink = fn }
+
+/** Move a score stored under a legacy key to its current key, keeping the best. */
+export function migrateScoreKey(oldKey: string, newKey: string) {
+  const legacy = Number(storageGet(oldKey) ?? 0) || 0
+  if (!legacy) return
+  const current = Number(storageGet(newKey) ?? 0) || 0
+  if (legacy > current) storageSet(newKey, String(legacy))
+  storageRemove(oldKey)
+}
+
+/** A persisted counter (e.g. online duel wins); returns the new total. */
+export function bumpTally(key: string): number {
+  const next = (Number(storageGet(key) ?? 0) || 0) + 1
+  storageSet(key, String(next))
+  return next
+}
 
 /** A high score backed by localStorage under a single key. */
 export function useHighScore(key: string) {
