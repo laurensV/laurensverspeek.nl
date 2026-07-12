@@ -1,5 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { bugReportUrl } from '~/utils/bugReport'
 import { profile } from '~/data/profile'
 
 // Appearance, session theater and the other one-offs: theme, fonts, git, ssh.
@@ -23,6 +24,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const lvosMail = useLvosMail()
   // the one real volume: taskbar tray, media app and this command share it
   const sound = useVolume()
+  // captured at factory time for the `bug` command's issue context
+  const buildHash = useRuntimeConfig().public.buildHash
 
   return {
     mail: {
@@ -153,6 +156,21 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           ctx.isOpen.value = false
           ctx.effects.bootReplay.value = true
         }, 400)
+      }
+    },
+    bug: {
+      category: 'system',
+      description: 'Report a bug — opens a prefilled GitHub issue',
+      exec: () => {
+        const url = bugReportUrl({
+          page: window.location.pathname,
+          viewport: `${window.innerWidth}×${window.innerHeight}`,
+          version: buildHash,
+          userAgent: navigator.userAgent
+        })
+        out('Found a bug? Opening a prefilled issue on GitHub...')
+        muted('the page, viewport and build hash are filled in for you — just describe what broke.')
+        window.open(url, '_blank', 'noopener')
       }
     },
     git: {

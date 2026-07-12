@@ -28,6 +28,7 @@
         · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
         · <NuxtLink to="/keyboard" class="build-shortcuts">shortcuts</NuxtLink>
         · <NuxtLink to="/til" class="build-til">til</NuxtLink>
+        · <button type="button" class="build-bug" @click="reportBug">found a bug?</button>
       </p>
       <RetroHitCounter />
     </div>
@@ -37,6 +38,7 @@
 <script setup lang="ts">
 import { profile } from '~/data/profile'
 import type { IconName } from '~/utils/icons'
+import { bugReportUrl } from '~/utils/bugReport'
 
 const { open, run } = useTerminal()
 const bootDesktop = () => navigateTo('/desktop')
@@ -46,6 +48,17 @@ const config = useRuntimeConfig()
 const showBuild = () => {
   open()
   run(`git show ${config.public.buildHash}`)
+}
+
+// a prefilled GitHub issue with the page, viewport and build hash filled in
+const reportBug = () => {
+  const url = bugReportUrl({
+    page: useRoute().path,
+    viewport: `${window.innerWidth}×${window.innerHeight}`,
+    version: config.public.buildHash,
+    userAgent: navigator.userAgent
+  })
+  window.open(url, '_blank', 'noopener')
 }
 </script>
 
@@ -100,13 +113,22 @@ const showBuild = () => {
 
     .build-changelog,
     .build-shortcuts,
-    .build-til {
+    .build-til,
+    .build-bug {
       color: inherit;
 
       &:hover,
       &:focus-visible {
         color: var(--bulma-primary-on-scheme);
       }
+    }
+
+    .build-bug {
+      border: none;
+      background: none;
+      padding: 0;
+      font: inherit;
+      cursor: pointer;
     }
   }
 
