@@ -43,6 +43,22 @@
         />
       </div>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">wallpaper</span>
+      <div class="settings-swatches">
+        <button
+          v-for="(paper, i) in wallpapers"
+          :key="paper.name"
+          class="settings-swatch"
+          :class="{ 'is-active': wallpaperIndex === i }"
+          :style="{ background: paper.css }"
+          :title="paper.name"
+          :aria-label="`Wallpaper: ${paper.name}`"
+          :aria-pressed="wallpaperIndex === i"
+          @click="wallpaperIndex = i"
+        />
+      </div>
+    </div>
     <p class="settings-note">// yes, this changes the real site behind the desktop</p>
 
     <p class="settings-section mt-4"># effects</p>
@@ -139,6 +155,7 @@ const colorMode = useColorMode()
 const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
 const partyActive = useState(STATE_KEYS.fxParty, () => false)
 const { accent, accents, setAccent } = useAccent()
+const { wallpapers, wallpaper: wallpaperIndex } = useWallpaper()
 const { saver, saverIds, saverNames } = useScreensaverChoice()
 const nightLight = useNightLight()
 const sound = useVolume()

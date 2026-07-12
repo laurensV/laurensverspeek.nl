@@ -39,6 +39,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const lvosMail = useLvosMail()
   // the one real volume: taskbar tray, media app and this command share it
   const sound = useVolume()
+  // the same wallpaper the lvOS start menu, BIOS and Settings set
+  const paper = useWallpaper()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
 
@@ -160,6 +162,29 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         sound.volume.value = Math.round(value)
         if (sound.volume.value > 0) sound.muted.value = false
         out(`volume ${gauge()}`)
+      }
+    },
+    wallpaper: {
+      category: 'system',
+      usage: 'wallpaper [next|<n>]',
+      description: 'Change the lvOS desktop wallpaper (same one as Settings)',
+      examples: ['wallpaper', 'wallpaper next', 'wallpaper 2'],
+      argCandidates: () => ['next', ...paper.wallpapers.value.map((_, i) => String(i))],
+      exec: (args) => {
+        const arg = args[0]?.toLowerCase()
+        if (!arg || arg === 'list') {
+          paper.wallpapers.value.forEach((p, i) =>
+            out(`${i === paper.wallpaper.value ? '›' : ' '} ${i}  ${p.name}`))
+          muted(`'wallpaper next' cycles, 'wallpaper <n>' picks one`)
+          return
+        }
+        if (arg === 'next') return out(`wallpaper: ${paper.cycleWallpaper()}`)
+        const n = Number(arg)
+        if (!Number.isInteger(n) || n < 0 || n >= paper.wallpapers.value.length) {
+          return error(`wallpaper: no such wallpaper '${args[0]}' — try next or 0–${paper.wallpapers.value.length - 1}`)
+        }
+        paper.wallpaper.value = n
+        out(`wallpaper: ${paper.wallpapers.value[n]!.name}`)
       }
     },
     reboot: {
