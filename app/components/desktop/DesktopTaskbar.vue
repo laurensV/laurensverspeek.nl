@@ -221,10 +221,19 @@ const clock = computed(() =>
   background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
 
   // frosted glass where the browser can afford it; the solid colour above is
-  // the everything-else fallback
+  // the everything-else fallback. The blur lives on a pseudo-element because
+  // backdrop-filter on the bar itself would make it a stacking context and
+  // trap the start menu's z-index below the windows.
   @supports (backdrop-filter: blur(1px)) {
     background-color: hsla(var(--lv-scheme-hs), 6%, 0.72);
-    backdrop-filter: blur(14px) saturate(1.3);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      backdrop-filter: blur(14px) saturate(1.3);
+    }
   }
   border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
   font-size: 0.75rem;

@@ -352,8 +352,11 @@ test('titlebar right-click menu pins a window on top and closes it', async ({ pa
   await expect(menu).toHaveCount(0)
   const readme = page.locator('.lvos-window[data-win="readme"]')
   await expect(readme.locator('.lvos-window-title')).toContainText('📌')
-  // focusing another window cannot climb above the pinned one
-  await page.locator('.lvos-icon', { hasText: /^taskmgr$/ }).click()
+  // focusing another window cannot climb above the pinned one (launched via
+  // Alt+R — the pinned readme now covers the taskmgr icon's grid spot)
+  await page.keyboard.press('Alt+r')
+  await page.fill('.run-input', 'taskmgr')
+  await page.keyboard.press('Enter')
   await page.locator('.taskmgr').waitFor()
   const zOf = (sel: string) => page.locator(sel).evaluate((el) => Number(getComputedStyle(el).zIndex))
   expect(await zOf('.lvos-window[data-win="readme"]')).toBeGreaterThan(await zOf('.lvos-window[data-win="taskmgr"]'))
