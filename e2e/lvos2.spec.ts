@@ -479,3 +479,22 @@ test('the code playground runs edited html/css/js in a sandboxed preview', async
   await page.locator('.play').waitFor()
   await expect(page.frameLocator('.play-frame').locator('h1')).toHaveText('edited live', { timeout: 4000 })
 })
+
+test('the camera app renders ascii frames and snaps to the gallery', async ({ page, context }) => {
+  await context.grantPermissions(['camera'])
+  await bootDesktop(page)
+  await page.locator('.lvos-icon', { hasText: /^camera$/ }).click()
+  // opt-in: nothing runs until the visitor turns the camera on
+  const win = page.locator('.lvos-window', { hasText: 'asciicam' })
+  await expect(win).toContainText('nothing is uploaded')
+  await win.getByRole('button', { name: /turn camera on/ }).click()
+  const feed = win.locator('.camera-feed')
+  await expect(feed).toBeVisible({ timeout: 8000 })
+  await expect.poll(() => feed.textContent().then((t) => (t ?? '').length)).toBeGreaterThan(200)
+  // snap lands in the shared lvos-shots gallery store
+  await win.getByRole('button', { name: /snap/ }).click()
+  await expect(win).toContainText('saved to gallery')
+  const shots = await page.evaluate(() => JSON.parse(localStorage.getItem('lvos-shots') ?? '[]') as string[])
+  expect(shots.length).toBeGreaterThan(0)
+  expect(shots[0]).toMatch(/^data:image\/png/)
+})

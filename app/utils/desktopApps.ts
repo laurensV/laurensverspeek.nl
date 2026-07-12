@@ -40,6 +40,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'life', title: 'game of life', label: 'life', icon: 'zap' },
   { id: 'snake', title: 'snake', label: 'snake', icon: 'zap' },
   { id: 'gallery', title: 'image viewer', label: 'gallery', icon: 'image' },
+  { id: 'camera', title: 'camera — asciicam', label: 'camera', icon: 'camera' },
   { id: 'taskmgr', title: 'task manager', label: 'taskmgr', icon: 'cpu' },
   { id: 'sysmon', title: 'system monitor', label: 'sysmon', icon: 'zap' },
   { id: 'displays', title: 'displays', label: 'displays', icon: 'sun' },
