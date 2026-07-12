@@ -1,6 +1,32 @@
 <template>
   <div class="mail is-family-code">
-    <div class="mail-list">
+    <div class="mail-toolbar">
+      <button class="mail-compose-btn" @click="composing = !composing">
+        [{{ composing ? 'back to inbox' : '✎ compose' }}]
+      </button>
+    </div>
+    <div v-if="composing" class="mail-composer">
+      <label class="mail-field">
+        <span>to:</span>
+        <input :value="profile.email" readonly aria-label="Recipient">
+      </label>
+      <label class="mail-field">
+        <span>subject:</span>
+        <input v-model="draftSubject" maxlength="120" placeholder="hello from lvOS" aria-label="Subject">
+      </label>
+      <textarea
+        v-model="draftBody"
+        class="mail-draft"
+        rows="6"
+        placeholder="dear laurens, your operating system delivered this…"
+        aria-label="Message"
+      />
+      <div class="mail-send-row">
+        <button class="mail-send" @click="send">[send →]</button>
+        <span class="mail-send-note">opens your real mail app — lvOS has no outbound SMTP (yet)</span>
+      </div>
+    </div>
+    <div v-else class="mail-list">
       <button
         v-for="msg in mails"
         :key="msg.id"
@@ -17,7 +43,7 @@
       </button>
       <p class="mail-count">{{ unread }} unread · inbox zero is a lifestyle</p>
     </div>
-    <div v-if="current" class="mail-body">
+    <div v-if="current && !composing" class="mail-body">
       <p class="mail-body-head">
         <b>{{ current.subject }}</b><br>
         <span class="mail-body-from">from: {{ current.from }} &lt;{{ current.address }}&gt;</span>
@@ -27,14 +53,17 @@
         [read the full post →]
       </button>
     </div>
-    <p v-else class="mail-empty">select a message — the prince can wait, but not forever</p>
+    <p v-else-if="!composing" class="mail-empty">select a message — the prince can wait, but not forever</p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { profile } from '~/data/profile'
+
 // The lvOS mail client: real blog posts arrive as newsletter mails on top of
 // the lovingly fake inbox. Read state lives in useLvosMail (shared with the
-// desktop icon's badge); replies do not exist, the prince remains hopeful.
+// desktop icon's badge). Compose finally exists: it drafts a REAL mail to the
+// contact address via mailto:, because the inbox deserved a reply button.
 
 const emit = defineEmits<{ post: [path: string] }>()
 
@@ -48,6 +77,19 @@ const current = computed(() => mails.value.find((msg) => msg.id === openId.value
 const openMail = (id: string) => {
   openId.value = id
   markRead(id)
+}
+
+// ---- compose: a mailto draft to the real contact address ----
+const composing = ref(false)
+const draftSubject = ref('')
+const draftBody = ref('')
+
+const send = () => {
+  const params = new URLSearchParams()
+  if (draftSubject.value.trim()) params.set('subject', draftSubject.value.trim())
+  if (draftBody.value.trim()) params.set('body', draftBody.value.trim())
+  const query = params.toString().replace(/\+/g, '%20')
+  window.location.href = `mailto:${profile.email}${query ? `?${query}` : ''}`
 }
 </script>
 
@@ -65,6 +107,78 @@ const openMail = (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+}
+
+.mail-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mail-compose-btn,
+.mail-send {
+  border: none;
+  background: none;
+  padding: 0.15rem 0.2rem;
+  color: var(--bulma-primary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.mail-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .mail-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    span {
+      width: 4em;
+      color: hsl(var(--lv-scheme-hs), 55%);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.25rem 0.4rem;
+      border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
+      border-radius: var(--bulma-radius-small);
+      background: hsla(var(--lv-scheme-hs), 50%, 0.08);
+      color: hsl(var(--lv-scheme-hs), 92%);
+      font: inherit;
+
+      &[readonly] {
+        color: hsl(var(--lv-scheme-hs), 60%);
+      }
+    }
+  }
+
+  .mail-draft {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
+    border-radius: var(--bulma-radius-small);
+    background: hsla(var(--lv-scheme-hs), 50%, 0.08);
+    color: hsl(var(--lv-scheme-hs), 92%);
+    font: inherit;
+    resize: vertical;
+  }
+
+  .mail-send-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .mail-send-note {
+    color: hsl(var(--lv-scheme-hs), 50%);
+    font-size: 0.68rem;
+  }
 }
 
 .mail-open-post {
