@@ -14,6 +14,17 @@
       <button class="dsnake-again" @click="start">play again</button>
     </div>
     <p class="dsnake-hint">arrows or wasd to move · q ends</p>
+
+    <!-- touch d-pad: the desktop snake was keyboard-only, so unplayable on a
+         phone — same pad the terminal snake and museum walk offer -->
+    <div class="dsnake-pad" aria-hidden="true">
+      <button @pointerdown.prevent="move('ArrowUp')">▲</button>
+      <div>
+        <button @pointerdown.prevent="move('ArrowLeft')">◀</button>
+        <button @pointerdown.prevent="move('ArrowDown')">▼</button>
+        <button @pointerdown.prevent="move('ArrowRight')">▶</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -44,6 +55,12 @@ const onKeydown = (event: KeyboardEvent) => {
   if (game.onKey(event.key)) event.preventDefault()
 }
 
+// d-pad taps steer through the same engine input the keyboard uses
+const move = (key: string) => {
+  if (!game || result.value) return
+  game.onKey(key)
+}
+
 onMounted(start)
 onUnmounted(() => game?.stop())
 </script>
@@ -52,14 +69,41 @@ onUnmounted(() => game?.stop())
 .desktop-snake {
   outline: none;
   padding: 0.5rem;
-  min-width: 24rem;
+  min-width: min(24rem, 100%);
 }
 
 .dsnake-frame {
   margin: 0;
+  max-width: 100%;
+  overflow-x: auto;
   color: var(--bulma-primary);
   line-height: 1.2;
   font-size: 0.8rem;
+}
+
+// touch d-pad: hidden where a keyboard is likely, shown on touch screens
+.dsnake-pad {
+  display: none;
+  margin-top: 0.5rem;
+  text-align: center;
+
+  button {
+    width: 2.6rem;
+    height: 2.2rem;
+    margin: 0.1rem;
+    border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+    border-radius: var(--bulma-radius-small);
+    background: none;
+    color: var(--bulma-primary);
+    font: inherit;
+    cursor: pointer;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .dsnake-pad {
+    display: block;
+  }
 }
 
 .dsnake-result {
