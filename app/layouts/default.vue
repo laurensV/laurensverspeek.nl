@@ -12,6 +12,7 @@
       <AppFooter />
     </div>
     <AppStatusBar />
+    <MobileNav />
     <TerminalOverlay />
     <CommandPalette />
     <ShortcutsHelp />
@@ -65,6 +66,11 @@ useAnchorHighlight()
   min-height: 100dvh;
   // keep content clear of the fixed status bar
   padding-bottom: 1.65rem;
+
+  // …and of the mobile tab bar riding above it on phones
+  @media (max-width: 768px) {
+    padding-bottom: calc(1.65rem + 3.4rem);
+  }
 
   main {
     flex: 1;
