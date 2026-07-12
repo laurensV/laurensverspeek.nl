@@ -119,7 +119,7 @@ onUnmounted(() => clearTimeout(deniedTimer))
 
 <style scoped lang="scss">
 .taskmgr {
-  min-width: 24rem;
+  min-width: min(24rem, 100%);
   font-size: 0.75rem;
 }
 

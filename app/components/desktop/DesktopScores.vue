@@ -71,7 +71,7 @@ const rows = [
 
 <style scoped lang="scss">
 .scores {
-  min-width: 20rem;
+  min-width: min(20rem, 100%);
   font-size: 0.78rem;
 }
 

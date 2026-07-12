@@ -62,7 +62,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  min-width: 22rem;
+  min-width: min(22rem, 100%);
   min-height: 12rem;
   font-size: 0.75rem;
 }
