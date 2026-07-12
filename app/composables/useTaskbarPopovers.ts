@@ -8,12 +8,14 @@ export function useTaskbarPopovers(
   startOpen: Ref<boolean>,
   calendarOpen: Ref<boolean>,
   notifOpen: Ref<boolean>,
+  volumeOpen: Ref<boolean>,
   onNotifOpen: () => void
 ) {
   const closePopovers = () => {
     startOpen.value = false
     calendarOpen.value = false
     notifOpen.value = false
+    volumeOpen.value = false
   }
 
   const toggleNotifications = () => {
@@ -35,10 +37,16 @@ export function useTaskbarPopovers(
     startOpen.value = next
   }
 
+  const toggleVolume = () => {
+    const next = !volumeOpen.value
+    closePopovers()
+    volumeOpen.value = next
+  }
+
   useEventListener(document, 'pointerdown', (event: PointerEvent) => {
     if ((event.target as HTMLElement).closest('.lvos-taskbar')) return
     closePopovers()
   })
 
-  return { closePopovers, toggleStart, toggleCalendar, toggleNotifications }
+  return { closePopovers, toggleStart, toggleCalendar, toggleNotifications, toggleVolume }
 }

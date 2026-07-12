@@ -72,6 +72,31 @@
       >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
 
       <button
+        class="lvos-tray-btn lvos-volume"
+        :class="{ 'is-open': volumeOpen }"
+        :aria-expanded="volumeOpen"
+        aria-label="Volume"
+        :title="muted ? 'muted' : `volume: ${volume}%`"
+        @click="toggleVolume"
+      >{{ volGlyph }}</button>
+      <div v-if="volumeOpen" class="lvos-volume-pop">
+        <button
+          class="lvos-volume-mute"
+          :aria-pressed="muted"
+          :aria-label="muted ? 'Unmute' : 'Mute'"
+          @click="toggleMute"
+        >{{ volGlyph }}</button>
+        <input
+          v-model.number="volume"
+          type="range"
+          min="0"
+          max="100"
+          aria-label="Volume level"
+        >
+        <span class="lvos-volume-val">{{ muted ? '--' : volume }}</span>
+      </div>
+
+      <button
         class="lvos-tray-btn lvos-tile"
         title="Tile windows"
         aria-label="Tile windows into a grid"
@@ -144,11 +169,15 @@ const emit = defineEmits<{
 const startOpen = defineModel<boolean>('startOpen', { default: false })
 const calendarOpen = defineModel<boolean>('calendarOpen', { default: false })
 const notifOpen = defineModel<boolean>('notifOpen', { default: false })
+const volumeOpen = defineModel<boolean>('volumeOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
 
-const { toggleStart, toggleCalendar, toggleNotifications } = useTaskbarPopovers(
-  startOpen, calendarOpen, notifOpen, () => emit('read')
+const { toggleStart, toggleCalendar, toggleNotifications, toggleVolume } = useTaskbarPopovers(
+  startOpen, calendarOpen, notifOpen, volumeOpen, () => emit('read')
 )
+
+// one real volume: the slider here is the same state the chiptune engine obeys
+const { volume, muted, glyph: volGlyph, toggleMute } = useVolume()
 
 // real battery in the tray, when the browser admits to having one
 const battery = useBattery()
@@ -221,6 +250,46 @@ const clock = computed(() =>
   &.is-open {
     background-color: hsla(var(--lv-primary-hsl), 0.15);
   }
+}
+
+.lvos-volume-pop {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 2.6rem;
+
+  @media (pointer: coarse) {
+    bottom: 3.3rem;
+  }
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+  border-radius: var(--bulma-radius);
+
+  @include lv-glass(8%, 0.98, 0.8, 16px);
+
+  z-index: 10000;
+
+  input[type='range'] {
+    width: 8rem;
+    accent-color: var(--bulma-primary);
+  }
+}
+
+.lvos-volume-mute {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.lvos-volume-val {
+  min-width: 2ch;
+  color: hsl(var(--lv-scheme-hs), 88%);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .lvos-start-menu {

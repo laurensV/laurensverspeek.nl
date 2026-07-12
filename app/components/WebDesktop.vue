@@ -139,6 +139,7 @@
         v-model:start-open="startOpen"
         v-model:calendar-open="calendarOpen"
         v-model:notif-open="notifOpen"
+        v-model:volume-open="volumeOpen"
         v-model:wallpaper="wallpaper"
         :windows="windows"
         :wallpapers="wallpapers"
@@ -245,6 +246,7 @@ const toggleMinimize = (win: DesktopWindow) => {
 const startOpen = ref(false)
 const calendarOpen = ref(false)
 const notifOpen = ref(false)
+const volumeOpen = ref(false)
 const booting = ref(false)
 // which window the taskbar is currently peeking (Aero-peek highlight)
 const peekedId = ref<string | null>(null)
@@ -426,6 +428,7 @@ useDesktopShortcuts({
   startOpen,
   calendarOpen,
   notifOpen,
+  volumeOpen,
   contextMenu,
   titleMenu,
   terminalOpen: terminal.isOpen,

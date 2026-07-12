@@ -17,6 +17,7 @@ export function useDesktopShortcuts(deps: {
   startOpen: Ref<boolean>
   calendarOpen: Ref<boolean>
   notifOpen: Ref<boolean>
+  volumeOpen: Ref<boolean>
   contextMenu: { open: boolean }
   titleMenu: { open: boolean }
   terminalOpen: Ref<boolean>
@@ -88,6 +89,7 @@ export function useDesktopShortcuts(deps: {
     deps.startOpen.value = false
     deps.calendarOpen.value = false
     deps.notifOpen.value = false
+    deps.volumeOpen.value = false
     deps.runOpen.value = false
   })
 }

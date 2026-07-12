@@ -414,6 +414,20 @@ test('the taskbar tray and boot nudge tell the truth about the battery', async (
   await expect(toast).toContainText(/Battery at \d+%/)
 })
 
+test('volume tray edits one persisted volume and escape dismisses it', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-volume').click()
+  const pop = page.locator('.lvos-volume-pop')
+  await pop.waitFor()
+  await pop.locator('input[type=range]').fill('20')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lvos-volume'))).toBe('20')
+  await pop.locator('.lvos-volume-mute').click()
+  await expect(page.locator('.lvos-volume')).toContainText('🔇')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lvos-muted'))).toBe('1')
+  await page.keyboard.press('Escape')
+  await expect(pop).toHaveCount(0)
+})
+
 test('file properties dialog reports size, lines and kind', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-window-actions button[title="Close"]').first().click()
