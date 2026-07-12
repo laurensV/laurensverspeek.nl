@@ -46,7 +46,8 @@ export const STATE_KEYS = {
   lvosTrash: 'lvos-trash',
   lvosWallpaperCustom: 'lvos-wallpaper-custom',
   lvosVolume: 'lvos-volume',
-  lvosMuted: 'lvos-muted'
+  lvosMuted: 'lvos-muted',
+  lvosSaver: 'lvos-saver'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]

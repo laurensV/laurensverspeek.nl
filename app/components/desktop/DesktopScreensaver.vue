@@ -18,14 +18,17 @@
 
 <script setup lang="ts">
 import { useNow } from '@vueuse/core'
+import { bounce, createSaver } from '~/utils/screensavers'
 
-// Screensaver: a warp-speed starfield with a DVD-logo-style bouncing clock.
+// Screensaver host: runs whichever renderer Settings picked (starfield,
+// flying toasters, mystify) with a DVD-logo-style bouncing clock on top.
 // Emits `wake` on any interaction so the desktop can dismiss it.
 defineEmits<{ wake: [] }>()
 
 const now = useNow({ interval: 1000 })
 const clock = computed(() => now.value.toLocaleTimeString('en-GB'))
 
+const { saver } = useScreensaverChoice()
 const canvasRef = ref<HTMLCanvasElement>()
 const logo = reactive({ x: 80, y: 80 })
 let raf = 0
@@ -42,13 +45,7 @@ onMounted(() => {
   resize()
 
   const primary = getComputedStyle(document.documentElement).getPropertyValue('--bulma-primary').trim() || '#ffba00'
-
-  // starfield: points streaking outward from center
-  const stars = Array.from({ length: 220 }, () => ({
-    x: (Math.random() - 0.5) * canvas.width,
-    y: (Math.random() - 0.5) * canvas.height,
-    z: Math.random() * canvas.width
-  }))
+  const renderer = createSaver(saver.value, primary)
 
   // bouncing logo velocity
   let vx = 1.6
@@ -57,36 +54,21 @@ onMounted(() => {
   const logoH = 90
 
   const draw = () => {
-    raf = requestAnimationFrame(draw)
-    const cx = canvas.width / 2
-    const cy = canvas.height / 2
-    ctx.fillStyle = 'rgba(6,6,8,0.35)'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-    ctx.fillStyle = primary
-    for (const s of stars) {
-      s.z -= 6
-      if (s.z <= 1) {
-        s.x = (Math.random() - 0.5) * canvas.width
-        s.y = (Math.random() - 0.5) * canvas.height
-        s.z = canvas.width
-      }
-      const k = 128 / s.z
-      const px = cx + s.x * k
-      const py = cy + s.y * k
-      const size = (1 - s.z / canvas.width) * 2.4
-      ctx.globalAlpha = Math.min(1, (1 - s.z / canvas.width) * 1.5)
-      ctx.fillRect(px, py, size, size)
-    }
-    ctx.globalAlpha = 1
-
-    // bounce the logo
-    logo.x += vx
-    logo.y += vy
-    if (logo.x <= 0 || logo.x >= canvas.width - logoW) vx = -vx
-    if (logo.y <= 0 || logo.y >= canvas.height - logoH) vy = -vy
+    renderer.tick(ctx, canvas.width, canvas.height)
+    ;[logo.x, vx] = bounce(logo.x, vx, 0, canvas.width - logoW)
+    ;[logo.y, vy] = bounce(logo.y, vy, 0, canvas.height - logoH)
   }
-  draw()
+
+  // reduced motion: paint a single quiet frame; the clock still ticks
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    draw()
+    return
+  }
+  const loop = () => {
+    raf = requestAnimationFrame(loop)
+    draw()
+  }
+  loop()
 
   useEventListener(window, 'resize', resize)
 })

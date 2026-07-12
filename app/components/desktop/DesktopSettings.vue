@@ -66,6 +66,17 @@
         <button @click="enterMatrix">[follow the white rabbit]</button>
       </div>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">screensaver</span>
+      <div class="settings-options">
+        <button
+          v-for="id in saverIds"
+          :key="id"
+          :class="{ 'is-active': saver === id }"
+          @click="saver = id"
+        >[{{ saverNames[id] }}]</button>
+      </div>
+    </div>
 
     <p class="settings-section mt-4"># system</p>
     <p class="settings-note">
@@ -108,6 +119,7 @@ const colorMode = useColorMode()
 const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
 const partyActive = useState(STATE_KEYS.fxParty, () => false)
 const { accent, accents, setAccent } = useAccent()
+const { saver, saverIds, saverNames } = useScreensaverChoice()
 
 const { name, setName } = useIdentity()
 const nameInput = ref(name.value)

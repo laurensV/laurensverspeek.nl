@@ -428,6 +428,18 @@ test('volume tray edits one persisted volume and escape dismisses it', async ({ 
   await expect(pop).toHaveCount(0)
 })
 
+test('settings picks a screensaver and the choice persists', async ({ page }) => {
+  await bootDesktop(page)
+  await page.keyboard.press('Alt+r')
+  await page.locator('.run-input').fill('settings')
+  await page.keyboard.press('Enter')
+  const settings = page.locator('.settings')
+  await settings.waitFor()
+  await settings.locator('button', { hasText: '[mystify]' }).click()
+  await expect(settings.locator('button', { hasText: '[mystify]' })).toHaveClass(/is-active/)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('lvos-saver'))).toBe('mystify')
+})
+
 test('file properties dialog reports size, lines and kind', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-window-actions button[title="Close"]').first().click()
