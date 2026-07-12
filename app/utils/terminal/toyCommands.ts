@@ -165,11 +165,13 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
         const stopSpin = ctx.spin(`asking open-meteo about ${query} ...`)
         try {
           const geo = await $fetch<GeoResult>('https://geocoding-api.open-meteo.com/v1/search', {
-            query: { name: query, count: 1 }
+            query: { name: query, count: 1 },
+            timeout: 10_000
           })
           const spot = geo.results?.[0]
           if (!spot) return error(`weather: unknown place '${query}'`)
           const forecast = await $fetch<ForecastResult>('https://api.open-meteo.com/v1/forecast', {
+            timeout: 10_000,
             query: {
               latitude: spot.latitude,
               longitude: spot.longitude,

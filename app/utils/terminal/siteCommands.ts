@@ -204,7 +204,8 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
         // the events API is keyless but only covers ~90 days / 300 events, so
         // this is an honest recent-activity graph, not the full-year calendar
         return $fetch<{ type: string, created_at: string, payload?: { size?: number } }[]>(
-          `https://api.github.com/users/${GITHUB_USER}/events/public?per_page=100`
+          `https://api.github.com/users/${GITHUB_USER}/events/public?per_page=100`,
+          { timeout: 10_000 }
         )
           .then((events) => {
             const perDay = new Map<string, number>()

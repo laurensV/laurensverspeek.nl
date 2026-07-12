@@ -84,7 +84,13 @@ const connect = () => {
   }
 
   socket.onmessage = (event) => {
-    const msg = JSON.parse(event.data as string) as WireMessage
+    // network input: a non-JSON frame must not throw on every later message
+    let msg: WireMessage
+    try {
+      msg = JSON.parse(event.data as string) as WireMessage
+    } catch {
+      return
+    }
     if (msg.type === 'move') {
       // keep any active speech bubble alive across position updates
       const prev = cursors.value.get(msg.id)

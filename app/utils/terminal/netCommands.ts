@@ -62,20 +62,31 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
         }
         muted(`* Trying ${url.host}...`)
         const stopSpin = ctx.spin(`waiting for ${url.host} ...`)
-        return fetch(url.toString(), { headers: { accept: 'text/plain, application/json, */*' } })
+        return fetch(url.toString(), {
+          headers: { accept: 'text/plain, application/json, */*' },
+          // a host that accepts the connection but never answers must not spin forever
+          signal: AbortSignal.timeout(10_000)
+        })
           .then(async (res) => {
             push('primary', `HTTP ${res.status} ${res.statusText}`.trim())
             const type = res.headers.get('content-type') ?? ''
             out(`content-type: ${type || 'unknown'}`)
             out('')
             const body = await res.text()
-            const text = type.includes('application/json')
-              ? JSON.stringify(JSON.parse(body), null, 2)
-              : body
+            let text = body
+            if (type.includes('application/json')) {
+              // a mislabeled or truncated JSON body still arrived fine — print it
+              // raw rather than blaming the network
+              try {
+                text = JSON.stringify(JSON.parse(body), null, 2)
+              } catch { /* keep the raw body */ }
+            }
             text.split('\n').slice(0, 40).forEach(out)
             if (text.split('\n').length > 40) muted('… (truncated)')
           })
-          .catch(() => error(`curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
+          .catch((err: unknown) => error(err instanceof DOMException && err.name === 'TimeoutError'
+            ? `curl: (28) connection to ${url.host} timed out after 10s`
+            : `curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
           .finally(stopSpin)
       }
     },
