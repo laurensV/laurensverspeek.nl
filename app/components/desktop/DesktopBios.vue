@@ -21,10 +21,14 @@
             <td>[{{ night.warmth.value }}%]</td>
           </tr>
           <tr :class="{ 'is-active': cursor === 3 }">
+            <td>Screensaver</td>
+            <td>[{{ saverNames[saver] }}]</td>
+          </tr>
+          <tr :class="{ 'is-active': cursor === 4 }">
             <td>Color Scheme</td>
             <td>[{{ colorMode.preference }}]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 4 }">
+          <tr :class="{ 'is-active': cursor === 5 }">
             <td>Quiet Boot <span class="bios-note">(skip splash this session)</span></td>
             <td>[{{ quietBoot ? 'Enabled' : 'Disabled' }}]</td>
           </tr>
@@ -57,14 +61,16 @@ const emit = defineEmits<{ exit: [] }>()
 const { wallpapers, wallpaper } = useWallpaper()
 const night = useNightLight()
 const colorMode = useColorMode()
+const { saver, saverIds, saverNames } = useScreensaverChoice()
 
 const cursor = ref(0)
-const ROWS = 5
+const ROWS = 6
 
 const HELP = [
   'Selects the desktop background. The Paint app can add a custom entry.',
   'Warms the display colors in the evening (the displays panel has the same switch).',
   'How warm the night light tints the screen.',
+  'What plays when the desktop idles (the settings app has the same picker).',
   'dark, light, or follow the system.',
   'Skips the site boot splash for the rest of this browser session.'
 ]
@@ -87,6 +93,9 @@ const change = (dir: 1 | -1) => {
   } else if (cursor.value === 2) {
     night.warmth.value = Math.min(100, Math.max(0, night.warmth.value + dir * 5))
   } else if (cursor.value === 3) {
+    const at = saverIds.indexOf(saver.value)
+    saver.value = saverIds[(at + dir + saverIds.length) % saverIds.length]!
+  } else if (cursor.value === 4) {
     const at = THEMES.indexOf(colorMode.preference)
     colorMode.preference = THEMES[(at + dir + THEMES.length) % THEMES.length]!
   } else {

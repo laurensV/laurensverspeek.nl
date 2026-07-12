@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { effectProcs, SYSTEM_PROCS, killByPid, windowPid, windowProcs, lvshProc, lvosSessionProc, gameProc, LVSH_PID } from '../app/utils/terminal/effectProcs'
+import { effectProcs, SYSTEM_PROCS, killByPid, windowPid, windowProcs, lvshProc, lvosSessionProc, gameProc, LVSH_PID, registerSaverProc, unregisterSaverProc, saverProcs, SAVER_PID } from '../app/utils/terminal/effectProcs'
 import { ref } from 'vue'
 
 const makeEffects = () => ({
@@ -86,5 +86,18 @@ describe('unified process table', () => {
   it('still protects init and the easter eggs', () => {
     expect(killByPid([], SYSTEM_PROCS, 1)).toEqual({ ok: false, reason: 'not-permitted' })
     expect(killByPid([], SYSTEM_PROCS, 77)).toEqual({ ok: false, reason: 'not-permitted' })
+  })
+
+  it('the screensaver is a killable proc while the desktop has one registered', () => {
+    expect(saverProcs()).toEqual([]) // nothing registered: no ghost process
+    let awake = false
+    let saverOn = true
+    registerSaverProc({ running: () => saverOn, wake: () => { awake = true; saverOn = false } })
+    expect(killByPid(saverProcs(), SYSTEM_PROCS, SAVER_PID)).toEqual({ ok: true, name: 'screensaver.scr' })
+    expect(awake).toBe(true)
+    // once woken it reads as not-running, like any dormant effect
+    expect(killByPid(saverProcs(), SYSTEM_PROCS, SAVER_PID)).toEqual({ ok: false, reason: 'not-running' })
+    unregisterSaverProc()
+    expect(saverProcs()).toEqual([])
   })
 })

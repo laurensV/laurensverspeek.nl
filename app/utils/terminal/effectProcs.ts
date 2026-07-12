@@ -83,6 +83,23 @@ export function lvosSessionProc(logout: () => void): EffectProc {
   return { pid: LVOS_SESSION_PID, name: 'lvos-session', running: () => true, stop: logout }
 }
 
+// The idle screensaver is a fullscreen takeover like matrix or the boss key,
+// so it gets a seat in the same process table: the desktop registers hooks
+// while mounted, and `kill 1099` wakes it like any other effect.
+export const SAVER_PID = 1099
+let saverHooks: { running: () => boolean, wake: () => void } | null = null
+export const registerSaverProc = (hooks: { running: () => boolean, wake: () => void }) => {
+  saverHooks = hooks
+}
+export const unregisterSaverProc = () => {
+  saverHooks = null
+}
+export function saverProcs(): EffectProc[] {
+  if (!saverHooks) return []
+  const hooks = saverHooks
+  return [{ pid: SAVER_PID, name: 'screensaver.scr', running: () => hooks.running(), stop: () => hooks.wake() }]
+}
+
 export type KillResult =
   | { ok: true, name: string }
   | { ok: false, reason: 'not-running' | 'not-permitted' | 'no-such-process' }

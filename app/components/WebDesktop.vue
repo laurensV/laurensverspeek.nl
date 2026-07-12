@@ -175,6 +175,7 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { dirEntries } from '~/utils/terminal/filesystem'
 import { storageDegraded } from '~/utils/terminal/storageHealth'
+import { registerSaverProc, unregisterSaverProc } from '~/utils/terminal/effectProcs'
 import { storageGet } from '~/utils/safeStorage'
 import type { GitCommit } from '~/utils/terminal/gitLog'
 import { profile } from '~/data/profile'
@@ -273,6 +274,10 @@ watch(idle, (isIdle) => {
   if (!isIdle) dismissedIdle.value = false
 })
 const wakeScreensaver = () => (dismissedIdle.value = true)
+// the saver joins the one process table while the desktop lives — ps sees it,
+// kill 1099 wakes it, exactly like the other fullscreen effects
+onMounted(() => registerSaverProc({ running: () => screensaverOn.value, wake: wakeScreensaver }))
+onUnmounted(unregisterSaverProc)
 
 // ---- right-click context menu ----
 const contextMenu = reactive({ open: false, x: 0, y: 0 })

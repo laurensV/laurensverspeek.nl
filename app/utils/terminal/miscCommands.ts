@@ -21,6 +21,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const fontScale = useTermFontScale()
   // the SAME inbox the lvOS mail app renders — reading here clears its badge
   const lvosMail = useLvosMail()
+  // the one real volume: taskbar tray, media app and this command share it
+  const sound = useVolume()
 
   return {
     mail: {
@@ -105,6 +107,41 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           fontScale.set(value)
         }
         out(`font scale: ${fontScale.scale.value}×`)
+      }
+    },
+    volume: {
+      category: 'system',
+      usage: 'volume [0–100|mute|unmute]',
+      description: 'Set the sound volume (same one as the lvOS tray)',
+      examples: ['volume', 'volume 40', 'volume mute'],
+      argCandidates: () => ['mute', 'unmute'],
+      exec: (args) => {
+        const gauge = () => {
+          const filled = Math.round(sound.volume.value / 10)
+          const bar = '█'.repeat(filled) + '░'.repeat(10 - filled)
+          return `[${bar}] ${sound.volume.value}%${sound.muted.value ? ' (muted)' : ''}`
+        }
+        const arg = args[0]?.toLowerCase()
+        if (!arg) {
+          out(`volume ${gauge()}`)
+          muted(`'volume <0–100>' sets it, 'volume mute' silences the chiptunes`)
+          return
+        }
+        if (arg === 'mute') {
+          sound.muted.value = true
+          return out(`volume ${gauge()}`)
+        }
+        if (arg === 'unmute') {
+          sound.muted.value = false
+          return out(`volume ${gauge()}`)
+        }
+        const value = Number(arg)
+        if (!Number.isFinite(value) || value < 0 || value > 100) {
+          return error(`volume: give me 0–100, 'mute' or 'unmute'`)
+        }
+        sound.volume.value = Math.round(value)
+        if (sound.volume.value > 0) sound.muted.value = false
+        out(`volume ${gauge()}`)
       }
     },
     reboot: {

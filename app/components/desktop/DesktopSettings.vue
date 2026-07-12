@@ -77,6 +77,26 @@
         >[{{ saverNames[id] }}]</button>
       </div>
     </div>
+    <div class="settings-row">
+      <span class="settings-label">night light</span>
+      <div class="settings-options">
+        <button :class="{ 'is-active': nightLight.enabled.value }" @click="nightLight.enabled.value = true">[on]</button>
+        <button :class="{ 'is-active': !nightLight.enabled.value }" @click="nightLight.enabled.value = false">[off]</button>
+      </div>
+    </div>
+
+    <p class="settings-section mt-4"># sound</p>
+    <div class="settings-row">
+      <span class="settings-label">volume</span>
+      <div class="settings-volume">
+        <input v-model.number="sound.volume.value" type="range" min="0" max="100" aria-label="Volume">
+        <span class="settings-volume-pct">{{ sound.muted.value ? 'muted' : `${sound.volume.value}%` }}</span>
+        <div class="settings-options">
+          <button @click="sound.toggleMute()">[{{ sound.muted.value ? 'unmute' : 'mute' }}]</button>
+        </div>
+      </div>
+    </div>
+    <p class="settings-note">// the one volume — tray, media app and the terminal's `volume` all share it</p>
 
     <p class="settings-section mt-4"># system</p>
     <p class="settings-note">
@@ -120,6 +140,8 @@ const { crtActive, matrixActive, toggleCrt } = useSiteEffects()
 const partyActive = useState(STATE_KEYS.fxParty, () => false)
 const { accent, accents, setAccent } = useAccent()
 const { saver, saverIds, saverNames } = useScreensaverChoice()
+const nightLight = useNightLight()
+const sound = useVolume()
 
 const { name, setName } = useIdentity()
 const nameInput = ref(name.value)
@@ -184,6 +206,24 @@ onUnmounted(() => clearTimeout(disarmTimer))
 
   .settings-label {
     color: hsl(var(--lv-scheme-hs), 80%);
+  }
+}
+
+.settings-volume {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input[type='range'] {
+    width: 8rem;
+    accent-color: var(--bulma-primary);
+  }
+
+  .settings-volume-pct {
+    min-width: 3.2em;
+    color: hsl(var(--lv-scheme-hs), 55%);
+    font-size: 0.7rem;
+    text-align: right;
   }
 }
 
