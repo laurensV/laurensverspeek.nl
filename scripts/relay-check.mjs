@@ -1,0 +1,234 @@
+// Live integration checks for the websocket relay: boots realtime/
+// cursors-server.mjs on a scratch port with scratch state files, then runs
+// real two-client conversations against every subsystem — world, scores,
+// pong, chess. Run with `npm run test:relay`. Exits non-zero on any failure.
+
+import { spawn } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import process from 'node:process'
+import WebSocket from 'ws'
+
+const PORT = Number(process.env.RELAY_CHECK_PORT) || 8873
+const URL = `ws://localhost:${PORT}`
+
+let passed = 0
+let failed = 0
+/** @param {string} name @param {boolean} ok @param {string} [detail] */
+const check = (name, ok, detail = '') => {
+  if (ok) {
+    passed++
+    console.log(`  ✓ ${name}`)
+  } else {
+    failed++
+    console.error(`  ✗ ${name}${detail ? ` — ${detail}` : ''}`)
+  }
+}
+
+/** A tiny test client: buffers every frame, lets checks await one by type. */
+class Client {
+  /** @param {string} url */
+  constructor(url) {
+    this.ws = new WebSocket(url)
+    /** @type {Record<string, unknown>[]} */
+    this.frames = []
+    this.ws.on('message', (raw) => {
+      try {
+        this.frames.push(JSON.parse(String(raw)))
+      } catch { /* ignore non-json */ }
+    })
+    this.open = new Promise((resolve, reject) => {
+      this.ws.once('open', resolve)
+      this.ws.once('error', reject)
+    })
+  }
+
+  /** @param {object} msg */
+  send(msg) {
+    this.ws.send(JSON.stringify(msg))
+  }
+
+  /** Await the next frame of `type` (consumes it). Null on timeout.
+   * @param {string} type @param {number} [timeoutMs] @returns {Promise<Record<string, unknown> | null>} */
+  async next(type, timeoutMs = 4000) {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const index = this.frames.findIndex((frame) => frame.type === type)
+      if (index >= 0) return this.frames.splice(index, 1)[0] ?? null
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+    return null
+  }
+
+  /** True if NO frame of `type` arrives within the window.
+   * @param {string} type @param {number} [windowMs] */
+  async silent(type, windowMs = 700) {
+    return (await this.next(type, windowMs)) === null
+  }
+
+  close() {
+    this.ws.close()
+  }
+}
+
+// ---- boot the relay on scratch state ----------------------------------------
+
+const scratch = mkdtempSync(join(tmpdir(), 'relay-check-'))
+const server = spawn('node', ['realtime/cursors-server.mjs'], {
+  env: {
+    ...process.env,
+    PORT: String(PORT),
+    WORLD_FILE: join(scratch, 'world.json'),
+    SCORES_FILE: join(scratch, 'scores.json'),
+    WORLD_COOLDOWN_MS: '1500'
+  },
+  stdio: ['ignore', 'pipe', 'inherit']
+})
+await new Promise((resolve, reject) => {
+  const bootTimeout = setTimeout(() => reject(new Error('relay did not boot within 8s')), 8000)
+  server.stdout.on('data', (chunk) => {
+    if (String(chunk).includes('listening')) {
+      clearTimeout(bootTimeout)
+      resolve(undefined)
+    }
+  })
+  server.once('exit', (code) => reject(new Error(`relay exited early (${code})`)))
+})
+
+const shutdown = () => {
+  server.kill()
+  rmSync(scratch, { recursive: true, force: true })
+}
+
+try {
+  // ---- pixel world ----------------------------------------------------------
+  console.log('world:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'world-join' })
+    b.send({ type: 'world-join' })
+    const state = await a.next('world-state')
+    check('join returns the board state', !!state && typeof state.board === 'string' && typeof state.size === 'number')
+    await b.next('world-state')
+    a.send({ type: 'pixel', x: 3, y: 4, c: 5, name: 'checker' })
+    a.send({ type: 'pixel', x: 9, y: 9, c: 1 }) // straight into the cooldown window
+    const seenByB = await b.next('pixel')
+    check('a placement reaches the other member', !!seenByB && seenByB.x === 3 && seenByB.y === 4 && seenByB.c === 5)
+    await a.next('pixel')
+    const denied = await a.next('pixel-denied')
+    check('the cooldown denies a rapid second pixel', !!denied)
+    b.send({ type: 'world-who', x: 3, y: 4 })
+    const who = await b.next('pixel-info')
+    check('provenance names the placer', !!who && who.by === 'checker')
+    a.close()
+    b.close()
+  }
+
+  // ---- leaderboard ------------------------------------------------------------
+  console.log('scores:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'score-submit', game: 'snake', score: 42, name: 'checker' })
+    const board = await b.next('score-board')
+    const entries = /** @type {{ name: string, score: number }[]} */ (board?.board ?? [])
+    check('a submission broadcasts the updated board', board?.game === 'snake' && entries.some((entry) => entry.name === 'checker' && entry.score === 42))
+    b.send({ type: 'scores-get' })
+    const boards = await b.next('scores')
+    check('scores-get returns all boards', !!boards && typeof boards.boards === 'object')
+    a.close()
+    b.close()
+  }
+
+  // ---- online pong ------------------------------------------------------------
+  console.log('pong:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'pong-join', name: 'lefty' })
+    check('the first joiner waits in the queue', !!(await a.next('pong-wait')))
+    b.send({ type: 'pong-join', name: 'righty' })
+    const startA = await a.next('pong-start')
+    const startB = await b.next('pong-start')
+    check('two joiners are matched l/r with names', startA?.side === 'l' && startB?.side === 'r' && startA?.foe === 'righty' && startB?.foe === 'lefty')
+    check('the server ticks state to both', !!(await a.next('pong-state')) && !!(await b.next('pong-state')))
+    b.close() // rage-quit
+    const end = await a.next('pong-end')
+    check('a disconnect forfeits to the opponent', end?.winner === 'l' && end?.forfeit === true)
+    a.close()
+  }
+
+  // ---- online chess -------------------------------------------------------------
+  console.log('chess:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'chess-join', name: 'white-hat' })
+    check('the first joiner waits in the queue', !!(await a.next('chess-wait')))
+    b.send({ type: 'chess-join', name: 'black-hat' })
+    const startA = await a.next('chess-start')
+    const startB = await b.next('chess-start')
+    check('two joiners are matched w/b with names', startA?.side === 'w' && startB?.side === 'b' && startA?.foe === 'black-hat' && startB?.foe === 'white-hat')
+
+    b.send({ type: 'chess-move', from: 12, to: 28 }) // black tries to move first
+    check('a move out of turn is ignored', await b.silent('chess-moved'))
+
+    a.send({ type: 'chess-move', from: 52, to: 36 }) // e2–e4
+    const movedA = await a.next('chess-moved')
+    const movedB = await b.next('chess-moved')
+    const moveOf = (/** @type {Record<string, unknown> | null} */ frame) => /** @type {{ from?: number, to?: number } | undefined} */ (frame?.move)
+    check('a legal move is applied and broadcast to both', moveOf(movedA)?.from === 52 && moveOf(movedA)?.to === 36 && moveOf(movedB)?.from === 52)
+
+    a.send({ type: 'chess-move', from: 51, to: 35 }) // white again, out of turn
+    check('the mover cannot move twice', await a.silent('chess-moved'))
+
+    b.send({ type: 'chess-move', from: 0, to: 63 }) // a rook teleport, please
+    check('an illegal move is rejected by the shared rules', await b.silent('chess-moved'))
+
+    b.send({ type: 'chess-move', from: 12, to: 28 }) // e7–e5, black's actual reply
+    const reply = await a.next('chess-moved')
+    check("black's legal reply comes through", moveOf(reply)?.from === 12 && moveOf(reply)?.to === 28)
+    await b.next('chess-moved')
+
+    b.close() // storm off mid-game
+    const end = await a.next('chess-end')
+    check('a disconnect forfeits to the opponent', end?.winner === 'w' && end?.reason === 'forfeit')
+    a.close()
+  }
+
+  // ---- fool's mate: the server itself declares checkmate -----------------------
+  console.log('chess endgame:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'chess-join', name: 'doomed' })
+    await a.next('chess-wait')
+    b.send({ type: 'chess-join', name: 'queen-slinger' })
+    await Promise.all([a.next('chess-start'), b.next('chess-start')])
+    // 1. f3 e5 2. g4 Qh4# (white digs its own grave; gate is 250ms between moves)
+    /** @type {[Client, number, number][]} */
+    const moves = [[a, 53, 45], [b, 12, 28], [a, 54, 38], [b, 3, 39]]
+    for (const [client, from, to] of moves) {
+      await new Promise((resolve) => setTimeout(resolve, 300)) // respect the flood gate
+      client.send({ type: 'chess-move', from, to })
+      await Promise.all([a.next('chess-moved'), b.next('chess-moved')])
+    }
+    const endA = await a.next('chess-end')
+    const endB = await b.next('chess-end')
+    check("fool's mate ends the match with black the winner", endA?.winner === 'b' && endA?.reason === 'checkmate' && endB?.winner === 'b')
+    a.close()
+    b.close()
+  }
+} finally {
+  shutdown()
+}
+
+console.log(`\n${passed} passed, ${failed} failed`)
+process.exit(failed ? 1 : 0)

@@ -21,6 +21,7 @@
     "postgenerate": "node scripts/generate-og-png.mjs && node scripts/generate-resume.mjs",
     "resume": "node scripts/generate-resume.mjs",
     "test:e2e": "playwright test",
+    "test:relay": "node scripts/relay-check.mjs",
     "postinstall": "nuxt prepare",
     "prepare": "husky",
     "test:nuxt": "vitest run --config vitest.nuxt.config.ts"
