@@ -107,6 +107,11 @@ const insertTab = (event: KeyboardEvent) => {
   height: 100%;
   min-height: 22rem;
   font-size: 0.8rem;
+
+  // side-by-side editor + preview are each too narrow on a phone; stack them
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
 }
 
 .play-editor,
