@@ -6,6 +6,10 @@ Personal portfolio of Laurens Verspeek — built with [Nuxt 4](https://nuxt.com)
 
 A minimalist developer portfolio on the surface, with an unusual amount hidden a keystroke away.
 
+| the terminal | lvOS | the pixel world |
+| --- | --- | --- |
+| ![The terminal open over the homepage](docs/screenshots/terminal.png) | ![The lvOS desktop with tiled windows](docs/screenshots/lvos.png) | ![The shared 128×128 pixel world](docs/screenshots/world.png) |
+
 ## The terminal
 
 Press <kbd>~</kbd> (or <kbd>`</kbd>) anywhere to open the interactive shell. It is the centerpiece — a real command interpreter shared by the navbar, footer and the lvOS desktop.
