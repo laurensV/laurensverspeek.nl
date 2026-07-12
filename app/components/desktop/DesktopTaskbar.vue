@@ -17,6 +17,7 @@
       <button @click="emit('run'); startOpen = false">▷ run… (alt+r)</button>
       <button @click="emit('iso'); startOpen = false">⤓ download lvos.iso</button>
       <button @click="emit('screenshot'); startOpen = false">⌜⌟ screenshot</button>
+      <button @click="emit('update'); startOpen = false">⟳ system update</button>
       <p class="lvos-start-label">wallpaper</p>
       <div class="lvos-wallpapers">
         <button
@@ -163,6 +164,7 @@ const emit = defineEmits<{
   run: []
   iso: []
   screenshot: []
+  update: []
 }>()
 
 // these are v-models so the parent can dismiss them on Escape

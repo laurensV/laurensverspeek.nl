@@ -160,7 +160,11 @@
         @run="runOpen = true"
         @iso="downloadIso"
         @screenshot="takeScreenshot"
+        @update="updateOpen = true"
       />
+
+      <!-- "System Update": installs real commits with maximum ceremony -->
+      <LazyDesktopUpdate v-if="updateOpen" @done="updateOpen = false" />
     </div>
   </Teleport>
 </template>
@@ -171,6 +175,8 @@ import type { DesktopWindow } from '~/composables/useWindowManager'
 import { DESKTOP_APPS, WINDOW_TITLES, isWideWindow } from '~/utils/desktopApps'
 import { dirEntries } from '~/utils/terminal/filesystem'
 import { storageDegraded } from '~/utils/terminal/storageHealth'
+import { storageGet } from '~/utils/safeStorage'
+import type { GitCommit } from '~/utils/terminal/gitLog'
 import { profile } from '~/data/profile'
 
 // Prop-less window apps render through one <component :is>, each still its own
@@ -312,9 +318,28 @@ const windowStyle = (win: DesktopWindow) =>
         ...genie[win.id]
       }
 
+const updateOpen = ref(false)
+
+// nudge when real commits shipped since the last "system update" install
+const nudgeUpdates = async () => {
+  try {
+    const commits = await $fetch<GitCommit[]>('/git-log.json')
+    const newest = commits[0]?.hash
+    const seen = storageGet('lv-updates-hash')
+    if (!newest || newest === seen) return
+    const pending = seen
+      ? Math.max(1, commits.findIndex((c) => c.hash === seen))
+      : commits.length
+    notify('⟳', 'Updates available', `${pending > 99 ? '99+' : pending} pending — start menu → system update`)
+  } catch {
+    // offline: no update server, no nudge
+  }
+}
+
 const onBootDone = () => {
   booting.value = false
   notify('⚡', 'Welcome to lvOS 2.0', 'right-click the desktop for a menu')
+  setTimeout(() => void nudgeUpdates(), 12_000)
   // the battery nudge tells the truth where the Battery API exists, and
   // keeps the classic bit where it doesn't
   setTimeout(() => {

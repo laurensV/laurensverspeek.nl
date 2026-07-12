@@ -347,6 +347,21 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await expect(page.locator('.lvos-window[data-win="blog"]')).toBeVisible()
 })
 
+test('system update installs real commits and remembers the newest hash', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-start').click()
+  await page.locator('.lvos-start-menu button', { hasText: 'system update' }).click()
+  const update = page.locator('.update')
+  await update.waitFor()
+  // real commit subjects roll by; skip the theatrics and land on "up to date"
+  await update.locator('.update-btn', { hasText: 'skip' }).click()
+  await expect(update.locator('.update-title')).toContainText('up to date')
+  const stored = await page.evaluate(() => localStorage.getItem('lv-updates-hash'))
+  expect(stored).toMatch(/^[0-9a-f]{7,}$/)
+  await update.locator('.update-btn', { hasText: 'back to desktop' }).click()
+  await expect(update).toHaveCount(0)
+})
+
 test('the start menu downloads a very real lvos.iso', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-start').click()
