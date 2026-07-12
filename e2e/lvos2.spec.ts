@@ -324,13 +324,19 @@ test('the mail app persists read state and the feed reader eats its own rss', as
   await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
   const mail = page.locator('.mail')
   await mail.waitFor()
-  await expect(mail.locator('.mail-count')).toContainText('5 unread')
+  // 5 house mails + one newsletter mail per real blog post
+  await expect(mail.locator('.mail-count')).toContainText('10 unread')
   await mail.locator('.mail-row', { hasText: 'boss key' }).click()
   await expect(mail.locator('.mail-body')).toContainText('very convincing spreadsheet')
-  await expect(mail.locator('.mail-count')).toContainText('4 unread')
+  await expect(mail.locator('.mail-count')).toContainText('9 unread')
   await page.locator('.lvos-window[data-win="mail"] .lvos-window-actions button[title="Close"]').click()
   await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
-  await expect(page.locator('.mail .mail-count')).toContainText('4 unread')
+  await expect(page.locator('.mail .mail-count')).toContainText('9 unread')
+  // a blog-post mail carries a link that opens the post in the blog app
+  await page.locator('.mail .mail-row', { hasText: 'new post:' }).first().click()
+  await page.locator('.mail .mail-open-post').click()
+  await expect(page.locator('.lvos-window[data-win="blog"]')).toBeVisible()
+  await page.locator('.lvos-window[data-win="blog"] .lvos-window-actions button[title="Close"]').click()
   await page.locator('.lvos-window[data-win="mail"] .lvos-window-actions button[title="Close"]').click()
   // rss: the reader lists the site's real feed and opens posts in the blog app
   await page.locator('.lvos-icon', { hasText: /^rss$/ }).click()
@@ -371,9 +377,9 @@ test('the hall of fame gathers every high score in one board', async ({ page }) 
 test('desktop icons wear live badges for unread mail and binned files', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-window-actions button[title="Close"]').first().click()
-  // five unread mails out of the box
+  // ten unread out of the box: five house mails + five blog-post newsletters
   const mailBadge = page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).locator('.lvos-icon-badge')
-  await expect(mailBadge).toHaveText('5')
+  await expect(mailBadge).toHaveText('10')
   // rm a file: the recycle bin icon counts it
   await page.locator('.lvos-icon', { hasText: /^terminal$/ }).first().click()
   await page.locator('#desktop-terminal-input').waitFor()
@@ -387,7 +393,7 @@ test('desktop icons wear live badges for unread mail and binned files', async ({
   // reading a mail drops the mail badge
   await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^mail$/ }) }).click()
   await page.locator('.mail .mail-row', { hasText: 'prince' }).click()
-  await expect(mailBadge).toHaveText('4')
+  await expect(mailBadge).toHaveText('9')
 })
 
 test('the screenshot tool files a snapshot into the gallery', async ({ page }) => {

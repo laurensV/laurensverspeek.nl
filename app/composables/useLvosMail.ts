@@ -11,6 +11,8 @@ export interface LvosMail {
   subject: string
   date: string
   body: string[]
+  /** set on blog-post mails: the post to open in the blog app */
+  postPath?: string
 }
 
 export const LVOS_MAILS: LvosMail[] = [
@@ -90,13 +92,14 @@ export const LVOS_MAILS: LvosMail[] = [
   }
 ]
 
-const MAIL_IDS = LVOS_MAILS.map((mail) => mail.id)
-
 const READ_KEY = 'lvos-mail-read'
 let restored = false
+let postsRequested = false
 
 export function useLvosMail() {
   const read = useState<Set<string>>('lvos-mail-read-state', () => new Set())
+  // real blog posts delivered as newsletter mails — the badge means something
+  const postMails = useState<LvosMail[]>('lvos-mail-posts', () => [])
 
   if (import.meta.client && !restored) {
     restored = true
@@ -104,13 +107,46 @@ export function useLvosMail() {
     if (saved) read.value = new Set(saved)
   }
 
+  // fetch once per app; every caller sits in a setup/factory context, so
+  // queryCollection still finds the Nuxt app
+  if (import.meta.client && !postsRequested) {
+    postsRequested = true
+    void queryCollection('blog')
+      .order('date', 'DESC')
+      .all()
+      .then((posts) => {
+        postMails.value = posts.map((post) => ({
+          id: `post:${post.path}`,
+          from: 'the blog',
+          address: 'blog@lvos.local',
+          subject: `new post: ${post.title}`,
+          date: post.date
+            ? new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toLowerCase()
+            : '',
+          body: [
+            post.description,
+            '',
+            '→ open it below, or find it in the blog app'
+          ],
+          postPath: post.path
+        }))
+      })
+      .catch((err: unknown) => {
+        // offline/hiccup: the fake inbox still works, posts just don't arrive
+        console.warn('[mail] blog posts unavailable:', err)
+        postsRequested = false
+      })
+  }
+
+  const mails = computed<LvosMail[]>(() => [...postMails.value, ...LVOS_MAILS])
+
   const markRead = (id: string) => {
     if (read.value.has(id)) return
     read.value = new Set(read.value).add(id)
     storageSetJson(READ_KEY, [...read.value])
   }
 
-  const unread = computed(() => MAIL_IDS.filter((id) => !read.value.has(id)).length)
+  const unread = computed(() => mails.value.filter((mail) => !read.value.has(mail.id)).length)
 
-  return { read, markRead, unread }
+  return { read, markRead, unread, mails }
 }

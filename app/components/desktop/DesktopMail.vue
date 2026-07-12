@@ -23,26 +23,27 @@
         <span class="mail-body-from">from: {{ current.from }} &lt;{{ current.address }}&gt;</span>
       </p>
       <p v-for="(line, i) in current.body" :key="i" class="mail-body-line">{{ line }}</p>
+      <button v-if="current.postPath" class="mail-open-post" @click="emit('post', current.postPath)">
+        [read the full post →]
+      </button>
     </div>
     <p v-else class="mail-empty">select a message — the prince can wait, but not forever</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { LVOS_MAILS } from '~/composables/useLvosMail'
+// The lvOS mail client: real blog posts arrive as newsletter mails on top of
+// the lovingly fake inbox. Read state lives in useLvosMail (shared with the
+// desktop icon's badge); replies do not exist, the prince remains hopeful.
 
-// The lvOS mail client: a lovingly fake inbox. Read state lives in
-// useLvosMail (shared with the desktop icon's badge); replies do not exist,
-// the prince remains hopeful.
+const emit = defineEmits<{ post: [path: string] }>()
 
 // the messages themselves live in useLvosMail, next to the read-state,
 // so the icon badge and the inbox can never disagree
-const mails = LVOS_MAILS
-
-const { read, markRead, unread } = useLvosMail()
+const { read, markRead, unread, mails } = useLvosMail()
 const openId = ref<string | null>(null)
 
-const current = computed(() => mails.find((msg) => msg.id === openId.value))
+const current = computed(() => mails.value.find((msg) => msg.id === openId.value))
 
 const openMail = (id: string) => {
   openId.value = id
@@ -64,6 +65,20 @@ const openMail = (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
+}
+
+.mail-open-post {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--bulma-primary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .mail-row {

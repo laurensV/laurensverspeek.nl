@@ -108,6 +108,7 @@
         <LazyDesktopVim v-else-if="win.id === 'vim'" :open-path="vimOpenPath" @close="closeWindow('vim')" />
         <LazyDesktopTaskManager v-else-if="win.id === 'taskmgr'" />
         <LazyDesktopRss v-else-if="win.id === 'rss'" @post="openBlogPost" />
+        <LazyDesktopMail v-else-if="win.id === 'mail'" @post="openBlogPost" />
         <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
         <component :is="SIMPLE_APPS[win.id]" v-else-if="SIMPLE_APPS[win.id]" />
@@ -194,7 +195,6 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   camera: defineAsyncComponent(() => import('~/components/desktop/DesktopCamera.vue')),
   chess: defineAsyncComponent(() => import('~/components/desktop/DesktopChess.vue')),
   trash: defineAsyncComponent(() => import('~/components/desktop/DesktopTrash.vue')),
-  mail: defineAsyncComponent(() => import('~/components/desktop/DesktopMail.vue')),
   scores: defineAsyncComponent(() => import('~/components/desktop/DesktopScores.vue')),
   sysmon: defineAsyncComponent(() => import('~/components/desktop/DesktopSysMon.vue')),
   displays: defineAsyncComponent(() => import('~/components/desktop/DesktopDisplays.vue'))
