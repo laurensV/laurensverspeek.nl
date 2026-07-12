@@ -98,7 +98,7 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
 .saver {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: 10040; // above the taskbar (10000) and toasts (10002); below the night-light wash
   background-color: hsl(var(--lv-scheme-hs), 3%);
   cursor: none;
   outline: none;

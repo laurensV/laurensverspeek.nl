@@ -62,7 +62,7 @@ onUnmounted(() => clearTimeout(unlockTimer))
 .lock {
   position: absolute;
   inset: 0;
-  z-index: 60; // above every window and the taskbar
+  z-index: 10060; // above every window, pinned windows (z+1000), the taskbar (10000) and toasts (10002)
   display: flex;
   align-items: center;
   justify-content: center;
