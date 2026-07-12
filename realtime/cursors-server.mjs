@@ -16,6 +16,7 @@ import {
 } from './world-core.mjs'
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 import { createPongState, stepPong, movePaddle, PONG_TICK_MS } from './pong-core.mjs'
+import { initialState as chessInitial, legalMoves as chessLegalMoves, applyMove as chessApply, gameOver as chessOver } from './chess-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
@@ -180,6 +181,48 @@ const dropPongPlayer = (socket) => {
   if (match) endPongMatch(match, socket === match.left ? 'r' : 'l', true)
 }
 
+// ---- online chess: turn-based matches, validated by the shared rules ----
+/**
+ * @typedef {{
+ *   white: import('ws').WebSocket, black: import('ws').WebSocket,
+ *   state: import('./chess-core.mjs').ChessState
+ * }} ChessMatch
+ */
+/** @type {{ socket: import('ws').WebSocket, name: string } | null} */
+let chessWaiting = null
+/** @type {Map<import('ws').WebSocket, ChessMatch>} */
+const chessMatches = new Map()
+// chess is turn-based; the gate just blunts scripted floods
+const chessMoveGate = new CooldownGate(250)
+
+/** @param {ChessMatch} match @param {'w' | 'b' | null} winner @param {'checkmate' | 'stalemate' | 'forfeit'} reason */
+const endChessMatch = (match, winner, reason) => {
+  chessMatches.delete(match.white)
+  chessMatches.delete(match.black)
+  const payload = wire({ type: 'chess-end', winner, reason })
+  sendTo(match.white, payload)
+  sendTo(match.black, payload)
+}
+
+/** @param {import('ws').WebSocket} a @param {string} aName @param {import('ws').WebSocket} b @param {string} bName */
+const startChessMatch = (a, aName, b, bName) => {
+  // the earlier queuer gets white
+  /** @type {ChessMatch} */
+  const match = { white: a, black: b, state: chessInitial() }
+  chessMatches.set(a, match)
+  chessMatches.set(b, match)
+  sendTo(a, wire({ type: 'chess-start', side: 'w', foe: bName }))
+  sendTo(b, wire({ type: 'chess-start', side: 'b', foe: aName }))
+}
+
+/** A player left (message or disconnect): forfeit their match / clear the queue.
+ * @param {import('ws').WebSocket} socket */
+const dropChessPlayer = (socket) => {
+  if (chessWaiting?.socket === socket) chessWaiting = null
+  const match = chessMatches.get(socket)
+  if (match) endChessMatch(match, socket === match.white ? 'b' : 'w', 'forfeit')
+}
+
 const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
 
@@ -253,6 +296,44 @@ wss.on('connection', (socket) => {
       if (!match || typeof msg.y !== 'number') return
       if (pongMoveGate.check(id, Date.now()) > 0) return
       movePaddle(match.state, socket === match.left ? 'l' : 'r', msg.y)
+      return
+    }
+    // ---- online chess protocol (server validates with the shared rules) ----
+    if (msg.type === 'chess-join') {
+      if (chessMatches.has(socket) || chessWaiting?.socket === socket) return
+      const name = cleanName(msg.name) || 'visitor'
+      if (chessWaiting && chessWaiting.socket.readyState === 1) {
+        const foe = chessWaiting
+        chessWaiting = null
+        startChessMatch(foe.socket, foe.name, socket, name)
+      } else {
+        chessWaiting = { socket, name }
+        sendTo(socket, wire({ type: 'chess-wait' }))
+      }
+      return
+    }
+    if (msg.type === 'chess-leave') {
+      dropChessPlayer(socket)
+      return
+    }
+    if (msg.type === 'chess-move') {
+      const match = chessMatches.get(socket)
+      if (!match || typeof msg.from !== 'number' || typeof msg.to !== 'number') return
+      if (chessMoveGate.check(id, Date.now()) > 0) return
+      // only the side to move may move — and only to a legal square. The full
+      // move (promo/castle/ep) comes from the server's own legal list; nothing
+      // else in the client frame is trusted.
+      const mySide = socket === match.white ? 'w' : 'b'
+      if (match.state.turn !== mySide) return
+      const move = chessLegalMoves(match.state).find((m) => m.from === msg.from && m.to === msg.to)
+      if (!move) return
+      match.state = chessApply(match.state, move)
+      const payload = wire({ type: 'chess-moved', move })
+      sendTo(match.white, payload)
+      sendTo(match.black, payload)
+      const over = chessOver(match.state)
+      if (over === 'checkmate') endChessMatch(match, mySide, 'checkmate')
+      else if (over === 'stalemate') endChessMatch(match, null, 'stalemate')
       return
     }
     // ---- pixel world protocol (server-authoritative) ----
@@ -334,6 +415,7 @@ wss.on('connection', (socket) => {
 
   socket.on('close', () => {
     dropPongPlayer(socket) // mid-match disconnects forfeit to the opponent
+    dropChessPlayer(socket)
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state, or the maps grow for the relay's
     // whole uptime (one entry per id that ever placed/moved/chatted)
@@ -342,6 +424,7 @@ wss.on('connection', (socket) => {
     chatGate.last.delete(id)
     scoreGate.last.delete(id)
     pongMoveGate.last.delete(id)
+    chessMoveGate.last.delete(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)

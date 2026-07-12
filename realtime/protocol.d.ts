@@ -5,6 +5,7 @@
 // typecheck instead of failing quietly at runtime.
 
 import type { ScoreEntry, ScoreBoards } from './scores-core.mjs'
+import type { ChessMove } from './chess-core.mjs'
 export type { ScoreEntry, ScoreBoards }
 
 // ---- client → server ----
@@ -24,6 +25,12 @@ export interface PongJoinIn { type: 'pong-join', name?: string }
 export interface PongLeaveIn { type: 'pong-leave' }
 export interface PongMoveIn { type: 'pong-move', y: number }
 
+export interface ChessJoinIn { type: 'chess-join', name?: string }
+export interface ChessLeaveIn { type: 'chess-leave' }
+/** A move intent: from/to squares only — the server derives promo/castle/ep
+ * from its own legal-move list and never trusts the rest. */
+export interface ChessMoveIn { type: 'chess-move', from: number, to: number }
+
 export type ClientMessage =
   | CursorMoveIn
   | SayIn
@@ -37,6 +44,9 @@ export type ClientMessage =
   | PongJoinIn
   | PongLeaveIn
   | PongMoveIn
+  | ChessJoinIn
+  | ChessLeaveIn
+  | ChessMoveIn
 
 // ---- server → client ----
 
@@ -91,4 +101,17 @@ export interface PongEndMsg { type: 'pong-end', winner: 'l' | 'r', forfeit?: boo
 /** What the online-pong client consumes. */
 export type PongServerMessage = PongWaitMsg | PongStartMsg | PongStateMsg | PongEndMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage
+export interface ChessWaitMsg { type: 'chess-wait' }
+export interface ChessStartMsg { type: 'chess-start', side: 'w' | 'b', foe: string }
+/** The server's applied, validated move — both clients replay it locally
+ * through the same chess-core, so the boards can never diverge. */
+export interface ChessMovedMsg { type: 'chess-moved', move: ChessMove }
+export interface ChessEndMsg {
+  type: 'chess-end'
+  winner: 'w' | 'b' | null
+  reason: 'checkmate' | 'stalemate' | 'forfeit'
+}
+/** What the online-chess client consumes. */
+export type ChessServerMessage = ChessWaitMsg | ChessStartMsg | ChessMovedMsg | ChessEndMsg
+
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage

@@ -564,6 +564,22 @@ test('chess: you move, the house replies, and the game survives a reopen', async
   await expect(page.locator('.lvos-window', { hasText: 'vs the house' }).locator('button[aria-label="e4 P"]')).toBeVisible()
 })
 
+test('chess online degrades honestly when no relay is configured', async ({ page }) => {
+  await bootDesktop(page)
+  await page.locator('.lvos-icon', { hasText: /^chess$/ }).click()
+  const win = page.locator('.lvos-window', { hasText: 'vs the house' })
+  await expect(win).toContainText('your move.')
+  // this build bakes no NUXT_PUBLIC_CURSORS_WS → the challenge button stays hidden
+  await expect(win.locator('.chess-new', { hasText: 'play a live visitor' })).toHaveCount(0)
+  // and the terminal command says so
+  await win.getByRole('button', { name: 'Close chess — vs the house' }).click()
+  await page.locator('.lvos-icon').filter({ has: page.locator('.lvos-icon-label', { hasText: /^terminal$/ }) }).first().click()
+  await page.locator('#desktop-terminal-input').waitFor()
+  await page.fill('#desktop-terminal-input', 'chess')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.lvos-window', { hasText: 'lvsh' })).toContainText('the ⚔ button challenges a live visitor')
+})
+
 test('DEL during POST enters a BIOS setup wired to real settings', async ({ page }) => {
   await page.goto('/desktop')
   // catch the POST while it types: keep pressing DEL until setup appears

@@ -1,4 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
+import { WINDOW_TITLES } from '~/utils/desktopApps'
 
 // The terminal mini-games (the game engines live in utils/games/). Every
 // engine is imported dynamically at launch so none of them ride along in the
@@ -12,6 +13,9 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
   // online pong needs the relay url and the visitor's display name
   const cursorsWs = useRuntimeConfig().public.cursorsWs
   const { name: identityName } = useIdentity()
+  // the chess command opens the lvOS app when the desktop is up
+  const route = useRoute()
+  const windowManager = useWindowManager(WINDOW_TITLES)
 
   // top renders the same unified process table as ps and the lvOS task
   // manager: system daemons plus whatever is really running right now
@@ -73,6 +77,21 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
         }
         muted('Starting pong... w/s or ↑/↓ to move, first to 5, q quits.')
         return import('~/utils/games/pong').then(({ createPongGame }) => ctx.startGame(createPongGame, 'pong'))
+      }
+    },
+    chess: {
+      category: 'games',
+      description: 'Chess vs the house AI — or a live visitor (lvOS app)',
+      exec: () => {
+        if (route.path === '/desktop') {
+          windowManager.openWindow('chess')
+          ctx.out('opening the board — the ⚔ button challenges a live visitor.')
+          return
+        }
+        muted('chess lives on the lvOS desktop — run `desktop`, then alt+r → chess.')
+        muted(cursorsWs
+          ? 'the ⚔ button in the app challenges another live visitor; the relay referees.'
+          : 'this build has no relay, so it\'s you vs the house AI.')
       }
     },
     wpm: {
