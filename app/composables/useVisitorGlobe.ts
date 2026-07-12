@@ -6,7 +6,7 @@ import { tzToLon, vibeLat, type GlobeMarker } from '~/utils/globe'
 // timezone when the relay is on. Privacy-safe: only a UTC offset crosses the
 // wire, never a location.
 export function useVisitorGlobe() {
-  const { geo, enabled } = useLiveVisitors()
+  const { geo, enabled, count } = useLiveVisitors()
   // -getTimezoneOffset(): minutes to add to local time to reach UTC, our sign
   const myTz = import.meta.client ? -new Date().getTimezoneOffset() : 0
 
@@ -19,5 +19,7 @@ export function useVisitorGlobe() {
     return [me, ...others]
   })
 
-  return { markers, enabled, count: computed(() => geo.value.length + 1) }
+  // reuse the ONE count the status-bar badge shows, rather than recomputing it,
+  // so the two can never disagree (e.g. on a relay drop)
+  return { markers, enabled, count }
 }

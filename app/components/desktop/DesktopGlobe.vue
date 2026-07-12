@@ -1,8 +1,8 @@
 <template>
   <div class="globe is-family-code">
     <p class="globe-head">
-      🌍 {{ count }} online ·
-      <span v-if="enabled">◉ you, ● visitors by timezone</span>
+      🌍
+      <span v-if="enabled">{{ count }} online · ◉ you, ● visitors by timezone</span>
       <span v-else>◉ you (no relay on this build)</span>
     </p>
     <pre class="globe-canvas" aria-hidden="true">{{ frame }}</pre>

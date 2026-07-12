@@ -73,8 +73,10 @@ watchEffect(() => {
   const now = Date.now()
   const live = [...cursors.value.values()].filter((c) => now - c.seen < 15000)
   count.value = connected.value ? live.length + 1 : 0
-  // the visitor globe reads this: every live visitor's id, hue and UTC offset
-  geo.value = live.map((c) => ({ id: c.id, hue: c.hue, tz: c.tz }))
+  // the visitor globe reads this: every live visitor's id, hue and UTC offset —
+  // cleared when disconnected so the globe can't keep plotting stale visitors
+  // after the badge has already dropped to 0
+  geo.value = connected.value ? live.map((c) => ({ id: c.id, hue: c.hue, tz: c.tz })) : []
 })
 
 // the shared relay-socket core: parse guards, drop detection and a capped
