@@ -133,12 +133,14 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
         const stopSpin = ctx.spin(`fetching from ${goatcounter}.goatcounter.com ...`)
         try {
           const total = await $fetch<{ count: string }>(
-            `https://${goatcounter}.goatcounter.com/counter/TOTAL.json`
+            `https://${goatcounter}.goatcounter.com/counter/TOTAL.json`,
+            { timeout: 10_000 }
           )
           push('output', `<span class="term-accent">site total</span>  ${total.count} views`, true)
           const path = window.location.pathname.replace(/\/$/, '') || '/'
           const here = await $fetch<{ count: string }>(
-            `https://${goatcounter}.goatcounter.com/counter/${encodeURIComponent(path)}.json`
+            `https://${goatcounter}.goatcounter.com/counter/${encodeURIComponent(path)}.json`,
+            { timeout: 10_000 }
           ).catch(() => null)
           if (here) push('output', `<span class="term-accent">this page</span>   ${here.count} views`, true)
           muted('(public counters — no cookies, no fingerprints)')
@@ -156,7 +158,8 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
       exec: () => {
         const stopSpin = ctx.spin('fetching from api.github.com ...')
         return $fetch<{ followers: number, public_repos: number }>(
-          `https://api.github.com/users/${GITHUB_USER}`
+          `https://api.github.com/users/${GITHUB_USER}`,
+          { timeout: 10_000 }
         )
           .then((user) => {
             push('output', `<span class="term-accent">user</span>       ${GITHUB_USER}`, true)
