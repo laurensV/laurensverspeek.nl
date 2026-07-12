@@ -72,8 +72,46 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
   const { push, out, muted, error } = ctx
   // the status-bar tamagotchi (factory-time: exec handlers run outside setup)
   const tamagotchi = usePet()
+  // the SAME chiptune engine the lvOS media app plays through (and the same
+  // shared volume) — pausing here pauses there, one jukebox for the whole site
+  const jukebox = useChiptune()
 
   return {
+    music: {
+      category: 'toys',
+      usage: 'music [play|pause|next|list]',
+      description: 'Drive the chiptune jukebox (shared with the media app)',
+      examples: ['music play', 'music next', 'music list'],
+      argCandidates: () => ['play', 'pause', 'next', 'list'],
+      exec: (args) => {
+        const action = args[0]?.toLowerCase()
+        const nowPlaying = () => out(`♪ ${jukebox.track.value} ${jukebox.playing.value ? '— playing' : '— paused'}`)
+        if (!action) {
+          nowPlaying()
+          muted(`'music play/pause/next' — same engine as the lvOS media app; 'volume' sets loudness`)
+          return
+        }
+        if (action === 'play') {
+          if (!jukebox.playing.value) jukebox.toggle()
+          return nowPlaying()
+        }
+        if (action === 'pause' || action === 'stop') {
+          jukebox.stop()
+          return out('⏸ paused — the visualizer sleeps too')
+        }
+        if (action === 'next') {
+          jukebox.next()
+          return nowPlaying()
+        }
+        if (action === 'list') {
+          jukebox.trackNames.forEach((name, index) => {
+            out(`${index === jukebox.trackIndex.value ? '▶' : ' '} ${index + 1}  ${name}`)
+          })
+          return
+        }
+        error(`music: unknown action '${action}' — try play, pause, next or list`)
+      }
+    },
     pet: {
       category: 'toys',
       usage: 'pet [adopt <name>|feed|play|coins|buy <item>|snack|release]',

@@ -2,6 +2,7 @@
   <div class="media is-family-code">
     <div class="media-bar">
       <button class="media-play" :aria-label="playing ? 'Pause' : 'Play'" @click="toggle">{{ playing ? '⏸' : '▶' }}</button>
+      <button class="media-next" aria-label="Next track" @click="next()">⏭</button>
       <span class="media-track">♪ {{ track }}</span>
       <span class="media-modes">
         <button
@@ -24,7 +25,7 @@
 // chiptune engine with three render modes off the same AnalyserNode. Closing
 // (or killing) this window stops the music — no ghost concerts.
 
-const { playing, track, toggle, stop, getAnalyser } = useChiptune()
+const { playing, track, toggle, next, stop, getAnalyser } = useChiptune()
 
 const MODES = ['bars', 'wave', 'radial'] as const
 type Mode = (typeof MODES)[number]
@@ -133,7 +134,8 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   font-size: 0.78rem;
 
-  .media-play {
+  .media-play,
+  .media-next {
     width: 1.8rem;
     height: 1.8rem;
     border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
