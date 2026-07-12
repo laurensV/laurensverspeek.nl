@@ -47,8 +47,8 @@ export function createChatRoom(
         return true
       }
       if (key === 'Enter') {
-        chat.send(buffer)
-        buffer = ''
+        // keep the line if it couldn't be sent (socket down) rather than eat it
+        if (chat.send(buffer)) buffer = ''
         render()
         return true
       }

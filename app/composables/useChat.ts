@@ -23,6 +23,7 @@ export function useChat() {
 
   conn ??= wsUrl
     ? createRelayConnection(wsUrl, {
+        // onOpen re-fires on every reconnect, so it re-joins the room too
         onOpen: () => conn?.send({ type: 'chat-join' } satisfies ChatJoinIn),
         onDrop: () => (status.value = 'lost'),
         onFail: () => (status.value = 'lost'),
@@ -38,7 +39,9 @@ export function useChat() {
             online.value = msg.online
           }
         }
-      })
+      // like the other persistent rooms (world, leaderboard, cursors), heal
+      // through a transient drop instead of wedging on 'lost' forever
+      }, { reconnect: true })
     : null
 
   /** Take a lease on the room. Returns a release function — always call it. */
@@ -61,10 +64,13 @@ export function useChat() {
     }
   }
 
-  const send = (text: string) => {
+  // returns whether the line was handled: true when nothing was worth keeping
+  // (empty) or the frame went out, false when a real message couldn't be sent
+  // (socket down) — callers use it to decide whether to clear the input.
+  const send = (text: string): boolean => {
     const trimmed = text.trim().slice(0, 200)
-    if (!trimmed) return
-    conn?.send({ type: 'chat-send', text: trimmed, name: name.value } satisfies ChatSendIn)
+    if (!trimmed) return true
+    return conn?.send({ type: 'chat-send', text: trimmed, name: name.value } satisfies ChatSendIn) ?? false
   }
 
   return { enabled, messages, online, status, join, send }

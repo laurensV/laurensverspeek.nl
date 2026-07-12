@@ -48,8 +48,8 @@ onMounted(() => {
 onUnmounted(() => release?.())
 
 const submit = () => {
-  send(draft.value)
-  draft.value = ''
+  // keep the draft if the send failed (socket down) so it isn't lost silently
+  if (send(draft.value)) draft.value = ''
 }
 
 const timeOf = (at: number) =>
