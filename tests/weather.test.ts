@@ -1,36 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { weatherGlyph, formatWeather } from '../app/utils/terminal/weather'
+import { formatWeather } from '../app/utils/terminal/weather'
+import { weatherCategory, weatherLabel } from '../app/utils/weather'
 
-describe('weatherGlyph', () => {
-  it('maps the WMO code families onto labels', () => {
-    expect(weatherGlyph(0).label).toBe('clear sky')
-    expect(weatherGlyph(2).label).toBe('partly cloudy')
-    expect(weatherGlyph(3).label).toBe('overcast')
-    expect(weatherGlyph(48).label).toBe('fog')
-    expect(weatherGlyph(55).label).toBe('rain')
-    expect(weatherGlyph(63).label).toBe('rain')
-    expect(weatherGlyph(81).label).toBe('rain')
-    expect(weatherGlyph(73).label).toBe('snow')
-    expect(weatherGlyph(86).label).toBe('snow')
-    expect(weatherGlyph(96).label).toBe('thunderstorm')
-  })
-
-  it('falls back gracefully on unknown codes', () => {
-    expect(weatherGlyph(42).label).toBe('weather')
-    expect(weatherGlyph(42).art).toHaveLength(5)
-  })
-
-  it('all glyphs are five rows tall', () => {
-    for (const code of [0, 1, 3, 45, 61, 75, 95]) {
-      expect(weatherGlyph(code).art).toHaveLength(5)
-    }
+describe('weatherCategory', () => {
+  it('buckets the WMO code families into art categories', () => {
+    expect(weatherCategory(0)).toBe('clear')
+    expect(weatherCategory(2)).toBe('cloudy')
+    expect(weatherCategory(3)).toBe('overcast')
+    expect(weatherCategory(48)).toBe('fog')
+    expect(weatherCategory(55)).toBe('rain')
+    expect(weatherCategory(63)).toBe('rain')
+    expect(weatherCategory(81)).toBe('rain')
+    expect(weatherCategory(73)).toBe('snow')
+    expect(weatherCategory(86)).toBe('snow')
+    expect(weatherCategory(96)).toBe('storm')
   })
 })
 
 describe('formatWeather', () => {
   const now = { temperature: 18.4, wind: 12, humidity: 78, code: 3 }
 
-  it('pairs the glyph with place, label and readings', () => {
+  it('pairs the art with place, the shared label and the readings', () => {
     const lines = formatWeather('Amsterdam, Netherlands', now)
     expect(lines).toHaveLength(5)
     const text = lines.join('\n')
@@ -39,7 +29,15 @@ describe('formatWeather', () => {
     expect(text).toContain('18.4°C · wind 12 km/h · humidity 78%')
   })
 
-  it('keeps the info column aligned to the glyph rows', () => {
+  it('shows the same condition label the app and tray use', () => {
+    // code 48 read "fog" in the terminal but "rime fog" in the app — now one
+    for (const code of [1, 48, 55, 81]) {
+      const lines = formatWeather('X', { temperature: 5, wind: 3, humidity: 90, code })
+      expect(lines.join('\n')).toContain(weatherLabel(code))
+    }
+  })
+
+  it('keeps the info column aligned to the art rows', () => {
     const lines = formatWeather('X', now)
     // the place lands on the row where the vertical centering puts it
     expect(lines[1]).toContain('X')

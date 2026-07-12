@@ -1,6 +1,9 @@
+import { weatherCategory, weatherLabel, type WeatherCategory } from '~/utils/weather'
+
 // Pure rendering for the terminal's `weather` command (data comes from the
-// keyless open-meteo API, fetched client-side). WMO weather codes map onto a
-// small wttr.in-style ASCII glyph plus a label.
+// keyless open-meteo API, fetched client-side). The condition text comes from
+// the shared weatherLabel so the command agrees with the tray and the app; the
+// ASCII art is picked by the shared weatherCategory bucket.
 
 export interface WeatherNow {
   temperature: number
@@ -9,51 +12,20 @@ export interface WeatherNow {
   code: number
 }
 
-interface Glyph {
-  label: string
-  art: string[]
-}
-
-const GLYPHS: { codes: (code: number) => boolean, glyph: Glyph }[] = [
-  {
-    codes: (c) => c === 0,
-    glyph: { label: 'clear sky', art: ['    \\ | /  ', '     .-.   ', '  - (   ) -', '     `-\'   ', '    / | \\  '] }
-  },
-  {
-    codes: (c) => c === 1 || c === 2,
-    glyph: { label: 'partly cloudy', art: ['   \\ |     ', '    .-. -. ', ' - (  (   ).', '   (___(__)', '           '] }
-  },
-  {
-    codes: (c) => c === 3,
-    glyph: { label: 'overcast', art: ['           ', '     .--.  ', '  .-(    ). ', ' (___.__)__)', '           '] }
-  },
-  {
-    codes: (c) => c === 45 || c === 48,
-    glyph: { label: 'fog', art: ['           ', ' _ - _ - _ ', '  _ - _ -  ', ' _ - _ - _ ', '           '] }
-  },
-  {
-    codes: (c) => (c >= 51 && c <= 57) || (c >= 61 && c <= 67) || (c >= 80 && c <= 82),
-    glyph: { label: 'rain', art: ['     .-.   ', '    (   ). ', '   (___(__)', '    ʻ ʻ ʻ  ', '   ʻ ʻ ʻ   '] }
-  },
-  {
-    codes: (c) => (c >= 71 && c <= 77) || c === 85 || c === 86,
-    glyph: { label: 'snow', art: ['     .-.   ', '    (   ). ', '   (___(__)', '    * * *  ', '   * * *   '] }
-  },
-  {
-    codes: (c) => c >= 95,
-    glyph: { label: 'thunderstorm', art: ['     .-.   ', '    (   ). ', '   (___(__)', '    ⚡ʻ⚡   ', '   ʻ ʻ ʻ   '] }
-  }
-]
-
-const FALLBACK: Glyph = { label: 'weather', art: ['           ', '     ?     ', '    ???    ', '     ?     ', '           '] }
-
-export function weatherGlyph(code: number): Glyph {
-  return GLYPHS.find((entry) => entry.codes(code))?.glyph ?? FALLBACK
+const ART: Record<WeatherCategory, string[]> = {
+  clear: ['    \\ | /  ', '     .-.   ', '  - (   ) -', '     `-\'   ', '    / | \\  '],
+  cloudy: ['   \\ |     ', '    .-. -. ', ' - (  (   ).', '   (___(__)', '           '],
+  overcast: ['           ', '     .--.  ', '  .-(    ). ', ' (___.__)__)', '           '],
+  fog: ['           ', ' _ - _ - _ ', '  _ - _ -  ', ' _ - _ - _ ', '           '],
+  rain: ['     .-.   ', '    (   ). ', '   (___(__)', '    ʻ ʻ ʻ  ', '   ʻ ʻ ʻ   '],
+  snow: ['     .-.   ', '    (   ). ', '   (___(__)', '    * * *  ', '   * * *   '],
+  storm: ['     .-.   ', '    (   ). ', '   (___(__)', '    ⚡ʻ⚡   ', '   ʻ ʻ ʻ   ']
 }
 
 /** ASCII art on the left, place + readings on the right. */
 export function formatWeather(place: string, now: WeatherNow): string[] {
-  const { label, art } = weatherGlyph(now.code)
+  const art = ART[weatherCategory(now.code)]
+  const label = weatherLabel(now.code)
   const info = [
     place,
     label,

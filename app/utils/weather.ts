@@ -16,6 +16,20 @@ export function weatherGlyph(code: number | null): string {
   return '⛈'
 }
 
+/** Coarse art/condition bucket for a WMO code — the one place that decides
+ * which sky a code belongs to, shared by the tray, the app and the terminal
+ * `weather` command so they never disagree on what code 1 or 48 looks like. */
+export type WeatherCategory = 'clear' | 'cloudy' | 'overcast' | 'fog' | 'rain' | 'snow' | 'storm'
+export function weatherCategory(code: number): WeatherCategory {
+  if (code === 0) return 'clear'
+  if (code <= 2) return 'cloudy'
+  if (code === 3) return 'overcast'
+  if (code <= 48) return 'fog'
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain'
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow'
+  return 'storm'
+}
+
 /** A short human label for a WMO weather code. */
 export function weatherLabel(code: number | null): string {
   if (code === null) return '—'
