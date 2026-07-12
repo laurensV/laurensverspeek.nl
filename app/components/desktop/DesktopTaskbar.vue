@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { useNow, useFullscreen, useEventListener } from '@vueuse/core'
+import { useNow, useFullscreen } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
 import type { Toast } from '~/composables/useDesktopToasts'
@@ -146,37 +146,9 @@ const calendarOpen = defineModel<boolean>('calendarOpen', { default: false })
 const notifOpen = defineModel<boolean>('notifOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
 
-// the taskbar popovers behave like popovers: opening one closes the others,
-// and clicking anywhere outside the taskbar dismisses them all
-const closePopovers = () => {
-  startOpen.value = false
-  calendarOpen.value = false
-  notifOpen.value = false
-}
-
-const toggleNotifications = () => {
-  const next = !notifOpen.value
-  closePopovers()
-  notifOpen.value = next
-  if (next) emit('read') // opening the panel clears the unread badge
-}
-
-const toggleCalendar = () => {
-  const next = !calendarOpen.value
-  closePopovers()
-  calendarOpen.value = next
-}
-
-const toggleStart = () => {
-  const next = !startOpen.value
-  closePopovers()
-  startOpen.value = next
-}
-
-useEventListener(document, 'pointerdown', (event: PointerEvent) => {
-  if ((event.target as HTMLElement).closest('.lvos-taskbar')) return
-  closePopovers()
-})
+const { toggleStart, toggleCalendar, toggleNotifications } = useTaskbarPopovers(
+  startOpen, calendarOpen, notifOpen, () => emit('read')
+)
 
 // real battery in the tray, when the browser admits to having one
 const battery = useBattery()

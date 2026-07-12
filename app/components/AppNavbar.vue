@@ -118,36 +118,7 @@ const menuEl = ref<HTMLElement | null>(null)
 const { onKeydown: onMenuKeydown } = useModalMenu(mobileMenu, menuEl)
 
 // Brand: hovering "expands" the ~ into /home, the way a shell would.
-// Frames type /home out character by character (and back again on leave).
-const BRAND_FRAMES = ['~', '/', '/h', '/ho', '/hom', '/home'] as const
-const brandFrame = ref(0)
-const brandTyping = ref(false)
-const brandText = computed(() => `${BRAND_FRAMES[brandFrame.value]}/laurens`)
-const brandExpanded = computed(() => brandFrame.value === BRAND_FRAMES.length - 1)
-
-let brandTimer: ReturnType<typeof setInterval> | undefined
-
-const expandBrand = (expand: boolean) => {
-  if (brandTimer) clearInterval(brandTimer)
-  const target = expand ? BRAND_FRAMES.length - 1 : 0
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    brandFrame.value = target
-    return
-  }
-  if (brandFrame.value === target) return
-  brandTyping.value = true
-  brandTimer = setInterval(() => {
-    brandFrame.value += brandFrame.value < target ? 1 : -1
-    if (brandFrame.value === target) {
-      clearInterval(brandTimer)
-      brandTyping.value = false
-    }
-  }, 55)
-}
-
-onUnmounted(() => {
-  if (brandTimer) clearInterval(brandTimer)
-})
+const { brandText, brandTyping, brandExpanded, expandBrand } = useBrandTyping()
 
 const navItems = [
   { to: '/', label: 'home' },
@@ -164,22 +135,15 @@ const { scramble } = useTextScramble()
 // hidden: triple-clicking the >_ prompt glyph toggles retro CRT mode (and
 // swallows those clicks so the brand link doesn't navigate)
 const { toggleCrt } = useSiteEffects()
-let markClicks = 0
-let markTimer: ReturnType<typeof setTimeout> | undefined
+const crtArmer = createClickArmer(3, 600, toggleCrt)
 const onMarkClick = (event: MouseEvent) => {
   // the glyph never navigates (the brand text still links home) so the clicks
   // can accumulate; the third in quick succession flips CRT mode
   event.preventDefault()
   event.stopPropagation()
-  markClicks++
-  clearTimeout(markTimer)
-  markTimer = setTimeout(() => (markClicks = 0), 600)
-  if (markClicks >= 3) {
-    markClicks = 0
-    toggleCrt()
-  }
+  crtArmer.click()
 }
-onUnmounted(() => clearTimeout(markTimer))
+onUnmounted(crtArmer.dispose)
 </script>
 
 <style scoped lang="scss">
