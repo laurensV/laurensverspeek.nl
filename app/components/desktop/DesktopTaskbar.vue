@@ -38,23 +38,27 @@
       <button @click="emit('shutdown')">⏻ shut down</button>
     </div>
 
-    <div
-      v-for="win in windows"
-      :key="win.id"
-      class="lvos-task-wrap"
-      @pointerenter="emit('peek', win.id)"
-      @pointerleave="emit('peek', null)"
-    >
-      <button
-        class="lvos-task"
-        :class="{ 'is-minimized': win.minimized }"
-        :data-win="win.id"
-        @click="emit('minimize', win)"
+    <!-- the open-window buttons scroll as a group on touch so they can never
+         push the tray off the right edge of a narrow phone -->
+    <div class="lvos-tasks">
+      <div
+        v-for="win in windows"
+        :key="win.id"
+        class="lvos-task-wrap"
+        @pointerenter="emit('peek', win.id)"
+        @pointerleave="emit('peek', null)"
       >
-        {{ win.title }}
-      </button>
-      <!-- hover preview: full title, and the desktop peeks the window (see parent) -->
-      <span class="lvos-task-preview is-family-code">{{ win.title }}</span>
+        <button
+          class="lvos-task"
+          :class="{ 'is-minimized': win.minimized }"
+          :data-win="win.id"
+          @click="emit('minimize', win)"
+        >
+          {{ win.title }}
+        </button>
+        <!-- hover preview: full title, and the desktop peeks the window (see parent) -->
+        <span class="lvos-task-preview is-family-code">{{ win.title }}</span>
+      </div>
     </div>
 
     <!-- the tray: weather, battery, tiling, fullscreen, bell and clock sit
@@ -233,6 +237,7 @@ const clock = computed(() =>
 }
 
 .lvos-start {
+  flex-shrink: 0;
   padding: 0.3rem 0.8rem;
 
   // a thumb-sized start button on touch screens
@@ -329,8 +334,29 @@ const clock = computed(() =>
   }
 }
 
+.lvos-tasks {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+
+  // on touch the strip shrinks and scrolls instead of shoving the tray
+  // off-screen; on desktop it stays visible so the upward hover preview
+  // (which an overflow context would clip) still shows
+  @media (pointer: coarse) {
+    flex: 0 1 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
 .lvos-task-wrap {
   position: relative;
+  flex-shrink: 0;
 }
 
 .lvos-task {
@@ -414,12 +440,14 @@ const clock = computed(() =>
   }
 }
 
-// the tray absorbs the free space so everything in it right-aligns
+// the tray absorbs the free space so everything in it right-aligns, and never
+// shrinks — the task strip scrolls instead so the tray stays reachable
 .lvos-tray {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 // tray buttons (tile, fullscreen, …) sit at the right, next to the clock
