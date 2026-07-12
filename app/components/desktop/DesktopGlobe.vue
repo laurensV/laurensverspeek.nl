@@ -38,7 +38,8 @@ onUnmounted(() => clearInterval(timer))
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  min-width: 22rem;
+  min-width: min(22rem, 100%);
+  max-width: 100%;
   font-size: 0.75rem;
 }
 
@@ -48,6 +49,11 @@ onUnmounted(() => clearInterval(timer))
 
 .globe-canvas {
   margin: 0;
+  // the ASCII globe is fixed-width; on a phone it can be wider than the window,
+  // so scroll it inside its own box instead of letting the centered art clip
+  // its own left edge off-screen
+  max-width: 100%;
+  overflow-x: auto;
   color: var(--bulma-primary);
   font-size: 0.72rem;
   line-height: 1;
