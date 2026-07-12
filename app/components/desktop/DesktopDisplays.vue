@@ -11,7 +11,7 @@
       <div><dt>resolution</dt><dd>{{ width }} × {{ height }}</dd></div>
       <div><dt>scaling</dt><dd>{{ scaling }}% ({{ dpr }}× dpr)</dd></div>
       <div><dt>refresh</dt><dd>{{ refresh }} Hz</dd></div>
-      <div><dt>colour</dt><dd>{{ colorDepth }}-bit</dd></div>
+      <div><dt>color</dt><dd>{{ colorDepth }}-bit</dd></div>
     </dl>
 
     <div class="displays-night">

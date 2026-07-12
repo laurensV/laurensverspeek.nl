@@ -21,7 +21,7 @@ export const LVOS_MAILS: LvosMail[] = [
     from: 'HR',
     address: 'hr@lvos.local',
     subject: 'RE: the "boss key" incident',
-    date: 'mon',
+    date: '9 jun',
     body: [
       'Hi,',
       'It has come to our attention that pressing b twice replaces the entire',
@@ -37,7 +37,7 @@ export const LVOS_MAILS: LvosMail[] = [
     from: 'lvOS weekly',
     address: 'newsletter@lvos.local',
     subject: 'this week in lvOS: everything is a process now',
-    date: 'tue',
+    date: '2 jun',
     body: [
       'IN THIS ISSUE:',
       '• ps now lists your windows. kill closes them. democracy!',
@@ -53,7 +53,7 @@ export const LVOS_MAILS: LvosMail[] = [
     from: 'Prince Adetokunbo',
     address: 'definitely.real@royal.example',
     subject: 'URGENT BUSINESS PROPOSAL (100% legitimate)',
-    date: 'wed',
+    date: '26 may',
     body: [
       'Dearest friend,',
       'I am writing concerning the sum of 4,700,000 localStorage bytes',
@@ -69,7 +69,7 @@ export const LVOS_MAILS: LvosMail[] = [
     from: 'root',
     address: 'root@lvos.local',
     subject: 'fork bomb detected (politely declined)',
-    date: 'thu',
+    date: '13 may',
     body: [
       'At 03:12 an sh script attempted to run itself recursively.',
       'The shell said, quote, "nice fork bomb though", and stopped it.',
@@ -82,7 +82,7 @@ export const LVOS_MAILS: LvosMail[] = [
     from: 'the museum curator',
     address: 'curator@lvos.local',
     subject: 'your visit left footprints on the gallery floor',
-    date: 'fri',
+    date: '1 may',
     body: [
       'A visitor was observed walking the museum at an unusual hour,',
       'reading plaques with what witnesses describe as "genuine interest".',

@@ -55,7 +55,7 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
       exec: (args) => {
         const cat = args[0]?.toLowerCase() as ProjectCategory | undefined
         if (cat && !categories.some((c) => c.value === cat)) {
-          error(`Unknown category '${cat}'. Try: ${categories.map((c) => c.value).join(', ')}`)
+          error(`projects: unknown category '${cat}' — try: ${categories.map((c) => c.value).join(', ')}`)
           return
         }
         listProjects(cat)
@@ -68,7 +68,7 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
       argCandidates: () => projects.map((p) => p.slug),
       exec: (args) => {
         if (!args[0]) {
-          error(`Usage: open <project> — run 'projects' to see the list.`)
+          error(`open: usage: open <project> — run 'projects' to see the list.`)
           return
         }
         const query = args[0].toLowerCase()
@@ -76,12 +76,12 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
           (p) => p.slug === query || p.title.toLowerCase().includes(query)
         )
         if (!project) {
-          error(`Project '${args[0]}' not found. Run 'projects' to see the list.`)
+          error(`open: '${args[0]}': not found — run 'projects' to see the list.`)
           return
         }
         const url = project.url ?? project.source
         if (!url) {
-          error(`No link available for ${project.title}.`)
+          error(`open: no link available for ${project.title}`)
           return
         }
         out(`Opening ${project.title} ...`)

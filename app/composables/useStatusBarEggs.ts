@@ -82,7 +82,7 @@ export function useStatusBarEggs() {
   let clockTimer: ReturnType<typeof setTimeout> | undefined
   const tickClock = () => {
     const now = new Date()
-    clock.value = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    clock.value = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     clockTimer = setTimeout(tickClock, 60_500 - (now.getSeconds() * 1000 + now.getMilliseconds()))
   }
 
