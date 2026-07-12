@@ -5,7 +5,7 @@
         <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
           <div>
             <p class="overline mb-2">blog $ tail -3</p>
-            <h2 class="title is-3">Latest writing</h2>
+            <ScrambleHeading tag="h2" class="title is-3" text="Latest writing" />
           </div>
           <NuxtLink to="/blog" class="see-all is-family-code is-size-6 is-hidden-mobile">
             all posts <span class="see-all-arrow" aria-hidden="true">→</span>

@@ -3,7 +3,7 @@
     <div class="container">
       <RevealBlock>
         <p class="overline mb-2">what-i-do $</p>
-        <h2 class="title is-3 mb-6">What I do</h2>
+        <ScrambleHeading tag="h2" class="title is-3 mb-6" text="What I do" />
       </RevealBlock>
       <div class="columns">
         <div v-for="(area, i) in areas" :key="area.title" class="column">

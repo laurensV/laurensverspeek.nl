@@ -55,7 +55,7 @@
           <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
             <div>
               <p class="overline mb-2">featured $</p>
-              <h2 class="title is-3">Featured projects</h2>
+              <ScrambleHeading tag="h2" class="title is-3" text="Featured projects" />
             </div>
             <NuxtLink to="/projects" class="see-all is-family-code is-size-6 is-hidden-mobile">
               all projects <span class="see-all-arrow" aria-hidden="true">→</span>
