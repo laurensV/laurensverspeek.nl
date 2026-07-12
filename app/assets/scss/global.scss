@@ -26,6 +26,23 @@ body {
   overflow-x: clip;
 }
 
+// Nicer line breaks where the browser supports them (progressive enhancement):
+// headings get even lines instead of a single dangling word, prose avoids
+// short last lines. Terminal/game output is preformatted and unaffected.
+h1,
+h2,
+h3,
+h4,
+.title,
+.subtitle {
+  text-wrap: balance;
+}
+
+.content p,
+.content li {
+  text-wrap: pretty;
+}
+
 // on the lvOS route the desktop fills the viewport as a fixed overlay — lock
 // scrolling so no dead scrollbar appears behind it
 html.is-lvos,
