@@ -156,6 +156,14 @@ const downloadName = computed(() => {
     font-size: 0.68rem;
     color: hsl(var(--lv-scheme-hs), 70%);
   }
+
+  // thumb-sized zoom/tool buttons on touch
+  @media (pointer: coarse) {
+    .gallery-tool {
+      min-width: 2.4rem;
+      height: 2.4rem;
+    }
+  }
 }
 
 .gallery-main {

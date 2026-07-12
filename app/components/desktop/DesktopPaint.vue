@@ -203,6 +203,21 @@ onUnmounted(() => {
   color: var(--bulma-primary);
 }
 
+// thumb-sized swatches and toolbar buttons on touch screens
+@media (pointer: coarse) {
+  .paint-swatch {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .paint-sizes button,
+  .paint-clear,
+  .paint-wallpaper {
+    min-height: 2.4rem;
+    padding: 0 0.4rem;
+  }
+}
+
 .paint-canvas {
   width: 100%;
   border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);

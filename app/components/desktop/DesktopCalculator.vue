@@ -147,6 +147,11 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   cursor: pointer;
   transition: background-color 0.12s ease;
 
+  // full 44px key height for thumbs
+  @media (pointer: coarse) {
+    min-height: 2.8rem;
+  }
+
   &:hover {
     background-color: hsla(var(--lv-primary-hsl), 0.15);
   }

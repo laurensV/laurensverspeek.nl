@@ -168,6 +168,20 @@ onBeforeUnmount(() => {
       }
     }
   }
+
+  // thumb-sized transport + mode buttons on touch
+  @media (pointer: coarse) {
+    .media-play,
+    .media-next {
+      width: 2.6rem;
+      height: 2.6rem;
+    }
+
+    .media-modes button {
+      min-height: 2.4rem;
+      padding: 0 0.3rem;
+    }
+  }
 }
 
 .media-canvas {
