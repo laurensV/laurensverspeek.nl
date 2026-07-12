@@ -3,9 +3,19 @@
     <canvas ref="fxRef" class="destroyer-fx" aria-hidden="true" />
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
-      <span class="destroyer-hint"><kbd>↑</kbd>/<kbd>w</kbd> thrust · <kbd>←</kbd><kbd>→</kbd> rotate · <kbd>space</kbd> fires · <kbd>esc</kbd> ends &amp; repairs</span>
+      <span class="destroyer-hint destroyer-hint-keys"><kbd>↑</kbd>/<kbd>w</kbd> thrust · <kbd>←</kbd><kbd>→</kbd> rotate · <kbd>space</kbd> fires · <kbd>esc</kbd> ends &amp; repairs</span>
+      <span class="destroyer-hint destroyer-hint-touch">drag to fly · tap (or hold fire) to shoot · ✕ repairs</span>
       <button class="destroyer-exit" aria-label="End destroy mode and repair the site" title="End & repair" @click="endMode">✕</button>
     </div>
+    <button
+      class="destroyer-fire"
+      aria-label="Hold to fire"
+      @pointerdown.prevent="setFiring(true)"
+      @pointerup="setFiring(false)"
+      @pointercancel="setFiring(false)"
+      @pointerleave="setFiring(false)"
+      @contextmenu.prevent
+    >fire</button>
   </div>
 </template>
 
@@ -268,6 +278,11 @@ onMounted(() => {
 })
 useEventListener('resize', fit)
 
+// the thumb fire button drives the same auto-fire flag as a held space key
+const setFiring = (value: boolean) => {
+  firing = value
+}
+
 // pointer: mouse click fires along the current heading (no mouse-aiming); touch
 // drags to steer, a tap fires
 useEventListener('pointermove', (event: PointerEvent) => {
@@ -280,7 +295,7 @@ useEventListener('pointermove', (event: PointerEvent) => {
 })
 useEventListener('pointerdown', (event: PointerEvent) => {
   // the HUD is neutral ground
-  if ((event.target as HTMLElement).closest('.destroyer-hud')) return
+  if ((event.target as HTMLElement).closest('.destroyer-hud, .destroyer-fire')) return
   if (event.pointerType === 'touch') {
     // wait and see: a drag flies the ship, a tap fires (decided on release)
     touchSteer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false }
@@ -326,7 +341,7 @@ useEventListener('keyup', (event: KeyboardEvent) => {
 // clicks in the capture phase — a shot must never also follow a link
 useEventListener(window, 'click', (event: MouseEvent) => {
   const target = event.target
-  if (target instanceof HTMLElement && target.closest('.destroyer-hud')) return
+  if (target instanceof HTMLElement && target.closest('.destroyer-hud, .destroyer-fire')) return
   event.preventDefault()
   event.stopPropagation()
 }, { capture: true })
@@ -356,9 +371,37 @@ onUnmounted(() => {
   // hit-testing); shooting + page-click suppression run on window listeners
   pointer-events: none;
 
-  // only the HUD is interactive
-  .destroyer-hud {
+  // only the HUD (and the touch fire button) is interactive
+  .destroyer-hud,
+  .destroyer-fire {
     pointer-events: auto;
+  }
+}
+
+// a thumb-sized held-to-fire button, only where fingers are the pointer
+.destroyer-fire {
+  display: none;
+
+  @media (pointer: coarse) {
+    display: block;
+    position: absolute;
+    right: 1.1rem;
+    bottom: 5.5rem;
+    width: 4.4rem;
+    height: 4.4rem;
+    border: 2px solid hsla(var(--lv-primary-hsl), 0.7);
+    border-radius: 50%;
+    background-color: hsla(var(--lv-scheme-hs), 6%, 0.8);
+    color: var(--bulma-primary);
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    touch-action: none;
+    user-select: none;
+
+    &:active {
+      background-color: hsla(var(--lv-primary-hsl), 0.3);
+    }
   }
 }
 
@@ -389,6 +432,21 @@ onUnmounted(() => {
 
   .destroyer-hint {
     color: hsl(var(--lv-scheme-hs), 60%);
+
+    // keyboard hint for mice, drag hint for fingers
+    &.destroyer-hint-touch {
+      display: none;
+    }
+
+    @media (pointer: coarse) {
+      &.destroyer-hint-keys {
+        display: none;
+      }
+
+      &.destroyer-hint-touch {
+        display: inline;
+      }
+    }
 
     kbd {
       padding: 0 0.3em;

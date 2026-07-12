@@ -10,8 +10,9 @@
       >
         <AppIcon name="code" :size="11" /> main*
       </a>
+      <!-- stays visible on mobile: its 5-tap easter egg must be findable by thumb too -->
       <button
-        class="status-item status-button is-hidden-mobile"
+        class="status-item status-button"
         title="v2.0.0"
         @click="versionClick"
       >v2.0.0</button>
