@@ -191,6 +191,10 @@ const draw = (time: number) => {
   lastTime = time
 
   moveShip(dt)
+  // a tiny test seam: expose the live heading so the e2e can wait for the ship
+  // to actually point down before thrusting, instead of guessing with a timer
+  // (the physics is frame-rate sensitive under load). Read-only, cleaned up on exit.
+  ;(window as Window & { __lvShip?: { angle: number, vy: number } }).__lvShip = { angle: ship.angle, vy: ship.vy }
   if (firing && time - lastShot >= FIRE_CADENCE) {
     shootForward()
     lastShot = time
@@ -337,6 +341,7 @@ useEventListener(window, 'blur', () => {
 })
 onUnmounted(() => {
   cancelAnimationFrame(raf)
+  delete (window as Window & { __lvShip?: { angle: number, vy: number } }).__lvShip
   repair() // never leave the site broken behind us
 })
 </script>

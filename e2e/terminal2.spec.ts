@@ -154,10 +154,18 @@ test('the destroyer ship flies the page: diving scrolls it, manual scrolling is 
   await page.mouse.wheel(0, 600)
   await page.waitForTimeout(300)
   expect(await page.evaluate(() => window.scrollY)).toBe(initial)
-  // the ship starts nose-up; rotate a half-turn to face down, then thrust —
-  // flying into the bottom edge drives the page scroll
+  // the ship starts nose-up; rotate right until it actually points down (the
+  // physics is frame-rate sensitive under load, so poll the real heading rather
+  // than guess with a timer), then thrust — flying into the bottom edge scrolls.
+  // sin(angle) is the downward component: -1 = straight up, +1 = straight down.
   await page.keyboard.down('ArrowRight')
-  await page.waitForTimeout(1000) // ~π rad at 3.2 rad/s ≈ facing down
+  await expect.poll(
+    () => page.evaluate(() => {
+      const ship = (window as Window & { __lvShip?: { angle: number } }).__lvShip
+      return ship ? Math.sin(ship.angle) : -1
+    }),
+    { timeout: 8000 }
+  ).toBeGreaterThan(0.7)
   await page.keyboard.up('ArrowRight')
   await page.keyboard.down('ArrowUp')
   await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 8000 }).toBeGreaterThan(120)
