@@ -43,6 +43,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const paper = useWallpaper()
   // the warm-wash night light, shared with Settings/BIOS/Displays
   const nightLight = useNightLight()
+  // which idle screensaver the desktop drifts into, shared with Settings/BIOS
+  const screensaver = useScreensaverChoice()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
 
@@ -187,6 +189,24 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         }
         paper.wallpaper.value = n
         out(`wallpaper: ${paper.wallpapers.value[n]!.name}`)
+      }
+    },
+    screensaver: {
+      category: 'system',
+      usage: 'screensaver [starfield|toasters|mystify]',
+      description: 'Pick the idle screensaver (same one as Settings)',
+      argCandidates: () => [...screensaver.saverIds],
+      exec: (args) => {
+        const arg = args[0]?.toLowerCase()
+        if (!arg) {
+          out(`screensaver: ${screensaver.saverNames[screensaver.saver.value]}`)
+          muted(`available: ${screensaver.saverIds.map((id) => screensaver.saverNames[id]).join(', ')} — drifts in after 45s idle on the desktop`)
+          return
+        }
+        const match = screensaver.saverIds.find((id) => id === arg)
+        if (!match) return error(`screensaver: unknown saver '${args[0]}' — try ${screensaver.saverIds.join(', ')}`)
+        screensaver.saver.value = match
+        out(`screensaver: ${screensaver.saverNames[match]}`)
       }
     },
     nightlight: {
