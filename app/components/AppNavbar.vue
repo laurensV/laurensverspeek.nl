@@ -14,7 +14,7 @@
         @mouseenter="expandBrand(true)"
         @mouseleave="expandBrand(false)"
       >
-        <span class="brand-mark" aria-hidden="true" title="…try me thrice" @click="onMarkClick"><AppIcon name="prompt" :size="16" /></span><span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
+        <span class="brand-mark" aria-hidden="true" title="…try me thrice" @click="onMarkClick"><AppIcon name="prompt" :size="19" /></span><span class="brand-path">{{ brandText }}</span><span class="brand-caret" aria-hidden="true" /><span class="brand-git">git:(main)</span>
       </NuxtLink>
 
       <div class="nav-links is-hidden-touch">
@@ -202,6 +202,8 @@ onUnmounted(crtArmer.dispose)
 .nav-brand {
   display: inline-flex;
   align-items: center;
+  // the brand leads the bar, so give it a touch more presence than the links
+  font-size: 1rem;
   color: var(--bulma-text-weak);
   white-space: pre;
 
