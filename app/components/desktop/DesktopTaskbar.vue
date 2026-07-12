@@ -203,6 +203,8 @@ const clock = computed(() =>
 </script>
 
 <style scoped lang="scss">
+@use '~/assets/scss/mixins' as *;
+
 .lvos-taskbar {
   position: absolute;
   bottom: 0;
@@ -218,23 +220,10 @@ const clock = computed(() =>
   @media (pointer: coarse) {
     height: 3.1rem;
   }
-  background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
+  // blur on a pseudo-element so the bar doesn't become a stacking context
+  // that traps the start menu's z-index below the windows
+  @include lv-glass-behind(6%, 0.95, 0.72);
 
-  // frosted glass where the browser can afford it; the solid colour above is
-  // the everything-else fallback. The blur lives on a pseudo-element because
-  // backdrop-filter on the bar itself would make it a stacking context and
-  // trap the start menu's z-index below the windows.
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 6%, 0.72);
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      backdrop-filter: blur(14px) saturate(1.3);
-    }
-  }
   border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
   font-size: 0.75rem;
   color: hsl(var(--lv-scheme-hs), 85%);
@@ -276,12 +265,9 @@ const clock = computed(() =>
   padding: 0.35rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
 
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 8%, 0.8);
-    backdrop-filter: blur(16px) saturate(1.3);
-  }
+  @include lv-glass(8%, 0.98, 0.8, 16px);
+
   z-index: 10000;
 
   button {
@@ -336,12 +322,9 @@ const clock = computed(() =>
   padding: 0.3rem 0.6rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius-small);
-  background-color: hsla(var(--lv-scheme-hs), 10%, 0.98);
 
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 10%, 0.82);
-    backdrop-filter: blur(14px) saturate(1.3);
-  }
+  @include lv-glass(10%, 0.98, 0.82);
+
   color: hsl(var(--lv-scheme-hs), 90%);
   font-size: 0.7rem;
   white-space: nowrap;

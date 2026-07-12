@@ -1,0 +1,34 @@
+// Shared SCSS mixins. Vue style blocks pull these in explicitly:
+//   @use '~/assets/scss/mixins' as *;
+
+// Frosted-glass panel: a solid colour is the no-backdrop-filter fallback, and
+// browsers that can afford the blur get a more transparent background with
+// blur + saturate so the wallpaper (and windows beneath) glow through.
+@mixin lv-glass($lightness, $solid-alpha, $glass-alpha, $blur: 14px, $saturate: 1.3) {
+  background-color: hsla(var(--lv-scheme-hs), $lightness, $solid-alpha);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: hsla(var(--lv-scheme-hs), $lightness, $glass-alpha);
+    backdrop-filter: blur($blur) saturate($saturate);
+  }
+}
+
+// Same frosted look, but the blur lives on a ::before pseudo-element because
+// backdrop-filter on the element itself would make it a stacking context and
+// trap absolutely-positioned children (e.g. the start menu) below siblings.
+// The element needs position other than static (all current users have it).
+@mixin lv-glass-behind($lightness, $solid-alpha, $glass-alpha, $blur: 14px, $saturate: 1.3) {
+  background-color: hsla(var(--lv-scheme-hs), $lightness, $solid-alpha);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: hsla(var(--lv-scheme-hs), $lightness, $glass-alpha);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      backdrop-filter: blur($blur) saturate($saturate);
+    }
+  }
+}

@@ -23,6 +23,8 @@ const emit = defineEmits<{
 </script>
 
 <style scoped lang="scss">
+@use '~/assets/scss/mixins' as *;
+
 .lvos-context {
   position: absolute;
   z-index: 10001;
@@ -32,12 +34,9 @@ const emit = defineEmits<{
   padding: 0.35rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
 
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 8%, 0.82);
-    backdrop-filter: blur(14px) saturate(1.3);
-  }
+  @include lv-glass(8%, 0.98, 0.82);
+
   box-shadow: 0 12px 30px hsla(var(--lv-scheme-hs), 2%, 0.6);
 
   button {

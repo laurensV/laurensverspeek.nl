@@ -122,6 +122,8 @@ onUnmounted(() => clearTimeout(pressTimer))
 </script>
 
 <style scoped lang="scss">
+@use '~/assets/scss/mixins' as *;
+
 .lvos-window {
   position: absolute;
   display: flex;
@@ -133,14 +135,9 @@ onUnmounted(() => clearTimeout(pressTimer))
   }
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius-large);
-  background-color: hsla(var(--lv-scheme-hs), 10%, 0.97);
+  // frosted glass: the wallpaper (and windows beneath) glow through the blur
+  @include lv-glass(10%, 0.97, 0.86, 12px, 1.25);
 
-  // frosted glass: the wallpaper (and windows beneath) glow through the blur;
-  // the solid colour above stays as the no-backdrop-filter fallback
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 10%, 0.86);
-    backdrop-filter: blur(12px) saturate(1.25);
-  }
   box-shadow: 0 18px 50px hsla(var(--lv-scheme-hs), 2%, 0.6);
   color: hsl(var(--lv-scheme-hs), 88%);
   overflow: hidden;

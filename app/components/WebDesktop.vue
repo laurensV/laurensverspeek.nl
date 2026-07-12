@@ -437,6 +437,8 @@ useDesktopShortcuts({
 </script>
 
 <style scoped lang="scss">
+@use '~/assets/scss/mixins' as *;
+
 .lvos {
   position: fixed;
   inset: 0;
@@ -476,12 +478,9 @@ useDesktopShortcuts({
   padding: 0.3rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
-  background-color: hsla(var(--lv-scheme-hs), 8%, 0.98);
 
-  @supports (backdrop-filter: blur(1px)) {
-    background-color: hsla(var(--lv-scheme-hs), 8%, 0.82);
-    backdrop-filter: blur(14px) saturate(1.3);
-  }
+  @include lv-glass(8%, 0.98, 0.82);
+
   font-size: 0.75rem;
 
   button {
