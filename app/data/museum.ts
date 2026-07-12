@@ -56,7 +56,7 @@ export const museum: Wing[] = [
       { name: 'weather & the colour picker', how: 'the weather and colours icons', blurb: 'A five-day Amsterdam forecast over the same source as the tray chip, and an eyedropper colour tool that reads hex/rgb/hsl and pushes any colour to the live site accent.' },
       { name: 'the hall of fame', how: 'the scores icon', blurb: 'Every game\'s persisted best in one board — and those same scores mint the coins your tamagotchi spends. One ledger, no fakes.' },
       { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' },
-      { name: 'built for a thumb', how: 'open the desktop on a phone', blurb: 'Windows open maximized so the close button is reachable, the taskbar scrolls instead of hiding its tray, a long-press summons the context menu, and Snake grows a d-pad. The whole desktop folds down to 375 pixels.' }
+      { name: 'built for a thumb', how: 'open the desktop on a phone', blurb: 'Windows open maximized so the close button is reachable, the taskbar scrolls instead of hiding its tray, a long-press summons the context menu (and a file\'s row menu), Snake grows a d-pad, Minesweeper gets a flag-mode toggle and shrinks its board to fit, and every app\'s buttons grow to thumb size. The whole desktop folds down to 375 pixels.' }
     ]
   },
   {
