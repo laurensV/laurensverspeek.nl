@@ -49,7 +49,7 @@ const print = () => window.print()
 
 .keyboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
   gap: 1.5rem 2.5rem;
 }
 

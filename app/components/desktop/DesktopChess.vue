@@ -128,8 +128,10 @@ onMounted(houseReply)
 }
 
 .chess-board {
+  // shrinks with the viewport so the 8-wide board fits the non-wide window on small phones
+  --chess-cell: min(2.1rem, calc((100vw - 5.5rem) / 8));
   display: grid;
-  grid-template-columns: repeat(8, 2.1rem);
+  grid-template-columns: repeat(8, var(--chess-cell));
   border: 1px solid var(--bulma-border);
   border-radius: 2px;
   overflow: hidden;
@@ -141,8 +143,8 @@ onMounted(houseReply)
 
 .chess-cell {
   position: relative;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: var(--chess-cell, 2.1rem);
+  height: var(--chess-cell, 2.1rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +171,7 @@ onMounted(houseReply)
 }
 
 .chess-piece {
-  font-size: 1.45rem;
+  font-size: calc(var(--chess-cell, 2.1rem) * 0.69);
   line-height: 1;
   color: #17130c;
 
@@ -181,7 +183,7 @@ onMounted(houseReply)
 
 .chess-dot {
   color: rgb(0 0 0 / 45%);
-  font-size: 1.6rem;
+  font-size: calc(var(--chess-cell, 2.1rem) * 0.76);
   line-height: 1;
 }
 

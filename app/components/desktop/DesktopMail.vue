@@ -55,7 +55,7 @@ const openMail = (id: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 24rem;
+  min-width: min(24rem, 100%);
   min-height: 14rem;
   font-size: 0.75rem;
 }
@@ -96,6 +96,7 @@ const openMail = (id: string) => {
   .mail-meta {
     display: flex;
     gap: 0.6rem;
+    min-width: 0;
     overflow: hidden;
 
     .mail-from {

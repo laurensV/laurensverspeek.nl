@@ -82,7 +82,7 @@
             >
               <span v-if="entry.dir" class="files-glyph" aria-hidden="true">▸</span>
               <AppIcon v-else name="file" :size="13" />
-              <span>{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
+              <span class="files-name">{{ entry.name }}{{ entry.dir ? '/' : '' }}</span>
               <span v-if="entry.edited" class="files-badge" title="Edited by you — rm restores the original">edited</span>
             </button>
             <button
@@ -253,6 +253,14 @@ const {
     color: var(--bulma-primary);
   }
 
+  // long user-created names ellipsize instead of widening the window body
+  .files-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .files-badge {
     margin-left: 0.3rem;
     padding: 0 0.3rem;
@@ -281,6 +289,7 @@ const {
 
   .files-file {
     flex: 1;
+    min-width: 0;
   }
 
   // the delete affordance stays faint until hover/focus — visible enough for
