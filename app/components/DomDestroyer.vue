@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { stepShip, steerToward } from '~/utils/shipPhysics'
+import { isEligibleTarget, spawnDebris, advanceDebris, edgeScrollDrive, type DebrisParticle } from '~/utils/destroyer'
 
 // Destroy mode: an Asteroids-style ship — rotate with ←→, thrust forward with
 // ↑, fire with space — flies the page and shoots the actual DOM to pieces.
@@ -34,10 +35,9 @@ const { destructActive } = useSiteEffects()
 const fxRef = ref<HTMLCanvasElement>()
 const score = ref(0)
 
-interface Particle { x: number, y: number, vx: number, vy: number, life: number, color: string }
 interface Bullet { x: number, y: number, dx: number, dy: number }
 
-let particles: Particle[] = []
+let particles: DebrisParticle[] = []
 let bullets: Bullet[] = []
 let destroyed: { el: HTMLElement, visibility: string }[] = []
 let raf = 0
@@ -90,28 +90,16 @@ const findTarget = (x: number, y: number): HTMLElement | null => {
   const el = document.elementFromPoint(x, y)
   if (!(el instanceof HTMLElement)) return null
   if (el.closest('.destroyer')) return null
-  if (['HTML', 'BODY', 'MAIN', 'SECTION', 'NAV', 'FOOTER'].includes(el.tagName)) return null
-  if (el.classList.contains('site-shell') || el.classList.contains('site-content') || el.classList.contains('container')) return null
   const rect = el.getBoundingClientRect()
-  if (rect.width * rect.height > window.innerWidth * window.innerHeight * 0.5) return null
-  if (rect.width < 4 || rect.height < 4) return null
+  const viewport = { w: window.innerWidth, h: window.innerHeight }
+  if (!isEligibleTarget(el.tagName, [...el.classList], rect, viewport)) return null
   if (hasVisibleChildren(el)) return null // clear the inner elements first
   return el
 }
 
 const explode = (rect: DOMRect) => {
   if (reduced) return
-  const colors = ['#ffba00', '#ff6b35', '#fff3d6', '#c9a24d']
-  for (let i = 0; i < 26; i++) {
-    particles.push({
-      x: rect.left + Math.random() * rect.width,
-      y: rect.top + Math.random() * rect.height,
-      vx: (Math.random() - 0.5) * 9,
-      vy: (Math.random() - 0.7) * 9,
-      life: 1,
-      color: colors[i % colors.length]!
-    })
-  }
+  particles.push(...spawnDebris(rect))
 }
 
 const destroy = (el: HTMLElement) => {
@@ -178,14 +166,10 @@ const moveShip = (dt: number) => {
   // spawn) doesn't auto-scroll. (behavior: instant — the site's smooth
   // scroll-behavior would fight these per-frame nudges.)
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-  if (ship.y > window.innerHeight - SCROLL_EDGE && ship.vy > EDGE_PUSH && window.scrollY < maxScroll - 0.5) {
-    const overshoot = ship.y - (window.innerHeight - SCROLL_EDGE)
-    window.scrollBy({ top: Math.min(overshoot, maxScroll - window.scrollY), behavior: 'instant' })
-    ship.y = window.innerHeight - SCROLL_EDGE
-  } else if (ship.y < SCROLL_EDGE && ship.vy < -EDGE_PUSH && window.scrollY > 0.5) {
-    const overshoot = SCROLL_EDGE - ship.y
-    window.scrollBy({ top: -Math.min(overshoot, window.scrollY), behavior: 'instant' })
-    ship.y = SCROLL_EDGE
+  const drive = edgeScrollDrive(ship.y, ship.vy, window.innerHeight, window.scrollY, maxScroll, SCROLL_EDGE, EDGE_PUSH)
+  if (drive.clampY !== null) {
+    window.scrollBy({ top: drive.scroll, behavior: 'instant' })
+    ship.y = drive.clampY
   }
 
   // the document ends here — bump the walls, shedding velocity into them
@@ -226,18 +210,14 @@ const draw = (time: number) => {
     context.stroke()
   }
 
-  // debris
+  // debris: paint at the current position, then the pure model steps + prunes
   for (const particle of particles) {
     context.globalAlpha = particle.life
     context.fillStyle = particle.color
     context.fillRect(particle.x, particle.y, 4, 4)
-    particle.x += particle.vx
-    particle.y += particle.vy
-    particle.vy += 0.25
-    particle.life -= 0.025
   }
   context.globalAlpha = 1
-  particles = particles.filter((particle) => particle.life > 0)
+  particles = advanceDebris(particles)
 
   // the ship: a small triangle pointing along its heading
   context.save()
