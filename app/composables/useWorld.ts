@@ -3,6 +3,7 @@ import {
   inWorld, validColor, plotAt, CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from '../../realtime/world-core.mjs'
 import { storageGet, storageSet, storageGetJson } from '~/utils/safeStorage'
+import { createRelayConnection, type RelayConnection } from '~/utils/relaySocket'
 import type { ServerMessage, WorldJoinIn, WorldLeaveIn, PixelIn, WorldWhoIn, WorldCursorIn } from '../../realtime/protocol'
 
 // The Pixel World's client brain: one websocket to the cursors relay when the
@@ -25,10 +26,8 @@ export interface WorldCursor {
 const OFFLINE_KEY = 'lv-world-board'
 const OFFLINE_META_KEY = 'lv-world-placed'
 
-let wired = false
-let socket: WebSocket | null = null
-let retries = 0
-let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+let conn: RelayConnection | null = null
+let releaseLease: (() => void) | null = null
 let offlineGate: CooldownGate | null = null
 let offlineMeta: Record<string, { by: string, at: number }> = {}
 // the last optimistic placement, so a server denial can roll it back
@@ -81,99 +80,84 @@ export function useWorld() {
     version.value++
   }
 
+  // one shared connection via the relay-socket core: capped-backoff reconnect
+  // while entered, so a mid-session relay drop can't strand the shared world
   const connect = () => {
-    try {
-      socket = new WebSocket(wsUrl)
-    } catch {
-      enterOffline()
-      return
-    }
-    socket.addEventListener('open', () => {
-      retries = 0 // a good connection resets the backoff, so later drops retry too
-      socket?.send(JSON.stringify({ type: 'world-join' } satisfies WorldJoinIn))
-    })
-    socket.addEventListener('error', () => {
-      if (!board.value) enterOffline()
-    })
-    socket.addEventListener('close', () => {
-      connected.value = false
-      socket = null
-      // a mid-session relay drop must not strand the shared world until a page
-      // reload — keep rejoining with a capped backoff while someone is wired
-      if (wired) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
-    })
-    socket.addEventListener('message', (event) => {
-      // the relay broadcasts other subsystems' frames (hello, page cursors,
-      // score boards) on the same socket — type the full union and let
-      // anything we don't handle fall through
-      let msg: ServerMessage
-      try {
-        msg = JSON.parse(String(event.data)) as ServerMessage
-      } catch { return }
-      if (msg.type === 'world-state') {
-        board.value = decodeBoard(msg.board)
-        cooldownMs.value = msg.cooldownMs || WORLD_COOLDOWN_MS
-        history.value = msg.history
-        connected.value = true
-        version.value++
-      } else if (msg.type === 'pixel') {
-        applyPixel(msg.x, msg.y, msg.c)
-        pushHistory(msg.x, msg.y, msg.c)
-        // our optimistic pixel came back confirmed — nothing to revert
-        if (pendingPlace && pendingPlace.x === msg.x && pendingPlace.y === msg.y) pendingPlace = null
-      } else if (msg.type === 'world-count') {
-        online.value = msg.online
-        recent.value = msg.recent
-      } else if (msg.type === 'pixel-denied') {
-        nextPlaceAt.value = Date.now() + msg.waitMs
-        // the server refused our optimistic pixel — roll it back to its old colour
-        if (pendingPlace) {
-          applyPixel(pendingPlace.x, pendingPlace.y, pendingPlace.prev)
-          pendingPlace = null
+    conn ??= createRelayConnection(wsUrl, {
+      onOpen: () => conn?.send({ type: 'world-join' } satisfies WorldJoinIn),
+      onFail: () => {
+        if (!board.value) enterOffline()
+      },
+      onDrop: () => (connected.value = false),
+      onFrame: (raw) => {
+        // the relay broadcasts other subsystems' frames (hello, page cursors,
+        // score boards) on the same socket — type the full union and let
+        // anything we don't handle fall through
+        const msg = raw as ServerMessage
+        if (msg.type === 'world-state') {
+          board.value = decodeBoard(msg.board)
+          cooldownMs.value = msg.cooldownMs || WORLD_COOLDOWN_MS
+          history.value = msg.history
+          connected.value = true
+          version.value++
+        } else if (msg.type === 'pixel') {
+          applyPixel(msg.x, msg.y, msg.c)
+          pushHistory(msg.x, msg.y, msg.c)
+          // our optimistic pixel came back confirmed — nothing to revert
+          if (pendingPlace && pendingPlace.x === msg.x && pendingPlace.y === msg.y) pendingPlace = null
+        } else if (msg.type === 'world-count') {
+          online.value = msg.online
+          recent.value = msg.recent
+        } else if (msg.type === 'pixel-denied') {
+          nextPlaceAt.value = Date.now() + msg.waitMs
+          // the server refused our optimistic pixel — roll it back to its old colour
+          if (pendingPlace) {
+            applyPixel(pendingPlace.x, pendingPlace.y, pendingPlace.prev)
+            pendingPlace = null
+          }
+        } else if (msg.type === 'pixel-info') {
+          lastInfo.value = { x: msg.x, y: msg.y, by: msg.by, at: msg.at }
+        } else if (msg.type === 'world-cursor') {
+          const { id, hue, x, y } = msg
+          const next = cursors.value.filter((cursor) => cursor.id !== id)
+          next.push({ id, hue, x, y, seen: Date.now() })
+          cursors.value = next.filter((cursor) => Date.now() - cursor.seen < 15_000)
+        } else if (msg.type === 'leave') {
+          const gone = msg.id
+          cursors.value = cursors.value.filter((cursor) => cursor.id !== gone)
         }
-      } else if (msg.type === 'pixel-info') {
-        lastInfo.value = { x: msg.x, y: msg.y, by: msg.by, at: msg.at }
-      } else if (msg.type === 'world-cursor') {
-        const { id, hue, x, y } = msg
-        const next = cursors.value.filter((cursor) => cursor.id !== id)
-        next.push({ id, hue, x, y, seen: Date.now() })
-        cursors.value = next.filter((cursor) => Date.now() - cursor.seen < 15_000)
-      } else if (msg.type === 'leave') {
-        const gone = msg.id
-        cursors.value = cursors.value.filter((cursor) => cursor.id !== gone)
       }
-    })
+    }, { reconnect: true })
   }
 
   const enter = () => {
-    if (wired) return
-    wired = true
+    if (releaseLease) return
     if (!wsUrl) {
       enterOffline()
       return
     }
     connect()
+    releaseLease = conn?.acquire() ?? null
   }
 
   const leave = () => {
-    wired = false // before close(), whose close handler would otherwise reconnect
-    clearTimeout(reconnectTimer)
-    // send() throws on a still-CONNECTING socket — closing early must not
-    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'world-leave' } satisfies WorldLeaveIn))
-    socket?.close()
-    socket = null
+    // a goodbye for the world, then hand the lease back (the core closes last)
+    conn?.send({ type: 'world-leave' } satisfies WorldLeaveIn)
+    releaseLease?.()
+    releaseLease = null
+    connected.value = false
   }
 
   /** Place a pixel; optimistic locally, authoritative on the server. Returns
    * remaining cooldown ms (0 = placed). */
   const place = (x: number, y: number, c: number): number => {
     if (!board.value || !inWorld(x, y) || !validColor(c)) return -1
-    if (connected.value && socket?.readyState === 1) {
+    if (connected.value && conn?.isOpen()) {
       const wait = nextPlaceAt.value - Date.now()
       if (wait > 0) return Math.ceil(wait)
       // optimistic paint, remembering the prior colour so a denial can revert
       pendingPlace = { x, y, prev: board.value[y * WORLD_SIZE + x] ?? 0 }
-      socket.send(JSON.stringify({ type: 'pixel', x, y, c, name: name.value } satisfies PixelIn))
+      conn.send({ type: 'pixel', x, y, c, name: name.value } satisfies PixelIn)
       applyPixel(x, y, c)
       nextPlaceAt.value = Date.now() + cooldownMs.value
       return 0
@@ -194,8 +178,8 @@ export function useWorld() {
   /** Ask who placed a pixel (answer lands in lastInfo). */
   const who = (x: number, y: number) => {
     if (!inWorld(x, y)) return
-    if (connected.value && socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'world-who', x, y } satisfies WorldWhoIn))
+    if (connected.value && conn?.isOpen()) {
+      conn.send({ type: 'world-who', x, y } satisfies WorldWhoIn)
       return
     }
     const info = offlineMeta[`${x},${y}`]
@@ -203,8 +187,8 @@ export function useWorld() {
   }
 
   const sendCursor = (x: number, y: number) => {
-    if (connected.value && socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'world-cursor', x, y } satisfies WorldCursorIn))
+    if (connected.value && conn?.isOpen()) {
+      conn.send({ type: 'world-cursor', x, y } satisfies WorldCursorIn)
     }
   }
 

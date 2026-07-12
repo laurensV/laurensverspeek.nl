@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { useEventListener, useThrottleFn } from '@vueuse/core'
+import { createRelayConnection } from '~/utils/relaySocket'
 // the relay's wire format lives in realtime/protocol.d.ts, shared with the server
 import type { ServerMessage, CursorMoveIn, SayIn } from '../../realtime/protocol'
 
@@ -48,10 +49,7 @@ const { count, showCursors, enabled, outbox } = useLiveVisitors()
 const cursors = ref(new Map<number, RemoteCursor>())
 const tick = ref(0)
 
-let socket: WebSocket | undefined
-let retries = 0
-let alive = true // false after unmount, so onclose can't resurrect the socket
-let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+let releaseLease: (() => void) | undefined
 const connected = ref(false)
 
 const visibleCursors = computed(() => {
@@ -71,71 +69,52 @@ watchEffect(() => {
   count.value = connected.value ? others + 1 : 0
 })
 
-const connect = () => {
-  if (!cursorsWs) return
-  socket = new WebSocket(cursorsWs)
-  socket.onopen = () => {
-    connected.value = true
-    retries = 0 // a good connection resets the backoff, so later drops retry too
-  }
-
-  socket.onmessage = (event) => {
-    // network input: a non-JSON frame must not throw on every later message
-    let msg: ServerMessage
-    try {
-      msg = JSON.parse(event.data as string) as ServerMessage
-    } catch {
-      return
-    }
-    if (msg.type === 'move') {
-      // keep any active speech bubble alive across position updates
-      const prev = cursors.value.get(msg.id)
-      cursors.value.set(msg.id, { ...msg, seen: Date.now(), say: prev?.say, sayUntil: prev?.sayUntil })
-      cursors.value = new Map(cursors.value)
-    } else if (msg.type === 'leave') {
-      cursors.value.delete(msg.id)
-      cursors.value = new Map(cursors.value)
-    } else if (msg.type === 'say') {
-      const existing = cursors.value.get(msg.id)
-      if (existing) {
-        existing.say = msg.text.slice(0, 80)
-        existing.sayUntil = Date.now() + 5000
-        cursors.value = new Map(cursors.value)
+// the shared relay-socket core: parse guards, drop detection and a capped
+// backoff that never gives up while this component holds its lease
+const conn = cursorsWs
+  ? createRelayConnection(cursorsWs, {
+      onOpen: () => (connected.value = true),
+      onDrop: () => (connected.value = false),
+      onFrame: (raw) => {
+        const msg = raw as ServerMessage
+        if (msg.type === 'move') {
+          // keep any active speech bubble alive across position updates
+          const prev = cursors.value.get(msg.id)
+          cursors.value.set(msg.id, { ...msg, seen: Date.now(), say: prev?.say, sayUntil: prev?.sayUntil })
+          cursors.value = new Map(cursors.value)
+        } else if (msg.type === 'leave') {
+          cursors.value.delete(msg.id)
+          cursors.value = new Map(cursors.value)
+        } else if (msg.type === 'say') {
+          const existing = cursors.value.get(msg.id)
+          if (existing) {
+            existing.say = msg.text.slice(0, 80)
+            existing.sayUntil = Date.now() + 5000
+            cursors.value = new Map(cursors.value)
+          }
+        }
       }
-    }
-  }
-
-  socket.onclose = () => {
-    connected.value = false
-    // close() on unmount fires this synchronously — don't reconnect a dead component.
-    // Never give up while mounted: an outage longer than three tries (a relay
-    // redeploy, a laptop nap) should still recover, just at a capped cadence.
-    if (alive) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
-  }
-}
+    }, { reconnect: true })
+  : null
 
 const send = useThrottleFn((event: PointerEvent) => {
-  if (socket?.readyState !== WebSocket.OPEN) return
-  socket.send(
-    JSON.stringify({
-      x: event.clientX / window.innerWidth,
-      y: event.clientY / window.innerHeight,
-      page: route.path,
-      name: name.value
-    } satisfies CursorMoveIn)
-  )
+  conn?.send({
+    x: event.clientX / window.innerWidth,
+    y: event.clientY / window.innerHeight,
+    page: route.path,
+    name: name.value
+  } satisfies CursorMoveIn)
 }, 90)
 
 onMounted(() => {
   if (!enabled.value) return
-  connect()
+  releaseLease = conn?.acquire()
   // prune stale cursors so they fade even without traffic
   const pruneTimer = setInterval(() => tick.value++, 2000)
   onBeforeUnmount(() => {
-    alive = false
-    clearTimeout(reconnectTimer)
     clearInterval(pruneTimer)
-    socket?.close()
+    releaseLease?.()
+    connected.value = false
   })
 })
 
@@ -143,9 +122,7 @@ useEventListener('pointermove', send, { passive: true })
 
 // the terminal `say` command writes here; forward it to the relay
 watch(outbox, (msg) => {
-  if (msg && socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'say', text: msg.text } satisfies SayIn))
-  }
+  if (msg) conn?.send({ type: 'say', text: msg.text } satisfies SayIn)
 })
 </script>
 

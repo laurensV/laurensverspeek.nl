@@ -1,5 +1,6 @@
 import { isQuitKey, bumpTally } from '~/utils/terminalGameKit'
 import { boxed } from '~/utils/asciiFrame'
+import { createRelayConnection } from '~/utils/relaySocket'
 import { PONG_W, PONG_H, PONG_PADDLE, clampPaddle } from '../../../realtime/pong-core.mjs'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
 import type { ServerMessage, PongJoinIn, PongLeaveIn, PongMoveIn } from '../../../realtime/protocol'
@@ -23,7 +24,8 @@ export function createOnlinePong(
   let myY = Math.floor(PONG_H / 2) - 1
   let state = { bx: PONG_W / 2, by: PONG_H / 2, ly: myY, ry: myY, ls: 0, rs: 0 }
   let dots = 0
-  let socket: WebSocket | null = null
+  let done = false
+  let release: (() => void) | null = null
 
   // keep the lobby spinner alive while connecting/waiting
   const lobbyTimer = setInterval(() => {
@@ -32,9 +34,9 @@ export function createOnlinePong(
 
   const stop = () => {
     clearInterval(lobbyTimer)
-    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'pong-leave' } satisfies PongLeaveIn))
-    socket?.close()
-    socket = null
+    conn.send({ type: 'pong-leave' } satisfies PongLeaveIn)
+    release?.()
+    release = null
   }
 
   const renderLobby = (line: string) => {
@@ -72,57 +74,46 @@ export function createOnlinePong(
   }
 
   const finish = (lines: string[]) => {
+    if (done) return
+    done = true
     stop()
     onEnd(lines)
   }
 
-  try {
-    socket = new WebSocket(wsUrl)
-  } catch {
-    clearInterval(lobbyTimer)
-    onEnd(['pong: the relay refused the call — try again later'])
-    return { onKey: () => false, stop: () => {} }
-  }
-
-  socket.addEventListener('open', () => {
-    socket?.send(JSON.stringify({ type: 'pong-join', name: playerName } satisfies PongJoinIn))
-    renderLobby('dialing the arcade')
-  })
-  socket.addEventListener('error', () => {
-    finish(['pong: the relay is unreachable — the global arcade is closed right now'])
-  })
-  socket.addEventListener('close', () => {
-    if (socket) finish(['pong: connection lost — the match dissolves into static'])
-  })
-  socket.addEventListener('message', (event) => {
-    let msg: ServerMessage
-    try {
-      msg = JSON.parse(String(event.data)) as ServerMessage
-    } catch {
-      return
-    }
-    if (msg.type === 'pong-wait') {
-      phase = 'waiting'
-      renderLobby('waiting for another visitor to type `pong online`')
-    } else if (msg.type === 'pong-start') {
-      phase = 'playing'
-      side = msg.side
-      foe = msg.foe || 'a visitor'
-      clearInterval(lobbyTimer)
-      render()
-    } else if (msg.type === 'pong-state') {
-      state = { bx: msg.bx, by: msg.by, ly: msg.ly, ry: msg.ry, ls: msg.ls, rs: msg.rs }
-      render()
-    } else if (msg.type === 'pong-end') {
-      const iWon = msg.winner === side
-      // a win over a real visitor joins the shared tally (hall of fame, pet coins)
-      if (iWon) bumpTally('lv-pong-online-wins')
-      const score = side === 'l' ? `${state.ls}–${state.rs}` : `${state.rs}–${state.ls}`
-      finish(msg.forfeit
-        ? [iWon ? `${foe} rage-quit — you win by forfeit!` : 'you forfeited. the arcade remembers.']
-        : [iWon ? `you beat ${foe} ${score}! a real human, defeated.` : `${foe} wins ${score} — shake hands with the screen.`])
+  // one fresh connection for this match, on the shared relay-socket core
+  const conn = createRelayConnection(wsUrl, {
+    onOpen: () => {
+      conn.send({ type: 'pong-join', name: playerName } satisfies PongJoinIn)
+      renderLobby('dialing the arcade')
+    },
+    onFail: () => finish(['pong: the relay is unreachable — the global arcade is closed right now']),
+    onDrop: () => finish(['pong: connection lost — the match dissolves into static']),
+    onFrame: (raw) => {
+      const msg = raw as ServerMessage
+      if (msg.type === 'pong-wait') {
+        phase = 'waiting'
+        renderLobby('waiting for another visitor to type `pong online`')
+      } else if (msg.type === 'pong-start') {
+        phase = 'playing'
+        side = msg.side
+        foe = msg.foe || 'a visitor'
+        clearInterval(lobbyTimer)
+        render()
+      } else if (msg.type === 'pong-state') {
+        state = { bx: msg.bx, by: msg.by, ly: msg.ly, ry: msg.ry, ls: msg.ls, rs: msg.rs }
+        render()
+      } else if (msg.type === 'pong-end') {
+        const iWon = msg.winner === side
+        // a win over a real visitor joins the shared tally (hall of fame, pet coins)
+        if (iWon) bumpTally('lv-pong-online-wins')
+        const score = side === 'l' ? `${state.ls}–${state.rs}` : `${state.rs}–${state.ls}`
+        finish(msg.forfeit
+          ? [iWon ? `${foe} rage-quit — you win by forfeit!` : 'you forfeited. the arcade remembers.']
+          : [iWon ? `you beat ${foe} ${score}! a real human, defeated.` : `${foe} wins ${score} — shake hands with the screen.`])
+      }
     }
   })
+  release = conn.acquire()
 
   const move = (delta: number) => {
     if (phase !== 'playing') return
@@ -131,9 +122,7 @@ export function createOnlinePong(
     if (side === 'l') state.ly = myY
     else state.ry = myY
     render()
-    if (socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'pong-move', y: myY } satisfies PongMoveIn))
-    }
+    conn.send({ type: 'pong-move', y: myY } satisfies PongMoveIn)
   }
 
   return {

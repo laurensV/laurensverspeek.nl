@@ -1,5 +1,6 @@
 import { initialState, applyMove } from '~/utils/chess'
 import { bumpTally } from '~/utils/terminalGameKit'
+import { createRelayConnection, type RelayConnection } from '~/utils/relaySocket'
 import type { ChessState, Side } from '~/utils/chess'
 import type { ServerMessage, ChessJoinIn, ChessLeaveIn, ChessMoveIn } from '../../realtime/protocol'
 
@@ -24,16 +25,19 @@ export function useChessOnline() {
   const lastMove = ref<number[]>([])
   const endLine = ref('')
 
-  let socket: WebSocket | null = null
+  // one fresh connection per match (relay-socket core: parse guards + the
+  // deliberate-close vs drop distinction live there)
+  let conn: RelayConnection | null = null
+  let release: (() => void) | null = null
 
   const teardown = () => {
-    const open = socket
-    socket = null // onclose checks this to tell a deliberate exit from a drop
-    open?.close()
+    release?.()
+    release = null
+    conn = null
   }
 
   const leave = () => {
-    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'chess-leave' } satisfies ChessLeaveIn))
+    conn?.send({ type: 'chess-leave' } satisfies ChessLeaveIn)
     teardown()
     phase.value = 'idle'
   }
@@ -50,68 +54,63 @@ export function useChessOnline() {
     state.value = initialState()
     lastMove.value = []
     endLine.value = ''
-    try {
-      socket = new WebSocket(wsUrl)
-    } catch {
-      finish('the relay refused the call — try again later')
-      return
-    }
-    socket.addEventListener('open', () => {
-      socket?.send(JSON.stringify({ type: 'chess-join', name: name.value } satisfies ChessJoinIn))
-    })
-    socket.addEventListener('error', () => {
-      if (socket) finish('the relay is unreachable — the chess club is closed right now')
-    })
-    socket.addEventListener('close', () => {
-      if (socket) finish('connection lost — the match dissolves')
-    })
-    socket.addEventListener('message', (event) => {
-      let msg: ServerMessage
-      try {
-        msg = JSON.parse(String(event.data)) as ServerMessage
-      } catch {
-        return
-      }
-      if (msg.type === 'chess-wait') {
-        phase.value = 'waiting'
-      } else if (msg.type === 'chess-start') {
-        mySide.value = msg.side
-        foe.value = msg.foe || 'a visitor'
-        state.value = initialState()
-        lastMove.value = []
-        phase.value = 'playing'
-      } else if (msg.type === 'chess-moved') {
-        state.value = applyMove(state.value, msg.move)
-        lastMove.value = [msg.move.from, msg.move.to]
-      } else if (msg.type === 'chess-end') {
-        const { winner, reason } = msg
-        // a win over a real visitor joins the shared tally (hall of fame, pet coins)
-        if (winner === mySide.value) bumpTally('lv-chess-online-wins')
-        if (reason === 'forfeit') {
-          finish(winner === mySide.value
-            ? `${foe.value} disconnected — you win by forfeit`
-            : 'you forfeited. the club remembers.')
-        } else if (reason === 'stalemate') {
-          finish('stalemate — a firm diplomatic handshake')
-        } else {
-          finish(winner === mySide.value
-            ? `checkmate — you beat ${foe.value}! a real human, defeated.`
-            : `checkmate — ${foe.value} wins. shake hands with the screen.`)
+    const match = createRelayConnection(wsUrl, {
+      onOpen: () => conn?.send({ type: 'chess-join', name: name.value } satisfies ChessJoinIn),
+      onFail: () => {
+        if (conn) finish('the relay is unreachable — the chess club is closed right now')
+      },
+      onDrop: () => {
+        if (conn) finish('connection lost — the match dissolves')
+      },
+      onFrame: (raw) => {
+        const msg = raw as ServerMessage
+        if (msg.type === 'chess-wait') {
+          phase.value = 'waiting'
+        } else if (msg.type === 'chess-start') {
+          mySide.value = msg.side
+          foe.value = msg.foe || 'a visitor'
+          state.value = initialState()
+          lastMove.value = []
+          phase.value = 'playing'
+        } else if (msg.type === 'chess-moved') {
+          state.value = applyMove(state.value, msg.move)
+          lastMove.value = [msg.move.from, msg.move.to]
+        } else if (msg.type === 'chess-end') {
+          const { winner, reason } = msg
+          // a win over a real visitor joins the shared tally (hall of fame, pet coins)
+          if (winner === mySide.value) bumpTally('lv-chess-online-wins')
+          if (reason === 'forfeit') {
+            finish(winner === mySide.value
+              ? `${foe.value} disconnected — you win by forfeit`
+              : 'you forfeited. the club remembers.')
+          } else if (reason === 'stalemate') {
+            finish('stalemate — a firm diplomatic handshake')
+          } else {
+            finish(winner === mySide.value
+              ? `checkmate — you beat ${foe.value}! a real human, defeated.`
+              : `checkmate — ${foe.value} wins. shake hands with the screen.`)
+          }
         }
       }
     })
+    conn = match
+    release = match.acquire()
+    const failedSynchronously = () => phase.value === 'over'
+    if (failedSynchronously()) {
+      // the socket constructor threw and finish() already ran — drop the lease
+      release()
+      release = null
+    }
   }
 
   const sendMove = (from: number, to: number) => {
     if (phase.value !== 'playing' || state.value.turn !== mySide.value) return
-    if (socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'chess-move', from, to } satisfies ChessMoveIn))
-    }
+    conn?.send({ type: 'chess-move', from, to } satisfies ChessMoveIn)
   }
 
   // closing the chess window mid-match is a forfeit, same as disconnecting
   onScopeDispose(() => {
-    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'chess-leave' } satisfies ChessLeaveIn))
+    conn?.send({ type: 'chess-leave' } satisfies ChessLeaveIn)
     teardown()
   })
 
