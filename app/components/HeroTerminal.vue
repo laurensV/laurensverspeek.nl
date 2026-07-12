@@ -17,16 +17,52 @@
       <span class="line output">nosana.md&nbsp;&nbsp;effect-network.md&nbsp;&nbsp;…</span>
       <span class="line"><span class="prompt">$</span> cat mission.txt</span>
       <span class="line output">decentralize compute, ship cool things</span>
-      <span class="line"><span class="prompt">$</span> <span class="blink-cursor" /></span>
+      <span class="line"><span class="prompt">$</span> {{ demoText }}<span class="blink-cursor" /></span>
       <span class="line hint">// click — or just start typing — to open the terminal</span>
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
+import { useIdle } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-const { open } = useTerminal()
+const { open, isOpen } = useTerminal()
+
+// ---- idle demo reel ----
+// leave the homepage alone for a bit and the card starts window-shopping:
+// it types a real command (they all work in the terminal it opens), holds it,
+// backspaces, tries the next. Any activity stops the show instantly.
+const DEMO_COMMANDS = ['neofetch', 'cowsay moo', 'snake', 'matrix', 'adventure', 'music play', 'fireworks']
+const demoText = ref('')
+const { idle } = useIdle(8_000)
+let demoTimer: ReturnType<typeof setTimeout> | undefined
+let demoIndex = 0
+
+const stepDemo = (target: string, len: number, phase: 'type' | 'hold' | 'erase') => {
+  demoText.value = target.slice(0, len)
+  const next = (delay: number, l: number, p: typeof phase) => {
+    demoTimer = setTimeout(() => stepDemo(target, l, p), delay)
+  }
+  if (phase === 'type') {
+    if (len < target.length) return next(110, len + 1, 'type')
+    return next(1_800, len, 'hold')
+  }
+  if (phase === 'hold') return next(0, len - 1, 'erase')
+  if (len > 0) return next(55, len - 1, 'erase')
+  demoIndex = (demoIndex + 1) % DEMO_COMMANDS.length
+  demoTimer = setTimeout(() => stepDemo(DEMO_COMMANDS[demoIndex]!, 1, 'type'), 700)
+}
+
+watch(idle, (isIdle) => {
+  clearTimeout(demoTimer)
+  if (isIdle && !isOpen.value && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    stepDemo(DEMO_COMMANDS[demoIndex]!, 1, 'type')
+  } else {
+    demoText.value = ''
+  }
+})
+onUnmounted(() => clearTimeout(demoTimer))
 
 // typing a printable key on the focused hero card opens the real terminal and
 // carries the keystroke in as the start of a command
