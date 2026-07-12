@@ -1,8 +1,8 @@
-import { isQuitKey, bumpTally } from '~/utils/terminalGameKit'
-import { createRelayConnection } from '~/utils/relaySocket'
+import { isQuitKey } from '~/utils/terminalGameKit'
+import { createRelayDuel } from '~/utils/games/relayDuel'
 import { wpmStats, wrapPassage } from '~/utils/games/wpm'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
-import type { ServerMessage, RaceJoinIn, RaceLeaveIn, RaceProgressIn } from '../../../realtime/protocol'
+import type { RaceJoinIn, RaceLeaveIn, RaceProgressIn } from '../../../realtime/protocol'
 
 // The online typing race: two visitors, one passage (from the same corpus the
 // solo test uses — realtime/race-core.mjs), and a server that holds the
@@ -29,9 +29,7 @@ export function createWpmRace(
   let keystrokes = 0
   let errors = 0
   let startedAt = 0
-  let dots = 0
   let done = false
-  let release: (() => void) | null = null
 
   // progress = leading correct characters; you can't sprint past a typo
   const correctPrefix = () => {
@@ -40,14 +38,8 @@ export function createWpmRace(
     return i
   }
 
-  const lobbyTimer = setInterval(() => {
-    if (phase === 'connecting' || phase === 'waiting') {
-      dots = (dots + 1) % 4
-      renderLobby(phase === 'connecting' ? 'dialing the racetrack' : 'waiting for another visitor to type `wpm race`')
-    }
-  }, 600)
-
-  const renderLobby = (line: string) => {
+  const renderLobby = (dots = 0) => {
+    const line = phase === 'connecting' ? 'dialing the racetrack' : 'waiting for another visitor to type `wpm race`'
     onFrame(['WPM RACE', '', `${line}${'.'.repeat(dots)}`, '', '(q backs out)'].join('\n'))
   }
 
@@ -84,25 +76,22 @@ export function createWpmRace(
   const finish = (lines: string[]) => {
     if (done) return
     done = true
-    clearInterval(lobbyTimer)
-    conn.send({ type: 'race-leave' } satisfies RaceLeaveIn)
-    release?.()
-    release = null
+    duel.teardown()
     onEnd(lines)
   }
 
-  const conn = createRelayConnection(wsUrl, {
-    onOpen: () => {
-      conn.send({ type: 'race-join', name: playerName } satisfies RaceJoinIn)
-      renderLobby('dialing the racetrack')
-    },
+  const duel = createRelayDuel({
+    wsUrl,
+    join: { type: 'race-join', name: playerName } satisfies RaceJoinIn,
+    leave: { type: 'race-leave' } satisfies RaceLeaveIn,
+    onOpen: () => renderLobby(),
+    spinner: { active: () => phase === 'connecting' || phase === 'waiting', tick: renderLobby },
     onFail: () => finish(['wpm: the relay is unreachable — the racetrack is closed right now']),
     onDrop: () => finish(['wpm: connection lost — the race dissolves at the starting line']),
-    onFrame: (raw) => {
-      const msg = raw as ServerMessage
+    onFrame: (msg) => {
       if (msg.type === 'race-wait') {
         phase = 'waiting'
-        renderLobby('waiting for another visitor to type `wpm race`')
+        renderLobby()
       } else if (msg.type === 'race-start') {
         phase = 'ready'
         foe = msg.foe || 'a visitor'
@@ -118,7 +107,7 @@ export function createWpmRace(
         if (phase === 'racing') render()
       } else if (msg.type === 'race-end') {
         // a win over a real visitor joins the shared tally (hall of fame, pet coins)
-        if (msg.youWon) bumpTally('lv-wpm-race-wins')
+        if (msg.youWon) duel.recordWin('lv-wpm-race-wins')
         const mine = correctPrefix()
         const { wpm, accuracy } = wpmStats(mine, keystrokes, errors, startedAt ? Date.now() - startedAt : 0)
         const stats = startedAt ? ` (${wpm} wpm · ${accuracy}% acc)` : ''
@@ -128,7 +117,6 @@ export function createWpmRace(
       }
     }
   })
-  release = conn.acquire()
 
   return {
     onKey(key) {
@@ -146,15 +134,10 @@ export function createWpmRace(
       keystrokes++
       if (key !== text[typed.length]) errors++
       typed += key
-      conn.send({ type: 'race-progress', chars: correctPrefix() } satisfies RaceProgressIn)
+      duel.send({ type: 'race-progress', chars: correctPrefix() } satisfies RaceProgressIn)
       render()
       return true
     },
-    stop: () => {
-      clearInterval(lobbyTimer)
-      conn.send({ type: 'race-leave' } satisfies RaceLeaveIn)
-      release?.()
-      release = null
-    }
+    stop: duel.teardown
   }
 }

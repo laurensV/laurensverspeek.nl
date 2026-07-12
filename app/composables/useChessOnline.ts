@@ -1,8 +1,7 @@
 import { initialState, applyMove } from '~/utils/chess'
-import { bumpTally } from '~/utils/terminalGameKit'
-import { createRelayConnection, type RelayConnection } from '~/utils/relaySocket'
+import { createRelayDuel, type RelayDuel } from '~/utils/games/relayDuel'
 import type { ChessState, Side } from '~/utils/chess'
-import type { ServerMessage, ChessJoinIn, ChessLeaveIn, ChessMoveIn } from '../../realtime/protocol'
+import type { ChessJoinIn, ChessLeaveIn, ChessMoveIn } from '../../realtime/protocol'
 
 export type ChessOnlinePhase = 'idle' | 'connecting' | 'waiting' | 'playing' | 'over'
 
@@ -25,24 +24,22 @@ export function useChessOnline() {
   const lastMove = ref<number[]>([])
   const endLine = ref('')
 
-  // one fresh connection per match (relay-socket core: parse guards + the
-  // deliberate-close vs drop distinction live there)
-  let conn: RelayConnection | null = null
-  let release: (() => void) | null = null
+  // one fresh duel per match (the relay-socket lease + leave frame + win tally
+  // live in the shared helper, pong/wpm-race style)
+  let duel: RelayDuel | null = null
 
   const teardown = () => {
-    release?.()
-    release = null
-    conn = null
+    duel?.teardown()
+    duel = null
   }
 
   const leave = () => {
-    conn?.send({ type: 'chess-leave' } satisfies ChessLeaveIn)
-    teardown()
+    teardown() // teardown sends the leave frame
     phase.value = 'idle'
   }
 
   const finish = (line: string) => {
+    if (phase.value === 'over' || phase.value === 'idle') return
     teardown()
     endLine.value = line
     phase.value = 'over'
@@ -54,16 +51,13 @@ export function useChessOnline() {
     state.value = initialState()
     lastMove.value = []
     endLine.value = ''
-    const match = createRelayConnection(wsUrl, {
-      onOpen: () => conn?.send({ type: 'chess-join', name: name.value } satisfies ChessJoinIn),
-      onFail: () => {
-        if (conn) finish('the relay is unreachable — the chess club is closed right now')
-      },
-      onDrop: () => {
-        if (conn) finish('connection lost — the match dissolves')
-      },
-      onFrame: (raw) => {
-        const msg = raw as ServerMessage
+    duel = createRelayDuel({
+      wsUrl,
+      join: { type: 'chess-join', name: name.value } satisfies ChessJoinIn,
+      leave: { type: 'chess-leave' } satisfies ChessLeaveIn,
+      onFail: () => finish('the relay is unreachable — the chess club is closed right now'),
+      onDrop: () => finish('connection lost — the match dissolves'),
+      onFrame: (msg) => {
         if (msg.type === 'chess-wait') {
           phase.value = 'waiting'
         } else if (msg.type === 'chess-start') {
@@ -78,7 +72,7 @@ export function useChessOnline() {
         } else if (msg.type === 'chess-end') {
           const { winner, reason } = msg
           // a win over a real visitor joins the shared tally (hall of fame, pet coins)
-          if (winner === mySide.value) bumpTally('lv-chess-online-wins')
+          if (winner === mySide.value) duel?.recordWin('lv-chess-online-wins')
           if (reason === 'forfeit') {
             finish(winner === mySide.value
               ? `${foe.value} disconnected — you win by forfeit`
@@ -93,26 +87,15 @@ export function useChessOnline() {
         }
       }
     })
-    conn = match
-    release = match.acquire()
-    const failedSynchronously = () => phase.value === 'over'
-    if (failedSynchronously()) {
-      // the socket constructor threw and finish() already ran — drop the lease
-      release()
-      release = null
-    }
   }
 
   const sendMove = (from: number, to: number) => {
     if (phase.value !== 'playing' || state.value.turn !== mySide.value) return
-    conn?.send({ type: 'chess-move', from, to } satisfies ChessMoveIn)
+    duel?.send({ type: 'chess-move', from, to } satisfies ChessMoveIn)
   }
 
   // closing the chess window mid-match is a forfeit, same as disconnecting
-  onScopeDispose(() => {
-    conn?.send({ type: 'chess-leave' } satisfies ChessLeaveIn)
-    teardown()
-  })
+  onScopeDispose(teardown)
 
   return { enabled, phase, mySide, foe, state, lastMove, endLine, join, leave, sendMove }
 }

@@ -1,9 +1,9 @@
-import { isQuitKey, bumpTally } from '~/utils/terminalGameKit'
+import { isQuitKey } from '~/utils/terminalGameKit'
 import { boxed } from '~/utils/asciiFrame'
-import { createRelayConnection } from '~/utils/relaySocket'
+import { createRelayDuel } from '~/utils/games/relayDuel'
 import { PONG_W, PONG_H, PONG_PADDLE, clampPaddle } from '../../../realtime/pong-core.mjs'
 import type { GameHandle, GameCallbacks } from '~/utils/games/types'
-import type { ServerMessage, PongJoinIn, PongLeaveIn, PongMoveIn } from '../../../realtime/protocol'
+import type { PongJoinIn, PongLeaveIn, PongMoveIn } from '../../../realtime/protocol'
 
 // Online pong over the cursors relay: the server owns the ball (see
 // realtime/pong-core.mjs — the SAME physics module), this side only renders
@@ -23,31 +23,11 @@ export function createOnlinePong(
   let foe = ''
   let myY = Math.floor(PONG_H / 2) - 1
   let state = { bx: PONG_W / 2, by: PONG_H / 2, ly: myY, ry: myY, ls: 0, rs: 0 }
-  let dots = 0
   let done = false
-  let release: (() => void) | null = null
 
-  // keep the lobby spinner alive while connecting/waiting
-  const lobbyTimer = setInterval(() => {
-    if (phase !== 'playing') renderLobby(phase === 'connecting' ? 'dialing the arcade' : 'waiting for another visitor to type `pong online`')
-  }, 600)
-
-  const stop = () => {
-    clearInterval(lobbyTimer)
-    conn.send({ type: 'pong-leave' } satisfies PongLeaveIn)
-    release?.()
-    release = null
-  }
-
-  const renderLobby = (line: string) => {
-    dots = (dots + 1) % 4
-    onFrame([
-      'ONLINE PONG',
-      '',
-      `${line}${'.'.repeat(dots)}`,
-      '',
-      '(q backs out)'
-    ].join('\n'))
+  const renderLobby = (dots = 0) => {
+    const line = phase === 'connecting' ? 'dialing the arcade' : 'waiting for another visitor to type `pong online`'
+    onFrame(['ONLINE PONG', '', `${line}${'.'.repeat(dots)}`, '', '(q backs out)'].join('\n'))
   }
 
   const render = () => {
@@ -76,28 +56,27 @@ export function createOnlinePong(
   const finish = (lines: string[]) => {
     if (done) return
     done = true
-    stop()
+    duel.teardown()
     onEnd(lines)
   }
 
-  // one fresh connection for this match, on the shared relay-socket core
-  const conn = createRelayConnection(wsUrl, {
-    onOpen: () => {
-      conn.send({ type: 'pong-join', name: playerName } satisfies PongJoinIn)
-      renderLobby('dialing the arcade')
-    },
+  // the shared duel owns the connection, lease, lobby spinner and leave frame
+  const duel = createRelayDuel({
+    wsUrl,
+    join: { type: 'pong-join', name: playerName } satisfies PongJoinIn,
+    leave: { type: 'pong-leave' } satisfies PongLeaveIn,
+    onOpen: () => renderLobby(),
+    spinner: { active: () => phase !== 'playing', tick: renderLobby },
     onFail: () => finish(['pong: the relay is unreachable — the global arcade is closed right now']),
     onDrop: () => finish(['pong: connection lost — the match dissolves into static']),
-    onFrame: (raw) => {
-      const msg = raw as ServerMessage
+    onFrame: (msg) => {
       if (msg.type === 'pong-wait') {
         phase = 'waiting'
-        renderLobby('waiting for another visitor to type `pong online`')
+        renderLobby()
       } else if (msg.type === 'pong-start') {
         phase = 'playing'
         side = msg.side
         foe = msg.foe || 'a visitor'
-        clearInterval(lobbyTimer)
         render()
       } else if (msg.type === 'pong-state') {
         state = { bx: msg.bx, by: msg.by, ly: msg.ly, ry: msg.ry, ls: msg.ls, rs: msg.rs }
@@ -105,7 +84,7 @@ export function createOnlinePong(
       } else if (msg.type === 'pong-end') {
         const iWon = msg.winner === side
         // a win over a real visitor joins the shared tally (hall of fame, pet coins)
-        if (iWon) bumpTally('lv-pong-online-wins')
+        if (iWon) duel.recordWin('lv-pong-online-wins')
         const score = side === 'l' ? `${state.ls}–${state.rs}` : `${state.rs}–${state.ls}`
         finish(msg.forfeit
           ? [iWon ? `${foe} rage-quit — you win by forfeit!` : 'you forfeited. the arcade remembers.']
@@ -113,7 +92,6 @@ export function createOnlinePong(
       }
     }
   })
-  release = conn.acquire()
 
   const move = (delta: number) => {
     if (phase !== 'playing') return
@@ -122,7 +100,7 @@ export function createOnlinePong(
     if (side === 'l') state.ly = myY
     else state.ry = myY
     render()
-    conn.send({ type: 'pong-move', y: myY } satisfies PongMoveIn)
+    duel.send({ type: 'pong-move', y: myY } satisfies PongMoveIn)
   }
 
   return {
@@ -143,6 +121,6 @@ export function createOnlinePong(
       }
       return false
     },
-    stop
+    stop: duel.teardown
   }
 }
