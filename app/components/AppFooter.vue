@@ -27,7 +27,6 @@
         </button>
         · <NuxtLink to="/changelog" class="build-changelog">changelog</NuxtLink>
         · <NuxtLink to="/keyboard" class="build-shortcuts">shortcuts</NuxtLink>
-        · <NuxtLink to="/til" class="build-til">til</NuxtLink>
         · <button type="button" class="build-bug" @click="reportBug">found a bug?</button>
       </p>
       <RetroHitCounter />
@@ -113,7 +112,6 @@ const reportBug = () => {
 
     .build-changelog,
     .build-shortcuts,
-    .build-til,
     .build-bug {
       color: inherit;
 

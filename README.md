@@ -36,7 +36,7 @@ Run `desktop` / `startx`, or visit `/desktop`. A BIOS boot (press <kbd>DEL</kbd>
 - **Vim-style navigation** — <kbd>j</kbd>/<kbd>k</kbd> scroll, <kbd>gg</kbd>/<kbd>G</kbd> jump, `gh`/`gb`/`gp` go to home/blog/projects.
 - **Command palette** — <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘K</kbd> fuzzy search over pages, posts, projects and actions.
 - **Details** — an interactive Game of Life hero (with a pointer trail), a working VS Code-style status bar (clock, presence, EOL/language toys, optionally a pet), `pwd` breadcrumbs, a time-aware greeting, theme-aware favicon (which becomes a prompt while the terminal is open), native **view transitions** (project cards morph into their detail pages), an interactive 404 recovery shell (with a hidden `play`), a downloadable vCard + ASCII QR on `/contact`, live GitHub stats that count up on scroll, print-optimized `/cv`, per-page OG cards generated at build time, `humans.txt` + `security.txt`, breadcrumb & article JSON-LD, an offline page with a playable snake, and git-derived "last updated" dates.
-- **Meta pages** — `/museum` catalogs every feature and easter egg as exhibits (and you can walk the floor as an avatar); `/stats` draws the public visitor counters; `/changelog` is the real git history; `/keyboard` is the shortcut reference; `/til` is a micro-blog; a PGP scaffold gates `/pgp.txt`.
+- **Meta pages** — `/museum` catalogs every feature and easter egg as exhibits (and you can walk the floor as an avatar); `/stats` draws the public visitor counters; `/changelog` is the real git history; `/keyboard` is the shortcut reference; a PGP scaffold gates `/pgp.txt`.
 - Dark/light theme throughout, reduced-motion respected everywhere, filterable projects with detail pages, `/uses` and `/now`.
 
 ## Architecture
