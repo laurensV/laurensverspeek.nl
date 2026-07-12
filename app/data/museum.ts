@@ -29,7 +29,8 @@ export const museum: Wing[] = [
       { name: 'vim & nano', how: 'vim notes.txt', blurb: 'Real modal editing over the real filesystem. Yes, :wq works. That alone makes it better than the original.' },
       { name: 'reverse search', how: 'ctrl+r', blurb: 'Incremental history search, cycling matches like the shell you grew up with.' },
       { name: 'ssh', how: 'ssh guest@laurensverspeek.nl', blurb: 'Connects to the server you are already on. Authentication method: "vibes".' },
-      { name: 'the process table', how: 'ps, kill, top', blurb: 'Effects, lvOS windows and running games are one process table. kill 1231 ends the fireworks; kill 7 ends you.' }
+      { name: 'the process table', how: 'ps, kill, top', blurb: 'Effects, lvOS windows and running games are one process table. kill 1231 ends the fireworks; kill 7 ends you.' },
+      { name: 'jq', how: "jq '.basics.name' resume", blurb: 'A real subset of jq over the site\'s own JSON — resume, profile, projects — field access, array iteration, pipes and keys/length. Pipe curl into it too.' }
     ]
   },
   {
@@ -52,6 +53,7 @@ export const museum: Wing[] = [
       { name: 'the volume tray & jukebox', how: 'the taskbar speaker, or type music', blurb: 'One real volume the chiptune engine obeys, shared by the media app, the terminal music command and the tray. Three tracks, all synthesized, no files.' },
       { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Both settable across Settings, Displays and BIOS.' },
       { name: 'camera, playground & monitors', how: 'the icon grid', blurb: 'A webcam-to-ASCII camera, a sandboxed HTML/CSS/JS code playground, a live system monitor and a GitHub contributions heatmap — the desktop earns its keep.' },
+      { name: 'weather & the colour picker', how: 'the weather and colours icons', blurb: 'A five-day Amsterdam forecast over the same source as the tray chip, and an eyedropper colour tool that reads hex/rgb/hsl and pushes any colour to the live site accent.' },
       { name: 'the hall of fame', how: 'the scores icon', blurb: 'Every game\'s persisted best in one board — and those same scores mint the coins your tamagotchi spends. One ledger, no fakes.' },
       { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' }
     ]
@@ -83,7 +85,8 @@ export const museum: Wing[] = [
       { name: 'CRT mode', how: 'type crt, or triple-click the logo', blurb: 'Scanlines and glow. Welcome back to 1985.' },
       { name: 'the steam locomotive', how: 'mistype ls as sl', blurb: 'You know exactly what you did.' },
       { name: 'party mode', how: '↑↑↓↓←→←→BA', blurb: 'The Konami code does what the Konami code must.' },
-      { name: 'barrel roll', how: 'do a barrel roll', blurb: 'Star Fox taught us well. Reduced motion politely asks you to imagine it.' }
+      { name: 'barrel roll', how: 'do a barrel roll', blurb: 'Star Fox taught us well. Reduced motion politely asks you to imagine it.' },
+      { name: 'the high-score burst', how: 'beat your best at any game', blurb: 'Confetti erupts the moment you top a personal record — never on the first play, and a single still frame under reduced motion.' }
     ]
   },
   {
@@ -114,7 +117,8 @@ export const museum: Wing[] = [
       { name: 'pong & the typing race', how: 'pong online, wpm race', blurb: 'Two visitors, one server-authoritative match. Pong physics and the finish line both live on the relay; without one, you quietly fall back to solo play.' },
       { name: 'the leaderboard', how: 'the hall of fame, when online', blurb: 'Local high scores plus a global top table over the relay — snake, tetris, 2048, wpm and pong, submitted automatically when a game ends.' },
       { name: 'the visitor globe', how: 'type globe', blurb: 'A spinning ASCII earth plotting everyone online by timezone — ◉ is you. Privacy-safe: only a UTC offset ever crosses the wire, never a location.' },
-      { name: 'the relay', how: 'realtime/cursors-server.mjs', blurb: 'One tiny Node websocket server behind all of it: authoritative pixel board, matchmaking, rate limits, provenance, no accounts, no tracking. The whole multiplayer layer is optional and off by default.' }
+      { name: 'the relay', how: 'realtime/cursors-server.mjs', blurb: 'One tiny Node websocket server behind all of it: authoritative pixel board, matchmaking, rate limits, provenance, no accounts, no tracking. The whole multiplayer layer is optional and off by default.' },
+      { name: 'the status page', how: 'visit /status', blurb: 'An honest health check for the whole multiplayer layer: whether the relay is up, who is online, how full the pixel board is, and which features are available right now.' }
     ]
   },
   {
