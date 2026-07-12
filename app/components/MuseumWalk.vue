@@ -14,7 +14,7 @@
       </p>
       <p class="walk-plaque-blurb">{{ exhibit?.blurb }}</p>
     </div>
-    <p v-else class="walk-hint is-family-code">// walk up to a ▯ plaque to read it — arrows or wasd move</p>
+    <p v-else class="walk-hint is-family-code">// walk up to a ? plaque to read it — arrows or wasd move</p>
 
     <div class="walk-pad" aria-hidden="true">
       <button @pointerdown.prevent="step(0, -1)">▲</button>

@@ -64,7 +64,7 @@ export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
     }
     if (w === wings.length - 1) for (let x = 0; x < width; x++) wall(x, bottom)
     // a door in every shared wall (not the museum's outer top wall)
-    if (w > 0) grid[top]![doorX] = { ch: '▒', walkable: true }
+    if (w > 0) grid[top]![doorX] = { ch: '+', walkable: true }
 
     // plaques hang on the room's own west and east walls — side walls are
     // never shared between rooms and never carry doors
@@ -74,7 +74,7 @@ export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
       const step = innerH / count
       for (let i = 0; i < count; i++) {
         const y = top + 1 + Math.min(innerH - 1, Math.floor(step * (i + 0.5)))
-        grid[y]![x] = { ch: '▯', walkable: false, plaque: { wing: w, exhibit: offset + i } }
+        grid[y]![x] = { ch: '?', walkable: false, plaque: { wing: w, exhibit: offset + i } }
       }
     }
     place(half, 0, 0)
@@ -144,7 +144,7 @@ export function renderMuseum(
       const cell = map.grid[y]![x]!
       row += cell.plaque && highlight
         && cell.plaque.wing === highlight.wing && cell.plaque.exhibit === highlight.exhibit
-        ? '▮'
+        ? '!'
         : cell.ch
     }
     rows.push(row)
