@@ -18,7 +18,13 @@ export function scrambleFrame(text: string, frame: number, totalFrames: number, 
 
 /** Drives the decode animation on an element's textContent (used by nav links). */
 export function useTextScramble() {
-  const timers = new WeakMap<HTMLElement, ReturnType<typeof setInterval>>()
+  const timers = new Map<HTMLElement, ReturnType<typeof setInterval>>()
+
+  // a mid-animation unmount must not leave intervals writing to detached nodes
+  onScopeDispose(() => {
+    timers.forEach((timer) => clearInterval(timer))
+    timers.clear()
+  })
 
   const scramble = (el: HTMLElement, text: string) => {
     const existing = timers.get(el)

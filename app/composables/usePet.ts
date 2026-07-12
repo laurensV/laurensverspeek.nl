@@ -4,8 +4,10 @@ import { storageGetJson, storageSetJson, storageRemove } from '~/utils/safeStora
 
 const PET_KEY = 'lv-pet'
 
-// one minute-tick for every caller, so moods update while the tab stays open
+// one minute-tick for every caller, so moods update while the tab stays open —
+// but only while a pet actually exists; no timer runs for visitors without one
 let tickStarted = false
+let tickTimer: ReturnType<typeof setInterval> | undefined
 
 /** The visitor's tamagotchi: adopted in the terminal, lives in the status bar. */
 export function usePet() {
@@ -19,7 +21,17 @@ export function usePet() {
   }
   if (import.meta.client && !tickStarted) {
     tickStarted = true
-    setInterval(() => (now.value = Date.now()), 60_000)
+    // detached scope: the first caller unmounting must not stop the clock
+    effectScope(true).run(() => {
+      watch(pet, (p) => {
+        if (p && !tickTimer) {
+          tickTimer = setInterval(() => (now.value = Date.now()), 60_000)
+        } else if (!p && tickTimer) {
+          clearInterval(tickTimer)
+          tickTimer = undefined
+        }
+      }, { immediate: true })
+    })
   }
 
   const view = computed(() => {

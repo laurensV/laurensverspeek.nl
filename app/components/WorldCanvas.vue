@@ -89,10 +89,17 @@ const plot = computed(() => world.plotAt(Math.round(cam.x), Math.round(cam.y)))
 const cam = reactive<Camera>({ x: SIZE / 2, y: SIZE / 2, zoom: 6 })
 const view = () => ({ w: canvasRef.value?.clientWidth ?? 0, h: canvasRef.value?.clientHeight ?? 0 })
 
+// tick the cooldown readout only while a cooldown is actually running — a
+// permanent rAF loop would paint 60 no-op frames/s the whole time the window
+// is open
 const cooldownLeft = ref(0)
-useRafFn(() => {
+const { pause: pauseCooldown, resume: resumeCooldown } = useRafFn(() => {
   cooldownLeft.value = Math.max(0, nextPlaceAt.value - Date.now())
-})
+  if (cooldownLeft.value === 0) pauseCooldown()
+}, { immediate: false })
+watch(nextPlaceAt, (at) => {
+  if (at > Date.now()) resumeCooldown()
+}, { immediate: true })
 
 const hoverInfo = computed(() => lastInfo.value)
 
