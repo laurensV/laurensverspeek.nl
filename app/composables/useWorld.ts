@@ -162,15 +162,21 @@ export function useWorld() {
       nextPlaceAt.value = Date.now() + cooldownMs.value
       return 0
     }
-    // offline world: same rules, local persistence
+    // offline world: same rules. Only a truly solo world (no relay configured)
+    // persists locally. A configured relay that has merely dropped must NOT
+    // write the server board into the offline cache — it would resurrect later
+    // as a stale online/offline hybrid — so it paints optimistically and lets
+    // the reconnect's world-state reconcile the board.
     offlineGate ??= new CooldownGate(cooldownMs.value)
     const wait = offlineGate.check('me', Date.now())
     if (wait > 0) return wait
     applyPixel(x, y, c)
-    pushHistory(x, y, c)
-    offlineMeta[`${x},${y}`] = { by: name.value, at: Date.now() }
-    storageSet(OFFLINE_KEY, encodeBoard(board.value))
-    storageSet(OFFLINE_META_KEY, JSON.stringify(offlineMeta))
+    if (!wsUrl) {
+      pushHistory(x, y, c)
+      offlineMeta[`${x},${y}`] = { by: name.value, at: Date.now() }
+      storageSet(OFFLINE_KEY, encodeBoard(board.value))
+      storageSet(OFFLINE_META_KEY, JSON.stringify(offlineMeta))
+    }
     nextPlaceAt.value = Date.now() + cooldownMs.value
     return 0
   }

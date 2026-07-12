@@ -607,7 +607,9 @@ useDesktopShortcuts({
 }
 
 .lvos-world {
-  min-width: 30rem;
+  // roomy on desktop, but never wider than the window: on a phone the window
+  // is capped at ~92vw and clips overflow, so cap the world to the space it has
+  min-width: min(30rem, 100%);
 }
 
 .lvos-toasts {
