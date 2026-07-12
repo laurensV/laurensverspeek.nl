@@ -39,7 +39,14 @@ const leadingBlanks = computed(() => {
   position: absolute;
   bottom: 2.6rem;
   right: 0.5rem;
+  // match the sibling tray popovers so a maximized window can't cover this
+  z-index: 10000;
   width: 15rem;
+
+  // clear the taller touch taskbar, like the start menu and volume popover
+  @media (pointer: coarse) {
+    bottom: 3.3rem;
+  }
   padding: 0.75rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);

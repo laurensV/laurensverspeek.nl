@@ -29,7 +29,14 @@ const emit = defineEmits<{ clear: [] }>()
   position: absolute;
   bottom: 2.6rem;
   right: 0.5rem;
+  // match the sibling tray popovers so a maximized window can't cover this
+  z-index: 10000;
   width: 17rem;
+
+  // clear the taller touch taskbar, like the start menu and volume popover
+  @media (pointer: coarse) {
+    bottom: 3.3rem;
+  }
   max-height: 20rem;
   overflow-y: auto;
   padding: 0.5rem;
