@@ -54,6 +54,7 @@
       <button class="status-item status-button" title="Open terminal (~)" @click="terminal.open()">
         <AppIcon name="terminal" :size="11" /> zsh
       </button>
+      <span v-if="!online" class="status-item status-offline" title="offline — cached pages still work">⚠ offline</span>
       <span v-if="clock" class="status-item status-clock" :title="`your local time — ${clock}`">{{ clock }}</span>
       <button class="status-item status-button" title="Toggle theme" @click="toggleTheme($event)">
         <ClientOnly>
@@ -69,6 +70,7 @@
 const terminal = useTerminal()
 const palette = useCommandPalette()
 const colorMode = useColorMode()
+const online = useOnline()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
@@ -143,6 +145,11 @@ const {
 .status-pending {
   color: var(--bulma-primary);
   font-weight: 700;
+}
+
+// the network dropped: quiet amber, matching the toast
+.status-offline {
+  color: hsl(45deg, 90%, 60%);
 }
 
 a.status-item:hover,

@@ -262,6 +262,13 @@ const peekedId = ref<string | null>(null)
 // ---- toast notifications ----
 const { toasts, history, unread, notify, markRead, clearHistory } = useDesktopToasts()
 
+// connectivity changes surface as desktop notifications (the main site shows
+// the same event as its own toast — one truth, native dress per surface)
+const online = useOnline()
+watch(online, (isOnline) => {
+  notify(isOnline ? '✓' : '⚠', isOnline ? 'Back online' : 'Connection lost', isOnline ? 'the relay reconnects on its own' : 'cached pages and local apps keep working')
+})
+
 // ---- idle screensaver ----
 // after 45s of no input on the desktop, drift into the screensaver
 const { idle } = useIdle(45_000)
