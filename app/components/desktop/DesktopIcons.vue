@@ -70,13 +70,19 @@ const onKey = (event: KeyboardEvent) => {
 <style scoped lang="scss">
 .lvos-icons {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  bottom: 4rem;
+  inset: 1.5rem 1.5rem 4rem;
   display: flex;
   flex-flow: column wrap;
   align-content: flex-start;
   gap: 0.75rem;
+  overflow: auto;
+
+  // on a phone the columns would wrap off the right edge and get clipped by the
+  // desktop's overflow:hidden; flow into rows that scroll vertically, like an
+  // app drawer, so every icon stays reachable
+  @media (pointer: coarse) {
+    flex-flow: row wrap;
+  }
 }
 
 .lvos-icon-glyph {
