@@ -83,3 +83,73 @@ export const isPetState = (parsed: unknown): parsed is PetState => {
     && typeof candidate.lastFed === 'number'
     && typeof candidate.lastPlayed === 'number'
 }
+
+// ---- the pet economy -------------------------------------------------------
+// Game high scores mint coins (derived from the SAME localStorage keys the
+// hall of fame reads — no second score ledger); coins buy snacks and
+// accessories the sprite actually wears.
+
+export interface PetWallet {
+  spent: number
+  accessories: string[]
+}
+
+export const emptyWallet = (): PetWallet => ({ spent: 0, accessories: [] })
+
+export const isPetWallet = (parsed: unknown): parsed is PetWallet => {
+  if (typeof parsed !== 'object' || parsed === null) return false
+  const candidate = parsed as Record<string, unknown>
+  return typeof candidate.spent === 'number' && candidate.spent >= 0
+    && Array.isArray(candidate.accessories)
+    && candidate.accessories.every((item) => typeof item === 'string')
+}
+
+export interface PetAccessory {
+  id: string
+  name: string
+  glyph: string
+  cost: number
+}
+
+export const PET_SHOP: PetAccessory[] = [
+  { id: 'bowtie', name: 'a dapper bowtie', glyph: '🎀', cost: 20 },
+  { id: 'hat', name: 'a tiny top hat', glyph: '🎩', cost: 35 },
+  { id: 'crown', name: 'a pixel crown', glyph: '👑', cost: 60 }
+]
+
+export const SNACK_COST = 5
+
+export interface ScoreReadings {
+  snake: number
+  tetris: number
+  g2048: number
+  wpm: number
+  /** how many minesweeper difficulties have a best time */
+  minesBests: number
+}
+
+/** Total coins ever minted by the visitor's high scores. */
+export function coinsEarned(scores: ScoreReadings): number {
+  return Math.floor(scores.snake / 10)
+    + Math.floor(scores.tetris / 100)
+    + Math.floor(scores.g2048 / 100)
+    + Math.floor(scores.wpm / 5)
+    + scores.minesBests * 15
+}
+
+/** Dress the face: head gear in front, neckwear behind. */
+export function gearFace(face: string, accessories: string[]): string {
+  const head = accessories.includes('crown') ? '👑' : accessories.includes('hat') ? '🎩' : ''
+  const neck = accessories.includes('bowtie') ? '🎀' : ''
+  return `${head}${face}${neck}`
+}
+
+/** Returns the wallet after buying, or an error string. */
+export function buyAccessory(wallet: PetWallet, id: string, earned: number): PetWallet | string {
+  const item = PET_SHOP.find((entry) => entry.id === id)
+  if (!item) return `no such item — the shop stocks: ${PET_SHOP.map((entry) => entry.id).join(', ')}`
+  if (wallet.accessories.includes(id)) return `${item.name} is already in the wardrobe`
+  const balance = earned - wallet.spent
+  if (balance < item.cost) return `${item.name} costs ${item.cost} coins — you have ${balance}. beat some high scores.`
+  return { spent: wallet.spent + item.cost, accessories: [...wallet.accessories, id] }
+}

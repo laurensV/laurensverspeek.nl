@@ -1,6 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import type { GameHandle } from '~/utils/terminalGames'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
+import { PET_SHOP, SNACK_COST } from '~/utils/pet'
 import { formatWeather } from '~/utils/terminal/weather'
 import { framePixelsToAscii } from '~/utils/asciiCam'
 
@@ -75,10 +76,10 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
   return {
     pet: {
       category: 'toys',
-      usage: 'pet [adopt <name>|feed|play|release]',
-      description: 'Your status-bar tamagotchi',
-      examples: ['pet adopt pixel', 'pet feed', 'pet play', 'pet  (status card)'],
-      argCandidates: () => ['adopt', 'feed', 'play', 'release'],
+      usage: 'pet [adopt <name>|feed|play|coins|buy <item>|snack|release]',
+      description: 'Your status-bar tamagotchi (high scores mint its coins)',
+      examples: ['pet adopt pixel', 'pet feed', 'pet coins', 'pet buy hat'],
+      argCandidates: () => ['adopt', 'feed', 'play', 'coins', 'buy', 'snack', 'release'],
       exec: (args) => {
         const action = args[0]?.toLowerCase()
         const view = tamagotchi.view.value
@@ -111,10 +112,29 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
           muted(`${view.name} waddles off into the scrollback. it waves. you wave back.`)
           return
         }
+        if (action === 'coins') {
+          push('primary', `  ⛁ ${tamagotchi.coins.value} coins (${tamagotchi.earned.value} earned, ${tamagotchi.wallet.value.spent} spent)`)
+          out('high scores mint coins: snake /10 · tetris /100 · 2048 /100 · wpm /5 · 15 per minesweeper best')
+          out(`the shop: ${PET_SHOP.map((item) => `${item.glyph} ${item.id} (${item.cost})`).join(' · ')} — snack ${SNACK_COST}`)
+          muted(`'pet buy <item>' dresses the sprite · 'pet snack' feeds AND plays`)
+          return
+        }
+        if (action === 'buy') {
+          const failure = tamagotchi.buy(args[1]?.toLowerCase() ?? '')
+          if (failure) return error(`pet: ${failure}`)
+          out(`purchased! ${view.name} wears it immediately: ${tamagotchi.view.value!.face}`)
+          return
+        }
+        if (action === 'snack') {
+          const failure = tamagotchi.snack()
+          if (failure) return error(`pet: ${failure}`)
+          out(`a premium snack. ${view.name} is beside itself. ${tamagotchi.view.value!.face}`)
+          return
+        }
         push('primary', `  ${view.face}  ${view.name}`)
-        out(`stage: ${view.stage} · ${view.age}`)
+        out(`stage: ${view.stage} · ${view.age} · ⛁ ${tamagotchi.coins.value} coins`)
         out(`mood:  ${view.moodLine}`)
-        muted(`'pet feed' · 'pet play' · 'pet release'`)
+        muted(`'pet feed' · 'pet play' · 'pet coins' · 'pet release'`)
       }
     },
     tips: {

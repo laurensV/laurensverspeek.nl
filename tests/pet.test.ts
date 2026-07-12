@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { adoptPet, feedPet, playWithPet, petStage, petMood, petFace, petAge, isPetState } from '../app/utils/pet'
+import { adoptPet, feedPet, playWithPet, petStage, petMood, petFace, petAge, isPetState, coinsEarned, buyAccessory, emptyWallet, gearFace, isPetWallet, type PetWallet } from '../app/utils/pet'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -59,5 +59,37 @@ describe('pet', () => {
     expect(isPetState(null)).toBe(false)
     expect(isPetState({ name: '', born: T0, lastFed: T0, lastPlayed: T0 })).toBe(false)
     expect(isPetState({ name: 'x', born: 'yesterday', lastFed: T0, lastPlayed: T0 })).toBe(false)
+  })
+})
+
+describe('pet economy', () => {
+  it('mints coins from the hall-of-fame score readings', () => {
+    expect(coinsEarned({ snake: 0, tetris: 0, g2048: 0, wpm: 0, minesBests: 0 })).toBe(0)
+    expect(coinsEarned({ snake: 105, tetris: 1250, g2048: 512, wpm: 62, minesBests: 2 }))
+      .toBe(10 + 12 + 5 + 12 + 30)
+  })
+
+  it('sells an affordable accessory exactly once', () => {
+    const bought = buyAccessory(emptyWallet(), 'bowtie', 25)
+    expect(bought).toEqual({ spent: 20, accessories: ['bowtie'] })
+    expect(typeof buyAccessory(bought as PetWallet, 'bowtie', 100)).toBe('string') // already owned
+  })
+
+  it('refuses when broke or when the item does not exist', () => {
+    expect(typeof buyAccessory(emptyWallet(), 'hat', 10)).toBe('string') // hat costs 35
+    expect(typeof buyAccessory(emptyWallet(), 'jetpack', 999)).toBe('string')
+  })
+
+  it('dresses the face with head gear in front and neckwear behind', () => {
+    expect(gearFace('(°ᴥ°)', [])).toBe('(°ᴥ°)')
+    expect(gearFace('(°ᴥ°)', ['hat', 'bowtie'])).toBe('🎩(°ᴥ°)🎀')
+    expect(gearFace('(°ᴥ°)', ['hat', 'crown'])).toBe('👑(°ᴥ°)') // the crown outranks the hat
+  })
+
+  it('validates wallets from storage', () => {
+    expect(isPetWallet({ spent: 5, accessories: ['hat'] })).toBe(true)
+    expect(isPetWallet({ spent: -1, accessories: [] })).toBe(false)
+    expect(isPetWallet({ spent: 0, accessories: [42] })).toBe(false)
+    expect(isPetWallet('nope')).toBe(false)
   })
 })

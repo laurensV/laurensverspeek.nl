@@ -29,6 +29,7 @@ export const STATE_KEYS = {
   // the status-bar pet
   petState: 'pet-state',
   petNow: 'pet-now',
+  petWallet: 'pet-wallet',
   // identity, theme, palette
   identityName: 'identity-name',
   accent: 'accent',
