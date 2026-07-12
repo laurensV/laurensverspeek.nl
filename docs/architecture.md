@@ -82,6 +82,28 @@ Dark/light keys off the `data-theme` attribute — style with
 Design language: monospace accents, corner brackets, amber `#ffba00`, prompt
 glyphs. Respect `prefers-reduced-motion` in every animation.
 
+## Mobile & touch
+
+The site is built to work with a thumb on a 375px screen. Two rules keep the
+mobile work from disturbing the desktop (and the e2e suite, which runs at a
+wide viewport with a fine pointer):
+
+- **Gate touch behaviour behind the pointer, not the width alone.** Enlarged
+  hit targets, d-pads and long-press menus live under
+  `@media (pointer: coarse)` / `(hover: none)`; fixed-viewport layout swaps use
+  `@media (max-width: …)` or a JS `window.innerWidth` check (e.g. windows
+  open maximized when `innerWidth <= 640`). Because the e2e browser is a
+  fine-pointer desktop, none of the coarse-gated changes affect it.
+- **Touch has no right-click or hover.** Anything reachable only via
+  `@contextmenu` or `:hover` needs a touch path: a ~500ms long-press that
+  synthesises the menu (desktop background, file rows) or an on-screen toggle
+  (Minesweeper's flag mode). Suppress the long-press's synthesised click with
+  `preventDefault` on `touchend` so it can't dismiss what it just opened.
+
+Fixed-width game boards (chess, minesweeper) size their cells with
+`min(<base>, calc((100vw − margin) / <cols>))` so they shrink to fit a phone
+window instead of overflowing it.
+
 ## Build & test
 
 ```
