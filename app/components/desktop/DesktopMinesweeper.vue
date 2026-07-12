@@ -15,6 +15,14 @@
         {{ status === 'lost' ? '×_×' : status === 'won' ? '^_^' : 'o_o' }}
       </button>
       <span class="mines-time">{{ seconds }}s</span>
+      <!-- touch has no right-click: flag-mode makes a tap place a flag -->
+      <button
+        class="mines-flag-toggle"
+        :class="{ 'is-active': flagMode }"
+        :aria-pressed="flagMode"
+        title="Flag mode — taps place flags"
+        @click="flagMode = !flagMode"
+      >⚑</button>
     </div>
     <div class="mines-grid" :style="{ gridTemplateColumns: `repeat(${W}, var(--mines-cell))`, '--mines-cell': cellSize }" @contextmenu.prevent>
       <button
@@ -22,7 +30,7 @@
         :key="i"
         class="mines-cell"
         :class="{ 'is-revealed': cell.revealed, [`count-${cell.count}`]: cell.revealed && cell.count }"
-        @click="reveal(i)"
+        @click="onCell(i)"
         @contextmenu.prevent="flag(i)"
       >
         <template v-if="cell.revealed">{{ cell.mine ? '✱' : cell.count || '' }}</template>
@@ -30,7 +38,7 @@
       </button>
     </div>
     <p class="mines-hint">
-      left-click: dig · right-click: flag
+      dig, or ⚑ to flag (right-click, or tap the ⚑ button on touch)
       <template v-if="best !== null"> · best {{ level }}: {{ best }}s</template>
     </p>
   </div>
@@ -69,6 +77,9 @@ interface Cell {
 
 const cells = ref<Cell[]>([])
 const status = ref<'fresh' | 'playing' | 'won' | 'lost'>('fresh')
+
+// when on, a tap flags instead of digging — the only way to flag on a phone
+const flagMode = ref(false)
 
 const minesLeft = computed(
   () => MINES.value - cells.value.filter((c) => c.flagged).length
@@ -179,6 +190,9 @@ const flag = (i: number) => {
   }
 }
 
+// a tap either digs or (in flag mode) plants a flag
+const onCell = (i: number) => (flagMode.value ? flag(i) : reveal(i))
+
 reset()
 </script>
 
@@ -196,7 +210,8 @@ reset()
   gap: 1.25rem;
   font-size: 0.8rem;
 
-  .mines-face {
+  .mines-face,
+  .mines-flag-toggle {
     padding: 0.2rem 0.6rem;
     border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
     border-radius: var(--bulma-radius-small);
@@ -204,6 +219,18 @@ reset()
     color: var(--bulma-primary);
     font: inherit;
     cursor: pointer;
+  }
+
+  .mines-flag-toggle.is-active {
+    background-color: hsla(var(--lv-primary-hsl), 0.25);
+  }
+
+  // a thumb-sized flag toggle on touch
+  @media (pointer: coarse) {
+    .mines-flag-toggle {
+      min-width: 2.6rem;
+      min-height: 2.2rem;
+    }
   }
 }
 
