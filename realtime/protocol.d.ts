@@ -20,6 +20,10 @@ export interface PixelIn { type: 'pixel', x: number, y: number, c: number, name?
 export interface WorldWhoIn { type: 'world-who', x: number, y: number }
 export interface WorldCursorIn { type: 'world-cursor', x: number, y: number }
 
+export interface PongJoinIn { type: 'pong-join', name?: string }
+export interface PongLeaveIn { type: 'pong-leave' }
+export interface PongMoveIn { type: 'pong-move', y: number }
+
 export type ClientMessage =
   | CursorMoveIn
   | SayIn
@@ -30,6 +34,9 @@ export type ClientMessage =
   | PixelIn
   | WorldWhoIn
   | WorldCursorIn
+  | PongJoinIn
+  | PongLeaveIn
+  | PongMoveIn
 
 // ---- server → client ----
 
@@ -69,4 +76,19 @@ export type WorldServerMessage =
 /** What the leaderboard client consumes. */
 export type ScoresServerMessage = ScoresMsg | ScoreBoardMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage
+export interface PongWaitMsg { type: 'pong-wait' }
+export interface PongStartMsg { type: 'pong-start', side: 'l' | 'r', foe: string }
+export interface PongStateMsg {
+  type: 'pong-state'
+  bx: number
+  by: number
+  ly: number
+  ry: number
+  ls: number
+  rs: number
+}
+export interface PongEndMsg { type: 'pong-end', winner: 'l' | 'r', forfeit?: boolean }
+/** What the online-pong client consumes. */
+export type PongServerMessage = PongWaitMsg | PongStartMsg | PongStateMsg | PongEndMsg
+
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage

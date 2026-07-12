@@ -8,6 +8,11 @@ import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 export function createGameCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { muted } = ctx
 
+  // captured at factory time (exec handlers run outside the Nuxt context):
+  // online pong needs the relay url and the visitor's display name
+  const cursorsWs = useRuntimeConfig().public.cursorsWs
+  const { name: identityName } = useIdentity()
+
   // top renders the same unified process table as ps and the lvOS task
   // manager: system daemons plus whatever is really running right now
   const table = useProcessTable({ effects: ctx.effects, game: ctx.game, closeShell: ctx.close })
@@ -51,8 +56,21 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
     },
     pong: {
       category: 'games',
-      description: 'You vs a slightly fallible AI paddle',
-      exec: () => {
+      usage: 'pong [online]',
+      description: 'You vs the AI — or `pong online` vs another live visitor',
+      examples: ['pong', 'pong online'],
+      argCandidates: () => ['online'],
+      exec: (args) => {
+        if (args[0]?.toLowerCase() === 'online') {
+          if (!cursorsWs) {
+            muted('pong online needs the live relay — no relay on this build.')
+            muted('The house AI steps in instead. w/s or ↑/↓ to move, q quits.')
+            return import('~/utils/games/pong').then(({ createPongGame }) => ctx.startGame(createPongGame, 'pong'))
+          }
+          muted('Entering the arcade... first other visitor to type `pong online` is your opponent. q backs out.')
+          return import('~/utils/games/pongOnline').then(({ createOnlinePong }) =>
+            ctx.startGame((callbacks) => createOnlinePong({ wsUrl: cursorsWs, playerName: identityName.value }, callbacks), 'pong online'))
+        }
         muted('Starting pong... w/s or ↑/↓ to move, first to 5, q quits.')
         return import('~/utils/games/pong').then(({ createPongGame }) => ctx.startGame(createPongGame, 'pong'))
       }

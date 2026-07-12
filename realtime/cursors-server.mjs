@@ -15,6 +15,7 @@ import {
   CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from './world-core.mjs'
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
+import { createPongState, stepPong, movePaddle, PONG_TICK_MS } from './pong-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
@@ -110,6 +111,75 @@ const broadcastWorldCount = () => {
  * @param {ServerMessage} msg */
 const wire = (msg) => JSON.stringify(msg)
 
+// ---- online pong: server-authoritative matches between two visitors ----
+/**
+ * @typedef {{
+ *   left: import('ws').WebSocket, right: import('ws').WebSocket,
+ *   state: import('./pong-core.mjs').PongState,
+ *   timer: ReturnType<typeof setInterval>
+ * }} PongMatch
+ */
+/** @type {{ socket: import('ws').WebSocket, name: string } | null} */
+let pongWaiting = null
+/** @type {Map<import('ws').WebSocket, PongMatch>} */
+const pongMatches = new Map()
+// paddle updates are frequent but tiny; a lenient per-connection gate stops floods
+const pongMoveGate = new CooldownGate(20)
+
+/** @param {import('ws').WebSocket} socket @param {string} payload */
+const sendTo = (socket, payload) => {
+  if (socket.readyState === 1) socket.send(payload)
+}
+
+/** @param {PongMatch} match @param {'l' | 'r'} winner @param {boolean} [forfeit] */
+const endPongMatch = (match, winner, forfeit = false) => {
+  clearInterval(match.timer)
+  pongMatches.delete(match.left)
+  pongMatches.delete(match.right)
+  const payload = wire(forfeit ? { type: 'pong-end', winner, forfeit: true } : { type: 'pong-end', winner })
+  sendTo(match.left, payload)
+  sendTo(match.right, payload)
+}
+
+/** @param {import('ws').WebSocket} a @param {string} aName @param {import('ws').WebSocket} b @param {string} bName */
+const startPongMatch = (a, aName, b, bName) => {
+  /** @type {PongMatch} */
+  const match = {
+    left: a,
+    right: b,
+    state: createPongState(),
+    timer: setInterval(() => {
+      const outcome = stepPong(match.state)
+      const { state } = match
+      const payload = wire({
+        type: 'pong-state',
+        bx: state.ballX,
+        by: state.ballY,
+        ly: state.leftY,
+        ry: state.rightY,
+        ls: state.leftScore,
+        rs: state.rightScore
+      })
+      sendTo(match.left, payload)
+      sendTo(match.right, payload)
+      if (outcome === 'win-l') endPongMatch(match, 'l')
+      else if (outcome === 'win-r') endPongMatch(match, 'r')
+    }, PONG_TICK_MS)
+  }
+  pongMatches.set(a, match)
+  pongMatches.set(b, match)
+  sendTo(a, wire({ type: 'pong-start', side: 'l', foe: bName }))
+  sendTo(b, wire({ type: 'pong-start', side: 'r', foe: aName }))
+}
+
+/** A player left (message or disconnect): forfeit their match / clear the queue.
+ * @param {import('ws').WebSocket} socket */
+const dropPongPlayer = (socket) => {
+  if (pongWaiting?.socket === socket) pongWaiting = null
+  const match = pongMatches.get(socket)
+  if (match) endPongMatch(match, socket === match.left ? 'r' : 'l', true)
+}
+
 const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
 
@@ -158,6 +228,31 @@ wss.on('connection', (socket) => {
       for (const client of wss.clients) {
         if (client.readyState === 1) client.send(payload)
       }
+      return
+    }
+    // ---- online pong protocol (server-authoritative) ----
+    if (msg.type === 'pong-join') {
+      if (pongMatches.has(socket) || pongWaiting?.socket === socket) return
+      const name = cleanName(msg.name) || 'visitor'
+      if (pongWaiting && pongWaiting.socket.readyState === 1) {
+        const foe = pongWaiting
+        pongWaiting = null
+        startPongMatch(foe.socket, foe.name, socket, name)
+      } else {
+        pongWaiting = { socket, name }
+        sendTo(socket, wire({ type: 'pong-wait' }))
+      }
+      return
+    }
+    if (msg.type === 'pong-leave') {
+      dropPongPlayer(socket)
+      return
+    }
+    if (msg.type === 'pong-move') {
+      const match = pongMatches.get(socket)
+      if (!match || typeof msg.y !== 'number') return
+      if (pongMoveGate.check(id, Date.now()) > 0) return
+      movePaddle(match.state, socket === match.left ? 'l' : 'r', msg.y)
       return
     }
     // ---- pixel world protocol (server-authoritative) ----
@@ -238,6 +333,7 @@ wss.on('connection', (socket) => {
   })
 
   socket.on('close', () => {
+    dropPongPlayer(socket) // mid-match disconnects forfeit to the opponent
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state, or the maps grow for the relay's
     // whole uptime (one entry per id that ever placed/moved/chatted)
@@ -245,6 +341,7 @@ wss.on('connection', (socket) => {
     moveGate.last.delete(id)
     chatGate.last.delete(id)
     scoreGate.last.delete(id)
+    pongMoveGate.last.delete(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)

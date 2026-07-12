@@ -565,3 +565,16 @@ test('mail lists the lvOS inbox and reading a message clears its unread flag', a
   await run(page, 'mail')
   await expect(output).toContainText('4 unread')
 })
+
+test('pong online degrades to the house AI when no relay is configured', async ({ page }) => {
+  await openTerminal(page)
+  await page.fill('#terminal-input', 'pong on')
+  await page.keyboard.press('Tab')
+  await expect(page.locator('#terminal-input')).toHaveValue('pong online')
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.terminal-output')).toContainText('no relay on this build')
+  // the solo game stepped in
+  await expect(page.locator('.game-frame')).toContainText('PONG')
+  await page.keyboard.press('q')
+  await expect(page.locator('.terminal-output')).toContainText(/pong aborted|wins/)
+})

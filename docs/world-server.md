@@ -13,6 +13,11 @@ pixel world runs in a solo, browser-local "offline" mode.
   placement cooldown, pixel provenance, online/activity counts, and a rolling
   history for the client time-lapse. All the shared rules live in
   `realtime/world-core.mjs`, imported by both the server and the browser.
+- Hosts the **game leaderboard** (top scores per game, persisted to
+  `realtime/scores.json`; rules in `realtime/scores-core.mjs`) and **online
+  pong** (`pong online` in the terminal): a two-visitor matchmaking queue with
+  a server-authoritative simulation, physics shared via `realtime/pong-core.mjs`.
+  The wire contract for all of it is typed in `realtime/protocol.d.ts`.
 
 No IPs, accounts or fingerprints are stored. Client-supplied identity and
 timestamps are never trusted — the server stamps everything.
