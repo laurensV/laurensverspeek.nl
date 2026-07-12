@@ -4,7 +4,7 @@
       <RevealBlock>
         <div class="is-flex is-align-items-baseline is-justify-content-space-between mb-5">
           <div>
-            <p class="overline mb-2">blog $ tail -2</p>
+            <p class="overline mb-2">blog $ tail -3</p>
             <h2 class="title is-3">Latest writing</h2>
           </div>
           <NuxtLink to="/blog" class="see-all is-family-code is-size-6 is-hidden-mobile">
@@ -13,7 +13,7 @@
         </div>
 
         <div v-if="pendingPosts" class="latest-posts" aria-hidden="true">
-          <div v-for="i in 2" :key="i" class="latest-post is-loading">
+          <div v-for="i in 3" :key="i" class="latest-post is-loading">
             <span class="is-skeleton is-size-7 latest-post-date">2026 Jan 01</span>
             <span class="is-skeleton latest-post-title">Loading a recent post title</span>
           </div>
@@ -37,10 +37,10 @@
 </template>
 
 <script setup lang="ts">
-// The two most recent blog posts on the homepage; the section hides itself if
+// The three most recent blog posts on the homepage; the section hides itself if
 // the blog is empty or the fetch fails.
 const { data: latestPosts, pending: pendingPosts } = useLazyAsyncData('latest-posts', () =>
-  queryCollection('blog').order('date', 'DESC').limit(2).all()
+  queryCollection('blog').order('date', 'DESC').limit(3).all()
 )
 
 const formatDate = (date: string) =>
