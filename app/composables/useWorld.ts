@@ -27,7 +27,10 @@ const OFFLINE_KEY = 'lv-world-board'
 const OFFLINE_META_KEY = 'lv-world-placed'
 
 let conn: RelayConnection | null = null
-let releaseLease: (() => void) | null = null
+// one lease per outstanding enter() (WorldCanvas, /status, terminal pixel/world)
+// so a single consumer's leave() can't tear down a connection the others still
+// hold — the core closes the socket only when the last lease is released
+const leaseReleases: (() => void)[] = []
 let offlineGate: CooldownGate | null = null
 let offlineMeta: Record<string, { by: string, at: number }> = {}
 // the last optimistic placement, so a server denial can roll it back
@@ -131,21 +134,24 @@ export function useWorld() {
   }
 
   const enter = () => {
-    if (releaseLease) return
     if (!wsUrl) {
       enterOffline()
       return
     }
     connect()
-    releaseLease = conn?.acquire() ?? null
+    if (conn) leaseReleases.push(conn.acquire())
   }
 
   const leave = () => {
-    // a goodbye for the world, then hand the lease back (the core closes last)
-    conn?.send({ type: 'world-leave' } satisfies WorldLeaveIn)
-    releaseLease?.()
-    releaseLease = null
-    connected.value = false
+    const release = leaseReleases.pop()
+    if (!release) return
+    // the last consumer says goodbye and marks us offline before the core
+    // closes the socket; earlier leavers just drop their own lease
+    if (leaseReleases.length === 0) {
+      conn?.send({ type: 'world-leave' } satisfies WorldLeaveIn)
+      connected.value = false
+    }
+    release()
   }
 
   /** Place a pixel; optimistic locally, authoritative on the server. Returns
