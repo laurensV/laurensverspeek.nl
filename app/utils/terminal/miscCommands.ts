@@ -1,7 +1,22 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { runJq } from '~/utils/terminal/jq'
+import { buildJsonResume } from '~/utils/resume'
 import { bugReportUrl } from '~/utils/bugReport'
 import { profile } from '~/data/profile'
+import { projects } from '~/data/projects'
+
+// the JSON documents `jq` can read by name — the site's own data, live
+const JQ_SOURCES: Record<string, () => unknown> = {
+  resume: () => buildJsonResume(),
+  profile: () => profile,
+  projects: () => projects.map((p) => ({ slug: p.slug, title: p.title, category: p.category, tags: p.tags, year: p.year }))
+}
+// strip one pair of matching surrounding quotes (args aren't dequoted upstream)
+const dequote = (s: string) =>
+  s.length >= 2 && ((s[0] === '"' && s.at(-1) === '"') || (s[0] === "'" && s.at(-1) === "'"))
+    ? s.slice(1, -1)
+    : s
 
 // Appearance, session theater and the other one-offs: theme, fonts, git, ssh.
 
@@ -226,6 +241,36 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           default:
             error(`git: '${sub}' is not a git command. See 'man git'.`)
         }
+      }
+    },
+    jq: {
+      category: 'content',
+      usage: "jq '<filter>' <resume|profile|projects>",
+      description: "Query the site's own JSON (a small jq subset)",
+      examples: [
+        "jq '.basics.name' resume",
+        "jq '.work[].name' resume",
+        'jq keys profile',
+        "jq '.[].title' projects",
+        'curl -s https://laurensverspeek.nl/resume.json | jq .basics'
+      ],
+      argCandidates: () => [...Object.keys(JQ_SOURCES), '.', 'keys', 'length', 'type'],
+      exec: (args) => {
+        if (args.length === 0) {
+          out('usage: jq \'<filter>\' <source>')
+          muted(`sources: ${Object.keys(JQ_SOURCES).join(', ')} — or pipe JSON in: curl -s <url> | jq '.x'`)
+          return
+        }
+        // the source is whichever arg names a known document; the rest is the filter
+        const sourceName = [...args].reverse().find((a) => a in JQ_SOURCES)
+        if (!sourceName) {
+          return error(`jq: no source — name one of ${Object.keys(JQ_SOURCES).join(', ')} (or pipe JSON in from curl/cat)`)
+        }
+        const filter = dequote(args.filter((a) => a !== sourceName).join(' ').trim()) || '.'
+        const json = JSON.stringify(JQ_SOURCES[sourceName]!())
+        const result = runJq(filter, json)
+        if (!result.ok) return error(result.error)
+        for (const line of result.lines) out(line)
       }
     },
     qr: {

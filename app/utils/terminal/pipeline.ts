@@ -2,6 +2,8 @@
 // resolution + pipe parsing, and the pipe filter stages. Kept free of Nuxt so
 // they can be unit-tested directly (see tests/terminalPipeline.test.ts).
 
+import { runJq } from '~/utils/terminal/jq'
+
 export const stripHtml = (text: string) => text.replace(/<[^>]+>/g, '')
 
 /** Expand $VAR and ${VAR} from an environment map; unknown vars are left as-is. */
@@ -173,7 +175,15 @@ export function applyFilter<T extends { text: string }>(
       flush()
       return { lines: out }
     }
+    case 'jq': {
+      // join the whole captured stream back into one JSON document, then query
+      const filter = rest.join(' ').replace(/^(['"])(.*)\1$/, '$2') || '.'
+      const json = input.map((line) => stripHtml(line.text)).join('\n')
+      const result = runJq(filter, json)
+      if (!result.ok) return { error: result.error }
+      return { lines: result.lines.map(createLine) }
+    }
     default:
-      return { error: `lvsh: unknown filter: ${name} (pipes support grep, head, tail, wc, sort, uniq)` }
+      return { error: `lvsh: unknown filter: ${name} (pipes support grep, head, tail, wc, sort, uniq, jq)` }
   }
 }
