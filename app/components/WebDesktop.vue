@@ -9,7 +9,10 @@
       role="application"
       aria-label="lvOS desktop — log out from the start menu"
       @contextmenu.prevent="openContextMenu"
-      @click="contextMenu.open = false; titleMenu.open = false"
+      @touchstart="onDesktopTouchStart"
+      @touchmove="onDesktopTouchMove"
+      @touchend="onDesktopTouchEnd"
+      @click="closeMenus"
     >
       <!-- live wallpaper: a dim Game of Life behind everything -->
       <LazyDesktopLifeWallpaper v-if="wallpapers[wallpaper]?.live" />
@@ -291,13 +294,50 @@ onUnmounted(unregisterSaverProc)
 
 // ---- right-click context menu ----
 const contextMenu = reactive({ open: false, x: 0, y: 0 })
-const openContextMenu = (event: MouseEvent) => {
-  // only on the desktop background, not on top of a window
-  if ((event.target as HTMLElement).closest('.lvos-window, .lvos-taskbar')) return
-  contextMenu.x = Math.min(event.clientX, window.innerWidth - 200)
-  contextMenu.y = Math.min(event.clientY, window.innerHeight - 220)
+const titleMenu = reactive({ open: false, x: 0, y: 0, winId: '' })
+const showContextMenu = (target: HTMLElement, clientX: number, clientY: number) => {
+  // only on the desktop background, not on top of a window or the taskbar
+  if (target.closest('.lvos-window, .lvos-taskbar')) return
+  contextMenu.x = Math.min(clientX, window.innerWidth - 200)
+  contextMenu.y = Math.min(clientY, window.innerHeight - 220)
   contextMenu.open = true
 }
+const openContextMenu = (event: MouseEvent) =>
+  showContextMenu(event.target as HTMLElement, event.clientX, event.clientY)
+
+// a tap anywhere dismisses the menus, unless a long-press just opened one (the
+// touchend synthesises a click we must ignore, or the menu would never show)
+let suppressNextClick = false
+const closeMenus = () => {
+  if (suppressNextClick) {
+    suppressNextClick = false
+    return
+  }
+  contextMenu.open = false
+  titleMenu.open = false
+}
+
+// touch has no right-click, so a ~500ms long-press summons the desktop menu
+let pressTimer: ReturnType<typeof setTimeout> | undefined
+let pressAt: { x: number, y: number } | null = null
+const onDesktopTouchStart = (event: TouchEvent) => {
+  const touch = event.touches[0]
+  if (!touch) return
+  pressAt = { x: touch.clientX, y: touch.clientY }
+  const target = event.target as HTMLElement
+  pressTimer = setTimeout(() => {
+    showContextMenu(target, pressAt!.x, pressAt!.y)
+    suppressNextClick = true
+    setTimeout(() => (suppressNextClick = false), 400)
+  }, 500)
+}
+const onDesktopTouchMove = (event: TouchEvent) => {
+  const touch = event.touches[0]
+  if (pressAt && touch && (Math.abs(touch.clientX - pressAt.x) > 10 || Math.abs(touch.clientY - pressAt.y) > 10)) {
+    clearTimeout(pressTimer)
+  }
+}
+const onDesktopTouchEnd = () => clearTimeout(pressTimer)
 
 // ---- wallpaper (persisted for the session) ----
 const { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper: nextWallpaper } = useWallpaper()
@@ -305,8 +345,7 @@ const { wallpapers, wallpaper, wallpaperStyle, cycleWallpaper: nextWallpaper } =
 const nightLight = useNightLight()
 const cycleWallpaper = () => notify('🖼', 'Wallpaper changed', nextWallpaper())
 
-// right-click menu on a window titlebar
-const titleMenu = reactive({ open: false, x: 0, y: 0, winId: '' })
+// right-click menu on a window titlebar (titleMenu declared with contextMenu)
 const openTitleMenu = (win: DesktopWindow, event: MouseEvent) => {
   focusWindow(win)
   titleMenu.open = true
