@@ -345,7 +345,14 @@ export function useTerminal() {
     }
     try {
       const outcome = command.exec(args)
-      if (outcome instanceof Promise) return outcome.then(() => { finish(); return !runFailed })
+      if (outcome instanceof Promise) {
+        return outcome.then(
+          () => { finish(); return !runFailed },
+          // a rejected async command must still release the capture sink, or the
+          // next queued command would write into this one's captured array
+          (err: unknown) => { sink = null; throw err }
+        )
+      }
       finish()
       return !runFailed
     } catch (err) {
