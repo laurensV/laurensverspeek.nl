@@ -551,3 +551,17 @@ test('leaderboard explains itself when no relay is configured', async ({ page })
   await page.keyboard.press('Tab')
   await expect(page.locator('#terminal-input')).toHaveValue('leaderboard snake')
 })
+
+test('mail lists the lvOS inbox and reading a message clears its unread flag', async ({ page }) => {
+  await openTerminal(page)
+  await run(page, 'mail')
+  const output = page.locator('.terminal-output')
+  await expect(output).toContainText('5 unread')
+  await expect(output).toContainText('URGENT BUSINESS PROPOSAL')
+  await run(page, 'mail 3')
+  await expect(output).toContainText('definitely.real@royal.example')
+  await expect(output).toContainText('localStorage bytes')
+  // the shared read-state: a second listing shows one fewer unread
+  await run(page, 'mail')
+  await expect(output).toContainText('4 unread')
+})

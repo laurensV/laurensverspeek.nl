@@ -19,8 +19,37 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   // Set by the ssh easter egg; the prompt's host segment follows it.
   const sshHost = useState(STATE_KEYS.terminalSshHost, () => '')
   const fontScale = useTermFontScale()
+  // the SAME inbox the lvOS mail app renders — reading here clears its badge
+  const lvosMail = useLvosMail()
 
   return {
+    mail: {
+      category: 'content',
+      usage: 'mail [n]',
+      description: 'Read your inbox (shared with the lvOS mail app)',
+      examples: ['mail', 'mail 3'],
+      argCandidates: () => LVOS_MAILS.map((_, index) => String(index + 1)),
+      exec: (args) => {
+        const pick = args[0]
+        if (!pick) {
+          push('primary', `Inbox for you@${profile.domain} — ${lvosMail.unread.value} unread`)
+          LVOS_MAILS.forEach((mail, index) => {
+            const flag = lvosMail.read.value.has(mail.id) ? ' ' : 'N'
+            out(`${flag} ${index + 1}  ${mail.from.padEnd(20)} ${mail.subject}`)
+          })
+          muted(`'mail <n>' reads a message ('N' = new — same inbox as the lvOS mail app)`)
+          return
+        }
+        const mail = LVOS_MAILS[Number(pick) - 1]
+        if (!mail) return error(`mail: no message ${pick} (you have ${LVOS_MAILS.length})`)
+        lvosMail.markRead(mail.id)
+        push('primary', `From: ${mail.from} <${mail.address}>`)
+        out(`Subject: ${mail.subject}`)
+        out(`Date: ${mail.date}`)
+        out('')
+        mail.body.forEach(out)
+      }
+    },
     theme: {
       category: 'system',
       usage: 'theme <dark|light|system>',
