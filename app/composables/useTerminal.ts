@@ -11,7 +11,7 @@ import { escapeHtml } from '~/utils/escapeHtml'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
-import type { ChainOp } from '~/utils/terminal/chain'
+import type { ChainOp, ChainSegment } from '~/utils/terminal/chain'
 import { writeFileAt } from '~/utils/terminal/filesystem'
 import { wireTerminalStorage } from '~/utils/terminal/terminalStorage'
 import { paneOrder, canSplit, nextFocus, focusAfterClose } from '~/utils/terminal/panes'
@@ -354,6 +354,33 @@ export function useTerminal() {
     }
   }
 
+  const executeLine = async (trimmed: string, segments: ChainSegment[]) => {
+    if (segments.length === 1) {
+      await runSegment(trimmed, history.value, true)
+      return
+    }
+    // a chain records the full line once; `!!` inside segments expands against
+    // the history as it was before this line
+    const historySnapshot = [...history.value]
+    history.value.push(trimmed)
+    saveHistory(history.value)
+    let ok = true
+    let op: ChainOp | null = null
+    for (const segment of segments) {
+      if (op === null || shouldRunNext(op, ok)) {
+        ok = await runSegment(segment.cmd, historySnapshot, false)
+      }
+      op = segment.op
+    }
+  }
+
+  // Commands run one at a time. An async command (curl, weather, git log) emits
+  // its output after an await, while `sink`/`runFailed` are single closure
+  // variables; letting a second command run in that gap corrupted the first's
+  // pipe/redirect (a `curl | jq` could dump raw JSON, or `> file` write empty).
+  // Chaining every line onto one promise keeps the capture sink to one owner.
+  let runQueue: Promise<void> = Promise.resolve()
+
   const run = (input: string) => {
     const trimmed = input.trim()
     push('input', trimmed)
@@ -363,25 +390,10 @@ export function useTerminal() {
       error(chain.error)
       return
     }
-    if (chain.segments.length === 1) {
-      void runSegment(trimmed, history.value, true)
-      return
-    }
-    // a chain records the full line once; `!!` inside segments expands against
-    // the history as it was before this line
-    const historySnapshot = [...history.value]
-    history.value.push(trimmed)
-    saveHistory(history.value)
-    void (async () => {
-      let ok = true
-      let op: ChainOp | null = null
-      for (const segment of chain.segments) {
-        if (op === null || shouldRunNext(op, ok)) {
-          ok = await runSegment(segment.cmd, historySnapshot, false)
-        }
-        op = segment.op
-      }
-    })()
+    runQueue = runQueue.then(() => executeLine(trimmed, chain.segments)).catch(() => {
+      // runSegment already surfaces command errors as lines; swallow unexpected
+      // throws so one bad command can't wedge the queue for every later one
+    })
   }
 
   const complete = (input: string): string[] => completeInput(input, commandNames, commands)
