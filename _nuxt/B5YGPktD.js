@@ -1,0 +1,8 @@
+import{bv as S,bx as E}from"./ACvXqGU9.js";import{r as b}from"./BI3hHhT_.js";const M="lv-2048-highscore";function C({onFrame:d,onEnd:g}){let n=Array.from({length:4},()=>Array.from({length:4},()=>0)),u=0,l=!1;const m=()=>{const r=[];if(n.forEach((t,s)=>t.forEach((c,y)=>!c&&r.push([s,y]))),!r.length)return;const[e,o]=r[Math.floor(Math.random()*r.length)];n[e][o]=Math.random()<.9?2:4},a=r=>{const e=r.filter(Boolean),o=[];for(let t=0;t<e.length;t++)if(e[t]===e[t+1]){const s=e[t]*2;u+=s,s===2048&&(l=!0),o.push(s),t++}else o.push(e[t]);for(;o.length<4;)o.push(0);return o},i=r=>r[0].map((e,o)=>r.map(t=>t[o])),f=r=>r.map(e=>[...e].reverse()),w=r=>{const e=JSON.stringify(n);return r==="left"&&(n=n.map(a)),r==="right"&&(n=f(f(n).map(a))),r==="up"&&(n=i(i(n).map(a))),r==="down"&&(n=i(f(f(i(n)).map(a)))),JSON.stringify(n)!==e},v=()=>n.some((r,e)=>r.some((o,t)=>!o||o===n[e]?.[t+1]||o===n[e+1]?.[t]));function h(r=""){const e=(t,s,c)=>b(t,s,c,4,6),o=n.map(t=>`│${t.map(s=>s?String(s).padStart(5," ")+" ":"      ").join("│")}│`).join(`
+${e("├","┼","┤")}
+`);d(`2048  score: ${u}${l?"  🏆":""}  (arrows/wasd, q quits)
+
+${e("┌","┬","┐")}
+${o}
+${e("└","┴","┘")}
+${r}`)}function p(r){g(E(M,u,{headline:r}))}m(),m(),h();const $={arrowleft:"left",a:"left",arrowright:"right",d:"right",arrowup:"up",w:"up",arrowdown:"down",s:"down"};return{onKey(r){const e=r.toLowerCase();if(S(r))return p("2048 terminated by user"),!0;const o=$[e];if(!o)return!1;const t=w(o);return t&&(m(),!v())?(h(),p("game over — out of moves, the heap is fragmented"),!0):(h(t?"":"(nothing moved)"),!0)},stop:()=>{}}}export{C as create2048Game};
