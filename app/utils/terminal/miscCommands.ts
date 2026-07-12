@@ -211,15 +211,24 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
     },
     nightlight: {
       category: 'system',
-      usage: 'nightlight [on|off]',
-      description: 'Toggle the lvOS warm night-light wash (same one as Settings)',
+      usage: 'nightlight [on|off|<0–100>]',
+      description: 'Toggle the lvOS warm night-light wash, or set its warmth',
+      examples: ['nightlight', 'nightlight on', 'nightlight 60'],
       argCandidates: () => ['on', 'off'],
       exec: (args) => {
         const arg = args[0]?.toLowerCase()
         if (arg === 'on') nightLight.enabled.value = true
         else if (arg === 'off') nightLight.enabled.value = false
         else if (!arg) nightLight.enabled.value = !nightLight.enabled.value
-        else return error(`nightlight: expected on or off, got '${args[0]}'`)
+        else {
+          // a number sets the warmth (and switches the wash on)
+          const warmth = Number(arg)
+          if (!Number.isFinite(warmth) || warmth < 0 || warmth > 100) {
+            return error(`nightlight: expected on, off or 0–100, got '${args[0]}'`)
+          }
+          nightLight.warmth.value = Math.round(warmth)
+          nightLight.enabled.value = true
+        }
         out(`night light ${nightLight.enabled.value ? 'on' : 'off'} (warmth ${nightLight.warmth.value}%)`)
       }
     },

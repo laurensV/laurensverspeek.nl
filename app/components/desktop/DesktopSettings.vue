@@ -100,6 +100,20 @@
         <button :class="{ 'is-active': !nightLight.enabled.value }" @click="nightLight.enabled.value = false">[off]</button>
       </div>
     </div>
+    <div class="settings-row" :class="{ 'is-disabled': !nightLight.enabled.value }">
+      <span class="settings-label">warmth</span>
+      <div class="settings-volume">
+        <input
+          v-model.number="nightLight.warmth.value"
+          type="range"
+          min="0"
+          max="100"
+          :disabled="!nightLight.enabled.value"
+          aria-label="Night light warmth"
+        >
+        <span class="settings-volume-pct">{{ nightLight.warmth.value }}%</span>
+      </div>
+    </div>
 
     <p class="settings-section mt-4"># sound</p>
     <div class="settings-row">
@@ -223,6 +237,10 @@ onUnmounted(() => clearTimeout(disarmTimer))
 
   .settings-label {
     color: hsl(var(--lv-scheme-hs), 80%);
+  }
+
+  &.is-disabled {
+    opacity: 0.45;
   }
 }
 
