@@ -3,6 +3,7 @@ import {
   inWorld, validColor, plotAt, CooldownGate, createSeedBoard, encodeBoard, decodeBoard
 } from '../../realtime/world-core.mjs'
 import { storageGet, storageSet, storageGetJson } from '~/utils/safeStorage'
+import type { ServerMessage, WorldJoinIn, WorldLeaveIn, PixelIn, WorldWhoIn, WorldCursorIn } from '../../realtime/protocol'
 
 // The Pixel World's client brain: one websocket to the cursors relay when the
 // site is built with NUXT_PUBLIC_CURSORS_WS, or a solo local world when not —
@@ -89,7 +90,7 @@ export function useWorld() {
     }
     socket.addEventListener('open', () => {
       retries = 0 // a good connection resets the backoff, so later drops retry too
-      socket?.send(JSON.stringify({ type: 'world-join' }))
+      socket?.send(JSON.stringify({ type: 'world-join' } satisfies WorldJoinIn))
     })
     socket.addEventListener('error', () => {
       if (!board.value) enterOffline()
@@ -102,47 +103,44 @@ export function useWorld() {
       if (wired) reconnectTimer = setTimeout(connect, Math.min(30_000, 4000 * ++retries))
     })
     socket.addEventListener('message', (event) => {
-      let msg: Record<string, unknown>
+      // the relay broadcasts other subsystems' frames (hello, page cursors,
+      // score boards) on the same socket — type the full union and let
+      // anything we don't handle fall through
+      let msg: ServerMessage
       try {
-        msg = JSON.parse(String(event.data)) as Record<string, unknown>
+        msg = JSON.parse(String(event.data)) as ServerMessage
       } catch { return }
       if (msg.type === 'world-state') {
-        board.value = decodeBoard(String(msg.board))
-        cooldownMs.value = Number(msg.cooldownMs) || WORLD_COOLDOWN_MS
-        if (Array.isArray(msg.history)) history.value = msg.history as typeof history.value
+        board.value = decodeBoard(msg.board)
+        cooldownMs.value = msg.cooldownMs || WORLD_COOLDOWN_MS
+        history.value = msg.history
         connected.value = true
         version.value++
       } else if (msg.type === 'pixel') {
-        const px = Number(msg.x)
-        const py = Number(msg.y)
-        applyPixel(px, py, Number(msg.c))
-        pushHistory(px, py, Number(msg.c))
+        applyPixel(msg.x, msg.y, msg.c)
+        pushHistory(msg.x, msg.y, msg.c)
         // our optimistic pixel came back confirmed — nothing to revert
-        if (pendingPlace && pendingPlace.x === px && pendingPlace.y === py) pendingPlace = null
+        if (pendingPlace && pendingPlace.x === msg.x && pendingPlace.y === msg.y) pendingPlace = null
       } else if (msg.type === 'world-count') {
-        online.value = Number(msg.online) || 0
-        recent.value = Number(msg.recent) || 0
+        online.value = msg.online
+        recent.value = msg.recent
       } else if (msg.type === 'pixel-denied') {
-        nextPlaceAt.value = Date.now() + (Number(msg.waitMs) || 0)
+        nextPlaceAt.value = Date.now() + msg.waitMs
         // the server refused our optimistic pixel — roll it back to its old colour
         if (pendingPlace) {
           applyPixel(pendingPlace.x, pendingPlace.y, pendingPlace.prev)
           pendingPlace = null
         }
       } else if (msg.type === 'pixel-info') {
-        lastInfo.value = {
-          x: Number(msg.x),
-          y: Number(msg.y),
-          by: (msg.by as string | null),
-          at: (msg.at as number | null)
-        }
+        lastInfo.value = { x: msg.x, y: msg.y, by: msg.by, at: msg.at }
       } else if (msg.type === 'world-cursor') {
-        const id = Number(msg.id)
+        const { id, hue, x, y } = msg
         const next = cursors.value.filter((cursor) => cursor.id !== id)
-        next.push({ id, hue: Number(msg.hue), x: Number(msg.x), y: Number(msg.y), seen: Date.now() })
+        next.push({ id, hue, x, y, seen: Date.now() })
         cursors.value = next.filter((cursor) => Date.now() - cursor.seen < 15_000)
       } else if (msg.type === 'leave') {
-        cursors.value = cursors.value.filter((cursor) => cursor.id !== Number(msg.id))
+        const gone = msg.id
+        cursors.value = cursors.value.filter((cursor) => cursor.id !== gone)
       }
     })
   }
@@ -161,7 +159,7 @@ export function useWorld() {
     wired = false // before close(), whose close handler would otherwise reconnect
     clearTimeout(reconnectTimer)
     // send() throws on a still-CONNECTING socket — closing early must not
-    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'world-leave' }))
+    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'world-leave' } satisfies WorldLeaveIn))
     socket?.close()
     socket = null
   }
@@ -175,7 +173,7 @@ export function useWorld() {
       if (wait > 0) return Math.ceil(wait)
       // optimistic paint, remembering the prior colour so a denial can revert
       pendingPlace = { x, y, prev: board.value[y * WORLD_SIZE + x] ?? 0 }
-      socket.send(JSON.stringify({ type: 'pixel', x, y, c, name: name.value }))
+      socket.send(JSON.stringify({ type: 'pixel', x, y, c, name: name.value } satisfies PixelIn))
       applyPixel(x, y, c)
       nextPlaceAt.value = Date.now() + cooldownMs.value
       return 0
@@ -197,7 +195,7 @@ export function useWorld() {
   const who = (x: number, y: number) => {
     if (!inWorld(x, y)) return
     if (connected.value && socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'world-who', x, y }))
+      socket.send(JSON.stringify({ type: 'world-who', x, y } satisfies WorldWhoIn))
       return
     }
     const info = offlineMeta[`${x},${y}`]
@@ -206,7 +204,7 @@ export function useWorld() {
 
   const sendCursor = (x: number, y: number) => {
     if (connected.value && socket?.readyState === 1) {
-      socket.send(JSON.stringify({ type: 'world-cursor', x, y }))
+      socket.send(JSON.stringify({ type: 'world-cursor', x, y } satisfies WorldCursorIn))
     }
   }
 

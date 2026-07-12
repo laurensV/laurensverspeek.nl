@@ -101,8 +101,14 @@ const broadcastWorld = (/** @type {string} */ payload) => {
   }
 }
 const broadcastWorldCount = () => {
-  broadcastWorld(JSON.stringify({ type: 'world-count', online: worldMembers.size, recent: recentActivity() }))
+  broadcastWorld(wire({ type: 'world-count', online: worldMembers.size, recent: recentActivity() }))
 }
+
+/** @typedef {import('./protocol.js').ServerMessage} ServerMessage */
+/** Stringify an outbound frame, type-checked against the shared wire contract
+ * in protocol.d.ts — drift between server and client shapes fails checkJs.
+ * @param {ServerMessage} msg */
+const wire = (msg) => JSON.stringify(msg)
 
 const wss = new WebSocketServer({ port: PORT })
 let nextId = 1
@@ -116,7 +122,7 @@ wss.on('connection', (socket) => {
   }
   const id = nextId++
   const hue = (id * 47) % 360
-  socket.send(JSON.stringify({ type: 'hello', id, hue }))
+  socket.send(wire({ type: 'hello', id, hue }))
 
   socket.on('message', (raw) => {
     let msg
@@ -130,7 +136,7 @@ wss.on('connection', (socket) => {
       const text = msg.text.slice(0, 80)
       if (!text.trim()) return
       if (chatGate.check(id, Date.now()) > 0) return // drop flooded chat
-      const payload = JSON.stringify({ type: 'say', id, text })
+      const payload = wire({ type: 'say', id, text })
       for (const client of wss.clients) {
         if (client !== socket && client.readyState === 1) client.send(payload)
       }
@@ -138,7 +144,7 @@ wss.on('connection', (socket) => {
     }
     // ---- leaderboard protocol (server-authoritative) ----
     if (msg.type === 'scores-get') {
-      socket.send(JSON.stringify({ type: 'scores', boards: scoreBoards }))
+      socket.send(wire({ type: 'scores', boards: scoreBoards }))
       return
     }
     if (msg.type === 'score-submit') {
@@ -148,7 +154,7 @@ wss.on('connection', (socket) => {
       scoreBoards[msg.game] = addScore(scoreBoards[msg.game], entry)
       scheduleScoresSave()
       // broadcast the updated board for that game to everyone
-      const payload = JSON.stringify({ type: 'score-board', game: msg.game, board: scoreBoards[msg.game] })
+      const payload = wire({ type: 'score-board', game: msg.game, board: scoreBoards[msg.game] })
       for (const client of wss.clients) {
         if (client.readyState === 1) client.send(payload)
       }
@@ -157,7 +163,7 @@ wss.on('connection', (socket) => {
     // ---- pixel world protocol (server-authoritative) ----
     if (msg.type === 'world-join') {
       worldMembers.add(socket)
-      socket.send(JSON.stringify({
+      socket.send(wire({
         type: 'world-state',
         size: WORLD_SIZE,
         cooldownMs: COOLDOWN_MS,
@@ -177,7 +183,7 @@ wss.on('connection', (socket) => {
       if (!inWorld(msg.x, msg.y) || !validColor(msg.c)) return
       const wait = cooldowns.check(id, Date.now())
       if (wait > 0) {
-        socket.send(JSON.stringify({ type: 'pixel-denied', waitMs: wait }))
+        socket.send(wire({ type: 'pixel-denied', waitMs: wait }))
         return
       }
       const by = typeof msg.name === 'string'
@@ -190,21 +196,21 @@ wss.on('connection', (socket) => {
       if (history.length > HISTORY_MAX) history = history.slice(-HISTORY_MAX)
       activity.push(at)
       scheduleSave()
-      broadcastWorld(JSON.stringify({ type: 'pixel', x: msg.x, y: msg.y, c: msg.c, by, at }))
+      broadcastWorld(wire({ type: 'pixel', x: msg.x, y: msg.y, c: msg.c, by, at }))
       broadcastWorldCount()
       return
     }
     if (msg.type === 'world-who') {
       if (!inWorld(msg.x, msg.y)) return
       const info = placedBy[`${msg.x},${msg.y}`]
-      socket.send(JSON.stringify({ type: 'pixel-info', x: msg.x, y: msg.y, by: info?.by ?? null, at: info?.at ?? null }))
+      socket.send(wire({ type: 'pixel-info', x: msg.x, y: msg.y, by: info?.by ?? null, at: info?.at ?? null }))
       return
     }
     // world cursors: board-coordinate positions relayed to other members
     if (msg.type === 'world-cursor') {
       if (!worldMembers.has(socket) || typeof msg.x !== 'number' || typeof msg.y !== 'number') return
       if (moveGate.check(id, Date.now()) > 0) return // throttle the fan-out
-      const payload = JSON.stringify({ type: 'world-cursor', id, hue, x: msg.x, y: msg.y })
+      const payload = wire({ type: 'world-cursor', id, hue, x: msg.x, y: msg.y })
       for (const member of worldMembers) {
         if (member !== socket && member.readyState === 1) member.send(payload)
       }
@@ -217,7 +223,7 @@ wss.on('connection', (socket) => {
     const name = typeof msg.name === 'string'
       ? msg.name.replace(/[^a-z0-9_-]/gi, '').slice(0, 24) || 'visitor'
       : 'visitor'
-    const payload = JSON.stringify({
+    const payload = wire({
       type: 'move',
       id,
       hue,
@@ -239,7 +245,7 @@ wss.on('connection', (socket) => {
     moveGate.last.delete(id)
     chatGate.last.delete(id)
     scoreGate.last.delete(id)
-    const payload = JSON.stringify({ type: 'leave', id })
+    const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
     }

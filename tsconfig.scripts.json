@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["scripts/**/*.mjs", "realtime/**/*.mjs"]
+  "include": ["scripts/**/*.mjs", "realtime/**/*.mjs", "realtime/**/*.d.ts"]
 }

@@ -1,8 +1,9 @@
 import { setScoreSink } from '~/utils/terminalGameKit'
 import { LEADERBOARD_GAMES, emptyBoards } from '../../realtime/scores-core.mjs'
+import type { ServerMessage, ScoreSubmitIn, ScoresGetIn, ScoreEntry, ScoreBoards } from '../../realtime/protocol'
 
-export interface ScoreEntry { name: string, score: number, at: number }
-export type ScoreBoards = Record<string, ScoreEntry[]>
+// the wire types are the score types — re-exported for the app's consumers
+export type { ScoreEntry, ScoreBoards }
 
 export const GAMES: string[] = LEADERBOARD_GAMES
 
@@ -27,7 +28,7 @@ export function useLeaderboard() {
 
   const submit = (game: string, score: number) => {
     if (socket?.readyState === 1 && GAMES.includes(game) && score > 0) {
-      socket.send(JSON.stringify({ type: 'score-submit', game, score, name: name.value }))
+      socket.send(JSON.stringify({ type: 'score-submit', game, score, name: name.value } satisfies ScoreSubmitIn))
     }
   }
 
@@ -41,18 +42,20 @@ export function useLeaderboard() {
     socket.onopen = () => {
       connected.value = true
       retries = 0 // a good connection resets the backoff, so later drops retry too
-      socket?.send(JSON.stringify({ type: 'scores-get' }))
+      socket?.send(JSON.stringify({ type: 'scores-get' } satisfies ScoresGetIn))
     }
     socket.onmessage = (event) => {
-      let msg: { type?: string, boards?: ScoreBoards, game?: string, board?: ScoreEntry[] }
+      // the relay broadcasts other subsystems' frames (hello, cursor moves) on
+      // the same socket, so the honest inbound type is the full union
+      let msg: ServerMessage
       try {
-        msg = JSON.parse(String(event.data)) as typeof msg
+        msg = JSON.parse(String(event.data)) as ServerMessage
       } catch {
         return
       }
-      if (msg.type === 'scores' && msg.boards) {
+      if (msg.type === 'scores') {
         boards.value = { ...emptyBoards(), ...msg.boards }
-      } else if (msg.type === 'score-board' && msg.game && msg.board) {
+      } else if (msg.type === 'score-board') {
         boards.value = { ...boards.value, [msg.game]: msg.board }
       }
     }

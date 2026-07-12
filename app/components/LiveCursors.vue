@@ -21,6 +21,8 @@
 
 <script setup lang="ts">
 import { useEventListener, useThrottleFn } from '@vueuse/core'
+// the relay's wire format lives in realtime/protocol.d.ts, shared with the server
+import type { ServerMessage, CursorMoveIn, SayIn } from '../../realtime/protocol'
 
 // Anonymous live cursors of other visitors, relayed through a tiny websocket
 // server (see realtime/cursors-server.mjs). Renders nothing unless
@@ -37,12 +39,6 @@ interface RemoteCursor {
   say?: string | undefined
   sayUntil?: number | undefined
 }
-
-// the relay's wire format (see realtime/cursors-server.mjs)
-type WireMessage =
-  | { type: 'move', id: number, hue: number, name?: string, x: number, y: number, page: string }
-  | { type: 'leave', id: number }
-  | { type: 'say', id: number, text: string }
 
 const { cursorsWs } = useRuntimeConfig().public
 const route = useRoute()
@@ -85,9 +81,9 @@ const connect = () => {
 
   socket.onmessage = (event) => {
     // network input: a non-JSON frame must not throw on every later message
-    let msg: WireMessage
+    let msg: ServerMessage
     try {
-      msg = JSON.parse(event.data as string) as WireMessage
+      msg = JSON.parse(event.data as string) as ServerMessage
     } catch {
       return
     }
@@ -99,7 +95,7 @@ const connect = () => {
     } else if (msg.type === 'leave') {
       cursors.value.delete(msg.id)
       cursors.value = new Map(cursors.value)
-    } else {
+    } else if (msg.type === 'say') {
       const existing = cursors.value.get(msg.id)
       if (existing) {
         existing.say = msg.text.slice(0, 80)
@@ -126,7 +122,7 @@ const send = useThrottleFn((event: PointerEvent) => {
       y: event.clientY / window.innerHeight,
       page: route.path,
       name: name.value
-    })
+    } satisfies CursorMoveIn)
   )
 }, 90)
 
@@ -148,7 +144,7 @@ useEventListener('pointermove', send, { passive: true })
 // the terminal `say` command writes here; forward it to the relay
 watch(outbox, (msg) => {
   if (msg && socket?.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'say', text: msg.text }))
+    socket.send(JSON.stringify({ type: 'say', text: msg.text } satisfies SayIn))
   }
 })
 </script>
