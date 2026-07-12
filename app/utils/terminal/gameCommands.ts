@@ -1,7 +1,9 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createSnakeGame, createHangmanGame, createTetrisGame, create2048Game, createTopGame, createLifeGame, createWpmGame, createPongGame, createAdventureGame, createAquarium } from '~/utils/terminalGames'
 
-// The terminal mini-games (the game engines live in utils/games/).
+// The terminal mini-games (the game engines live in utils/games/). Every
+// engine is imported dynamically at launch so none of them ride along in the
+// main bundle — a visitor pays for tetris when they type `tetris`, not on
+// first paint.
 
 export function createGameCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { muted } = ctx
@@ -20,7 +22,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Play snake in the terminal',
       exec: () => {
         muted('Starting snake... arrows/wasd to move, q to quit.')
-        ctx.startGame(createSnakeGame, 'snake')
+        return import('~/utils/games/snake').then(({ createSnakeGame }) => ctx.startGame(createSnakeGame, 'snake'))
       }
     },
     hangman: {
@@ -28,7 +30,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Play hangman (a 2014 classic, remastered)',
       exec: () => {
         muted('Starting hangman... type letters to guess, q to quit.')
-        ctx.startGame(createHangmanGame, 'hangman')
+        return import('~/utils/games/hangman').then(({ createHangmanGame }) => ctx.startGame(createHangmanGame, 'hangman'))
       }
     },
     tetris: {
@@ -36,7 +38,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Play tetris in the terminal',
       exec: () => {
         muted('Starting tetris... ←→ move, ↑ rotate, ↓ drop, space slams, q quits.')
-        ctx.startGame(createTetrisGame, 'tetris')
+        return import('~/utils/games/tetris').then(({ createTetrisGame }) => ctx.startGame(createTetrisGame, 'tetris'))
       }
     },
     2048: {
@@ -44,7 +46,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Slide the tiles, double the numbers',
       exec: () => {
         muted('Starting 2048... arrows/wasd to slide, q to quit.')
-        ctx.startGame(create2048Game, '2048')
+        return import('~/utils/games/game2048').then(({ create2048Game }) => ctx.startGame(create2048Game, '2048'))
       }
     },
     pong: {
@@ -52,7 +54,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'You vs a slightly fallible AI paddle',
       exec: () => {
         muted('Starting pong... w/s or ↑/↓ to move, first to 5, q quits.')
-        ctx.startGame(createPongGame, 'pong')
+        return import('~/utils/games/pong').then(({ createPongGame }) => ctx.startGame(createPongGame, 'pong'))
       }
     },
     wpm: {
@@ -60,7 +62,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Typing test — how fast are you really?',
       exec: () => {
         muted('Starting typing test... just start typing, Backspace fixes, Esc quits.')
-        ctx.startGame(createWpmGame, 'wpm')
+        return import('~/utils/games/wpm').then(({ createWpmGame }) => ctx.startGame(createWpmGame, 'wpm'))
       }
     },
     top: {
@@ -68,7 +70,8 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'Live process monitor',
       exec: () => {
         muted('Starting top... q to quit.')
-        ctx.startGame((callbacks) => createTopGame(callbacks, topProcs), 'top')
+        return import('~/utils/games/top').then(({ createTopGame }) =>
+          ctx.startGame((callbacks) => createTopGame(callbacks, topProcs), 'top'))
       }
     },
     asciiquarium: {
@@ -76,7 +79,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: 'A tiny ASCII fish tank swims in your terminal',
       exec: () => {
         muted('Filling the tank... q to surface.')
-        ctx.startGame(createAquarium, 'asciiquarium')
+        return import('~/utils/games/asciiquarium').then(({ createAquarium }) => ctx.startGame(createAquarium, 'asciiquarium'))
       }
     },
     life: {
@@ -84,7 +87,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       description: "Conway's Game of Life, in ASCII",
       exec: () => {
         muted('Starting life... space pauses, r reseeds, q quits.')
-        ctx.startGame(createLifeGame, 'life')
+        return import('~/utils/games/life').then(({ createLifeGame }) => ctx.startGame(createLifeGame, 'life'))
       }
     },
     adventure: {
@@ -93,7 +96,7 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
       examples: ['adventure', "then: 'look', 'go west', 'examine keyboard', 'talk duck'"],
       exec: () => {
         muted('Starting adventure... type commands, Esc saves & quits.')
-        ctx.startGame(createAdventureGame, 'adventure')
+        return import('~/utils/games/adventure').then(({ createAdventureGame }) => ctx.startGame(createAdventureGame, 'adventure'))
       }
     },
     htop: {

@@ -1,7 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { parseRedirect, resolvePath, expandFileArgs, writeFileAt, pathCandidates } from '~/utils/terminal/filesystem'
 import { markSeedsDeleted, restoreSeeds, hasSeedsUnder, isSysPath } from '~/utils/terminal/siteFs'
-import { createNanoEditor, createVimEditor, type EditorIO } from '~/utils/terminalEditors'
+import type { EditorIO } from '~/utils/terminalEditors'
 
 // The writing half of the virtual filesystem: creating, copying, removing and
 // editing files. (The reading half — cat/ls/cd — lives in fileCommands.)
@@ -46,7 +46,9 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
     const io = editorIo(name)
     if ('error' in io) return error(`vim: ${io.error}`)
     muted(`Opening ${name} — i inserts, Esc then :wq writes & quits.`)
-    ctx.startGame((callbacks) => createVimEditor(io, callbacks), `vim ${name}`)
+    // the modal editors load on first open, not with the main bundle
+    return import('~/utils/terminalEditors').then(({ createVimEditor }) =>
+      ctx.startGame((callbacks) => createVimEditor(io, callbacks), `vim ${name}`))
   }
 
   // shared cp/mv (files only): copy a node to dest, and for mv drop the source
@@ -249,7 +251,8 @@ export function createFileWriteCommands(ctx: TerminalContext): Record<string, Te
         const io = editorIo(name)
         if ('error' in io) return error(`nano: ${io.error}`)
         muted(`Editing ${name} — ^S saves, ^X exits.`)
-        ctx.startGame((callbacks) => createNanoEditor(io, callbacks), `nano ${name}`)
+        return import('~/utils/terminalEditors').then(({ createNanoEditor }) =>
+          ctx.startGame((callbacks) => createNanoEditor(io, callbacks), `nano ${name}`))
       }
     }
   }

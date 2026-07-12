@@ -1,5 +1,4 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { createStarwarsGame } from '~/utils/terminalGames'
 import { profile } from '~/data/profile'
 import { pgp } from '~/data/pgp'
 
@@ -109,7 +108,8 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
         }
         muted(`Trying 176.9.9.172...`)
         muted(`Connected to ${host}. Escape character is 'q'.`)
-        ctx.startGame(createStarwarsGame, 'telnet')
+        // the film's frames are heavy — fetch them only when someone dials in
+        return import('~/utils/games/starwars').then(({ createStarwarsGame }) => ctx.startGame(createStarwarsGame, 'telnet'))
       }
     },
     gpg: {
