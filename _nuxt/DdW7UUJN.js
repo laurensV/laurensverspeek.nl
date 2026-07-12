@@ -1,1 +1,0 @@
-import{_ as o,o as s,c as r,W as c}from"./DH881Pqv.js";const n={};function t(e,a){return s(),r("code",null,[c(e.$slots,"default")])}const l=Object.assign(o(n,[["render",t]]),{__name:"ProseCode"});export{l as default};

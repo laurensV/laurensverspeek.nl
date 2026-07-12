@@ -1,1 +1,0 @@
-import{aa as n,g as c}from"./DH881Pqv.js";function i(r=1800){const e=c(!1);let t;const a=()=>{e.value=!0,clearTimeout(t),t=setTimeout(()=>e.value=!1,r)},o=async u=>{try{return await navigator.clipboard.writeText(u),a(),!0}catch{return!1}};return n(()=>clearTimeout(t)),{copied:e,copy:o,flag:a}}export{i as u};
