@@ -10,7 +10,7 @@ import { projects } from '~/data/projects'
 const JQ_SOURCES: Record<string, () => unknown> = {
   resume: () => buildJsonResume(),
   profile: () => profile,
-  projects: () => projects.map((p) => ({ slug: p.slug, title: p.title, category: p.category, tags: p.tags, year: p.year }))
+  projects: () => projects.map((p) => ({ slug: p.slug, title: p.title, category: p.category, tech: p.tech, year: p.year }))
 }
 // strip one pair of matching surrounding quotes (args aren't dequoted upstream)
 const dequote = (s: string) =>

@@ -65,13 +65,13 @@ function parseStage(stage: string): { builtin: string } | { access: Access[] } {
     let m: RegExpMatchArray | null
     if ((m = rest.match(/^\.?"([^"]*)"/)) || (m = rest.match(/^\.?([A-Za-z_][A-Za-z0-9_]*)/))) {
       // .foo or ."a b" (the leading dot is optional after the first segment)
-      access.push({ kind: 'field', key: m[1] })
+      access.push({ kind: 'field', key: m[1] ?? '' })
       rest = rest.slice(m[0].length)
       optionalTail()
       continue
     }
     if ((m = rest.match(/^\[\s*"([^"]*)"\s*\]/))) {
-      access.push({ kind: 'field', key: m[1] })
+      access.push({ kind: 'field', key: m[1] ?? '' })
       rest = rest.slice(m[0].length)
       optionalTail()
       continue

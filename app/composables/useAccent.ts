@@ -52,12 +52,25 @@ export function useAccent() {
     return found
   }
 
+  /** Apply an arbitrary HSL colour as the accent (from the colour-picker app).
+   * Persisted as `custom:h,s,l` so it survives a reload like a named accent. */
+  const applyCustom = (h: number, s: number, l: number) => {
+    // white text on dark fills, near-black on light ones
+    const custom: Accent = { name: 'custom', h, s, l, invert: l < 55 ? 'hsl(0, 0%, 100%)' : 'hsl(0, 0%, 4%)' }
+    accent.value = 'custom'
+    applyVars(custom)
+    if (import.meta.client) storageSet(STORAGE_KEY, `custom:${h},${s},${l}`)
+  }
+
   /** Restore the persisted accent (called once on client load). */
   const initAccent = () => {
     if (!import.meta.client) return
     const saved = storageGet(STORAGE_KEY)
-    if (saved && saved !== 'amber') setAccent(saved)
+    if (!saved || saved === 'amber') return
+    const custom = saved.match(/^custom:(\d+),(\d+),(\d+)$/)
+    if (custom) applyCustom(Number(custom[1]), Number(custom[2]), Number(custom[3]))
+    else setAccent(saved)
   }
 
-  return { accent, accents: ACCENTS, setAccent, initAccent }
+  return { accent, accents: ACCENTS, setAccent, applyCustom, initAccent }
 }

@@ -54,6 +54,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'chat', title: 'chat — #lounge', label: 'chat', icon: 'chat' },
   { id: 'globe', title: 'visitor globe', label: 'globe', icon: 'globe' },
   { id: 'weather', title: 'weather — amsterdam', label: 'weather', icon: 'sun' },
+  { id: 'colorpicker', title: 'colour picker', label: 'colours', icon: 'pen' },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

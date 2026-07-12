@@ -207,7 +207,8 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   sysmon: defineAsyncComponent(() => import('~/components/desktop/DesktopSysMon.vue')),
   displays: defineAsyncComponent(() => import('~/components/desktop/DesktopDisplays.vue')),
   globe: defineAsyncComponent(() => import('~/components/desktop/DesktopGlobe.vue')),
-  weather: defineAsyncComponent(() => import('~/components/desktop/DesktopWeather.vue'))
+  weather: defineAsyncComponent(() => import('~/components/desktop/DesktopWeather.vue')),
+  colorpicker: defineAsyncComponent(() => import('~/components/desktop/DesktopColorPicker.vue'))
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
