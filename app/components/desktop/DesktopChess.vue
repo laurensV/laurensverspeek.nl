@@ -274,10 +274,12 @@ onMounted(houseReply)
 
 .chess-new {
   align-self: flex-start;
-  border: 1px solid var(--bulma-border);
+  // the lvOS window is always dark; use scheme colours, not --bulma-* (which
+  // flip to a light chip with dark text in light theme)
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.3);
   border-radius: var(--bulma-radius);
-  background: var(--bulma-scheme-main-bis);
-  color: var(--bulma-text);
+  background: hsla(var(--lv-scheme-hs), 50%, 0.12);
+  color: hsl(var(--lv-scheme-hs), 88%);
   font: inherit;
   padding: 0.25rem 0.7rem;
   cursor: pointer;

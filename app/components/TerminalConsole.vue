@@ -316,7 +316,9 @@ defineExpose({ focusInput })
 .terminal-search-count {
   margin-left: auto;
   padding-left: 1rem;
-  color: var(--bulma-text-weak);
+  // the terminal is an always-dark surface; --bulma-text-weak is dark-on-dark
+  // in light theme, so dim the scheme colour instead (matches .search-match)
+  color: hsl(var(--lv-scheme-hs), 62%);
   font-size: 0.75rem;
   white-space: nowrap;
 }
