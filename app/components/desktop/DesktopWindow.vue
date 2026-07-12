@@ -154,6 +154,11 @@ onUnmounted(() => clearTimeout(pressTimer))
     inset: 0 0 2.4rem;
     width: auto;
     border-radius: 0;
+
+    // track the taller touch taskbar
+    @media (pointer: coarse) {
+      inset: 0 0 3.1rem;
+    }
   }
 
   // Aero-peek: hovering a taskbar item highlights its window and fades the rest
@@ -222,6 +227,27 @@ onUnmounted(() => clearTimeout(pressTimer))
 
       &:hover {
         color: var(--bulma-primary);
+      }
+    }
+  }
+
+  // fingers need real targets: on touch the –/□/× buttons grow to ~40px
+  // squares (WCAG 2.5.8) instead of mouse-sized 22px strips
+  @media (pointer: coarse) {
+    padding: 0.3rem 0.5rem 0.3rem 0.8rem;
+
+    .lvos-window-actions {
+      gap: 0.15rem;
+
+      button {
+        width: 2.4rem;
+        height: 2.2rem;
+        font-size: 1.1rem;
+        border-radius: var(--bulma-radius-small);
+
+        &:active {
+          background-color: hsla(var(--lv-primary-hsl), 0.2);
+        }
       }
     }
   }

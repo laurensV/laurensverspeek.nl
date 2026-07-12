@@ -213,6 +213,11 @@ const clock = computed(() =>
   gap: 0.4rem;
   height: 2.4rem;
   padding: 0 0.6rem;
+
+  // the whole bar grows on touch so nothing inside it is a 20px target
+  @media (pointer: coarse) {
+    height: 3.1rem;
+  }
   background-color: hsla(var(--lv-scheme-hs), 6%, 0.95);
   border-top: 1px solid hsla(var(--lv-primary-hsl), 0.3);
   font-size: 0.75rem;
@@ -221,6 +226,12 @@ const clock = computed(() =>
 
 .lvos-start {
   padding: 0.3rem 0.8rem;
+
+  // a thumb-sized start button on touch screens
+  @media (pointer: coarse) {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+  }
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
   background: none;
@@ -238,6 +249,10 @@ const clock = computed(() =>
 .lvos-start-menu {
   position: absolute;
   bottom: 2.6rem;
+
+  @media (pointer: coarse) {
+    bottom: 3.3rem;
+  }
   left: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -270,6 +285,10 @@ const clock = computed(() =>
 
 .lvos-task {
   padding: 0.3rem 0.7rem;
+
+  @media (pointer: coarse) {
+    padding: 0.55rem 0.9rem;
+  }
   max-width: 11rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -356,6 +375,10 @@ const clock = computed(() =>
   display: inline-flex;
   align-items: center;
   padding: 0.25rem;
+
+  @media (pointer: coarse) {
+    padding: 0.55rem 0.45rem;
+  }
   border: none;
   background: none;
   color: hsl(var(--lv-scheme-hs), 60%);
