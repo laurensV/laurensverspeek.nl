@@ -96,6 +96,23 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
           : 'this build has no relay, so it\'s you vs the house AI.')
       }
     },
+    draw: {
+      category: 'games',
+      description: 'A shared freehand whiteboard — co-draw with live visitors (lvOS app)',
+      exec: () => {
+        if (route.path === '/desktop') {
+          windowManager.openWindow('codraw')
+          ctx.out(cursorsWs
+            ? 'opening the whiteboard — everyone here draws on the same board.'
+            : 'opening the whiteboard — no relay on this build, so it\'s a solo sketchpad.')
+          return
+        }
+        muted('the whiteboard lives on the lvOS desktop — run `desktop`, then alt+r → whiteboard.')
+        muted(cursorsWs
+          ? 'strokes sync live over the relay; clear wipes it for everyone.'
+          : 'this build has no relay, so it\'s a solo sketchpad in this browser.')
+      }
+    },
     wpm: {
       category: 'games',
       usage: 'wpm [race]',

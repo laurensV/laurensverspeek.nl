@@ -17,6 +17,7 @@ import {
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 import { createPongState, stepPong, movePaddle, PONG_TICK_MS } from './pong-core.mjs'
 import { pickPassage, validProgress, RACE_COUNTDOWN_MS } from './race-core.mjs'
+import { sanitizeStroke, MAX_STROKES } from './draw-core.mjs'
 import { initialState as chessInitial, legalMoves as chessLegalMoves, applyMove as chessApply, gameOver as chessOver } from './chess-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
@@ -196,6 +197,25 @@ const broadcastChat = (/** @type {string} */ payload) => {
 }
 const broadcastChatCount = () => {
   broadcastChat(wire({ type: 'chat-count', online: chatMembers.size }))
+}
+
+// ---- the co-draw whiteboard: one ephemeral shared canvas, a ring buffer of
+// recent freehand segments replayed to each new joiner ----
+/** @type {{ x0: number, y0: number, x1: number, y1: number, c: number }[]} */
+let drawLog = []
+/** @type {Set<import('ws').WebSocket>} */
+const drawMembers = new Set()
+// drawing fires many segments a second; a light gate blunts scripted floods
+// without dropping a normal drag (~60/s)
+const drawGate = new CooldownGate(8)
+/** @param {string} payload @param {import('ws').WebSocket} [except] */
+const broadcastDraw = (payload, except) => {
+  for (const member of drawMembers) {
+    if (member !== except && member.readyState === 1) member.send(payload)
+  }
+}
+const broadcastDrawCount = () => {
+  broadcastDraw(wire({ type: 'draw-count', online: drawMembers.size }))
 }
 
 // ---- online chess: turn-based matches, validated by the shared rules ----
@@ -404,6 +424,34 @@ wss.on('connection', (socket) => {
       broadcastChat(wire({ type: 'chat-msg', ...entry }))
       return
     }
+    // ---- co-draw whiteboard protocol (ephemeral, server-sanitized) ----
+    if (msg.type === 'draw-join') {
+      drawMembers.add(socket)
+      socket.send(wire({ type: 'draw-state', strokes: drawLog, online: drawMembers.size }))
+      broadcastDrawCount()
+      return
+    }
+    if (msg.type === 'draw-leave') {
+      if (drawMembers.delete(socket)) broadcastDrawCount()
+      return
+    }
+    if (msg.type === 'draw-stroke') {
+      if (!drawMembers.has(socket)) return
+      const stroke = sanitizeStroke(msg)
+      if (!stroke) return
+      if (drawGate.check(id, Date.now()) > 0) return // drop flooded segments
+      drawLog.push(stroke)
+      if (drawLog.length > MAX_STROKES) drawLog = drawLog.slice(-MAX_STROKES)
+      // the sender already drew it optimistically — echo only to everyone else
+      broadcastDraw(wire({ type: 'draw-stroke', ...stroke }), socket)
+      return
+    }
+    if (msg.type === 'draw-clear') {
+      if (!drawMembers.has(socket)) return
+      drawLog = []
+      broadcastDraw(wire({ type: 'draw-clear' }), socket)
+      return
+    }
     // ---- online chess protocol (server validates with the shared rules) ----
     if (msg.type === 'chess-join') {
       if (chessMatches.has(socket) || chessWaiting?.socket === socket) return
@@ -565,6 +613,7 @@ wss.on('connection', (socket) => {
     dropChessPlayer(socket)
     dropRacePlayer(socket)
     if (chatMembers.delete(socket)) broadcastChatCount()
+    if (drawMembers.delete(socket)) broadcastDrawCount()
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state, or the maps grow for the relay's
     // whole uptime (one entry per id that ever placed/moved/chatted)

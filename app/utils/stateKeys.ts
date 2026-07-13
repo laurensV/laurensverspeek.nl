@@ -50,6 +50,10 @@ export const STATE_KEYS = {
   chatMessages: 'chat-messages',
   chatOnline: 'chat-online',
   chatStatus: 'chat-status',
+  // the co-draw whiteboard (relay)
+  drawStrokes: 'draw-strokes',
+  drawOnline: 'draw-online',
+  drawStatus: 'draw-status',
   // live visitors
   liveVisitorCount: 'live-visitor-count',
   liveCursorsVisible: 'live-cursors-visible',

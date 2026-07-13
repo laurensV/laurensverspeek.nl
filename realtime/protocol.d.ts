@@ -36,6 +36,13 @@ export interface ChessLeaveIn { type: 'chess-leave' }
  * from its own legal-move list and never trusts the rest. */
 export interface ChessMoveIn { type: 'chess-move', from: number, to: number }
 
+export interface DrawJoinIn { type: 'draw-join' }
+export interface DrawLeaveIn { type: 'draw-leave' }
+/** One freehand line segment, endpoints in normalized [0,1] space, `c` a pen
+ * index into DRAW_COLORS. The server sanitizes/clamps before storing. */
+export interface DrawStrokeIn { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
+export interface DrawClearIn { type: 'draw-clear' }
+
 export interface RaceJoinIn { type: 'race-join', name?: string }
 export interface RaceLeaveIn { type: 'race-leave' }
 /** How many leading characters of the passage this player has typed correctly.
@@ -64,6 +71,10 @@ export type ClientMessage =
   | RaceJoinIn
   | RaceLeaveIn
   | RaceProgressIn
+  | DrawJoinIn
+  | DrawLeaveIn
+  | DrawStrokeIn
+  | DrawClearIn
 
 // ---- server → client ----
 
@@ -149,4 +160,13 @@ export interface RaceEndMsg { type: 'race-end', youWon: boolean, forfeit?: boole
 /** What the wpm-race client consumes. */
 export type RaceServerMessage = RaceWaitMsg | RaceStartMsg | RaceGoMsg | RaceFoeMsg | RaceEndMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage
+/** One whiteboard segment as stored/broadcast. */
+export interface DrawStroke { x0: number, y0: number, x1: number, y1: number, c: number }
+export interface DrawStateMsg { type: 'draw-state', strokes: DrawStroke[], online: number }
+export interface DrawStrokeMsg { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
+export interface DrawClearMsg { type: 'draw-clear' }
+export interface DrawCountMsg { type: 'draw-count', online: number }
+/** What the co-draw whiteboard client consumes. */
+export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawCountMsg
+
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage | DrawServerMessage

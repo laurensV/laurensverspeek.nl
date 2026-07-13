@@ -316,6 +316,48 @@ try {
     a.close()
     b.close()
   }
+
+  // ---- co-draw whiteboard ------------------------------------------------------
+  console.log('draw:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'draw-join' })
+    const state = await a.next('draw-state')
+    check('joining returns the board + members', !!state && Array.isArray(state.strokes) && state.online === 1)
+    await a.next('draw-count') // a's own join broadcast
+    b.send({ type: 'draw-join' })
+    await b.next('draw-state')
+    check('the member count updates on join', (await a.next('draw-count'))?.online === 2)
+
+    // send two segments back-to-back (synchronously, well inside the 8ms gate):
+    // the first lands, the second is flood-dropped
+    a.send({ type: 'draw-stroke', x0: 0.1, y0: 0.2, x1: 0.3, y1: 0.4, c: 2 })
+    a.send({ type: 'draw-stroke', x0: 0.5, y0: 0.5, x1: 0.6, y1: 0.6, c: 3 })
+    const seen = await b.next('draw-stroke')
+    check('a stroke reaches the other member', seen?.x0 === 0.1 && seen?.y1 === 0.4 && seen?.c === 2)
+    check('the drawer does not receive its own echo', await a.silent('draw-stroke'))
+    check('the flood gate drops rapid segments', await b.silent('draw-stroke'))
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    a.send({ type: 'draw-stroke', x0: 0, y0: 0, x1: 0, y1: 0, c: 999 }) // an out-of-palette pen
+    check('an unsanitary stroke is dropped', await b.silent('draw-stroke'))
+
+    const c = new Client(URL)
+    await c.open
+    c.send({ type: 'draw-join' })
+    const late = await c.next('draw-state')
+    const lateStrokes = /** @type {{ c: number }[]} */ (late?.strokes ?? [])
+    check('a late joiner receives the stroke buffer', lateStrokes.some((entry) => entry.c === 2))
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    b.send({ type: 'draw-clear' })
+    check('clear wipes the board for the others', !!(await a.next('draw-clear')))
+    a.close()
+    b.close()
+    c.close()
+  }
 } finally {
   shutdown()
 }
