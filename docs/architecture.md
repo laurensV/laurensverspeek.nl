@@ -76,14 +76,20 @@ additionally flips `fx-world-record` for a bigger burst + `WorldRecordToast`.
 A desktop on its own route (`/desktop`). `WebDesktop.vue` is the shell;
 mechanics live in composables: `useWindowManager` (drag/resize/snap/z-order),
 `useDesktopShortcuts` (the keyboard), `useDesktopPower` (lock/logout/CRT
-power-off), `useWallpaper`, `useDesktopToasts`. Apps are lazy components in
+power-off), `useDesktopContextMenu` (right-click + touch long-press menu),
+`useWallpaper`, `useDesktopToasts`. Apps are lazy components in
 `app/components/desktop/`, registered in `app/utils/desktopApps.ts` — that
 one registry drives the icon grid, window titles, wide-window hints, the
-Alt+R run dialog and process pids.
+Alt+R run dialog and process pids. The terminal `desktop <app>` command
+resolves a name through that same registry (`matchApp`), stashes the id in a
+`lvos-pending-app` state, and WebDesktop opens it on mount.
 
 Crucially, lvOS shares the site's state: the Files app, vim window and
 terminal edit the same virtual filesystem; the recycle bin catches `rm` from
-everywhere; the pet in the status bar is the pet on the desktop.
+everywhere; the pet in the status bar is the pet on the desktop; the keyclick
+setting ticks in lvOS text fields as well as the terminal; and every copy
+(terminal, blog, vCard, colour picker, palette) flows through one
+`writeClipboard()` chokepoint that feeds the Clipboard app's history.
 
 ## Realtime (the cursors relay, opt-in)
 
@@ -102,12 +108,18 @@ throwaway relay and asserts each protocol end-to-end. The co-draw whiteboard
 (`draw-core.mjs` + `useCoDraw` + `DesktopCoDraw.vue`) is the simplest current
 example of the whole pattern — it also broadcasts live pen positions
 (`draw-cursor`), pruned client-side after a few seconds of silence and cleared
-by a `draw-cursor-gone` frame when a member leaves.
+by a `draw-cursor-gone` frame when a member leaves. Each stored segment carries
+the drawer's connection id (`by`, server-assigned) and a per-drag `sid`, so a
+`draw-undo` frame can drop one drawer's whole most-recent stroke for everyone.
 
 Every per-connection rate limiter is a `CooldownGate` built through the server's
 `gate()` helper, which registers it so a single `forgetConnection(id)` on socket
 close clears that id from all of them — a new gate can't be forgotten and leak
-its per-id map for the relay's uptime.
+its per-id map for the relay's uptime. Every inbound frame is attacker-controlled,
+so the message handler drops non-object payloads (a bare `null` would otherwise
+crash the single-instance relay), validates coords with `Number.isFinite`
+(rejecting `Infinity`/`NaN`), and flood-gates the high-frequency frames including
+the room joins.
 
 ## Styling
 
