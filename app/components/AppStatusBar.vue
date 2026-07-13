@@ -191,9 +191,11 @@ const {
   font-weight: 700;
 }
 
-// the network dropped: quiet amber, matching the toast
+// the network dropped: a theme-aware warning amber that stays legible on the
+// light-theme status bar too (the old fixed hsl(45,90%,60%) washed out on the
+// near-white light chrome)
 .status-offline {
-  color: hsl(45deg, 90%, 60%);
+  color: var(--bulma-warning-on-scheme);
 }
 
 a.status-item:hover,
