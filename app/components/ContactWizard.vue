@@ -281,6 +281,9 @@ onMounted(focusInput)
 
 .contact-input {
   flex: 1;
+  // without min-width:0 a flex item can't shrink below its intrinsic content
+  // width, so at 320px the input's right edge was clipped ~18px by the card
+  min-width: 0;
   border: none;
   outline: none;
   background: none;
