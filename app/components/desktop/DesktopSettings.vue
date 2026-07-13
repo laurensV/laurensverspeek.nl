@@ -41,6 +41,15 @@
           :aria-pressed="accent === a.name"
           @click="setAccent(a.name)"
         />
+        <button
+          v-if="accent === 'custom'"
+          class="settings-swatch is-active is-custom"
+          :style="{ backgroundColor: 'var(--bulma-primary)' }"
+          title="custom colour — open the colour picker"
+          aria-label="Accent: custom colour"
+          :aria-pressed="true"
+          @click="emit('open', 'colorpicker')"
+        />
       </div>
     </div>
     <div class="settings-row">
@@ -182,6 +191,8 @@ import { storageWipe } from '~/utils/safeStorage'
 
 // lvOS settings that actually control the real site: theme, CRT, party mode —
 // plus the danger zone (reseed site files / factory reset).
+
+const emit = defineEmits<{ open: [id: string] }>()
 
 const colorMode = useColorMode()
 const { crtActive, matrixActive, toggleCrt } = useSiteEffects()

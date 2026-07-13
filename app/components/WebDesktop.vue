@@ -114,7 +114,7 @@
         <LazyDesktopMail v-else-if="win.id === 'mail'" @post="openBlogPost" />
         <LazyWorldCanvas v-else-if="win.id === 'world'" class="lvos-world" />
         <LazyDesktopTerminal v-else-if="win.id === 'terminal'" :active="terminalActive" />
-        <component :is="SIMPLE_APPS[win.id]" v-else-if="SIMPLE_APPS[win.id]" />
+        <component :is="SIMPLE_APPS[win.id]" v-else-if="SIMPLE_APPS[win.id]" @open="openWindow" />
       </DesktopWindow>
 
       <!-- window titlebar context menu -->
