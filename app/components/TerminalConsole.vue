@@ -343,6 +343,16 @@ defineExpose({ focusInput })
   margin-top: 0.5rem;
   color: var(--bulma-primary);
   line-height: 1.35;
+  // the grid games (snake is 51 columns wide) must never wrap — a wrapped row
+  // corrupts the board. keep it rigid and let it scroll sideways if it's wider
+  // than the pane instead of inheriting .terminal-line's pre-wrap
+  white-space: pre;
+  overflow-x: auto;
+
+  // on a phone, shrink the board font so most of it fits without scrolling
+  @media (pointer: coarse) {
+    font-size: 0.72rem;
+  }
 }
 
 .term-prompt {
