@@ -1,7 +1,11 @@
 // Bulma v1 — configured via module system (fonts are loaded in nuxt.config.ts head)
 @use "bulma/sass" with (
-  $family-primary: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  $family-code: '"JetBrains Mono", ui-monospace, monospace',
+  // NB: parenthesise the font stacks — a quoted STRING ('"Inter", …') emits as
+  // one invalid quoted family name and silently falls back to a proportional
+  // font (is-family-code applies it with !important, so even <pre> loses its
+  // monospace). Parentheses keep it a real comma-separated list.
+  $family-primary: ("Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif),
+  $family-code: ("JetBrains Mono", ui-monospace, monospace),
   $primary: #ffba00,
   $link: #ffba00,
   $radius: 0.5rem,
