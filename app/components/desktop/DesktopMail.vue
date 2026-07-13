@@ -266,6 +266,9 @@ const send = () => {
 
   .mail-date {
     margin-left: auto;
+    // keep '8 jul' on one line — at 320px the column got squeezed and the date
+    // broke to two lines ('8' over 'jul')
+    white-space: nowrap;
     color: hsl(var(--lv-scheme-hs), 50%);
   }
 }
