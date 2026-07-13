@@ -141,4 +141,36 @@ const cpu = (title: string, item: string) => {
 .ps-cmd {
   min-width: 0;
 }
+
+// on a phone the fixed PID/STAT/%CPU columns starve COMMAND to ~44px and break it
+// mid-word; stack each process into a card — the three meta fields on one line,
+// the full command on the line below with the whole width to itself
+@media (max-width: 600px) {
+  .ps-head {
+    display: none;
+  }
+
+  .ps-row {
+    grid-template-columns: max-content max-content 1fr;
+    grid-template-areas:
+      'pid stat cpu'
+      'cmd cmd cmd';
+    gap: 0.15rem 0.9rem;
+    padding: 0.5rem 1rem;
+
+    .ps-pid {
+      grid-area: pid;
+    }
+    .ps-stat {
+      grid-area: stat;
+    }
+    .ps-cpu {
+      grid-area: cpu;
+      text-align: left;
+    }
+    .ps-cmd {
+      grid-area: cmd;
+    }
+  }
+}
 </style>
