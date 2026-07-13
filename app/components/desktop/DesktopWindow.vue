@@ -259,10 +259,19 @@ onUnmounted(() => clearTimeout(pressTimer))
 
 .lvos-window-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
   max-height: 50vh;
   overflow-y: auto;
   font-size: 0.85rem;
+
+  // the app fills the body's height (which fills the window) instead of sitting
+  // at its natural height and leaving the lower half of a maximized window empty
+  :slotted(*) {
+    flex: 1;
+    min-height: 0;
+  }
 
   // app content is slotted, so it carries WebDesktop's scope id
   :slotted(a) {

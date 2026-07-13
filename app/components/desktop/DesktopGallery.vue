@@ -113,7 +113,6 @@ const downloadName = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: min(30rem, 70vw);
 }
 
 .gallery-toolbar {
@@ -167,7 +166,10 @@ const downloadName = computed(() => {
 }
 
 .gallery-main {
-  aspect-ratio: 1200 / 630;
+  // grow to fill the window (so a maximized viewer uses the whole pane) but
+  // keep a sensible image area when the window is floating at its natural size
+  flex: 1;
+  min-height: 12rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.25);
   border-radius: var(--bulma-radius-small);
   overflow: hidden;
