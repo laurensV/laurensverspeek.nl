@@ -30,9 +30,15 @@ export function useTextScramble() {
     const existing = timers.get(el)
     if (existing) clearInterval(existing)
 
-    // lock the current width so random glyphs can never shift the layout
-    el.style.width = `${el.getBoundingClientRect().width}px`
+    // Lock the box so wider glyphs can never reflow the page. Width keeps a nav
+    // link from shoving its neighbours; height + overflow keep a heading that's
+    // near the edge of a line from briefly wrapping to a second line and back
+    // (its final text is preserved in aria-label, so this is purely visual).
+    const rect = el.getBoundingClientRect()
+    el.style.width = `${rect.width}px`
+    el.style.height = `${rect.height}px`
     el.style.display = 'inline-block'
+    el.style.overflow = 'hidden'
 
     let frame = 0
     const totalFrames = text.length * 2 + 4
@@ -42,7 +48,9 @@ export function useTextScramble() {
       if (frame >= totalFrames) {
         el.textContent = text
         el.style.width = ''
+        el.style.height = ''
         el.style.display = ''
+        el.style.overflow = ''
         clearInterval(timer)
         timers.delete(el)
       }
