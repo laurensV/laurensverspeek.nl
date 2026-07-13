@@ -68,6 +68,13 @@ onUnmounted(() => clearTimeout(unlockTimer))
   justify-content: center;
   background: hsla(var(--lv-scheme-hs), 3%, 0.82);
   backdrop-filter: blur(14px);
+
+  // on touch the on-screen keyboard covers a vertically-centred input, so sit
+  // the box up in the top third where it stays visible while typing
+  @media (pointer: coarse) {
+    align-items: flex-start;
+    padding-top: 14vh;
+  }
 }
 
 .lock-box {
