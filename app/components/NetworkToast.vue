@@ -33,15 +33,15 @@ onUnmounted(() => clearTimeout(hideTimer))
   transform: translateX(-50%);
   z-index: 60;
   padding: 0.45rem 0.9rem;
-  border: 1px solid hsla(45deg, 90%, 60%, 0.5);
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.5);
   border-radius: var(--bulma-radius);
   background-color: hsla(var(--lv-scheme-hs), 8%, 0.97);
-  color: hsl(45deg, 90%, 70%);
+  color: hsl(var(--lv-primary-hsl));
   font-size: 0.72rem;
 
   &.is-back {
-    border-color: hsla(140deg, 60%, 50%, 0.5);
-    color: hsl(140deg, 55%, 60%);
+    border-color: hsla(var(--bulma-success-h), var(--bulma-success-s), var(--bulma-success-l), 0.5);
+    color: var(--bulma-success);
   }
 }
 
