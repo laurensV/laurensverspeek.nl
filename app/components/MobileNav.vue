@@ -66,6 +66,16 @@ useEventListener(import.meta.client ? window : null, 'scroll', () => {
   &.is-hidden-away {
     transform: translateY(calc(100% + 1.65rem));
   }
+
+  // the status bar strip below grows on touch, so sit above its taller height
+  // (declared after the base rule so it wins on coarse pointers)
+  @media (pointer: coarse) {
+    bottom: 2.5rem;
+
+    &.is-hidden-away {
+      transform: translateY(calc(100% + 2.5rem));
+    }
+  }
 }
 
 .mobile-nav-item {

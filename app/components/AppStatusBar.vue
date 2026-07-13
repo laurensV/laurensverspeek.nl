@@ -121,6 +121,13 @@ const {
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--bulma-border-weak);
   color: var(--bulma-text-weak);
+
+  // a 26px bar leaves the theme toggle / presence / version controls too small to
+  // tap — grow the bar (and so its full-height items) on touch pointers
+  @media (pointer: coarse) {
+    height: 2.5rem;
+    font-size: 0.8rem;
+  }
 }
 
 .status-group {
@@ -137,6 +144,11 @@ const {
   padding: 0 0.55rem;
   color: inherit;
   white-space: nowrap;
+
+  // wider hit area to go with the taller bar on touch
+  @media (pointer: coarse) {
+    padding: 0 0.85rem;
+  }
 }
 
 // live visitor badge: dim while cursors are hidden, accent while shown
