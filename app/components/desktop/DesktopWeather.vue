@@ -41,6 +41,11 @@ interface Forecast {
   daily: { time: string[], weather_code: number[], temperature_2m_max: number[], temperature_2m_min: number[] }
 }
 
+// the tray chip's shared current-reading state: after our own (fresher, fuller)
+// fetch lands we push the temp+code back into it, so the tray and the app never
+// show two different temperatures for the same city
+const chip = useWeatherChip()
+
 const pending = ref(true)
 const error = ref(false)
 const now = ref<{ temp: number, code: number, wind: number, humidity: number } | null>(null)
@@ -69,6 +74,8 @@ const load = async () => {
       wind: Math.round(data.current.wind_speed_10m),
       humidity: Math.round(data.current.relative_humidity_2m)
     }
+    // keep the tray chip in sync with this fresher reading
+    chip.setCurrent(now.value.temp, now.value.code)
     days.value = data.daily.time.map((date, i) => ({
       date,
       name: dayName(date, i),

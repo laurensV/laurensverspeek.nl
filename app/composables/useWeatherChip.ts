@@ -21,5 +21,13 @@ export function useWeatherChip() {
 
   const glyph = computed(() => weatherGlyph(code.value))
 
-  return { temp, glyph }
+  // the full weather app fetches a fresher current reading than the tray's
+  // once-on-mount snapshot; letting it push that back keeps the tray chip and
+  // the app from showing two different temperatures for the same city
+  const setCurrent = (t: number, c: number) => {
+    temp.value = t
+    code.value = c
+  }
+
+  return { temp, glyph, setCurrent }
 }
