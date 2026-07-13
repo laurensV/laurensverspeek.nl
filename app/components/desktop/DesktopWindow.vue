@@ -299,12 +299,6 @@ onUnmounted(() => clearTimeout(pressTimer))
   // corners sit above the edges
   &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 14px; height: 14px; z-index: 4; }
 
-  // fingers need bigger targets than mouse pointers (WCAG 2.5.8)
-  @media (pointer: coarse) {
-    &.is-n, &.is-s { height: 20px; }
-    &.is-e, &.is-w { width: 20px; }
-    &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 28px; height: 28px; }
-  }
   &.is-ne { top: 0; right: 0; cursor: nesw-resize; }
   &.is-nw { top: 0; left: 0; cursor: nwse-resize; }
   &.is-sw { bottom: 0; left: 0; cursor: nesw-resize; }
@@ -326,6 +320,15 @@ onUnmounted(() => clearTimeout(pressTimer))
         hsla(var(--lv-primary-hsl), 0.5) 80% 85%,
         transparent 85%
       );
+  }
+
+  // fingers need bigger targets than mouse pointers (WCAG 2.5.8). This block
+  // comes AFTER .is-se so its width/height win — .is-se's own 1rem used to
+  // override the coarse 28px and leave the grip corner the smallest target
+  @media (pointer: coarse) {
+    &.is-n, &.is-s { height: 20px; }
+    &.is-e, &.is-w { width: 20px; }
+    &.is-ne, &.is-nw, &.is-se, &.is-sw { width: 28px; height: 28px; }
   }
 }
 </style>
