@@ -85,6 +85,23 @@ Crucially, lvOS shares the site's state: the Files app, vim window and
 terminal edit the same virtual filesystem; the recycle bin catches `rm` from
 everywhere; the pet in the status bar is the pet on the desktop.
 
+## Realtime (the cursors relay, opt-in)
+
+Every multiplayer feature rides one optional Node websocket relay
+(`realtime/cursors-server.mjs`, enabled by `NUXT_PUBLIC_CURSORS_WS`). Each
+subsystem follows one pattern: a shared pure `*-core.mjs` (rules, palette,
+validation) imported by BOTH server and client so the server stays
+authoritative and the client only predicts; a typed wire contract in
+`realtime/protocol.d.ts`; and a client composable that leases the shared
+`utils/relaySocket.ts` connection with a refcount so the socket opens on the
+first consumer and closes when the last leaves. Ephemeral rooms (chat, the
+co-draw whiteboard) keep a short ring buffer in server memory and replay it to
+late joiners. Every subsystem degrades gracefully to solo/local when no relay
+is configured, and `scripts/relay-check.mjs` (`npm run test:relay`) boots a
+throwaway relay and asserts each protocol end-to-end. The co-draw whiteboard
+(`draw-core.mjs` + `useCoDraw` + `DesktopCoDraw.vue`) is the simplest current
+example of the whole pattern.
+
 ## Styling
 
 Bulma v1 via `@use "bulma/sass" with (…)` in `app/assets/scss/global.scss`.
