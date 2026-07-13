@@ -197,6 +197,13 @@ const copyFeed = () => copy(`${SITE_URL}/rss.xml`)
     border-color: hsla(var(--lv-primary-hsl), 0.7);
     background-color: hsla(var(--lv-primary-hsl), 0.12);
   }
+
+  // Bulma's is-small tag is only ~24px tall — grow it into a thumb target on touch
+  @media (pointer: coarse) {
+    height: auto;
+    min-height: 2.4rem;
+    padding: 0 0.8rem;
+  }
 }
 
 .blog-list {

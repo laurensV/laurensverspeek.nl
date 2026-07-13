@@ -141,6 +141,11 @@ const visibleProjects = computed(() =>
     cursor: pointer;
     transition: color 0.2s ease;
 
+    // taller vertical tap area on touch (the ~24px text buttons are fiddly)
+    @media (pointer: coarse) {
+      padding: 0.55rem 0.3rem;
+    }
+
     .flag-count {
       color: var(--bulma-text-weak);
       opacity: 0.6;

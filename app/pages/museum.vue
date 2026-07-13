@@ -90,6 +90,11 @@ useSeoMeta({
   &:hover {
     color: var(--bulma-primary-on-scheme);
   }
+
+  // bigger tap area on touch
+  @media (pointer: coarse) {
+    padding: 0.6rem 0.5rem;
+  }
 }
 
 .museum-plaque {
