@@ -101,6 +101,11 @@ const cooldowns = gate(COOLDOWN_MS)
 // already throttles to ~90ms); chat is slower.
 const moveGate = gate(45)
 const chatGate = gate(400)
+// room joins (chat/draw/world) re-send the full room state to the requester
+// AND broadcast a member count to everyone — so a scripted re-join is a
+// fan-out amplifier. A brand-new connection's first join always passes (no
+// prior entry); only rapid re-joins on the same connection are dropped.
+const joinGate = gate(500)
 /** placements in the trailing 10 minutes, for the activity counter */
 /** @type {number[]} */
 let activity = []
@@ -237,6 +242,7 @@ wss.on('connection', (socket) => {
     if (race.handle(socket, msg, id)) return
     // ---- chat-room protocol (ephemeral, server-sanitized) ----
     if (msg.type === 'chat-join') {
+      if (joinGate.check(id, Date.now()) > 0) return // drop rapid re-joins
       chatMembers.add(socket)
       socket.send(wire({ type: 'chat-state', messages: chatLog, online: chatMembers.size }))
       broadcastChatCount()
@@ -259,6 +265,7 @@ wss.on('connection', (socket) => {
     }
     // ---- co-draw whiteboard protocol (ephemeral, server-sanitized) ----
     if (msg.type === 'draw-join') {
+      if (joinGate.check(id, Date.now()) > 0) return // drop rapid re-joins
       drawMembers.add(socket)
       socket.send(wire({ type: 'draw-state', strokes: drawLog, online: drawMembers.size }))
       broadcastDrawCount()
@@ -301,6 +308,7 @@ wss.on('connection', (socket) => {
     }
     // ---- pixel world protocol (server-authoritative) ----
     if (msg.type === 'world-join') {
+      if (joinGate.check(id, Date.now()) > 0) return // drop rapid re-joins
       worldMembers.add(socket)
       socket.send(wire({
         type: 'world-state',
