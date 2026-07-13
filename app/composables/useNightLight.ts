@@ -18,8 +18,13 @@ export function useNightLight() {
   })
   persistState(warmth, WARMTH_KEY, {
     restore: () => {
-      const saved = Number(storageGet(WARMTH_KEY))
-      if (saved >= 0 && saved <= 100) warmth.value = saved
+      // only override the default when a value was actually stored — otherwise
+      // Number(null)===0 passes the range check and silently zeroes the default
+      // 45, so a first-time visitor's night light produced no tint at all
+      const raw = storageGet(WARMTH_KEY)
+      if (raw === null) return
+      const saved = Number(raw)
+      if (Number.isFinite(saved) && saved >= 0 && saved <= 100) warmth.value = saved
     },
     persist: (value) => storageSet(WARMTH_KEY, String(value))
   })
