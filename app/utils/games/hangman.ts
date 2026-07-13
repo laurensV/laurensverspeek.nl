@@ -56,6 +56,7 @@ export function createHangmanGame({ onFrame, onEnd }: GameCallbacks): GameHandle
   render()
 
   return {
+    acceptsText: true,
     onKey(key) {
       const lower = key.toLowerCase()
       if (isQuitKey(key)) {

@@ -61,6 +61,7 @@ export function createAdventureGame({ onFrame, onEnd }: GameCallbacks): GameHand
   const finish = (lines: string[]) => onEnd(lines)
 
   return {
+    acceptsText: true,
     onKey: (key: string) => {
       if (key === 'Escape') {
         storageSetJson(SAVE_KEY, state)

@@ -11,6 +11,20 @@
         <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
       </template>
       <pre v-if="activeGame && active" class="terminal-line game-frame" aria-hidden="true">{{ gameFrame }}</pre>
+      <!-- invisible field: raises the soft keyboard so letter-driven games are
+           playable on touch; its characters route into the game via onGameText -->
+      <input
+        v-if="gameWantsText && active"
+        ref="gameCaptureRef"
+        class="terminal-game-capture"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        aria-label="Game text input"
+        @input="onGameText"
+      >
       <pre v-if="spinnerLabel && !activeGame && active" class="terminal-line is-muted terminal-spinner" aria-hidden="true">{{ spinnerFrame }} {{ spinnerLabel }}</pre>
     </div>
 
@@ -104,8 +118,26 @@ const inputRef = ref<HTMLInputElement>()
 const outputRef = ref<HTMLElement>()
 const historyIndex = ref(-1)
 
+// a focused (but invisible) text field raises the soft keyboard for letter-
+// driven games (adventure/hangman/wpm) on touch — mobile keyboards don't fire
+// reliable keydowns for letters, so its characters route into onKey instead
+const gameCaptureRef = ref<HTMLInputElement>()
+const isCoarse = ref(false)
+const gameWantsText = computed(() => isCoarse.value && !!activeGame.value?.acceptsText)
+
 const focusInput = () => {
-  if (props.active) inputRef.value?.focus()
+  if (!props.active) return
+  if (gameWantsText.value) gameCaptureRef.value?.focus()
+  else inputRef.value?.focus()
+}
+
+// forward each typed character into the game, then clear so the field never
+// accumulates (the game frame is the only echo); Enter/Backspace still arrive
+// through the keydown listener, which fires reliably on mobile for those
+const onGameText = (event: Event) => {
+  const el = event.target as HTMLInputElement
+  for (const ch of el.value) activeGame.value?.onKey(ch)
+  el.value = ''
 }
 
 const submit = () => {
@@ -178,6 +210,10 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   if (activeGame.value) {
     if (event.metaKey || event.altKey) return
+    // on touch, a text game's printable characters come through the capture
+    // field's input event instead (mobile keydowns are unreliable for letters),
+    // so skip them here to avoid double-forwarding
+    if (gameWantsText.value && event.key.length === 1 && !event.ctrlKey) return
     // ctrl combos reach games as 'ctrl+x' etc. (the editors use them);
     // unconsumed keys keep their browser default, as before
     const key = event.ctrlKey ? `ctrl+${event.key.toLowerCase()}` : event.key
@@ -207,12 +243,12 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   onSearchKey(event, submit)
 })
 
-// refocus the input when a game ends
-watch(activeGame, async (game) => {
-  if (!game && props.active) {
-    await nextTick()
-    focusInput()
-  }
+// refocus when a game ends — and, for a text game, focus the capture field so
+// the soft keyboard opens right away on touch
+watch(activeGame, async () => {
+  if (!props.active) return
+  await nextTick()
+  focusInput()
 })
 
 watch(
@@ -234,6 +270,7 @@ watch([() => paneLines.value.length, () => gameFrame.value !== ''], async () => 
 
 // a console opening onto an existing transcript starts at the bottom too
 onMounted(() => {
+  isCoarse.value = window.matchMedia('(pointer: coarse)').matches
   outputRef.value?.scrollTo({ top: outputRef.value.scrollHeight })
 })
 
@@ -350,6 +387,24 @@ defineExpose({ focusInput })
   @media (pointer: coarse) {
     font-size: max(16px, calc(0.9rem * var(--term-font-scale, 1)));
   }
+}
+
+// invisible keyboard-capture field for letter-driven games on touch: tapping
+// the console focuses it (see the wrapper's @click) which raises the soft
+// keyboard; 16px dodges iOS zoom, transparent text keeps the game frame the
+// only visible echo
+.terminal-game-capture {
+  display: block;
+  width: 100%;
+  height: 2rem;
+  margin-top: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: transparent;
+  font-size: 16px;
+  caret-color: transparent;
+  opacity: 0;
 }
 
 // the quick-key row only exists for fingers

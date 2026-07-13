@@ -80,6 +80,7 @@ export function createWpmGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
   render()
 
   return {
+    acceptsText: true,
     onKey(key) {
       if (key === 'Escape') {
         ticker.stop()
