@@ -152,7 +152,7 @@ test('cal prints the current month, which resolves builtins, uname reports the s
   await openTerminal(page)
   await run(page, 'cal')
   const out = page.locator('.terminal-output')
-  await expect(out).toContainText('Su Mo Tu We Th Fr Sa')
+  await expect(out).toContainText('Mo Tu We Th Fr Sa Su')
   await run(page, 'which help')
   await expect(out).toContainText('help: lvsh builtin')
   await run(page, 'which nope-not-real')

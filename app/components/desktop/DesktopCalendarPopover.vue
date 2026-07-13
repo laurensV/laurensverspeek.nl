@@ -16,22 +16,20 @@
 
 <script setup lang="ts">
 import { useNow } from '@vueuse/core'
+import { monthGrid } from '~/utils/terminal/calendar'
 
-// The taskbar clock's calendar popover.
+// The taskbar clock's calendar popover. Its month geometry (Monday-first
+// leading blanks, days-in-month) comes from the shared monthGrid() core the
+// terminal `cal` command also builds from, so the two never disagree.
 
 const now = useNow({ interval: 1000 })
 const today = computed(() => now.value.getDate())
 const monthLabel = computed(() =>
   now.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 )
-const daysInMonth = computed(() =>
-  new Date(now.value.getFullYear(), now.value.getMonth() + 1, 0).getDate()
-)
-// blank cells before day 1, with Monday as the first column
-const leadingBlanks = computed(() => {
-  const firstDay = new Date(now.value.getFullYear(), now.value.getMonth(), 1).getDay()
-  return (firstDay + 6) % 7
-})
+const grid = computed(() => monthGrid(now.value))
+const daysInMonth = computed(() => grid.value.daysInMonth)
+const leadingBlanks = computed(() => grid.value.leadingBlanks)
 </script>
 
 <style scoped lang="scss">
