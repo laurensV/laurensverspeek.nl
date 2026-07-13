@@ -183,7 +183,9 @@ test('the task manager kills a terminal effect and the running game', async ({ p
   await expect(page.locator('html')).toHaveClass(/crt-mode/)
   await page.fill('#desktop-terminal-input', 'snake')
   await page.keyboard.press('Enter')
-  await expect(page.locator('.game-frame')).toBeVisible()
+  // the game engine is a lazily-imported chunk; under full-suite load its first
+  // frame can take a beat longer than the default 5s assertion timeout
+  await expect(page.locator('.game-frame')).toBeVisible({ timeout: 10_000 })
   // task manager sees both, with the same names ps uses
   await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
   await page.locator('.lvos-icon', { hasText: /^taskmgr$/ }).click()
