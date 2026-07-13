@@ -32,6 +32,9 @@ export const STATE_KEYS = {
   petState: 'pet-state',
   petNow: 'pet-now',
   petWallet: 'pet-wallet',
+  // accessibility
+  reduceMotion: 'reduce-motion',
+
   // identity, theme, palette
   identityName: 'identity-name',
   accent: 'accent',

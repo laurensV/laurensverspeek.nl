@@ -19,4 +19,8 @@ useHead({
     href: computed(() => `${SITE_URL}${route.path.replace(/\/+$/, '') || '/'}`)
   }]
 })
+
+// apply the manual "reduce motion" preference across every route (default and
+// lvOS desktop layouts alike)
+useReduceMotion()
 </script>

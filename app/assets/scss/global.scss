@@ -205,6 +205,22 @@ kbd {
   }
 }
 
+// Manual "reduce motion" switch (Settings → useReduceMotion): flatten every
+// animation and transition site-wide when the visitor asks for it, regardless of
+// their OS setting. Same shape as the well-known prefers-reduced-motion reset.
+:root[data-reduce-motion] {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 // One shimmer for every loading skeleton on the site. Bulma's .is-skeleton
 // gives a flat block; this sweeps a soft highlight across it so all the
 // placeholders (blog list, github stats, …) breathe the same way.

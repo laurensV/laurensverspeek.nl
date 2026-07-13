@@ -128,6 +128,16 @@
     </div>
     <p class="settings-note">// the one volume — tray, media app and the terminal's `volume` all share it</p>
 
+    <p class="settings-section mt-4"># accessibility</p>
+    <div class="settings-row">
+      <span class="settings-label">reduce motion</span>
+      <div class="settings-options">
+        <button :class="{ 'is-active': reduceMotion.enabled.value }" @click="reduceMotion.enabled.value = true">[on]</button>
+        <button :class="{ 'is-active': !reduceMotion.enabled.value }" @click="reduceMotion.enabled.value = false">[off]</button>
+      </div>
+    </div>
+    <p class="settings-note">// flattens every animation and transition, whatever your system setting says</p>
+
     <p class="settings-section mt-4"># system</p>
     <p class="settings-note">
       lvOS 2.0 · kernel nuxt 4 · {{ windowCount }} window(s) open<br>
@@ -173,6 +183,7 @@ const { wallpapers, wallpaper: wallpaperIndex } = useWallpaper()
 const { saver, saverIds, saverNames } = useScreensaverChoice()
 const nightLight = useNightLight()
 const sound = useVolume()
+const reduceMotion = useReduceMotion()
 
 const { name, setName } = useIdentity()
 const nameInput = ref(name.value)
