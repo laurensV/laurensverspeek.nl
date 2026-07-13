@@ -255,7 +255,11 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
       description: 'Your webcam, rendered in ASCII (asks permission)',
       exec: () => {
         muted('asciicam: requesting camera... (press q to stop)')
-        return startAsciiCam(ctx)
+        // don't return the promise: getUserMedia blocks on a non-modal permission
+        // prompt, and awaiting it here would wedge the serialized run queue (every
+        // later command would sit behind the pending prompt). it drives its own
+        // game takeover and reports its own errors, so fire it and move on.
+        void startAsciiCam(ctx)
       }
     }
   }

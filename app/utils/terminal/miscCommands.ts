@@ -24,7 +24,9 @@ const dequote = (s: string) =>
 // fetched once and shared by every terminal instance
 let gitHistory: GitCommit[] | null = null
 const loadGitHistory = async (): Promise<GitCommit[]> => {
-  if (!gitHistory) gitHistory = await $fetch<GitCommit[]>('/git-log.json')
+  // timeout so a stalled (never-rejecting) request can't wedge the serialized run
+  // queue, matching every other terminal $fetch (stats/github/weather/curl)
+  if (!gitHistory) gitHistory = await $fetch<GitCommit[]>('/git-log.json', { timeout: 10_000 })
   return gitHistory
 }
 
