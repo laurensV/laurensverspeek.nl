@@ -184,6 +184,14 @@ onUnmounted(() => clearInterval(clock))
     letter-spacing: 0;
     font-size: 0.85rem;
     border-radius: 2px;
+
+    // the code is a fixed character grid, so on a 320px phone its right edge was
+    // clipped ~12px past the viewport — cutting scannable modules. Shrink it (and
+    // trim the quiet-zone padding) so the whole square fits and still scans.
+    @media (max-width: 25rem) {
+      padding: 0.5rem;
+      font-size: 0.66rem;
+    }
   }
 }
 </style>
