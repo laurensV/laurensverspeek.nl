@@ -27,6 +27,7 @@ export const STATE_KEYS = {
   fxBoss: 'fx-boss',
   fxFireworks: 'fx-fireworks',
   fxCelebrate: 'fx-celebrate',
+  fxWorldRecord: 'fx-world-record',
   bootReplay: 'boot-replay',
   // the status-bar pet
   petState: 'pet-state',

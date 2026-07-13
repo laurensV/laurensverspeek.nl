@@ -28,6 +28,7 @@
     <LazyDomDestroyer v-if="destructActive" />
     <LazyFireworksShow v-if="fireworksActive" />
     <LazyScoreCelebration v-if="celebrateActive" />
+    <LazyWorldRecordToast v-if="worldRecord" />
     <SlTrain />
     <PartyMode />
     <BossScreen />
@@ -76,7 +77,7 @@ onMounted(() => {
 
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the
 // terminal, so gate it behind its flag to keep it out of the initial bundle.
-const { matrixActive, destructActive, fireworksActive, celebrateActive } = useSiteEffects()
+const { matrixActive, destructActive, fireworksActive, celebrateActive, worldRecord } = useSiteEffects()
 
 // j/k · gg/G scrolling everywhere except lvOS, which has its own keyboard world
 useVimScroll()

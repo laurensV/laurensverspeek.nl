@@ -26,6 +26,8 @@ export function useLeaderboard() {
   const wsUrl = useRuntimeConfig().public.cursorsWs
   const enabled = computed(() => !!wsUrl)
   const { name } = useIdentity()
+  // beating the global #1 gets its own celebration on top of the personal best
+  const { celebrateActive, worldRecord } = useSiteEffects()
 
   conn ??= wsUrl && import.meta.client
     ? createRelayConnection(wsUrl, {
@@ -49,7 +51,16 @@ export function useLeaderboard() {
 
   const submit = (game: string, score: number) => {
     if (GAMES.includes(game) && score > 0) {
+      // the board is sorted best-first, so [0] is the reigning global top known
+      // to this client — captured BEFORE our submission updates it
+      const worldBest = boards.value[game]?.[0]?.score ?? 0
       conn?.send({ type: 'score-submit', game, score, name: name.value } satisfies ScoreSubmitIn)
+      // only the player who beat a real existing #1 celebrates (never a first-ever
+      // score against an empty board, and only when actually connected)
+      if (connected.value && worldBest > 0 && score > worldBest) {
+        worldRecord.value = game
+        celebrateActive.value = true
+      }
     }
   }
 

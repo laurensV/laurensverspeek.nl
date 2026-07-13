@@ -6,6 +6,9 @@ export function useSiteEffects() {
   const fireworksActive = useState(STATE_KEYS.fxFireworks, () => false)
   // a brief confetti burst when a game beats a personal best
   const celebrateActive = useState(STATE_KEYS.fxCelebrate, () => false)
+  // the game name when you beat the GLOBAL leaderboard #1 — a bigger burst + a
+  // "new world record" banner ride on this; '' when there's nothing to crow about
+  const worldRecord = useState(STATE_KEYS.fxWorldRecord, () => '')
 
   const toggleCrt = (on?: boolean) => {
     crtActive.value = on ?? !crtActive.value
@@ -15,5 +18,5 @@ export function useSiteEffects() {
     return crtActive.value
   }
 
-  return { matrixActive, crtActive, destructActive, fireworksActive, celebrateActive, toggleCrt }
+  return { matrixActive, crtActive, destructActive, fireworksActive, celebrateActive, worldRecord, toggleCrt }
 }

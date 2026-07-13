@@ -6,7 +6,7 @@
 // A brief confetti burst when a game beats a personal best. Flipped on by the
 // game-kit celebrate-sink (see plugins/celebration.client.ts); clears the flag
 // itself when the animation finishes. Reduced motion gets a single still frame.
-const { celebrateActive } = useSiteEffects()
+const { celebrateActive, worldRecord } = useSiteEffects()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 interface Bit { x: number, y: number, vx: number, vy: number, size: number, color: string, spin: number, rot: number }
@@ -14,16 +14,18 @@ interface Bit { x: number, y: number, vx: number, vy: number, size: number, colo
 const COLORS = ['#ffba00', '#ff5d73', '#41d6a0', '#4aa8ff', '#c56bff', '#ffffff']
 
 let raf = 0
+// beating the global #1 (see useLeaderboard) gets a bigger, longer burst
+const big = () => !!worldRecord.value
 
 const done = () => {
   cancelAnimationFrame(raf)
   celebrateActive.value = false
 }
 
-const spawn = (w: number, h: number): Bit[] =>
+const spawn = (w: number, h: number, count: number): Bit[] =>
   // biased vary-by-index so nothing here needs Math.random-per-frame determinism
-  Array.from({ length: 90 }, (_, i) => {
-    const angle = (i / 90) * Math.PI * 2
+  Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * Math.PI * 2
     const speed = 4 + (i % 7)
     return {
       x: w / 2,
@@ -50,7 +52,9 @@ const run = () => {
   ctx.scale(dpr, dpr)
 
   const reduced = prefersReducedMotion()
-  const bits = spawn(w, h)
+  const bigBurst = big()
+  const bits = spawn(w, h, bigBurst ? 200 : 90)
+  const lifetime = bigBurst ? 120 : 80
 
   if (reduced) {
     // one still frame near the burst origin, then out
@@ -75,12 +79,12 @@ const run = () => {
       ctx.save()
       ctx.translate(b.x, b.y)
       ctx.rotate(b.rot)
-      ctx.globalAlpha = Math.max(0, 1 - frame / 80)
+      ctx.globalAlpha = Math.max(0, 1 - frame / lifetime)
       ctx.fillStyle = b.color
       ctx.fillRect(-b.size / 2, -b.size / 2, b.size, b.size)
       ctx.restore()
     }
-    if (frame < 80) raf = requestAnimationFrame(tick)
+    if (frame < lifetime) raf = requestAnimationFrame(tick)
     else done()
   }
   raf = requestAnimationFrame(tick)
