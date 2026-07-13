@@ -23,6 +23,21 @@ import { initialState as chessInitial, legalMoves as chessLegalMoves, applyMove 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
 
+// Every per-connection CooldownGate is created through gate() so it registers
+// itself here; forgetConnection(id) then clears that id from ALL of them on
+// close. Without this a newly-added gate is easy to forget in the close handler,
+// and its per-id map leaks one entry per connection for the relay's whole uptime
+// (exactly the bug drawGate hit). Register once, never forget.
+const allGates = /** @type {import('./world-core.mjs').CooldownGate[]} */ ([])
+const gate = (/** @type {number} */ ms) => {
+  const g = new CooldownGate(ms)
+  allGates.push(g)
+  return g
+}
+const forgetConnection = (/** @type {number} */ id) => {
+  for (const g of allGates) g.last.delete(id)
+}
+
 // ---- the game leaderboard: top scores per game, persisted ----
 const SCORES_FILE = process.env.SCORES_FILE
   ?? fileURLToPath(new URL('./scores.json', import.meta.url))
@@ -44,7 +59,7 @@ const scheduleScoresSave = () => {
   }, 2000)
 }
 // submissions are rate-limited per connection
-const scoreGate = new CooldownGate(1500)
+const scoreGate = gate(1500)
 
 // ---- the pixel world: one persistent board, server-authoritative ----
 const WORLD_FILE = process.env.WORLD_FILE
@@ -82,12 +97,12 @@ const scheduleSave = () => {
   }, 2000)
 }
 
-const cooldowns = new CooldownGate(COOLDOWN_MS)
+const cooldowns = gate(COOLDOWN_MS)
 // broadcasts (chat + cursor moves) are throttled per connection too, so a
 // scripted client can't flood the fan-out. Moves are lenient (the client
 // already throttles to ~90ms); chat is slower.
-const moveGate = new CooldownGate(45)
-const chatGate = new CooldownGate(400)
+const moveGate = gate(45)
+const chatGate = gate(400)
 /** placements in the trailing 10 minutes, for the activity counter */
 /** @type {number[]} */
 let activity = []
@@ -127,7 +142,7 @@ let pongWaiting = null
 /** @type {Map<import('ws').WebSocket, PongMatch>} */
 const pongMatches = new Map()
 // paddle updates are frequent but tiny; a lenient per-connection gate stops floods
-const pongMoveGate = new CooldownGate(20)
+const pongMoveGate = gate(20)
 
 /** @param {import('ws').WebSocket} socket @param {string} payload */
 const sendTo = (socket, payload) => {
@@ -189,7 +204,7 @@ const CHAT_LOG_MAX = 50
 let chatLog = []
 /** @type {Set<import('ws').WebSocket>} */
 const chatMembers = new Set()
-const chatSendGate = new CooldownGate(1200)
+const chatSendGate = gate(1200)
 const broadcastChat = (/** @type {string} */ payload) => {
   for (const member of chatMembers) {
     if (member.readyState === 1) member.send(payload)
@@ -207,7 +222,7 @@ let drawLog = []
 const drawMembers = new Set()
 // drawing fires many segments a second; a light gate blunts scripted floods
 // without dropping a normal drag (~60/s)
-const drawGate = new CooldownGate(8)
+const drawGate = gate(8)
 /** @param {string} payload @param {import('ws').WebSocket} [except] */
 const broadcastDraw = (payload, except) => {
   for (const member of drawMembers) {
@@ -230,7 +245,7 @@ let chessWaiting = null
 /** @type {Map<import('ws').WebSocket, ChessMatch>} */
 const chessMatches = new Map()
 // chess is turn-based; the gate just blunts scripted floods
-const chessMoveGate = new CooldownGate(250)
+const chessMoveGate = gate(250)
 
 /** @param {ChessMatch} match @param {'w' | 'b' | null} winner @param {'checkmate' | 'stalemate' | 'forfeit'} reason */
 const endChessMatch = (match, winner, reason) => {
@@ -274,7 +289,7 @@ let raceWaiting = null
 /** @type {Map<import('ws').WebSocket, RaceMatch>} */
 const raceMatches = new Map()
 // progress reports arrive per keystroke burst; a lenient gate blunts floods
-const raceProgressGate = new CooldownGate(60)
+const raceProgressGate = gate(60)
 // the countdown is env-overridable so the relay test doesn't sit out 3s
 const raceCountdownMs = Number(process.env.RACE_COUNTDOWN_MS || RACE_COUNTDOWN_MS)
 // minimum plausible ms per finished character — a full passage that "arrives"
@@ -615,17 +630,10 @@ wss.on('connection', (socket) => {
     if (chatMembers.delete(socket)) broadcastChatCount()
     if (drawMembers.delete(socket)) broadcastDrawCount()
     if (worldMembers.delete(socket)) broadcastWorldCount()
-    // drop this connection's cooldown state, or the maps grow for the relay's
-    // whole uptime (one entry per id that ever placed/moved/chatted)
-    cooldowns.last.delete(id)
-    moveGate.last.delete(id)
-    chatGate.last.delete(id)
-    scoreGate.last.delete(id)
-    pongMoveGate.last.delete(id)
-    chessMoveGate.last.delete(id)
-    chatSendGate.last.delete(id)
-    raceProgressGate.last.delete(id)
-    drawGate.last.delete(id)
+    // drop this connection's cooldown state from every registered gate, or the
+    // maps grow for the relay's whole uptime (one entry per id that ever
+    // placed/moved/chatted/drew) — the registry means no gate can be forgotten
+    forgetConnection(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
