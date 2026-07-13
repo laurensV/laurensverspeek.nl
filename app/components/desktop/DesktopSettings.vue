@@ -243,6 +243,8 @@ onUnmounted(() => clearTimeout(disarmTimer))
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // wrap the controls below the label on a narrow window instead of clipping
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 0.3rem 0;
 
@@ -275,6 +277,10 @@ onUnmounted(() => clearTimeout(disarmTimer))
 
 .settings-options {
   display: flex;
+  // let the option buttons (e.g. the three screensaver names) wrap to a second
+  // line on a narrow window rather than clipping the last one off the edge
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.35rem;
 
   button {
