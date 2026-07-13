@@ -339,6 +339,15 @@ onUnmounted(() => clearTimeout(filePressTimer))
     line-height: 1;
     cursor: pointer;
     opacity: 0.35;
+
+    // touch has no hover to reveal it, so on coarse pointers it stays visible
+    // and gets a real ~40px-tall tap area
+    @media (pointer: coarse) {
+      min-width: 2.4rem;
+      min-height: 2.4rem;
+      font-size: 1.1rem;
+      opacity: 0.6;
+    }
   }
 
   &:hover .files-delete,
