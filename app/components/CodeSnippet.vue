@@ -54,6 +54,13 @@ defineProps<{ title: string, code: string }>()
   line-height: 1.7;
   overflow-x: auto;
 
+  // on a tablet/narrow layout the card is too tight to scroll comfortably and the
+  // `pre`'s long lines clip mid-word with no visible affordance — wrap them there
+  @media (max-width: 900px) {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   :deep(.tok-kw) {
     color: var(--bulma-danger);
   }
