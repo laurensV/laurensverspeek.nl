@@ -667,6 +667,18 @@ useDesktopShortcuts({
   flex-direction: column;
   gap: 0.5rem;
   max-width: 18rem;
+
+  // on a phone the front app is maximized, so a bottom-anchored toast lands
+  // squarely on its bottom control strip (Chat's compose field, the whiteboard
+  // tools, Gallery's 'set as wallpaper'). Move to the top, over the titlebar
+  // drag-area which has no inputs to cover.
+  @media (pointer: coarse) {
+    top: 0.75rem;
+    bottom: auto;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+  }
 }
 
 .lvos-toast {
