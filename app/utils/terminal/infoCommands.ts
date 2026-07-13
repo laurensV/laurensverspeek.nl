@@ -1,6 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { renderCalendar } from '~/utils/terminal/calendar'
 import { collectStorageSlices, dfLines, duLines } from '~/utils/terminal/storageUsage'
+import { browserName } from '~/utils/browserName'
 import { profile } from '~/data/profile'
 import { batteryGauge } from '~/composables/useBattery'
 
@@ -96,11 +97,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       category: 'system',
       description: 'A neofetch for your browser session',
       exec: () => {
-        const ua = navigator.userAgent
-        const browser = /Firefox\//.test(ua) ? 'Firefox'
-          : /Edg\//.test(ua) ? 'Edge'
-            : /Chrome\//.test(ua) ? 'Chrome'
-              : /Safari\//.test(ua) ? 'Safari' : 'a browser'
+        const browser = browserName(navigator.userAgent)
         const storageKb = (collectStorageSlices().reduce((sum, slice) => sum + slice.bytes, 0) / 1024).toFixed(1)
         const uptime = Math.round(performance.now() / 1000)
         const rows: [string, string][] = [

@@ -34,15 +34,6 @@ const uptime = computed(() => {
   return minutes ? `${minutes}m ${seconds}s` : `${seconds}s`
 })
 
-const browserName = (ua: string) => {
-  if (ua.includes('Firefox/')) return 'firefox'
-  if (ua.includes('Edg/')) return 'edge'
-  if (ua.includes('OPR/')) return 'opera'
-  if (ua.includes('Chrome/')) return 'chromium-ish'
-  if (ua.includes('Safari/')) return 'safari'
-  return 'something exotic'
-}
-
 const specs = computed(() => {
   // `now` keeps this fresh if storage changes while the window sits open
   void now.value
