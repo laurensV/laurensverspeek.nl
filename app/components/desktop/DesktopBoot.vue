@@ -108,6 +108,9 @@ onUnmounted(() => clearTimeout(timer))
   color: var(--bulma-primary);
   font-size: 0.85rem;
   line-height: 1.2;
+  // Bulma's base <pre> is overflow-x:auto, which shows a small scrollbar under
+  // the fixed-width ASCII logo on a narrow window; the boot screen clips anyway
+  overflow: hidden;
 }
 
 .boot-line {
