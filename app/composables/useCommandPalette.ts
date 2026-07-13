@@ -1,6 +1,7 @@
 import type { IconName } from '~/utils/icons'
 import { projects } from '~/data/projects'
 import { profile } from '~/data/profile'
+import { uses } from '~/data/uses'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 
 export interface PaletteAction {
@@ -8,7 +9,7 @@ export interface PaletteAction {
   label: string
   hint?: string
   icon: IconName
-  section: 'Pages' | 'Projects' | 'Blog' | 'Theme' | 'Actions' | 'Socials'
+  section: 'Pages' | 'Projects' | 'Blog' | 'Uses' | 'Theme' | 'Actions' | 'Socials'
   keywords?: string
   perform: () => void
 }
@@ -129,6 +130,10 @@ export function useCommandPalette() {
     { id: 'changelog', label: 'Changelog', icon: 'code', section: 'Pages', keywords: 'git history commits updates', perform: () => go('/changelog') },
     { id: 'cv', label: 'CV / Resume', icon: 'file', section: 'Pages', keywords: 'resume curriculum print pdf', perform: () => go('/cv') },
     { id: 'contact', label: 'Contact', icon: 'mail', section: 'Pages', keywords: 'email reach', perform: () => go('/contact') },
+    { id: 'museum', label: 'Museum', icon: 'layers', section: 'Pages', keywords: 'exhibits features catalog easter eggs', perform: () => go('/museum') },
+    { id: 'keyboard', label: 'Keyboard shortcuts', icon: 'terminal', section: 'Pages', keywords: 'keys shortcuts reference vim chords', perform: () => go('/keyboard') },
+    { id: 'stats', label: 'Stats', icon: 'code', section: 'Pages', keywords: 'analytics counters visits traffic', perform: () => go('/stats') },
+    { id: 'status', label: 'Status', icon: 'monitor', section: 'Pages', keywords: 'relay health uptime services', perform: () => go('/status') },
     ...projects.map<PaletteAction>((project) => ({
       id: `project-${project.slug}`,
       label: project.title,
@@ -147,6 +152,26 @@ export function useCommandPalette() {
       keywords: `${post.tags?.join(' ') ?? ''} ${post.description}`,
       perform: () => go(post.path)
     })),
+    // every gear item from /uses, so searching a tool name finds it — external
+    // links open in a tab, the rest jump to the page
+    ...uses.flatMap<PaletteAction>((group) =>
+      group.items.map((item) => ({
+        id: `uses-${item.name}`,
+        label: item.name,
+        hint: 'uses',
+        icon: item.icon ?? 'cpu',
+        section: 'Uses',
+        keywords: `${group.group} ${item.note ?? ''} gear tools setup`,
+        perform: () => {
+          if (item.url) {
+            close()
+            window.open(item.url, '_blank', 'noopener')
+          } else {
+            go('/uses')
+          }
+        }
+      }))
+    ),
     ...accents.map<PaletteAction>((a) => ({
       id: `accent-${a.name}`,
       label: `Accent: ${a.name}`,
