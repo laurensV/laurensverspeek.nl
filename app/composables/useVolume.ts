@@ -14,7 +14,12 @@ export function useVolume() {
 
   persistState(volume, VOLUME_KEY, {
     restore: () => {
-      const saved = Number(storageGet(VOLUME_KEY))
+      // a missing key must NOT read as 0 — Number(null) === 0 is finite and in
+      // range, which would silently overwrite the default 70 and mute a fresh
+      // visitor (same trap the night-light warmth restore hit in an earlier round)
+      const raw = storageGet(VOLUME_KEY)
+      if (raw === null) return
+      const saved = Number(raw)
       if (Number.isFinite(saved) && saved >= 0 && saved <= 100) volume.value = saved
     },
     persist: (value) => storageSet(VOLUME_KEY, String(value))
