@@ -1,5 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { LVSH_PID, LVOS_SESSION_PID, killByPid } from '~/utils/terminal/effectProcs'
+import { DESKTOP_APPS, matchApp, appCandidates } from '~/utils/desktopApps'
+import { STATE_KEYS } from '~/utils/stateKeys'
 
 // Site-wide effects and easter eggs, plus the ps/kill process theater.
 
@@ -26,6 +28,9 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
     enteredWorld = true
     world.enter()
   }
+
+  // `desktop <app>` stashes an app id here; WebDesktop opens it once mounted
+  const pendingApp = useState<string>(STATE_KEYS.lvosPendingApp, () => '')
 
   const commands: Record<string, TerminalCommand> = {
     world: {
@@ -243,8 +248,24 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
       }
     },
     desktop: {
-      description: 'Boot the lvOS desktop environment',
-      exec: () => {
+      usage: 'desktop [app]',
+      description: 'Boot the lvOS desktop environment — optionally opening an app',
+      argCandidates: (partial) => appCandidates(partial),
+      exec: (args) => {
+        const query = args.join(' ').trim()
+        if (query) {
+          const app = matchApp(query)
+          if (!app) {
+            error(`desktop: no app named '${query}'`)
+            muted(`try: ${DESKTOP_APPS.filter((a) => a.id !== 'logout').map((a) => a.id).join(', ')}`)
+            return
+          }
+          // hand the id to WebDesktop, which opens it once lvOS has mounted
+          pendingApp.value = app.id
+          push('primary', `Booting lvOS 2.0 — opening ${app.label} ...`)
+          ctx.navigate('desktop')
+          return
+        }
         push('primary', 'Booting lvOS 2.0 ...')
         muted('Tip: the start menu logs you out again.')
         ctx.navigate('desktop')

@@ -497,12 +497,24 @@ const launchById = (id: string) => {
   if (app?.action && app.action !== 'window') iconActions[app.action]!()
   else openWindow(id)
 }
+// the terminal `desktop <app>` command stashes an app id here for us to open
+// on arrival (or immediately, if lvOS is already up and the terminal is on it)
+const pendingApp = useState<string>(STATE_KEYS.lvosPendingApp, () => '')
+const openPendingApp = () => {
+  if (!pendingApp.value) return
+  const id = pendingApp.value
+  pendingApp.value = ''
+  launchById(id)
+}
+watch(pendingApp, openPendingApp)
+
 // entering the /desktop page runs the BIOS/POST screen; a fresh session then
 // opens the readme, while a returning session restores its previous windows.
 onMounted(() => {
   const firstBoot = !windows.value.length
   booting.value = true
   if (firstBoot) openWindow('readme')
+  openPendingApp()
 })
 
 // the desktop keyboard (?, ~, alt+r, alt+tab, ctrl+alt+arrows, escape)

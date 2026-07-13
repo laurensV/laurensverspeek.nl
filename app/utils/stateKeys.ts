@@ -67,7 +67,9 @@ export const STATE_KEYS = {
   lvosWallpaperCustom: 'lvos-wallpaper-custom',
   lvosVolume: 'lvos-volume',
   lvosMuted: 'lvos-muted',
-  lvosSaver: 'lvos-saver'
+  lvosSaver: 'lvos-saver',
+  // an app id the terminal `desktop <app>` command wants opened once lvOS mounts
+  lvosPendingApp: 'lvos-pending-app'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]
