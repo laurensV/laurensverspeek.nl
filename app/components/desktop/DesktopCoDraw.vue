@@ -176,6 +176,7 @@ useResizeObserver(canvasRef, fit)
 
 .codraw-tools {
   display: flex;
+  flex-wrap: wrap; // on a narrow phone the pens + clear can't share one row
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
@@ -183,6 +184,7 @@ useResizeObserver(canvasRef, fit)
 
 .codraw-pens {
   display: flex;
+  flex-wrap: wrap; // 8 coarse-size pens overflow a 320px window on their own row
   gap: 0.35rem;
 }
 
