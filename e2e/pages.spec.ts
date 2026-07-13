@@ -338,7 +338,9 @@ test('contact page serves a vCard and shows a QR contact card', async ({ page, r
   await expect(box.locator('.vcard-download')).toHaveAttribute('href', '/contact.vcf')
   const qr = box.locator('.vcard-qr')
   await expect(qr).toBeVisible()
-  expect((await qr.textContent())!.length).toBeGreaterThan(100)
+  // the ascii QR is generated client-side (its generator is dynamically imported
+  // so it stays off the site-wide bundle), so poll until it has filled in
+  await expect.poll(async () => (await qr.textContent())!.length).toBeGreaterThan(100)
 })
 
 test('external prose links carry the arrow marker, internal ones do not', async ({ page }) => {

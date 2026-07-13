@@ -53,7 +53,6 @@
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
-import { qrAsciiLines } from '~/utils/qrAscii'
 import { pgp } from '~/data/pgp'
 
 useHead({ title: 'Contact — Laurens Verspeek' })
@@ -66,8 +65,14 @@ useSeoMeta({
   twitterImage: ogImage
 })
 
-// half-block ascii QR pointing at the prerendered vCard
-const qr = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
+// half-block ascii QR pointing at the prerendered vCard — built client-side from
+// a dynamically-imported generator so qrcode-generator (only ever needed on this
+// one page) stays out of the site-wide preload bundle
+const qr = ref('')
+onMounted(async () => {
+  const { qrAsciiLines } = await import('~/utils/qrAscii')
+  qr.value = qrAsciiLines(`https://${profile.domain}/contact.vcf`).join('\n')
+})
 
 // live clock in my timezone — client-only (starts as --:-- in the static
 // HTML), so the prerendered page never bakes in a stale time
