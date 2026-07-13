@@ -225,6 +225,9 @@ test('footer build stamp opens git show in the terminal', async ({ page }) => {
 test('vim go-to chords navigate: gb to blog, gh home', async ({ page }) => {
   await page.goto('/about')
   await page.locator('h1').waitFor()
+  // the clock only renders once the client-side status bar mounts — a reliable
+  // signal the layout has hydrated and useVimScroll's key listeners are live
+  await page.locator('.status-clock').waitFor()
   await page.keyboard.press('g')
   await page.keyboard.press('b')
   await expect(page).toHaveURL(/\/blog\/?$/)
@@ -234,6 +237,7 @@ test('vim go-to chords navigate: gb to blog, gh home', async ({ page }) => {
   // a stale g (chord window expired) must not navigate
   await page.goto('/about')
   await page.locator('h1').waitFor()
+  await page.locator('.status-clock').waitFor()
   await page.keyboard.press('g')
   await page.waitForTimeout(700)
   await page.keyboard.press('p')
@@ -259,6 +263,8 @@ test('deep links flash their target section', async ({ page }) => {
 test('a pending g chord shows in the status bar', async ({ page }) => {
   await page.goto('/about')
   await page.locator('h1').waitFor()
+  // wait for the client status bar (its clock) so the chord listeners are live
+  await page.locator('.status-clock').waitFor()
   // chord navigation first, with no assertion inside the 500ms chord window
   await page.keyboard.press('g')
   await page.keyboard.press('b')
