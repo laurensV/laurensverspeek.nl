@@ -455,6 +455,19 @@ defineExpose({ focusInput })
         background-color: hsla(var(--lv-primary-hsl), 0.25);
       }
     }
+
+    // on the narrowest phones the 7–8 keys overflow and the last ('esc') falls
+    // off-screen with no scroll cue — tighten so the whole row fits
+    @media (max-width: 360px) {
+      gap: 0.25rem;
+      padding-inline: 0.5rem;
+
+      button {
+        min-width: 0;
+        padding: 0.5rem 0.35rem;
+        font-size: 0.72rem;
+      }
+    }
   }
 }
 </style>
