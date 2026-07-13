@@ -54,11 +54,17 @@ const tick = () => {
   draw()
 }
 
+const reduced = useReducedMotion()
+
 onMounted(() => {
   fit()
-  if (!prefersReducedMotion()) {
-    timer = setInterval(tick, TICK_MS)
-  }
+  // start/stop the simulation live so flipping the reduce-motion switch freezes
+  // (or resumes) the wallpaper without needing the desktop reopened
+  watch(reduced, (r) => {
+    clearInterval(timer)
+    timer = undefined
+    if (!r) timer = setInterval(tick, TICK_MS)
+  }, { immediate: true })
 })
 useEventListener('resize', fit)
 onUnmounted(() => clearInterval(timer))

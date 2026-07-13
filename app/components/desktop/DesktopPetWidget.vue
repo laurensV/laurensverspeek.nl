@@ -26,10 +26,12 @@ const fedPulse = ref(false)
 
 let wanderTimer: ReturnType<typeof setInterval> | undefined
 let pulseTimer: ReturnType<typeof setTimeout> | undefined
-let still = false
+// reactive so flipping the reduce-motion switch settles the pet immediately
+// (and lets it resume) rather than snapshotting the setting once at mount
+const reduced = useReducedMotion()
 
 const wander = () => {
-  if (still || !view.value || view.value.mood === 'asleep') return
+  if (reduced.value || !view.value || view.value.mood === 'asleep') return
   // amble somewhere nearby, keeping clear of the icon column and taskbar
   const target = {
     x: Math.min(88, Math.max(24, pos.value.x + (Math.random() - 0.5) * 34)),
@@ -40,7 +42,6 @@ const wander = () => {
 }
 
 onMounted(() => {
-  still = prefersReducedMotion()
   wanderTimer = setInterval(wander, 3400)
 })
 onUnmounted(() => {

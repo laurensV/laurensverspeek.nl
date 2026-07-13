@@ -24,10 +24,15 @@ const spin = ref(0)
 const frame = computed(() => renderGlobe(spin.value, GLOBE_W, GLOBE_H, markers.value).join('\n'))
 
 let timer: ReturnType<typeof setInterval> | undefined
+const reduced = useReducedMotion()
 onMounted(() => {
-  const reduced = prefersReducedMotion()
-  if (reduced) return // a still earth for reduced-motion; markers still plot
-  timer = setInterval(() => (spin.value += 0.08), 90)
+  // spin/stop live when the reduce-motion switch flips; a still earth still
+  // plots its markers
+  watch(reduced, (r) => {
+    clearInterval(timer)
+    timer = undefined
+    if (!r) timer = setInterval(() => (spin.value += 0.08), 90)
+  }, { immediate: true })
 })
 onUnmounted(() => clearInterval(timer))
 </script>
