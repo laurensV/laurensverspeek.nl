@@ -103,7 +103,7 @@ export function saverProcs(): EffectProc[] {
 // The boot splash / `reboot` replay is another fullscreen takeover, so like the
 // screensaver it earns a seat in the process table. BootSplash registers hooks
 // while mounted; `kill 200` (its z-index, as a mnemonic) finishes the sequence.
-export const BOOT_REPLAY_PID = 200
+const BOOT_REPLAY_PID = 200
 let bootHooks: { running: () => boolean, stop: () => void } | null = null
 export const registerBootProc = (hooks: { running: () => boolean, stop: () => void }) => {
   bootHooks = hooks
