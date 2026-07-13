@@ -398,9 +398,10 @@ try {
     a.send({ type: 'world-join' })
     b.send({ type: 'world-join' })
     await Promise.all([a.next('world-state'), b.next('world-state')])
-    // JSON.parse('1e400') === Infinity — typeof is 'number', so only
-    // Number.isFinite rejects it; without the guard it relays unclamped
-    a.send({ type: 'world-cursor', x: 1e400, y: 0.5 })
+    // sent as RAW json text: JSON.stringify(Infinity) is 'null', but an
+    // attacker writes the frame by hand, and JSON.parse('1e400') === Infinity
+    // (typeof 'number', so only Number.isFinite rejects it — unguarded it relays)
+    a.ws.send('{"type":"world-cursor","x":1e400,"y":0.5}')
     check('a non-finite world cursor is dropped', await b.silent('world-cursor'))
     a.close()
     b.close()
