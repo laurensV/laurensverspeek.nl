@@ -67,7 +67,9 @@ A terminal command flips a `useState` flag (`fx-*` in `STATE_KEYS`); a
 component mounted in `app/layouts/default.vue` watches it (`MatrixRain`,
 `FireworksShow`, `BossScreen`, …). Register every effect in `effectProcs.ts`
 so it's killable, give it a reduced-motion story, and gate heavy components
-behind `v-if` + `Lazy`.
+behind `v-if` + `Lazy`. Beating a game's personal best flips `fx-celebrate`
+(`ScoreCelebration`); topping the global leaderboard #1 (`useLeaderboard`)
+additionally flips `fx-world-record` for a bigger burst + `WorldRecordToast`.
 
 ## lvOS (`app/components/WebDesktop.vue` + `app/components/desktop/`)
 
@@ -89,7 +91,10 @@ Bulma v1 via `@use "bulma/sass" with (…)` in `app/assets/scss/global.scss`.
 Dark/light keys off the `data-theme` attribute — style with
 `var(--bulma-*)`/`hsla(var(--lv-*-hsl), …)` variables so both themes work.
 Design language: monospace accents, corner brackets, amber `#ffba00`, prompt
-glyphs. Respect `prefers-reduced-motion` in every animation.
+glyphs. Respect `prefers-reduced-motion` in every animation — for JS/canvas
+loops gate on the shared `prefersReducedMotion()` helper (`app/utils/reducedMotion.ts`),
+which ORs the OS query with the manual "reduce motion" switch, not a raw
+`matchMedia` call.
 
 ## Mobile & touch
 
