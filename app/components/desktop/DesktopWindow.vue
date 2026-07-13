@@ -267,8 +267,11 @@ onUnmounted(() => clearTimeout(pressTimer))
   font-size: 0.85rem;
 
   // the app fills the body's height (which fills the window) instead of sitting
-  // at its natural height and leaving the lower half of a maximized window empty
-  :slotted(*) {
+  // at its natural height and leaving the lower half of a maximized window empty.
+  // only-child so a single-root app stretches, but the readme window (which slots
+  // several <p> roots directly) doesn't hand each paragraph an equal share of the
+  // height and spread them apart on a maximized phone window
+  :slotted(:only-child) {
     flex: 1;
     min-height: 0;
   }
