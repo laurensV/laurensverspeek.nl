@@ -12,7 +12,7 @@
       </label>
       <label class="mail-field">
         <span>subject:</span>
-        <input v-model="draftSubject" maxlength="120" placeholder="hello from lvOS" aria-label="Subject">
+        <input v-model="draftSubject" maxlength="120" placeholder="hello from lvOS" aria-label="Subject" @input="keyClick.click()">
       </label>
       <textarea
         v-model="draftBody"
@@ -20,6 +20,7 @@
         rows="6"
         placeholder="dear laurens, your operating system delivered this…"
         aria-label="Message"
+        @input="keyClick.click()"
       />
       <div class="mail-send-row">
         <button class="mail-send" @click="send">[send →]</button>
@@ -70,6 +71,8 @@ const emit = defineEmits<{ post: [path: string] }>()
 // the messages themselves live in useLvosMail, next to the read-state,
 // so the icon badge and the inbox can never disagree
 const { read, markRead, unread, mails } = useLvosMail()
+// the shared `keyclick` typing sound ticks here too, not just in the terminal
+const keyClick = useKeyClick()
 const openId = ref<string | null>(null)
 
 const current = computed(() => mails.value.find((msg) => msg.id === openId.value))

@@ -21,7 +21,7 @@
           rows="5"
           placeholder="type here…"
           spellcheck="false"
-          @input="writeNote(note, ($event.target as HTMLTextAreaElement).value)"
+          @input="keyClick.click(); writeNote(note, ($event.target as HTMLTextAreaElement).value)"
         />
       </article>
     </div>
@@ -41,6 +41,9 @@ const LEGACY_KEY = 'lvos-notes'
 
 const { files } = useTerminal()
 const trash = useTrash()
+// shared opt-in typing sound (the `keyclick` setting) ticks in lvOS text fields
+// too, not just the terminal — silent unless the setting is on and unmuted
+const keyClick = useKeyClick()
 
 interface LegacyNote { id: number, text: string, updated: number }
 const isLegacyNotes = (value: unknown): value is LegacyNote[] =>

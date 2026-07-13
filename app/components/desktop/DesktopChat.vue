@@ -25,6 +25,7 @@
           :placeholder="`chat as ${name} — enter sends`"
           aria-label="Chat message"
           spellcheck="false"
+          @input="keyClick.click()"
         >
       </form>
     </template>
@@ -38,6 +39,8 @@
 
 const { enabled, messages, online, status, join, send } = useChat()
 const { name } = useIdentity()
+// the shared `keyclick` typing sound ticks here too, not just in the terminal
+const keyClick = useKeyClick()
 const draft = ref('')
 const feedEl = ref<HTMLElement>()
 
