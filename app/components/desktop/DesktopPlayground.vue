@@ -193,6 +193,8 @@ const insertTab = (event: KeyboardEvent) => {
   flex: 1;
   width: 100%;
   border: none;
-  background: #fff;
+  // default to the dark window tone (not a glaring #fff) so a snippet without its
+  // own background blends into the always-dark lvOS chrome instead of flashing white
+  background: #101014;
 }
 </style>
