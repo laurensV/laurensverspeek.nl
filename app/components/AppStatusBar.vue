@@ -37,8 +37,8 @@
       <button
         v-if="petView"
         class="status-item status-button status-pet is-hidden-mobile"
-        :title="`${petView.name} is ${petView.moodLine} run 'pet' in the terminal`"
-        @click="terminal.open()"
+        :title="`${petView.name} is ${petView.moodLine} — click to check on them`"
+        @click="checkPet"
       >{{ petView.face }} {{ petView.name }}</button>
     </div>
 
@@ -80,6 +80,13 @@ const visitors = useLiveVisitors()
 
 // the tamagotchi (if adopted via the terminal's `pet` command)
 const { view: petView } = usePet()
+
+// clicking the pet opens the terminal AND checks on it, rather than just
+// opening an empty shell
+const checkPet = () => {
+  terminal.open()
+  terminal.run('pet')
+}
 
 const { toggle: toggleTheme } = useThemeSwitch()
 
