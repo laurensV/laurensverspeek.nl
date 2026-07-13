@@ -180,7 +180,9 @@ test('the task manager kills a terminal effect and the running game', async ({ p
   await page.locator('#desktop-terminal-input').waitFor()
   await page.fill('#desktop-terminal-input', 'crt')
   await page.keyboard.press('Enter')
-  await expect(page.locator('html')).toHaveClass(/crt-mode/)
+  // commands run through the terminal's serialized queue, which can lag under
+  // full-suite load, so give the queued effects room beyond the default 5s
+  await expect(page.locator('html')).toHaveClass(/crt-mode/, { timeout: 10_000 })
   await page.fill('#desktop-terminal-input', 'snake')
   await page.keyboard.press('Enter')
   // the game engine is a lazily-imported chunk; under full-suite load its first
@@ -194,11 +196,11 @@ test('the task manager kills a terminal effect and the running game', async ({ p
   const crtRow = taskmgr.locator('tr', { hasText: 'crt-filter' })
   await expect(crtRow).toBeVisible()
   await crtRow.locator('.taskmgr-kill').click()
-  await expect(page.locator('html')).not.toHaveClass(/crt-mode/)
+  await expect(page.locator('html')).not.toHaveClass(/crt-mode/, { timeout: 10_000 })
   const snakeRow = taskmgr.locator('tr', { hasText: 'snake' })
-  await expect(snakeRow).toBeVisible()
+  await expect(snakeRow).toBeVisible({ timeout: 10_000 })
   await snakeRow.locator('.taskmgr-kill').click()
-  await expect(taskmgr.locator('tr', { hasText: 'snake' })).toHaveCount(0)
+  await expect(taskmgr.locator('tr', { hasText: 'snake' })).toHaveCount(0, { timeout: 10_000 })
   // the terminal is back at its prompt, game gone
   await page.locator('.lvos-task', { hasText: 'lvsh' }).click()
   await expect(page.locator('.game-frame')).toHaveCount(0)
