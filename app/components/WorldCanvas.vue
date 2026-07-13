@@ -343,7 +343,11 @@ const age = (at: number) => {
 .world-stage {
   position: relative;
   flex: 1;
-  min-height: 0;
+  // a real floor so the tall mobile palette/HUD rows can't starve the stage down
+  // to a sliver and let the absolutely-positioned minimap escape upward over the
+  // page; overflow:hidden is the belt — the minimap can never leave the stage
+  min-height: 9rem;
+  overflow: hidden;
 }
 
 .world-canvas {

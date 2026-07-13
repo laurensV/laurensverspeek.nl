@@ -43,10 +43,12 @@ useSeoMeta({
   border-radius: var(--bulma-radius-large);
   padding: 0.5rem;
 
-  // shorter on phones so the canvas's own palette/coords row clears the fixed
-  // mobile tab bar riding at the bottom of the viewport
+  // on phones use min-height (not a fixed height) so the frame grows to fit the
+  // canvas's own palette/coords rows + the stage's floor instead of starving the
+  // stage; the page scrolls, and the rows clear the fixed mobile tab bar
   @media (max-width: 768px) {
-    height: min(58vh, 40rem);
+    height: auto;
+    min-height: min(58vh, 40rem);
   }
 }
 </style>
