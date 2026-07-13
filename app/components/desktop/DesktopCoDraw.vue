@@ -41,14 +41,19 @@
           @click="pen = i"
         />
       </div>
-      <button
-        class="codraw-clear"
-        :class="{ 'is-confirm': confirmClear }"
-        :title="confirmClear ? 'Tap again to wipe it for everyone' : 'Clear the board for everyone'"
-        @click="onClear"
-      >
-        {{ confirmClear ? 'clear all?' : 'clear' }}
-      </button>
+      <div class="codraw-actions">
+        <button class="codraw-clear" title="Save the board to the Gallery and download a PNG" @click="saveBoard">
+          {{ saved ? 'saved ✓' : 'save' }}
+        </button>
+        <button
+          class="codraw-clear"
+          :class="{ 'is-confirm': confirmClear }"
+          :title="confirmClear ? 'Tap again to wipe it for everyone' : 'Clear the board for everyone'"
+          @click="onClear"
+        >
+          {{ confirmClear ? 'clear all?' : 'clear' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -57,6 +62,7 @@
 import { useResizeObserver } from '@vueuse/core'
 import type { DrawStroke } from '../../../realtime/protocol'
 import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
+import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 
 // The lvOS face of the co-draw whiteboard. Same shared board as the terminal
 // `draw` command (useCoDraw's shared state + relay lease); freehand segments in
@@ -89,23 +95,51 @@ const statusLabel = computed(() => {
 
 let dpr = 1
 
-const redraw = () => {
-  const canvas = canvasRef.value
-  const ctx = canvas?.getContext('2d')
-  if (!canvas || !ctx) return
+// paint the whole board onto any 2D context at its pixel size — shared by the
+// live canvas and the fixed-size snapshot the save button renders
+const paintBoard = (ctx: CanvasRenderingContext2D, w: number, h: number, lineScale: number) => {
   ctx.fillStyle = COLORS[0]!
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.fillRect(0, 0, w, h)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   for (const s of strokes.value) {
     ctx.strokeStyle = COLORS[s.c] ?? COLORS[1]!
     // the eraser (index 0, board colour) draws fatter so it clears cleanly
-    ctx.lineWidth = (s.c === 0 ? 16 : 3) * dpr
+    ctx.lineWidth = (s.c === 0 ? 16 : 3) * lineScale
     ctx.beginPath()
-    ctx.moveTo(s.x0 * canvas.width, s.y0 * canvas.height)
-    ctx.lineTo(s.x1 * canvas.width, s.y1 * canvas.height)
+    ctx.moveTo(s.x0 * w, s.y0 * h)
+    ctx.lineTo(s.x1 * w, s.y1 * h)
     ctx.stroke()
   }
+}
+
+const redraw = () => {
+  const canvas = canvasRef.value
+  const ctx = canvas?.getContext('2d')
+  if (!canvas || !ctx) return
+  paintBoard(ctx, canvas.width, canvas.height, dpr)
+}
+
+// snapshot the board at a fixed size → the shared lvOS Gallery + a PNG download
+const saved = ref(false)
+const saveBoard = () => {
+  const w = 960
+  const h = 600
+  const off = document.createElement('canvas')
+  off.width = w
+  off.height = h
+  const ctx = off.getContext('2d')
+  if (!ctx) return
+  paintBoard(ctx, w, h, 2)
+  const url = off.toDataURL('image/png')
+  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
+  storageSetJson('lvos-shots', [url, ...existing].slice(0, 6))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'whiteboard.png'
+  a.click()
+  saved.value = true
+  setTimeout(() => { saved.value = false }, 1600)
 }
 
 const fit = () => {
@@ -259,6 +293,11 @@ useResizeObserver(canvasRef, fit)
   display: flex;
   flex-wrap: wrap; // 8 coarse-size pens overflow a 320px window on their own row
   gap: 0.35rem;
+}
+
+.codraw-actions {
+  display: flex;
+  gap: 0.4rem;
 }
 
 .codraw-pen {
