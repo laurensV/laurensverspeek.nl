@@ -3,6 +3,8 @@ import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { buildContribGraph } from '~/utils/terminal/contribGraph'
+import { HALL_OF_FAME, readBest } from '~/utils/hallOfFame'
+import { migrateScoreKey } from '~/utils/terminalGameKit'
 
 // Commands about me and the site itself: profile, contact, live stats.
 
@@ -179,7 +181,7 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
       exec: (args) => {
         if (!leaderboard.enabled.value) {
           muted('leaderboard: no relay on this build — scores stay local.')
-          muted(`(the lvOS 'scores' app shows your personal hall of fame)`)
+          muted(`(run 'scores' for your personal hall of fame)`)
           return
         }
         leaderboard.enter()
@@ -196,6 +198,21 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
             out(`${String(i + 1).padStart(2)}. ${entry.name.padEnd(16)} ${entry.score}`)
           })
         }
+      }
+    },
+    scores: {
+      category: 'games',
+      description: 'Your local hall of fame (personal bests)',
+      exec: () => {
+        // the same board the lvOS `scores` app shows, from the same shared list
+        migrateScoreKey('lv-pong-rally', 'lv-pong-highscore')
+        push('primary', '★ HALL OF FAME ★')
+        for (const { game, key, unit } of HALL_OF_FAME) {
+          const best = readBest(key)
+          const value = best === null ? '———' : `${best} ${unit}`
+          push('output', `<span class="term-accent">${game.padEnd(28)}</span> ${value}`, true)
+        }
+        muted('scores live in your browser — set them in the games. Global board: leaderboard')
       }
     },
     contributions: {
