@@ -96,6 +96,25 @@ export function createGameCommands(ctx: TerminalContext): Record<string, Termina
           : 'this build has no relay, so it\'s you vs the house AI.')
       }
     },
+    minesweeper: {
+      category: 'games',
+      description: 'Clear the minefield — flags mint coins (lvOS app)',
+      exec: () => {
+        if (route.path === '/desktop') {
+          windowManager.openWindow('minesweeper')
+          ctx.out('opening minesweeper — right-click (or the flag toggle) marks a mine.')
+          return
+        }
+        muted('minesweeper lives on the lvOS desktop — run `desktop`, then alt+r → minesweeper.')
+        muted('beginner/intermediate/expert each keep their own best time in the hall of fame.')
+      }
+    },
+    mines: {
+      category: 'games',
+      hidden: true,
+      description: 'Alias for minesweeper',
+      exec: () => ctx.getCommands().minesweeper!.exec([])
+    },
     draw: {
       category: 'games',
       description: 'A shared freehand whiteboard — co-draw with live visitors (lvOS app)',
