@@ -1,5 +1,5 @@
 <template>
-  <div class="status-bar is-family-code no-print" role="contentinfo">
+  <div class="status-bar is-family-code no-print" role="toolbar" aria-label="Editor status bar">
     <div class="status-group">
       <a
         class="status-item"
