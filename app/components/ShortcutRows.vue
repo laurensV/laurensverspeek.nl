@@ -1,6 +1,6 @@
 <template>
   <div v-for="row in rows" :key="row.label" class="shortcut-row">
-    <span class="shortcut-keys" :style="{ minWidth: keysWidth }">
+    <span class="shortcut-keys" :style="{ '--shortcut-keys-width': keysWidth ?? '0px' }">
       <kbd v-for="key in row.keys" :key="key">{{ key }}</kbd>
     </span>
     <span class="shortcut-label">{{ row.label }}</span>
@@ -36,6 +36,16 @@ defineProps<{
   flex-wrap: wrap;
   gap: 0.2rem;
   flex-shrink: 0;
+  // the reserved key-column width comes in as a custom property so this rule
+  // (not an inline style) owns min-width — letting the mobile query below drop it
+  min-width: var(--shortcut-keys-width, 0);
+
+  // on a phone the fixed reservation (e.g. 9rem on /keyboard) wastes most of the
+  // row for a single-key shortcut and crushes the label to 2–3 lines; drop it so
+  // the label reclaims the space
+  @media (max-width: 520px) {
+    min-width: 0;
+  }
 }
 
 .shortcut-label {
