@@ -22,6 +22,15 @@ site where all the "dynamic" behavior is client-side state shared through
 The centerpiece. One composable holds the interpreter; every caller (navbar,
 footer, overlay, the lvOS terminal window) shares its state via `useState`.
 
+- **Lazily mounted:** the overlay and command palette (which drag in the whole
+  command registry) are `<Lazy… v-if="open">` in the layout, so a visitor who
+  never presses `~`/⌘K never downloads them. Always-mounted chrome opens them
+  through `useTerminalLauncher`/`usePaletteLauncher` — tiny composables that only
+  flip the shared open flag (and queue a command to run on mount) without pulling
+  the registry. Anything on a plain page that reads the terminal VFS
+  (`useBlogOverrides`) restores it from storage itself, since the terminal may
+  never mount there.
+
 - **Commands** are plain factories over a `TerminalContext`
   (`app/utils/terminal/types.ts`), grouped in per-domain modules under
   `app/utils/terminal/` and merged by three facades: `systemCommands`

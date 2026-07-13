@@ -29,7 +29,7 @@ export const museum: Wing[] = [
       { name: 'vim & nano', how: 'vim notes.txt', blurb: 'Real modal editing over the real filesystem. Yes, :wq works. That alone makes it better than the original.' },
       { name: 'reverse search', how: 'ctrl+r', blurb: 'Incremental history search, cycling matches like the shell you grew up with.' },
       { name: 'ssh', how: 'ssh guest@laurensverspeek.nl', blurb: 'Connects to the server you are already on. Authentication method: "vibes".' },
-      { name: 'the process table', how: 'ps, kill, top', blurb: 'Effects, lvOS windows and running games are one process table. kill 1231 ends the fireworks; kill 7 ends you.' },
+      { name: 'the process table', how: 'ps, kill, top', blurb: 'Effects, lvOS windows and running games are one process table — right down to the screensaver and the boot-replay takeover. kill 1231 ends the fireworks; kill 7 ends you.' },
       { name: 'jq', how: "jq '.basics.name' resume", blurb: 'A real subset of jq over the site\'s own JSON — resume, profile, projects — field access, array iteration, pipes and keys/length. Pipe curl into it too.' }
     ]
   },
@@ -51,12 +51,12 @@ export const museum: Wing[] = [
       { name: 'system update', how: 'start menu → system update', blurb: 'Ceremonially installs this repo\'s actual recent commits, progress bar and "do not turn off your computer" and all. It remembers what it installed, so the nudge only returns when new work ships.' },
       { name: 'BIOS setup', how: 'press DEL during the POST', blurb: 'Arrow-key menus over the real settings — wallpaper, night light, theme, screensaver. F10 saves and resumes the boot. Nothing here is decorative.' },
       { name: 'the volume tray & jukebox', how: 'the taskbar speaker, or type music', blurb: 'One real volume the chiptune engine obeys, shared by the media app, the terminal music command and the tray. Three tracks, all synthesized, no files.' },
-      { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Both settable across Settings, Displays, BIOS and the terminal — one shared preference, five ways in.' },
+      { name: 'screensavers & night light', how: 'idle, or the settings app', blurb: 'A starfield, flying toasters or mystify drift in after 45 idle seconds; a warm night-light wash eases late-night pixel-pushing. Night light is settable from Settings, Displays, BIOS and the terminal; the screensaver from Settings, BIOS and the terminal — one shared preference each, and both are killable processes.' },
       { name: 'camera, playground & monitors', how: 'the icon grid', blurb: 'A webcam-to-ASCII camera, a sandboxed HTML/CSS/JS code playground, a live system monitor and a GitHub contributions heatmap — the desktop earns its keep.' },
       { name: 'weather & the colour picker', how: 'the weather and colours icons', blurb: 'A five-day Amsterdam forecast over the same source as the tray chip, and an eyedropper colour tool that reads hex/rgb/hsl and pushes any colour to the live site accent.' },
       { name: 'the hall of fame', how: 'the scores icon', blurb: 'Every game\'s persisted best in one board — and those same scores mint the coins your tamagotchi spends. One ledger, no fakes.' },
       { name: 'lvos-2.0.iso', how: 'start menu → download', blurb: 'Actual installation media for an operating system with no hardware. Do not burn to disc; the release notes explain everything.' },
-      { name: 'built for a thumb', how: 'open the desktop on a phone', blurb: 'Windows open maximized so the close button is reachable, the taskbar scrolls instead of hiding its tray, a long-press summons the context menu (and a file\'s row menu), Snake grows a d-pad, Minesweeper gets a flag-mode toggle and shrinks its board to fit, and every app\'s buttons grow to thumb size. The whole desktop folds down to 375 pixels.' }
+      { name: 'built for a thumb', how: 'open the desktop on a phone', blurb: 'Windows open maximized so the close button is reachable, the taskbar collapses its tray behind a ⋯ and scrolls, a long-press summons the context menu (and a file\'s row menu), Snake grows a d-pad, Minesweeper gets a flag-mode toggle and shrinks its board to fit, and every app\'s buttons grow to thumb size. The terminal stops jumping sideways and its grid games stop wrapping, letter games raise the keyboard, the pixel-world swatches and the status-bar controls grow, and the destroyer flies by a virtual joystick. The whole desktop folds down to 320 pixels.' }
     ]
   },
   {
@@ -131,6 +131,8 @@ export const museum: Wing[] = [
       { name: 'view transitions', how: 'click a project card', blurb: 'Titles and thumbnails morph between list and detail using the native View Transitions API.' },
       { name: 'both themes, all of it', how: 'the sun/moon toggle', blurb: 'Every exhibit works in light and dark, keys off one data-theme attribute, and respects prefers-reduced-motion.' },
       { name: 'the test battery', how: 'the repo', blurb: 'Hundreds of unit tests and a couple hundred end-to-end tests boot this museum before every deploy, so the exhibits stay dusted.' },
+      { name: 'lean by default', how: 'load any page, never open the terminal', blurb: 'The whole shell and its command registry only download the first time you press ~, and the project previews are lightweight looping video instead of multi-megabyte GIFs. A visitor who never opens the terminal never pays for it.' },
+      { name: 'install it, quiet it', how: 'the install chip; settings → reduce motion', blurb: 'It offers to install as a real app when your browser allows, plays a startup chime you can mute, and hides a reduce-motion switch that flattens every animation on top of your system setting.' },
       { name: 'privacy', how: 'check /stats', blurb: 'No cookies, no fingerprints; the visitor counters are public and the analytics are optional at build time.' },
       { name: 'this very floor', how: '[ walk the floor ], above', blurb: 'The museum you are standing in: rooms generated from this catalog, plaques mounted by code, one @ to walk them. The exhibit is the building.' },
       { name: 'the pixel world', how: 'world open, in the terminal', blurb: 'A hidden shared canvas: place one pixel at a time on a 128×128 board, see who placed what, watch strangers build a landscape together. The server keeps the peace; the visitors keep the paint.' }
