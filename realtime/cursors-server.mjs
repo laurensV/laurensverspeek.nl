@@ -625,6 +625,7 @@ wss.on('connection', (socket) => {
     chessMoveGate.last.delete(id)
     chatSendGate.last.delete(id)
     raceProgressGate.last.delete(id)
+    drawGate.last.delete(id)
     const payload = wire({ type: 'leave', id })
     for (const client of wss.clients) {
       if (client.readyState === 1) client.send(payload)
