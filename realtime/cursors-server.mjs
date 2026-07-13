@@ -197,6 +197,10 @@ wss.on('connection', (socket) => {
     } catch {
       return
     }
+    // JSON.parse('null') / '123' / '"x"' succeed but aren't objects — every
+    // handler below reads msg.type, so a bare `null` would throw and (with no
+    // uncaughtException handler) take down the whole single-instance relay.
+    if (!msg || typeof msg !== 'object') return
     // chat: a short message shown as a speech bubble over the sender's cursor
     if (msg.type === 'say' && typeof msg.text === 'string') {
       const text = msg.text.slice(0, 80)

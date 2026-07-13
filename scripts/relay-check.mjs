@@ -378,6 +378,19 @@ try {
     b.close()
     c.close()
   }
+
+  // ---- robustness: hostile frames must not crash the relay --------------------
+  console.log('robustness:')
+  {
+    const a = new Client(URL)
+    await a.open
+    a.send(null) // JSON.parse('null') succeeds but isn't an object
+    a.send('nope') // a bare string
+    a.send(42) // a bare number
+    a.send({ type: 'scores-get' }) // a legit follow-up proves the relay is alive
+    check('a non-object payload does not crash the relay', !!(await a.next('scores')))
+    a.close()
+  }
 } finally {
   shutdown()
 }
