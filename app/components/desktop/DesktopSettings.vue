@@ -362,6 +362,12 @@ onUnmounted(() => clearTimeout(disarmTimer))
     box-shadow: 0 0 0 2px hsl(var(--lv-scheme-hs), 10%), 0 0 0 3px currentcolor;
     outline: none;
   }
+
+  // a 21px circle is a fiddly target for a picker on a phone — grow it
+  @media (pointer: coarse) {
+    width: 2rem;
+    height: 2rem;
+  }
 }
 
 .settings-note {
