@@ -326,7 +326,10 @@ const age = (at: number) => {
 .world {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  // height comes from the host: the /world page's .world-frame sets it, and the
+  // lvOS window body stretches this root via flex. A `height: 100%` here fought
+  // .world-frame (same element) and, when it won, spilled the palette/hint rows
+  // out the bottom of the frame and under the mobile tab bar.
   min-height: 24rem;
 }
 
