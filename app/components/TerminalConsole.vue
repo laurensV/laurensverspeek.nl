@@ -64,6 +64,9 @@
         <button @pointerdown.prevent @click="historyDown">↓</button>
         <button @pointerdown.prevent @click="typeChar('|')">|</button>
         <button @pointerdown.prevent @click="typeChar('~')">~</button>
+        <!-- tmux split needs Ctrl+B on a keyboard; give touch its own control -->
+        <button @pointerdown.prevent @click="splitPane">⊞ split</button>
+        <button v-if="panes.ids.value.length > 1" @pointerdown.prevent @click="closePane">✕ pane</button>
         <button @pointerdown.prevent @click="onEscape">esc</button>
       </template>
     </div>
@@ -138,6 +141,16 @@ const gameKey = (key: string) => {
 }
 const typeChar = (char: string) => {
   input.value += char
+  focusInput()
+}
+// touch split/close for tmux panes (the keyboard uses ctrl+b % / x)
+const splitPane = () => {
+  panes.split('cols')
+  focusInput()
+}
+const closePane = () => {
+  const target = panes.active.value !== 0 ? panes.active.value : panes.ids.value.find((id) => id !== 0)
+  if (target !== undefined) panes.close(target)
   focusInput()
 }
 
