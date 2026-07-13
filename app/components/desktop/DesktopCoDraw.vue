@@ -5,16 +5,27 @@
       <span class="codraw-online">{{ statusLabel }}</span>
     </div>
 
-    <canvas
-      ref="canvasRef"
-      class="codraw-canvas"
-      aria-label="Shared drawing canvas"
-      @pointerdown="onDown"
-      @pointermove="onMove"
-      @pointerup="onUp"
-      @pointercancel="onUp"
-      @pointerleave="onUp"
-    />
+    <div class="codraw-stage">
+      <canvas
+        ref="canvasRef"
+        class="codraw-canvas"
+        aria-label="Shared drawing canvas"
+        @pointerdown="onDown"
+        @pointermove="onMove"
+        @pointerup="onUp"
+        @pointercancel="onUp"
+        @pointerleave="onUp"
+      />
+      <!-- live pens of the other visitors, positioned over the board -->
+      <div class="codraw-cursors" aria-hidden="true">
+        <span
+          v-for="(cur, id) in cursors"
+          :key="id"
+          class="codraw-cursor"
+          :style="{ left: `${cur.x * 100}%`, top: `${cur.y * 100}%`, '--dot': COLORS[cur.c] }"
+        />
+      </div>
+    </div>
 
     <div class="codraw-tools">
       <div class="codraw-pens" role="group" aria-label="Pen colour">
@@ -53,7 +64,7 @@ import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
 // size. Works solo (local only) when no relay is configured.
 
 const COLORS = DRAW_COLORS
-const { enabled, strokes, online, status, join, addStroke, clear: clearBoard } = useCoDraw()
+const { enabled, strokes, online, status, cursors, join, addStroke, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
 
 const canvasRef = ref<HTMLCanvasElement>()
 const pen = ref(2) // the amber pen by default
@@ -123,19 +134,30 @@ const posOf = (event: PointerEvent): { x: number, y: number } | null => {
 
 let last: { x: number, y: number } | null = null
 
+// pen positions are broadcast far more coarsely than strokes are drawn
+let lastCursorAt = 0
+const shareCursor = (x: number, y: number) => {
+  const now = Date.now()
+  if (now - lastCursorAt < 50) return
+  lastCursorAt = now
+  sendCursor(x, y, pen.value)
+}
+
 const onDown = (event: PointerEvent) => {
   const p = posOf(event)
   if (!p) return
   last = p
   canvasRef.value?.setPointerCapture(event.pointerId)
+  shareCursor(p.x, p.y)
   // a tap leaves a dot: a zero-length segment
   addStroke({ x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: pen.value } satisfies DrawStroke)
 }
 
 const onMove = (event: PointerEvent) => {
-  if (!last) return
   const p = posOf(event)
   if (!p) return
+  shareCursor(p.x, p.y) // show the pen moving even while just hovering
+  if (!last) return
   addStroke({ x0: last.x, y0: last.y, x1: p.x, y1: p.y, c: pen.value } satisfies DrawStroke)
   last = p
 }
@@ -148,11 +170,18 @@ const onUp = (event: PointerEvent) => {
 }
 
 let release: (() => void) | undefined
+let pruneTimer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
   release = join()
   fit()
+  // drop remote cursor dots that have gone quiet
+  pruneTimer = setInterval(pruneCursors, 1000)
 })
-onUnmounted(() => { release?.(); if (confirmTimer) clearTimeout(confirmTimer) })
+onUnmounted(() => {
+  release?.()
+  if (confirmTimer) clearTimeout(confirmTimer)
+  if (pruneTimer) clearInterval(pruneTimer)
+})
 
 // remote strokes / init / clear all replace the array — repaint on any change,
 // and refit when the window is resized
@@ -181,15 +210,41 @@ useResizeObserver(canvasRef, fit)
   color: hsl(var(--lv-scheme-hs), 55%);
 }
 
+.codraw-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 12rem;
+}
+
 .codraw-canvas {
   flex: 1;
   width: 100%;
-  min-height: 12rem;
+  min-height: 0;
   border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
   border-radius: var(--bulma-radius-small);
   background-color: #14141a; // DRAW_COLORS[0]; the canvas paints over it
   cursor: crosshair;
   touch-action: none; // let a drag draw instead of scrolling the window
+}
+
+// the other visitors' live pens float over the board, not on the canvas
+.codraw-cursors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.codraw-cursor {
+  position: absolute;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1px solid rgb(0 0 0 / 40%);
+  border-radius: 50%;
+  background-color: var(--dot);
+  box-shadow: 0 0 0 2px hsla(var(--lv-scheme-hs), 8%, 0.6);
+  transform: translate(-50%, -50%);
+  transition: left 0.08s linear, top 0.08s linear; // flattened under reduce-motion
 }
 
 .codraw-tools {

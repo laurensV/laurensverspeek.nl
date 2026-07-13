@@ -54,6 +54,7 @@ export const STATE_KEYS = {
   drawStrokes: 'draw-strokes',
   drawOnline: 'draw-online',
   drawStatus: 'draw-status',
+  drawCursors: 'draw-cursors',
   // live visitors
   liveVisitorCount: 'live-visitor-count',
   liveCursorsVisible: 'live-cursors-visible',

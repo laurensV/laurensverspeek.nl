@@ -351,6 +351,26 @@ try {
     const lateStrokes = /** @type {{ c: number }[]} */ (late?.strokes ?? [])
     check('a late joiner receives the stroke buffer', lateStrokes.some((entry) => entry.c === 2))
 
+    // live pen cursors (broadcast to others, throttled by a 40ms gate)
+    const gap = () => new Promise((resolve) => setTimeout(resolve, 50))
+    a.send({ type: 'draw-cursor', x: 0.25, y: 0.75, c: 4 })
+    const cur = await b.next('draw-cursor')
+    check('a live pen cursor reaches the others', cur?.x === 0.25 && cur?.y === 0.75 && cur?.c === 4 && typeof cur?.id === 'number')
+    check('the drawer does not receive its own cursor', await a.silent('draw-cursor'))
+    await gap()
+    a.send({ type: 'draw-cursor', x: 2, y: -1, c: 5 }) // out of the board
+    const clamped = await b.next('draw-cursor')
+    check('a live cursor is clamped into the board', clamped?.x === 1 && clamped?.y === 0)
+    await gap()
+    a.send({ type: 'draw-cursor', x: 0.5, y: 0.5, c: 42 }) // bad pen index
+    check('a cursor with an invalid pen is dropped', await b.silent('draw-cursor'))
+    // a member leaving takes its cursor dot with it
+    c.send({ type: 'draw-cursor', x: 0.4, y: 0.4, c: 1 })
+    const cCur = await a.next('draw-cursor')
+    c.send({ type: 'draw-leave' })
+    const gone = await a.next('draw-cursor-gone')
+    check('a leaving member clears its cursor for everyone', gone?.id === cCur?.id)
+
     await new Promise((resolve) => setTimeout(resolve, 20))
     b.send({ type: 'draw-clear' })
     check('clear wipes the board for the others', !!(await a.next('draw-clear')))

@@ -42,6 +42,9 @@ export interface DrawLeaveIn { type: 'draw-leave' }
  * index into DRAW_COLORS. The server sanitizes/clamps before storing. */
 export interface DrawStrokeIn { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
 export interface DrawClearIn { type: 'draw-clear' }
+/** A live pen position (where this visitor's cursor is over the board), so the
+ * others can see where everyone is drawing. Ephemeral — never stored. */
+export interface DrawCursorIn { type: 'draw-cursor', x: number, y: number, c: number }
 
 export interface RaceJoinIn { type: 'race-join', name?: string }
 export interface RaceLeaveIn { type: 'race-leave' }
@@ -75,6 +78,7 @@ export type ClientMessage =
   | DrawLeaveIn
   | DrawStrokeIn
   | DrawClearIn
+  | DrawCursorIn
 
 // ---- server → client ----
 
@@ -166,7 +170,11 @@ export interface DrawStateMsg { type: 'draw-state', strokes: DrawStroke[], onlin
 export interface DrawStrokeMsg { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
 export interface DrawClearMsg { type: 'draw-clear' }
 export interface DrawCountMsg { type: 'draw-count', online: number }
+/** Another visitor's live pen position, tagged with their connection id. */
+export interface DrawCursorMsg { type: 'draw-cursor', id: number, x: number, y: number, c: number }
+/** A visitor left the board — drop their cursor dot. */
+export interface DrawCursorGoneMsg { type: 'draw-cursor-gone', id: number }
 /** What the co-draw whiteboard client consumes. */
-export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawCountMsg
+export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawCountMsg | DrawCursorMsg | DrawCursorGoneMsg
 
 export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage | DrawServerMessage

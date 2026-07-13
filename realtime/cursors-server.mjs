@@ -17,7 +17,7 @@ import {
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 import { createPongState, stepPong, movePaddle, PONG_TICK_MS } from './pong-core.mjs'
 import { pickPassage, validProgress, RACE_COUNTDOWN_MS } from './race-core.mjs'
-import { sanitizeStroke, MAX_STROKES } from './draw-core.mjs'
+import { sanitizeStroke, validPen, MAX_STROKES } from './draw-core.mjs'
 import { initialState as chessInitial, legalMoves as chessLegalMoves, applyMove as chessApply, gameOver as chessOver } from './chess-core.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
@@ -223,6 +223,8 @@ const drawMembers = new Set()
 // drawing fires many segments a second; a light gate blunts scripted floods
 // without dropping a normal drag (~60/s)
 const drawGate = gate(8)
+// live pen positions are broadcast far more coarsely than strokes are drawn
+const drawCursorGate = gate(40)
 /** @param {string} payload @param {import('ws').WebSocket} [except] */
 const broadcastDraw = (payload, except) => {
   for (const member of drawMembers) {
@@ -447,7 +449,10 @@ wss.on('connection', (socket) => {
       return
     }
     if (msg.type === 'draw-leave') {
-      if (drawMembers.delete(socket)) broadcastDrawCount()
+      if (drawMembers.delete(socket)) {
+        broadcastDrawCount()
+        broadcastDraw(wire({ type: 'draw-cursor-gone', id }), socket)
+      }
       return
     }
     if (msg.type === 'draw-stroke') {
@@ -465,6 +470,17 @@ wss.on('connection', (socket) => {
       if (!drawMembers.has(socket)) return
       drawLog = []
       broadcastDraw(wire({ type: 'draw-clear' }), socket)
+      return
+    }
+    if (msg.type === 'draw-cursor') {
+      if (!drawMembers.has(socket)) return
+      if (drawCursorGate.check(id, Date.now()) > 0) return // coarser than strokes
+      const x = Number(msg.x)
+      const y = Number(msg.y)
+      if (!Number.isFinite(x) || !Number.isFinite(y) || !validPen(msg.c)) return
+      const cx = x < 0 ? 0 : x > 1 ? 1 : x
+      const cy = y < 0 ? 0 : y > 1 ? 1 : y
+      broadcastDraw(wire({ type: 'draw-cursor', id, x: cx, y: cy, c: msg.c }), socket)
       return
     }
     // ---- online chess protocol (server validates with the shared rules) ----
@@ -628,7 +644,10 @@ wss.on('connection', (socket) => {
     dropChessPlayer(socket)
     dropRacePlayer(socket)
     if (chatMembers.delete(socket)) broadcastChatCount()
-    if (drawMembers.delete(socket)) broadcastDrawCount()
+    if (drawMembers.delete(socket)) {
+      broadcastDrawCount()
+      broadcastDraw(wire({ type: 'draw-cursor-gone', id }), socket)
+    }
     if (worldMembers.delete(socket)) broadcastWorldCount()
     // drop this connection's cooldown state from every registered gate, or the
     // maps grow for the relay's whole uptime (one entry per id that ever
