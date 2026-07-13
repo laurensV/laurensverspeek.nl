@@ -4,7 +4,7 @@
     <p v-for="(line, i) in visibleLines" :key="i" class="boot-line" :class="`is-${line.type}`">
       {{ line.text }}<span v-if="i === visibleLines.length - 1" class="boot-caret">█</span>
     </p>
-    <p class="boot-setup-hint">Press DEL to enter SETUP</p>
+    <button type="button" class="boot-setup-hint" @click="enterSetup">Press DEL — or tap here — to enter SETUP</button>
   </div>
   <DesktopBios v-else @exit="exitSetup" />
 </template>
@@ -65,12 +65,16 @@ onMounted(() => {
   tick()
 })
 
-// DEL during POST: pause the boot, open the setup
+// DEL during POST (or a tap on the hint) pauses the boot and opens the setup
+const enterSetup = () => {
+  if (inSetup.value) return
+  clearTimeout(timer)
+  inSetup.value = true
+}
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (inSetup.value || event.key !== 'Delete') return
   event.preventDefault()
-  clearTimeout(timer)
-  inSetup.value = true
+  enterSetup()
 })
 
 const exitSetup = () => {
@@ -122,7 +126,21 @@ onUnmounted(() => clearTimeout(timer))
   position: absolute;
   bottom: 1.5rem;
   left: clamp(1.5rem, 6vw, 6rem);
+  padding: 0;
+  border: none;
+  background: none;
   color: hsl(var(--lv-scheme-hs), 45%);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--bulma-primary);
+  }
+
+  // a real tap target on touch (POST flashes past, so it's forgiving)
+  @media (pointer: coarse) {
+    padding: 0.6rem 0;
+  }
 }
 
 .boot-caret {

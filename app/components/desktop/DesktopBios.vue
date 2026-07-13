@@ -8,29 +8,29 @@
             <td>System Date</td>
             <td>{{ today }}</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 0 }">
+          <tr :class="{ 'is-active': cursor === 0 }" @click="pick(0)">
             <td>Wallpaper</td>
-            <td>[{{ wallpapers[wallpaper]?.name ?? 'unknown' }}]</td>
+            <td class="bios-value">[{{ wallpapers[wallpaper]?.name ?? 'unknown' }}]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 1 }">
+          <tr :class="{ 'is-active': cursor === 1 }" @click="pick(1)">
             <td>Night Light</td>
-            <td>[{{ night.enabled.value ? 'Enabled' : 'Disabled' }}]</td>
+            <td class="bios-value">[{{ night.enabled.value ? 'Enabled' : 'Disabled' }}]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 2 }">
+          <tr :class="{ 'is-active': cursor === 2 }" @click="pick(2)">
             <td>Night Light Warmth</td>
-            <td>[{{ night.warmth.value }}%]</td>
+            <td class="bios-value">[{{ night.warmth.value }}%]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 3 }">
+          <tr :class="{ 'is-active': cursor === 3 }" @click="pick(3)">
             <td>Screensaver</td>
-            <td>[{{ saverNames[saver] }}]</td>
+            <td class="bios-value">[{{ saverNames[saver] }}]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 4 }">
+          <tr :class="{ 'is-active': cursor === 4 }" @click="pick(4)">
             <td>Color Scheme</td>
-            <td>[{{ colorMode.preference }}]</td>
+            <td class="bios-value">[{{ colorMode.preference }}]</td>
           </tr>
-          <tr :class="{ 'is-active': cursor === 5 }">
+          <tr :class="{ 'is-active': cursor === 5 }" @click="pick(5)">
             <td>Quiet Boot <span class="bios-note">(skip splash this session)</span></td>
-            <td>[{{ quietBoot ? 'Enabled' : 'Disabled' }}]</td>
+            <td class="bios-value">[{{ quietBoot ? 'Enabled' : 'Disabled' }}]</td>
           </tr>
         </tbody>
       </table>
@@ -46,6 +46,12 @@
       <span>F10 Save &amp; Exit</span>
       <span>ESC Exit</span>
     </footer>
+    <!-- touch has no arrows/F10: tap a row to select+cycle, or use these -->
+    <div class="bios-touch">
+      <button type="button" @click="change(-1)">◀ prev</button>
+      <button type="button" @click="change(1)">next ▶</button>
+      <button type="button" class="bios-touch-exit" @click="emit('exit')">Save &amp; Exit</button>
+    </div>
   </div>
 </template>
 
@@ -103,6 +109,12 @@ const change = (dir: 1 | -1) => {
     if (quietBoot.value) sessionStorage.setItem('lv-booted', '1')
     else sessionStorage.removeItem('lv-booted')
   }
+}
+
+// touch: tapping a row selects it and cycles its value forward
+const pick = (i: number) => {
+  cursor.value = i
+  change(1)
 }
 
 useEventListener('keydown', (event: KeyboardEvent) => {
@@ -206,5 +218,39 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   background-color: #04188a;
   color: #d8d8e8;
   font-size: 0.75rem;
+}
+
+// keyboard-driven by default; the touch bar only appears on coarse pointers
+.bios-touch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .bios-value {
+    cursor: pointer;
+  }
+
+  .bios-touch {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem 1rem;
+    background-color: #04188a;
+
+    button {
+      min-height: 2.6rem;
+      padding: 0 0.9rem;
+      border: 1px solid #4a5ad0;
+      border-radius: var(--bulma-radius-small);
+      background: none;
+      color: #d8d8e8;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .bios-touch-exit {
+      margin-left: auto;
+      color: #ffe14d;
+    }
+  }
 }
 </style>
