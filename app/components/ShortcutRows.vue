@@ -41,10 +41,13 @@ defineProps<{
   min-width: var(--shortcut-keys-width, 0);
 
   // on a phone the fixed reservation (e.g. 9rem on /keyboard) wastes most of the
-  // row for a single-key shortcut and crushes the label to 2–3 lines; drop it so
-  // the label reclaims the space
+  // row for a single-key shortcut and crushes the label to 2–3 lines. Drop the
+  // reservation so a single key sits at its natural width, but cap the column so a
+  // long key sequence (the Konami row) still wraps within it instead of eating the
+  // whole row and starving the label.
   @media (max-width: 520px) {
     min-width: 0;
+    max-width: 52%;
   }
 }
 
