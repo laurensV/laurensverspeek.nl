@@ -1,5 +1,5 @@
 <template>
-  <div class="calc is-family-code">
+  <div ref="rootRef" class="calc is-family-code">
     <div class="calc-modes" role="tablist" aria-label="calculator mode">
       <button
         v-for="m in MODES"
@@ -172,9 +172,35 @@ const press = (label: string) => {
   }
 }
 
+const rootRef = ref<HTMLElement>()
+
+// the listener is on window (so keys work without clicking a key first), but it
+// must only fire when the calculator is the FRONT window and the user isn't
+// typing into some other field — otherwise it swallows digits meant for Notes,
+// the Run dialog, or whatever app is actually focused
+const isEditableTarget = (el: EventTarget | null): boolean => {
+  const node = el as HTMLElement | null
+  if (!node?.tagName) return false
+  return node.tagName === 'INPUT' || node.tagName === 'TEXTAREA'
+    || node.tagName === 'SELECT' || node.isContentEditable
+}
+const isFrontWindow = (): boolean => {
+  const myWin = rootRef.value?.closest<HTMLElement>('.lvos-window')
+  if (!myWin) return true // not mounted in a window (shouldn't happen) → don't block
+  if (myWin.classList.contains('is-minimized')) return false
+  let front: HTMLElement | null = null
+  let maxZ = -Infinity
+  for (const w of document.querySelectorAll<HTMLElement>('.lvos-window:not(.is-minimized)')) {
+    const z = Number(getComputedStyle(w).zIndex) || 0
+    if (z >= maxZ) { maxZ = z; front = w }
+  }
+  return myWin === front
+}
+
 // keyboard support while the window is mounted
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (event.ctrlKey || event.metaKey || event.altKey) return
+  if (isEditableTarget(event.target) || !isFrontWindow()) return
   const k = event.key
   if (k === 'Enter' || k === '=') { press('='); event.preventDefault(); return }
   if (k === 'Backspace') { press('⌫'); event.preventDefault(); return }
