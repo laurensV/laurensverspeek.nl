@@ -51,6 +51,7 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const screensaver = useScreensaverChoice()
   // the manual "reduce motion" switch, shared with the Settings accessibility row
   const motion = useReduceMotion()
+  const keyClick = useKeyClick()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
   // the console-hunt win, shared with the devtools plugin that unlocks `backstage`
@@ -273,6 +274,22 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         muted('flattens every animation site-wide, on top of your OS setting')
       }
     },
+    keyclick: {
+      category: 'system',
+      usage: 'keyclick [on|off]',
+      description: 'Toggle mechanical-keyboard typing sounds in the terminal',
+      examples: ['keyclick', 'keyclick on'],
+      argCandidates: () => ['on', 'off'],
+      exec: (args) => {
+        const arg = args[0]?.toLowerCase()
+        if (arg === 'on') keyClick.toggle(true)
+        else if (arg === 'off') keyClick.toggle(false)
+        else if (!arg) keyClick.toggle()
+        else return error(`keyclick: expected on or off, got '${args[0]}'`)
+        out(`keyclick ${keyClick.enabled.value ? 'on' : 'off'}`)
+        muted('a subtle tick per keystroke, through the shared volume (silent when muted)')
+      }
+    },
     settings: {
       category: 'system',
       description: 'Show every appearance, sound and accessibility setting at a glance',
@@ -286,7 +303,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         row('screensaver', screensaver.saverNames[screensaver.saver.value])
         row('night light', nightLight.enabled.value ? `on (warmth ${nightLight.warmth.value}%)` : 'off')
         row('reduce motion', motion.enabled.value ? 'on' : 'off')
-        muted('change any of these here (theme/colorscheme/volume/wallpaper/screensaver/nightlight/reducemotion) or in lvOS Settings')
+        row('keyclick', keyClick.enabled.value ? 'on' : 'off')
+        muted('change any of these here (theme/colorscheme/volume/wallpaper/screensaver/nightlight/reducemotion/keyclick) or in lvOS Settings')
       }
     },
     reboot: {

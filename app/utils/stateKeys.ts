@@ -37,6 +37,7 @@ export const STATE_KEYS = {
   petWallet: 'pet-wallet',
   // accessibility
   reduceMotion: 'reduce-motion',
+  keyClick: 'key-click',
 
   // identity, theme, palette
   identityName: 'identity-name',

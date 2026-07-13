@@ -48,7 +48,7 @@
         autocomplete="off"
         autocapitalize="off"
         spellcheck="false"
-        @input="resetCompletion"
+        @input="onType"
         @keydown.enter="submit"
         @keydown.up.prevent="historyUp"
         @keydown.down.prevent="historyDown"
@@ -166,6 +166,14 @@ const historyDown = () => {
 
 // zsh-style Tab completion cycling (see useTerminalConsole)
 const { autocomplete, resetCompletion } = useCompletionCycle(input, complete)
+
+// opt-in mechanical-keyboard typing sounds (terminal `keyclick`); a tick per
+// character typed, then the usual completion reset
+const keyClick = useKeyClick()
+const onType = () => {
+  keyClick.click()
+  resetCompletion()
+}
 
 // the touch quick-key row routes into the same handlers the keyboard uses
 const gameKey = (key: string) => {
