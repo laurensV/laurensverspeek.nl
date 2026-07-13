@@ -64,11 +64,13 @@
     <!-- the tray: weather, battery, tiling, fullscreen, bell and clock sit
          together at the right, like every desktop since 1995 -->
     <div class="lvos-tray">
-      <span
+      <button
         v-if="weather.temp.value !== null"
         class="lvos-tray-btn lvos-weather"
-        :title="`Amsterdam · live from open-meteo`"
-      >{{ weather.glyph.value }} {{ weather.temp.value }}°</span>
+        title="Amsterdam · live from open-meteo — open the forecast"
+        aria-label="Open the weather app"
+        @click="emit('open', 'weather')"
+      >{{ weather.glyph.value }} {{ weather.temp.value }}°</button>
 
       <span
         v-if="battery.supported.value && battery.percent.value !== null"
