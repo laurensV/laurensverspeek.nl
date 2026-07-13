@@ -410,6 +410,18 @@ const age = (at: number) => {
   border-radius: var(--bulma-radius-small);
   cursor: pointer;
 
+  // the swatches ARE the core interaction — 22px is well under a thumb target,
+  // so grow them on touch (they wrap, so a taller palette is fine)
+  @media (pointer: coarse) {
+    width: 2rem;
+    height: 2rem;
+
+    &.is-active {
+      width: 2.2rem;
+      height: 2.2rem;
+    }
+  }
+
   &.is-active {
     border-color: var(--bulma-primary);
     transform: scale(1.15);
