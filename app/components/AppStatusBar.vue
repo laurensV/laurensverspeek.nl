@@ -138,6 +138,27 @@ const {
   height: 100%;
 }
 
+// on a phone the two groups' natural width exceeds the viewport, and with
+// `space-between` it was the RIGHT group — holding the terminal button and the
+// sun/moon toggle, the only tap-accessible theme switch on mobile — that got
+// pushed off the edge. Let the left (easter-egg) group yield first: it shrinks
+// and clips its least-essential items (presence, visitors) so the controls the
+// user actually needs stay reachable.
+.status-group:first-child {
+  @media (pointer: coarse) {
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+// the local-time clock is nice-to-have and a phone always shows the OS clock;
+// drop it on the narrowest screens so it can't crowd the toggle off
+.status-clock {
+  @media (max-width: 22.5rem) {
+    display: none;
+  }
+}
+
 .status-item {
   display: inline-flex;
   align-items: center;
@@ -147,9 +168,11 @@ const {
   color: inherit;
   white-space: nowrap;
 
-  // wider hit area to go with the taller bar on touch
+  // a slightly wider hit area to go with the taller bar on touch — but not so
+  // wide that the row overflows the viewport (was 0.85rem, which pushed the
+  // theme toggle off a 375px screen)
   @media (pointer: coarse) {
-    padding: 0 0.85rem;
+    padding: 0 0.55rem;
   }
 }
 
