@@ -110,6 +110,11 @@ const launch = () => {
   font: inherit;
   font-size: 0.85rem;
   caret-color: var(--bulma-primary);
+
+  // 16px on touch so iOS doesn't zoom the page when the field is focused
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
 }
 
 .run-hint {

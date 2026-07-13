@@ -331,6 +331,12 @@ defineExpose({ focusInput })
   font-size: calc(0.9rem * var(--term-font-scale, 1));
   color: hsl(var(--lv-scheme-hs), 92%);
   caret-color: var(--bulma-primary);
+
+  // never below 16px on touch, or iOS zooms the page on focus (the scale can
+  // still push it larger)
+  @media (pointer: coarse) {
+    font-size: max(16px, calc(0.9rem * var(--term-font-scale, 1)));
+  }
 }
 
 // the quick-key row only exists for fingers
