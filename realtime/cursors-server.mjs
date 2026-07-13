@@ -347,7 +347,9 @@ wss.on('connection', (socket) => {
     }
     // world cursors: board-coordinate positions relayed to other members
     if (msg.type === 'world-cursor') {
-      if (!worldMembers.has(socket) || typeof msg.x !== 'number' || typeof msg.y !== 'number') return
+      // Number.isFinite rejects NaN/Infinity (typeof-number passes them, and
+      // JSON.parse('1e400') === Infinity), matching the draw-cursor guard above
+      if (!worldMembers.has(socket) || !Number.isFinite(msg.x) || !Number.isFinite(msg.y)) return
       if (moveGate.check(id, Date.now()) > 0) return // throttle the fan-out
       const payload = wire({ type: 'world-cursor', id, hue, x: msg.x, y: msg.y })
       for (const member of worldMembers) {
@@ -356,7 +358,9 @@ wss.on('connection', (socket) => {
       return
     }
 
-    if (typeof msg.x !== 'number' || typeof msg.y !== 'number' || typeof msg.page !== 'string') return
+    // Number.isFinite rejects NaN/Infinity — Math.max(0, Infinity) is Infinity,
+    // so an unguarded coord would propagate unclamped into the relayed move frame
+    if (!Number.isFinite(msg.x) || !Number.isFinite(msg.y) || typeof msg.page !== 'string') return
     if (moveGate.check(id, Date.now()) > 0) return // throttle the cursor fan-out
     // relay the visitor's chosen display name (sanitized, length-capped)
     const name = typeof msg.name === 'string'

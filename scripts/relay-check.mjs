@@ -391,6 +391,20 @@ try {
     check('a non-object payload does not crash the relay', !!(await a.next('scores')))
     a.close()
   }
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'world-join' })
+    b.send({ type: 'world-join' })
+    await Promise.all([a.next('world-state'), b.next('world-state')])
+    // JSON.parse('1e400') === Infinity — typeof is 'number', so only
+    // Number.isFinite rejects it; without the guard it relays unclamped
+    a.send({ type: 'world-cursor', x: 1e400, y: 0.5 })
+    check('a non-finite world cursor is dropped', await b.silent('world-cursor'))
+    a.close()
+    b.close()
+  }
 } finally {
   shutdown()
 }
