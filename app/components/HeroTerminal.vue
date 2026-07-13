@@ -27,7 +27,11 @@
 import { useIdle } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-const { open, isOpen } = useTerminal()
+// the lightweight launcher (open/isOpen only) instead of the full useTerminal():
+// this card renders on the home page, so pulling the whole ~45KB command registry
+// here would drag it back into the most-visited page's initial bundle and undo
+// R33's lazy-mount win. Keystrokes are carried in via the DOM input below, not run().
+const { open, isOpen } = useTerminalLauncher()
 
 // ---- idle demo reel ----
 // leave the homepage alone for a bit and the card starts window-shopping:
