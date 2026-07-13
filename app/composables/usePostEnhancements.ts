@@ -42,6 +42,28 @@ export function usePostEnhancements(bodyRef: Ref<HTMLElement | undefined>) {
     })
   }
 
+  // inline `code` spans become tap/click-to-copy, matching the fenced-block copy
+  // button — handy on touch where there's no select-and-copy
+  const enhanceInlineCode = () => {
+    const codes = bodyRef.value?.querySelectorAll<HTMLElement>('code')
+    codes?.forEach((code) => {
+      // skip fenced blocks (their <code> lives in a <pre>) and re-runs
+      if (code.closest('pre') || code.dataset.copyable) return
+      code.dataset.copyable = '1'
+      code.classList.add('inline-copy')
+      code.title = 'click to copy'
+      code.addEventListener('click', () => {
+        navigator.clipboard
+          .writeText(code.textContent)
+          .then(() => {
+            code.classList.add('is-copied')
+            setTimeout(() => code.classList.remove('is-copied'), 1200)
+          })
+          .catch(() => {})
+      })
+    })
+  }
+
   const addHeadingAnchors = () => {
     const headings = bodyRef.value?.querySelectorAll<HTMLElement>('h2[id], h3[id]')
     headings?.forEach((heading) => {
@@ -68,6 +90,7 @@ export function usePostEnhancements(bodyRef: Ref<HTMLElement | undefined>) {
 
   onMounted(() => {
     enhanceCodeBlocks()
+    enhanceInlineCode()
     addHeadingAnchors()
   })
 }

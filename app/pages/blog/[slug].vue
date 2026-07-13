@@ -364,6 +364,20 @@ usePostEnhancements(bodyRef)
     color: var(--bulma-text-weak);
   }
 
+  // inline `code` copies itself on click/tap (see usePostEnhancements)
+  :deep(code.inline-copy) {
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  :deep(code.inline-copy:hover) {
+    box-shadow: inset 0 0 0 1px hsla(var(--lv-primary-hsl), 0.5);
+  }
+
+  :deep(code.inline-copy.is-copied) {
+    background-color: hsla(var(--lv-primary-hsl), 0.22);
+  }
+
   // render the code as a grid so a highlighted line can span the full width
   // (Shiki keeps the trailing newline inside each .line, which breaks the
   // simpler inline-block approach)
