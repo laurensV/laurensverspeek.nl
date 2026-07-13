@@ -127,6 +127,14 @@
       </div>
     </div>
     <p class="settings-note">// the one volume — tray, media app and the terminal's `volume` all share it</p>
+    <div class="settings-row">
+      <span class="settings-label">keyclick</span>
+      <div class="settings-options">
+        <button :class="{ 'is-active': keyclick.enabled.value }" @click="keyclick.toggle(true)">[on]</button>
+        <button :class="{ 'is-active': !keyclick.enabled.value }" @click="keyclick.toggle(false)">[off]</button>
+      </div>
+    </div>
+    <p class="settings-note">// a subtle mechanical tick per terminal keystroke, through the shared volume (also the terminal's `keyclick`)</p>
 
     <p class="settings-section mt-4"># accessibility</p>
     <div class="settings-row">
@@ -183,6 +191,7 @@ const { wallpapers, wallpaper: wallpaperIndex } = useWallpaper()
 const { saver, saverIds, saverNames } = useScreensaverChoice()
 const nightLight = useNightLight()
 const sound = useVolume()
+const keyclick = useKeyClick()
 const reduceMotion = useReduceMotion()
 
 const { name, setName } = useIdentity()
