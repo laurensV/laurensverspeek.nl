@@ -39,8 +39,11 @@ const { name } = useIdentity()
 // this overlay is lazily mounted the moment it's opened, so the greeting and any
 // commands queued from chrome (footer's `git show`, the status-bar pet) that
 // useTerminal.open() used to handle now happen here on mount / when the queue grows
+// only greet on the first-ever open (the transcript persists across open/close)
+const greetIfFresh = () => { if (!lines.value.length) greet() }
+
 onMounted(() => {
-  if (!lines.value.length) greet()
+  greetIfFresh()
   // the console's own focus-on-active can miss during this nested lazy mount, so
   // grab the input here too — without focus, Escape and typing wouldn't reach the
   // terminal right after a lazy open. poll briefly since the input renders a tick
@@ -52,8 +55,12 @@ onMounted(() => {
   }
   void nextTick(() => focusInput())
 })
+// the immediate watch drains during setup (before onMounted), so greet FIRST or a
+// terminal opened via a queued chrome command (footer `git show`, status-bar pet)
+// would show raw command output with the welcome banner skipped
 watch(pending, (queue) => {
   if (!queue.length) return
+  greetIfFresh()
   pending.value = []
   queue.forEach(run)
 }, { immediate: true })
