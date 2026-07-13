@@ -130,6 +130,8 @@ export interface ScoreReadings {
   pong: number
   /** online pong + chess matches won against real visitors */
   duelWins: number
+  /** chess games won against the house AI */
+  chessAiWins: number
 }
 
 /** Total coins ever minted by the visitor's high scores. */
@@ -141,6 +143,7 @@ export function coinsEarned(scores: ScoreReadings): number {
     + scores.minesBests * 15
     + Math.floor(scores.pong / 2)
     + scores.duelWins * 10
+    + scores.chessAiWins * 5
 }
 
 /** Dress the face: head gear in front, neckwear behind. */

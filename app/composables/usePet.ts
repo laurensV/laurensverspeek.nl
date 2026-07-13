@@ -21,7 +21,8 @@ const readScores = (): ScoreReadings => {
     minesBests: ['beginner', 'intermediate', 'expert']
       .filter((level) => num(`lvos-mines-best-${level}`) > 0).length,
     pong: num('lv-pong-highscore'),
-    duelWins: num('lv-pong-online-wins') + num('lv-chess-online-wins') + num('lv-wpm-race-wins')
+    duelWins: num('lv-pong-online-wins') + num('lv-chess-online-wins') + num('lv-wpm-race-wins'),
+    chessAiWins: num('lv-chess-ai-wins')
   }
 }
 

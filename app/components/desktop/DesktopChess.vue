@@ -44,6 +44,7 @@ import {
 } from '~/utils/chess'
 import type { ChessState, ChessMove, Piece } from '~/utils/chess'
 import { storageGetJson, storageSetJson, storageRemove } from '~/utils/safeStorage'
+import { bumpTally, celebrateNewBest } from '~/utils/terminalGameKit'
 
 // Chess against a small pure engine (utils/chess). The game survives closing
 // the window: state persists per move and restores on reopen.
@@ -176,6 +177,23 @@ const reset = () => {
   lastMove.value = []
   storageRemove(SAVE_KEY)
 }
+
+// checkmating the house feeds the shared economy like every other game: a tally
+// the hall of fame + pet coins read, plus the win-confetti. (turn 'b' at
+// checkmate = black/the house is mated, i.e. the player won.) The watch only
+// reacts to a live transition, so reopening an already-won board doesn't re-count.
+let aiWinRecorded = false
+watch(over, (result) => {
+  if (isOnline.value) return
+  if (result === 'checkmate' && game.value.turn === 'b') {
+    if (aiWinRecorded) return
+    aiWinRecorded = true
+    bumpTally('lv-chess-ai-wins')
+    celebrateNewBest()
+  } else if (!result) {
+    aiWinRecorded = false
+  }
+})
 
 // restored mid-house-turn (closed the window while it thought): finish the move
 onMounted(houseReply)

@@ -64,6 +64,7 @@ const rows = [
   { game: 'minesweeper · intermediate', value: readNumber('lvos-mines-best-intermediate'), unit: 'seconds' },
   { game: 'minesweeper · expert', value: readNumber('lvos-mines-best-expert'), unit: 'seconds' },
   { game: 'pong online', value: readNumber('lv-pong-online-wins'), unit: 'duels won' },
+  { game: 'chess · vs house', value: readNumber('lv-chess-ai-wins'), unit: 'wins' },
   { game: 'chess online', value: readNumber('lv-chess-online-wins'), unit: 'duels won' },
   { game: 'typing race', value: readNumber('lv-wpm-race-wins'), unit: 'races won' }
 ]
