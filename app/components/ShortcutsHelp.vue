@@ -8,8 +8,9 @@
         aria-modal="true"
         aria-label="Keyboard shortcuts"
         @click.self="isOpen = false"
+        @keydown="onModalKeydown"
       >
-        <div class="shortcuts-window is-family-code">
+        <div ref="windowRef" class="shortcuts-window is-family-code">
           <TuiFrame />
           <header class="shortcuts-head">
             <span class="shortcuts-title">$ man laurensverspeek</span>
@@ -37,18 +38,20 @@ import { onKeyStroke } from '@vueuse/core'
 import { siteShortcuts } from '~/data/shortcuts'
 
 const isOpen = ref(false)
+const windowRef = ref<HTMLElement | null>(null)
 
 const GROUPS = siteShortcuts
+
+// treat it like the terminal/palette modals: move focus in, trap Tab, close on
+// Escape, restore focus to the trigger (the overlay claimed aria-modal but did
+// none of this before)
+const { onKeydown: onModalKeydown } = useModalMenu(isOpen, windowRef)
 
 onKeyStroke('?', (event) => {
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()
   isOpen.value = !isOpen.value
-})
-
-onKeyStroke('Escape', () => {
-  if (isOpen.value) isOpen.value = false
 })
 </script>
 
