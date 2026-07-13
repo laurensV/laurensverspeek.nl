@@ -9,6 +9,7 @@ export function useTaskbarPopovers(
   calendarOpen: Ref<boolean>,
   notifOpen: Ref<boolean>,
   volumeOpen: Ref<boolean>,
+  moreOpen: Ref<boolean>,
   onNotifOpen: () => void
 ) {
   const closePopovers = () => {
@@ -16,6 +17,7 @@ export function useTaskbarPopovers(
     calendarOpen.value = false
     notifOpen.value = false
     volumeOpen.value = false
+    moreOpen.value = false
   }
 
   const toggleNotifications = () => {
@@ -43,10 +45,17 @@ export function useTaskbarPopovers(
     volumeOpen.value = next
   }
 
+  // the collapsed tray items (weather/battery/tile/fullscreen) on a phone
+  const toggleMore = () => {
+    const next = !moreOpen.value
+    closePopovers()
+    moreOpen.value = next
+  }
+
   useEventListener(document, 'pointerdown', (event: PointerEvent) => {
     if ((event.target as HTMLElement).closest('.lvos-taskbar')) return
     closePopovers()
   })
 
-  return { closePopovers, toggleStart, toggleCalendar, toggleNotifications, toggleVolume }
+  return { closePopovers, toggleStart, toggleCalendar, toggleNotifications, toggleVolume, toggleMore }
 }

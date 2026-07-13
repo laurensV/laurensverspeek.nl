@@ -62,21 +62,50 @@
     </div>
 
     <!-- the tray: weather, battery, tiling, fullscreen, bell and clock sit
-         together at the right, like every desktop since 1995 -->
+         together at the right, like every desktop since 1995. On a phone the
+         first four collapse behind a ⋯ toggle so the row can't overflow. -->
     <div class="lvos-tray">
       <button
-        v-if="weather.temp.value !== null"
-        class="lvos-tray-btn lvos-weather"
-        title="Amsterdam · live from open-meteo — open the forecast"
-        aria-label="Open the weather app"
-        @click="emit('open', 'weather')"
-      >{{ weather.glyph.value }} {{ weather.temp.value }}°</button>
+        class="lvos-tray-btn lvos-tray-toggle"
+        :class="{ 'is-open': moreOpen }"
+        :aria-expanded="moreOpen"
+        aria-label="More tray items"
+        @click="toggleMore"
+      >⋯</button>
+      <div class="lvos-tray-more" :class="{ 'is-open': moreOpen }">
+        <button
+          v-if="weather.temp.value !== null"
+          class="lvos-tray-btn lvos-weather"
+          title="Amsterdam · live from open-meteo — open the forecast"
+          aria-label="Open the weather app"
+          @click="emit('open', 'weather')"
+        >{{ weather.glyph.value }} {{ weather.temp.value }}°</button>
 
-      <span
-        v-if="battery.supported.value && battery.percent.value !== null"
-        class="lvos-tray-btn lvos-battery"
-        :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
-      >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
+        <span
+          v-if="battery.supported.value && battery.percent.value !== null"
+          class="lvos-tray-btn lvos-battery"
+          :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
+        >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
+
+        <button
+          class="lvos-tray-btn lvos-tile"
+          title="Tile windows"
+          aria-label="Tile windows into a grid"
+          @click="emit('tile')"
+        >
+          <AppIcon name="grid" :size="14" />
+        </button>
+
+        <button
+          class="lvos-tray-btn lvos-fullscreen"
+          :aria-pressed="isFullscreen"
+          :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+          aria-label="Toggle fullscreen"
+          @click="toggleFullscreen"
+        >
+          <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
+        </button>
+      </div>
 
       <button
         class="lvos-tray-btn lvos-volume"
@@ -102,25 +131,6 @@
         >
         <span class="lvos-volume-val">{{ muted ? '--' : volume }}</span>
       </div>
-
-      <button
-        class="lvos-tray-btn lvos-tile"
-        title="Tile windows"
-        aria-label="Tile windows into a grid"
-        @click="emit('tile')"
-      >
-        <AppIcon name="grid" :size="14" />
-      </button>
-
-      <button
-        class="lvos-tray-btn lvos-fullscreen"
-        :aria-pressed="isFullscreen"
-        :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-        aria-label="Toggle fullscreen"
-        @click="toggleFullscreen"
-      >
-        <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
-      </button>
 
       <button
         class="lvos-tray-btn lvos-bell"
@@ -180,8 +190,10 @@ const notifOpen = defineModel<boolean>('notifOpen', { default: false })
 const volumeOpen = defineModel<boolean>('volumeOpen', { default: false })
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
 
-const { toggleStart, toggleCalendar, toggleNotifications, toggleVolume } = useTaskbarPopovers(
-  startOpen, calendarOpen, notifOpen, volumeOpen, () => emit('read')
+// collapsed-tray state is local (touch-only, dismissed by outside-click)
+const moreOpen = ref(false)
+const { toggleStart, toggleCalendar, toggleNotifications, toggleVolume, toggleMore } = useTaskbarPopovers(
+  startOpen, calendarOpen, notifOpen, volumeOpen, moreOpen, () => emit('read')
 )
 
 // one real volume: the slider here is the same state the chiptune engine obeys
@@ -450,6 +462,44 @@ const clock = computed(() =>
   gap: 0.4rem;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+// the ⋯ toggle only exists on touch; on desktop the group sits inline
+.lvos-tray-toggle {
+  display: none;
+}
+
+.lvos-tray-more {
+  display: contents;
+}
+
+@media (pointer: coarse) {
+  .lvos-tray-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // weather / battery / tile / fullscreen collapse into a popover so the tray
+  // can't overflow a narrow phone; only volume, bell and clock stay in the row
+  .lvos-tray-more {
+    display: none;
+
+    &.is-open {
+      display: flex;
+      position: absolute;
+      right: 0.5rem;
+      bottom: 3.3rem;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding: 0.5rem;
+      z-index: 10000;
+      border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
+      border-radius: var(--bulma-radius);
+
+      @include lv-glass(8%, 0.98, 0.8, 16px);
+    }
+  }
 }
 
 // tray buttons (tile, fullscreen, …) sit at the right, next to the clock
