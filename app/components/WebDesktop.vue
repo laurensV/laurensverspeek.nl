@@ -651,10 +651,7 @@ useDesktopShortcuts({
   // tools, Gallery's 'set as wallpaper'). Move to the top, over the titlebar
   // drag-area which has no inputs to cover.
   @media (pointer: coarse) {
-    top: 0.75rem;
-    bottom: auto;
-    left: 1rem;
-    right: 1rem;
+    inset: 0.75rem 1rem auto; // top / left+right / bottom:auto
     max-width: none;
   }
 }
