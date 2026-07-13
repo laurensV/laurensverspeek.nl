@@ -24,6 +24,9 @@
 <script setup lang="ts">
 import { usePreferredReducedMotion, useEventListener } from '@vueuse/core'
 import { registerBootProc, unregisterBootProc } from '~/utils/terminal/effectProcs'
+import { playBootChime } from '~/utils/bootChime'
+
+const { volume, muted } = useVolume()
 
 const BOOT_LINES = [
   'BIOS laurensverspeek.nl v2.0.0',
@@ -57,6 +60,10 @@ const play = () => {
   shownLines.value = []
   done.value = false
   visible.value = true
+  // startup chime, unless muted or silenced — sounds on user-triggered boots
+  // (`reboot`, entering lvOS); autoplay policy quietly blocks it on a gesture-less
+  // first visit. quiet-boot skips play() entirely, so it's covered too.
+  if (!muted.value && volume.value > 0) playBootChime(volume.value / 100)
   BOOT_LINES.forEach((line, i) => {
     timers.push(setTimeout(() => shownLines.value.push(line), 120 + i * 160))
   })
