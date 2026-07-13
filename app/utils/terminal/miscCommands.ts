@@ -252,6 +252,22 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         muted('flattens every animation site-wide, on top of your OS setting')
       }
     },
+    settings: {
+      category: 'system',
+      description: 'Show every appearance, sound and accessibility setting at a glance',
+      exec: () => {
+        push('primary', 'lvOS settings — the live state every surface shares')
+        const row = (label: string, value: string) => out(`  ${label.padEnd(14)} ${value}`)
+        row('theme', ctx.colorMode.preference)
+        row('accent', ctx.accent.current.value)
+        row('volume', sound.muted.value ? `${sound.volume.value}% (muted)` : `${sound.volume.value}%`)
+        row('wallpaper', paper.wallpapers.value[paper.wallpaper.value]?.name ?? '—')
+        row('screensaver', screensaver.saverNames[screensaver.saver.value])
+        row('night light', nightLight.enabled.value ? `on (warmth ${nightLight.warmth.value}%)` : 'off')
+        row('reduce motion', motion.enabled.value ? 'on' : 'off')
+        muted('change any of these here (theme/colorscheme/volume/wallpaper/screensaver/nightlight/reducemotion) or in lvOS Settings')
+      }
+    },
     reboot: {
       category: 'system',
       description: 'Replay the boot sequence',
