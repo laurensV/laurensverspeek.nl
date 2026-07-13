@@ -4,7 +4,7 @@
     <div class="destroyer-hud is-family-code">
       <span class="destroyer-score">☠ {{ score }} destroyed</span>
       <span class="destroyer-hint destroyer-hint-keys"><kbd>↑</kbd>/<kbd>w</kbd> thrust · <kbd>←</kbd><kbd>→</kbd> rotate · <kbd>space</kbd> fires · <kbd>esc</kbd> ends &amp; repairs</span>
-      <span class="destroyer-hint destroyer-hint-touch">drag to fly · tap (or hold fire) to shoot · ✕ repairs</span>
+      <span class="destroyer-hint destroyer-hint-touch">joystick flies · hold fire to shoot · ✕ repairs</span>
       <button class="destroyer-exit" aria-label="End destroy mode and repair the site" title="End & repair" @click="endMode">✕</button>
     </div>
     <button
@@ -16,6 +16,10 @@
       @pointerleave="setFiring(false)"
       @contextmenu.prevent
     >fire</button>
+    <!-- virtual joystick (touch): push the knob to steer + thrust -->
+    <div class="destroyer-stick" aria-label="Steering joystick" @pointerdown.prevent="stickDown">
+      <div class="destroyer-stick-knob" :style="knobStyle" />
+    </div>
   </div>
 </template>
 
@@ -65,9 +69,15 @@ const anyHeld = (keys: Set<string>) => [...keys].some((key) => held.has(key))
 let firing = false
 let lastShot = 0
 
-// touch flies by dragging: the ship turns toward the finger and thrusts (a tap fires)
-let touchSteer: { id: number, startX: number, startY: number, moved: boolean } | null = null
-let touchPoint = { x: 0, y: 0 }
+// touch flies with a virtual joystick (bottom-right): the knob's offset from
+// centre is the steering direction, its distance the thrust. STICK_RADIUS is the
+// knob's max travel in px (matches the CSS ring); DEADZONE ignores tiny wobbles.
+const STICK_RADIUS = 40
+const STICK_DEADZONE = 0.2
+const stick = reactive({ id: -1, cx: 0, cy: 0, dx: 0, dy: 0, active: false })
+const knobStyle = computed(() => ({ transform: `translate(${(stick.dx * STICK_RADIUS).toFixed(1)}px, ${(stick.dy * STICK_RADIUS).toFixed(1)}px)` }))
+const stickMag = () => Math.hypot(stick.dx, stick.dy)
+const stickEngaged = () => stick.active && stickMag() > STICK_DEADZONE
 
 // does this element still have visible element children? a container is only
 // destroyable once its children are cleared — so you dismantle inner-to-outer
@@ -148,14 +158,14 @@ const flyBullet = (bullet: Bullet, dt: number): boolean => {
   return false
 }
 
-const thrustingForward = () => anyHeld(FORWARD) || touchSteer?.moved === true
+const thrustingForward = () => anyHeld(FORWARD) || stickEngaged()
 
 const moveShip = (dt: number) => {
-  // touch aims the nose toward the finger; keys rotate ← / →
-  if (touchSteer?.moved) {
-    ship.angle = steerToward(ship, touchPoint.x, touchPoint.y, dt)
+  // the joystick aims the nose along its push direction; keys rotate ← / →
+  if (stickEngaged()) {
+    ship.angle = steerToward(ship, ship.x + stick.dx * 1000, ship.y + stick.dy * 1000, dt)
   }
-  const turn = touchSteer?.moved ? 0 : (anyHeld(RIGHT) ? 1 : 0) - (anyHeld(LEFT) ? 1 : 0)
+  const turn = stickEngaged() ? 0 : (anyHeld(RIGHT) ? 1 : 0) - (anyHeld(LEFT) ? 1 : 0)
   // the pure Asteroids model advances heading + momentum (utils/shipPhysics)
   const next = stepShip(ship, { thrust: thrustingForward(), turn, dt })
   Object.assign(ship, next)
@@ -267,34 +277,45 @@ const setFiring = (value: boolean) => {
   firing = value
 }
 
-// pointer: mouse click fires along the current heading (no mouse-aiming); touch
-// drags to steer, a tap fires
-useEventListener('pointermove', (event: PointerEvent) => {
-  if (touchSteer && event.pointerId === touchSteer.id) {
-    touchPoint = { x: event.clientX, y: event.clientY }
-    if (Math.hypot(event.clientX - touchSteer.startX, event.clientY - touchSteer.startY) > 12) {
-      touchSteer.moved = true
-    }
-  }
-})
-useEventListener('pointerdown', (event: PointerEvent) => {
-  // the HUD is neutral ground
-  if ((event.target as HTMLElement).closest('.destroyer-hud, .destroyer-fire')) return
-  if (event.pointerType === 'touch') {
-    // wait and see: a drag flies the ship, a tap fires (decided on release)
-    touchSteer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false }
-    touchPoint = { x: event.clientX, y: event.clientY }
-    return
-  }
-  shootForward() // mouse: one shot straight ahead
-})
-const endTouch = (event: PointerEvent) => {
-  if (!touchSteer || event.pointerId !== touchSteer.id) return
-  if (!touchSteer.moved) shootForward() // it was a tap
-  touchSteer = null
+// the joystick: knob follows the finger, clamped to the ring; its offset drives
+// steering + thrust (read in moveShip). The pointer is captured so a drag off
+// the ring still tracks.
+const setKnob = (clientX: number, clientY: number) => {
+  let ox = (clientX - stick.cx) / STICK_RADIUS
+  let oy = (clientY - stick.cy) / STICK_RADIUS
+  const mag = Math.hypot(ox, oy)
+  if (mag > 1) { ox /= mag; oy /= mag }
+  stick.dx = ox
+  stick.dy = oy
 }
-useEventListener('pointerup', endTouch)
-useEventListener('pointercancel', endTouch)
+const stickDown = (event: PointerEvent) => {
+  const el = event.currentTarget as HTMLElement
+  const rect = el.getBoundingClientRect()
+  stick.cx = rect.left + rect.width / 2
+  stick.cy = rect.top + rect.height / 2
+  stick.id = event.pointerId
+  stick.active = true
+  setKnob(event.clientX, event.clientY)
+  el.setPointerCapture(event.pointerId)
+}
+const releaseStick = (event: PointerEvent) => {
+  if (event.pointerId !== stick.id) return
+  stick.active = false
+  stick.id = -1
+  stick.dx = 0
+  stick.dy = 0
+}
+useEventListener('pointermove', (event: PointerEvent) => {
+  if (stick.active && event.pointerId === stick.id) setKnob(event.clientX, event.clientY)
+})
+useEventListener('pointerup', releaseStick)
+useEventListener('pointercancel', releaseStick)
+// mouse click on the page fires one shot straight ahead (no mouse-aiming)
+useEventListener('pointerdown', (event: PointerEvent) => {
+  if (event.pointerType === 'touch') return // touch steers with the joystick
+  if ((event.target as HTMLElement).closest('.destroyer-hud, .destroyer-fire, .destroyer-stick')) return
+  shootForward()
+})
 
 // keys the browser would scroll with, beyond the ship's own controls
 const SCROLL_KEYS = new Set(['pageup', 'pagedown', 'home', 'end'])
@@ -337,7 +358,10 @@ useEventListener(window, 'touchmove', (event: Event) => event.preventDefault(), 
 useEventListener(window, 'blur', () => {
   held.clear()
   firing = false
-  touchSteer = null
+  stick.active = false
+  stick.id = -1
+  stick.dx = 0
+  stick.dy = 0
 })
 onUnmounted(() => {
   cancelAnimationFrame(raf)
@@ -356,24 +380,26 @@ onUnmounted(() => {
   // hit-testing); shooting + page-click suppression run on window listeners
   pointer-events: none;
 
-  // only the HUD (and the touch fire button) is interactive
+  // only the HUD and the touch controls (fire button + joystick) are interactive
   .destroyer-hud,
-  .destroyer-fire {
+  .destroyer-fire,
+  .destroyer-stick {
     pointer-events: auto;
   }
 }
 
-// a thumb-sized held-to-fire button, only where fingers are the pointer
+// a thumb-sized held-to-fire button at bottom-left (the joystick owns the
+// right), only where fingers are the pointer
 .destroyer-fire {
   display: none;
 
   @media (pointer: coarse) {
     display: block;
     position: absolute;
-    right: 1.1rem;
-    bottom: 5.5rem;
-    width: 4.4rem;
-    height: 4.4rem;
+    left: 1.1rem;
+    bottom: 2rem;
+    width: 4.6rem;
+    height: 4.6rem;
     border: 2px solid hsla(var(--lv-primary-hsl), 0.7);
     border-radius: 50%;
     background-color: hsla(var(--lv-scheme-hs), 6%, 0.8);
@@ -387,6 +413,35 @@ onUnmounted(() => {
     &:active {
       background-color: hsla(var(--lv-primary-hsl), 0.3);
     }
+  }
+}
+
+// the virtual joystick at bottom-right: a ring the thumb pushes a knob around
+.destroyer-stick {
+  display: none;
+
+  @media (pointer: coarse) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 1.1rem;
+    bottom: 2rem;
+    width: 7.5rem;
+    height: 7.5rem;
+    border: 2px solid hsla(var(--lv-primary-hsl), 0.5);
+    border-radius: 50%;
+    background-color: hsla(var(--lv-scheme-hs), 6%, 0.6);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .destroyer-stick-knob {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background-color: hsla(var(--lv-primary-hsl), 0.6);
+    pointer-events: none;
   }
 }
 
