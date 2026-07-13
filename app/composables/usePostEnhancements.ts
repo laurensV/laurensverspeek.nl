@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { writeClipboard } from '~/utils/clipboard'
 
 /**
  * Post-render DOM garnish on a rendered post body: copy buttons + language
@@ -24,19 +25,18 @@ export function usePostEnhancements(bodyRef: Ref<HTMLElement | undefined>) {
       button.type = 'button'
       button.textContent = '[copy]'
       button.addEventListener('click', () => {
-        navigator.clipboard
-          .writeText(pre.querySelector('code')?.textContent ?? '')
-          .then(() => {
-            button.textContent = '[copied!]'
-            button.classList.add('is-copied')
-            setTimeout(() => {
-              button.textContent = '[copy]'
-              button.classList.remove('is-copied')
-            }, 1600)
-          })
-          .catch(() => {
+        void writeClipboard(pre.querySelector('code')?.textContent ?? '').then((ok) => {
+          if (!ok) {
             button.textContent = '[nope :(]'
-          })
+            return
+          }
+          button.textContent = '[copied!]'
+          button.classList.add('is-copied')
+          setTimeout(() => {
+            button.textContent = '[copy]'
+            button.classList.remove('is-copied')
+          }, 1600)
+        })
       })
       pre.appendChild(button)
     })
@@ -53,13 +53,11 @@ export function usePostEnhancements(bodyRef: Ref<HTMLElement | undefined>) {
       code.classList.add('inline-copy')
       code.title = 'click to copy'
       code.addEventListener('click', () => {
-        navigator.clipboard
-          .writeText(code.textContent)
-          .then(() => {
-            code.classList.add('is-copied')
-            setTimeout(() => code.classList.remove('is-copied'), 1200)
-          })
-          .catch(() => {})
+        void writeClipboard(code.textContent).then((ok) => {
+          if (!ok) return
+          code.classList.add('is-copied')
+          setTimeout(() => code.classList.remove('is-copied'), 1200)
+        })
       })
     })
   }
@@ -76,13 +74,11 @@ export function usePostEnhancements(bodyRef: Ref<HTMLElement | undefined>) {
       anchor.addEventListener('click', (event) => {
         event.preventDefault()
         history.replaceState(null, '', `#${heading.id}`)
-        navigator.clipboard
-          .writeText(`${location.origin}${location.pathname}#${heading.id}`)
-          .then(() => {
-            anchor.classList.add('is-copied')
-            setTimeout(() => anchor.classList.remove('is-copied'), 1200)
-          })
-          .catch(() => {})
+        void writeClipboard(`${location.origin}${location.pathname}#${heading.id}`).then((ok) => {
+          if (!ok) return
+          anchor.classList.add('is-copied')
+          setTimeout(() => anchor.classList.remove('is-copied'), 1200)
+        })
       })
       heading.appendChild(anchor)
     })

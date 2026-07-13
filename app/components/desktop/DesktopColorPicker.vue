@@ -50,6 +50,7 @@
 
 <script setup lang="ts">
 import { hslToRgb, rgbToHex, rgbToHsl, hexToRgb } from '~/utils/color'
+import { writeClipboard } from '~/utils/clipboard'
 import type { Accent } from '~/composables/useAccent'
 
 // An eyedropper + HSL colour tool. Copies hex/rgb/hsl, samples screen colours
@@ -72,7 +73,7 @@ const hasEyeDropper = import.meta.client && 'EyeDropper' in window
 const copied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | undefined
 const copyValue = (value: string) => {
-  void navigator.clipboard.writeText(value)
+  void writeClipboard(value)
   copied.value = true
   clearTimeout(copyTimer)
   copyTimer = setTimeout(() => (copied.value = false), 1200)

@@ -63,6 +63,7 @@
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
+import { writeClipboard } from '~/utils/clipboard'
 
 const { name } = useIdentity()
 
@@ -157,7 +158,7 @@ const reset = () => {
 }
 
 const copyEmail = async () => {
-  await navigator.clipboard.writeText(profile.email)
+  if (!await writeClipboard(profile.email)) return
   copied.value = true
   setTimeout(() => (copied.value = false), 2000)
 }

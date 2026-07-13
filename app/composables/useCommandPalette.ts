@@ -3,6 +3,7 @@ import { projects } from '~/data/projects'
 import { profile } from '~/data/profile'
 import { uses } from '~/data/uses'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { writeClipboard } from '~/utils/clipboard'
 
 export interface PaletteAction {
   id: string
@@ -259,7 +260,7 @@ export function useCommandPalette() {
       keywords: 'share url copy clipboard link',
       perform: () => {
         close()
-        if (import.meta.client) navigator.clipboard.writeText(window.location.href).catch(() => {})
+        void writeClipboard(window.location.href)
       }
     },
     ...profile.socials.map<PaletteAction>((social) => ({

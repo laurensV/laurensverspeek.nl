@@ -69,7 +69,9 @@ export const STATE_KEYS = {
   lvosMuted: 'lvos-muted',
   lvosSaver: 'lvos-saver',
   // an app id the terminal `desktop <app>` command wants opened once lvOS mounts
-  lvosPendingApp: 'lvos-pending-app'
+  lvosPendingApp: 'lvos-pending-app',
+  // recent clipboard copies, for the lvOS Clipboard app
+  clipboardHistory: 'clipboard-history'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]

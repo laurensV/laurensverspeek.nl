@@ -8,6 +8,7 @@ import { completeInput } from '~/utils/terminal/completion'
 import { nearestCommand } from '~/utils/terminal/nearestCommand'
 import { createPager } from '~/utils/terminal/pager'
 import { escapeHtml } from '~/utils/escapeHtml'
+import { writeClipboard } from '~/utils/clipboard'
 import { loadHistory, saveHistory } from '~/utils/terminal/history'
 import { planRun } from '~/utils/terminal/planRun'
 import { splitChain, shouldRunNext } from '~/utils/terminal/chain'
@@ -316,9 +317,10 @@ export function useTerminal() {
       }
       if (toClipboard) {
         const text = result.map((line) => stripHtml(line.text)).join('\n')
-        navigator.clipboard.writeText(text)
-          .then(() => muted(`copied ${result.length} line${result.length === 1 ? '' : 's'} to the clipboard`))
-          .catch(() => error('copy: the clipboard said no'))
+        void writeClipboard(text)
+          .then((ok) => ok
+            ? muted(`copied ${result.length} line${result.length === 1 ? '' : 's'} to the clipboard`)
+            : error('copy: the clipboard said no'))
         return
       }
       if (redirectFile) {
