@@ -37,7 +37,7 @@ export function useDesktopPower(deps: {
   // would snap the desktop back to full size for a frame before it unmounts.
   const powerOff = (after: () => void, keepDim = false) => {
     closeMenus()
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return after()
+    if (prefersReducedMotion()) return after()
     poweringOff.value = true
     powerTimer = setTimeout(() => {
       after()

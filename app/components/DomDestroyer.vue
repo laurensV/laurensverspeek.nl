@@ -45,7 +45,7 @@ let particles: DebrisParticle[] = []
 let bullets: Bullet[] = []
 let destroyed: { el: HTMLElement, visibility: string }[] = []
 let raf = 0
-const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const reduced = prefersReducedMotion()
 
 // ---- ship physics (the pure flight model lives in utils/shipPhysics) ----
 const BULLET_SPEED = 1400 // px/s

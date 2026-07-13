@@ -100,7 +100,7 @@ export function useSpinnerFrames(spinnerLabel: Ref<string>) {
   watch(spinnerLabel, (label) => {
     clearInterval(timer)
     if (!label || !import.meta.client) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (prefersReducedMotion()) {
       spinnerFrame.value = '⠿'
       return
     }

@@ -9,7 +9,7 @@ export function useThemeSwitch() {
 
   const apply = (next: 'dark' | 'light', event?: MouseEvent) => {
     if (!import.meta.client) return
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reduce = prefersReducedMotion()
     const canAnimate = typeof Element !== 'undefined' && 'animate' in Element.prototype
 
     if (reduce || !canAnimate) {

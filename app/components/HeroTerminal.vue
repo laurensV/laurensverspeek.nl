@@ -56,7 +56,7 @@ const stepDemo = (target: string, len: number, phase: 'type' | 'hold' | 'erase')
 
 watch(idle, (isIdle) => {
   clearTimeout(demoTimer)
-  if (isIdle && !isOpen.value && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (isIdle && !isOpen.value && !prefersReducedMotion()) {
     stepDemo(DEMO_COMMANDS[demoIndex]!, 1, 'type')
   } else {
     demoText.value = ''

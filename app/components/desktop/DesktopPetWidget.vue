@@ -40,7 +40,7 @@ const wander = () => {
 }
 
 onMounted(() => {
-  still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  still = prefersReducedMotion()
   wanderTimer = setInterval(wander, 3400)
 })
 onUnmounted(() => {

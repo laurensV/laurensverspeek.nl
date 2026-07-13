@@ -92,7 +92,7 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
       hidden: true,
       description: 'Star Fox taught us well',
       exec: () => {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (prefersReducedMotion()) {
           muted('reduced motion is on — please imagine the site doing a 360° 🌀')
           return
         }
@@ -161,7 +161,7 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
       description: 'Light up the night sky (pid 1231 if you regret it)',
       exec: () => {
         // reduced motion gets a handcrafted burst instead of the canvas show
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (prefersReducedMotion()) {
           out(String.raw`       .  *  .`)
           out(String.raw`    *  \ | /  *`)
           out(String.raw`   .  ~ -o- ~  .`)

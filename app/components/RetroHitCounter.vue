@@ -25,7 +25,7 @@ const digits = ref<string[] | null>(null)
 let rollTimer: ReturnType<typeof setInterval> | undefined
 const rollTo = (count: string) => {
   const target = Number(count.replace(/\D/g, '')) || 0
-  if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!target || prefersReducedMotion()) {
     digits.value = formatHits(count)
     return
   }

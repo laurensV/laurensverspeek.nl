@@ -29,7 +29,14 @@ export function useCanvasScene(
   scene: CanvasScene,
   options: CanvasSceneOptions = {}
 ) {
-  const reducedMotion = usePreferredReducedMotion()
+  // honour BOTH the OS media query and the site's manual "reduce motion" switch
+  // (useReduceMotion's shared state), reactively — toggling either stops/starts
+  // ambient scenes; alwaysAnimate scenes (deliberate effects) ignore both.
+  const osReducedMotion = usePreferredReducedMotion()
+  const manualReducedMotion = useState(STATE_KEYS.reduceMotion, () => false)
+  const reducedMotion = computed(
+    () => manualReducedMotion.value || osReducedMotion.value === 'reduce'
+  )
   const visibility = useDocumentVisibility()
   let ctx: CanvasRenderingContext2D | null = null
   let rafId = 0
@@ -59,7 +66,7 @@ export function useCanvasScene(
   const start = () => {
     cancelAnimationFrame(rafId)
     if (!scene.onFrame || visibility.value !== 'visible') return
-    if (!options.alwaysAnimate && reducedMotion.value === 'reduce') return
+    if (!options.alwaysAnimate && reducedMotion.value) return
     last = performance.now()
     rafId = requestAnimationFrame(loop)
   }

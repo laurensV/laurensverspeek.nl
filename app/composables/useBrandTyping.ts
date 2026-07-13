@@ -13,7 +13,7 @@ export function useBrandTyping() {
   const expandBrand = (expand: boolean) => {
     if (brandTimer) clearInterval(brandTimer)
     const target = expand ? BRAND_FRAMES.length - 1 : 0
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (prefersReducedMotion()) {
       brandFrame.value = target
       return
     }

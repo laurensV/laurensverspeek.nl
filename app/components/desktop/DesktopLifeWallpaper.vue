@@ -56,7 +56,7 @@ const tick = () => {
 
 onMounted(() => {
   fit()
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!prefersReducedMotion()) {
     timer = setInterval(tick, TICK_MS)
   }
 })

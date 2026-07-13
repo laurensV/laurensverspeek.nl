@@ -49,7 +49,7 @@ const run = () => {
   canvas.height = h * dpr
   ctx.scale(dpr, dpr)
 
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reduced = prefersReducedMotion()
   const bits = spawn(w, h)
 
   if (reduced) {

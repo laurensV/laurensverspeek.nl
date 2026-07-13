@@ -70,7 +70,7 @@ const loop = (t: number) => {
 }
 
 onMounted(() => {
-  spinning.value = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  spinning.value = !prefersReducedMotion()
   last = performance.now()
   frame.value = renderTeapot(points, angleY.value, angleX.value) // always show one
   // under reduced motion there's no idle spin, but drags still re-render

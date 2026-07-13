@@ -25,7 +25,7 @@ const frame = computed(() => renderGlobe(spin.value, GLOBE_W, GLOBE_H, markers.v
 
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reduced = prefersReducedMotion()
   if (reduced) return // a still earth for reduced-motion; markers still plot
   timer = setInterval(() => (spin.value += 0.08), 90)
 })

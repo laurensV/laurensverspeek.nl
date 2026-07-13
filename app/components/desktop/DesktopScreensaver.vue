@@ -60,7 +60,7 @@ onMounted(() => {
   }
 
   // reduced motion: paint a single quiet frame; the clock still ticks
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (prefersReducedMotion()) {
     draw()
     return
   }

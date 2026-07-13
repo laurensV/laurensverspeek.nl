@@ -43,7 +43,7 @@ let raf = 0
 watch([data, visible], ([value, seen]) => {
   if (!value || !seen || played) return
   played = true
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (prefersReducedMotion()) return
   cancelAnimationFrame(raf)
   progress.value = 0
   const start = performance.now()

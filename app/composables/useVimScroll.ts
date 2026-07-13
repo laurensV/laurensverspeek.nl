@@ -39,7 +39,7 @@ export function useVimScroll() {
   }
 
   const behavior = (): ScrollBehavior =>
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    prefersReducedMotion() ? 'auto' : 'smooth'
 
   const allowed = (event: KeyboardEvent): boolean => {
     if (event.ctrlKey || event.metaKey || event.altKey) return false

@@ -65,8 +65,7 @@ const trailRef = ref<HTMLCanvasElement>()
 interface Spark { x: number, y: number, life: number }
 let sparks: Spark[] = []
 let trailRaf = 0
-const reducedMotion = () =>
-  import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const reducedMotion = () => prefersReducedMotion()
 
 const fitTrail = () => {
   const canvas = trailRef.value
