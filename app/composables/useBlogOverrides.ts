@@ -1,4 +1,5 @@
 import type { Filesystem } from '~/utils/terminal/filesystem'
+import { loadFs } from '~/utils/terminal/filesystem'
 import { parseFrontmatter, parseTagList, renderMarkdownLite } from '~/utils/markdownLite'
 
 export interface BlogOverride {
@@ -23,7 +24,16 @@ export function useBlogOverrides() {
   // overrides live in localStorage, which the server-rendered page can't see —
   // apply them only after mount so hydration matches the static markup
   const mounted = ref(false)
-  onMounted(() => (mounted.value = true))
+  onMounted(() => {
+    mounted.value = true
+    // the terminal normally restores the saved VFS into this state, but it's now
+    // lazily mounted and may never open on a plain blog page — hydrate the user's
+    // saved files ourselves so an edit made earlier still shows here
+    if (!Object.keys(files.value).length) {
+      const saved = loadFs()
+      if (saved && Object.keys(saved).length) files.value = saved
+    }
+  })
 
   /** Plain reactive read — call it inside a computed or template. */
   const overrideFor = (slug: string): BlogOverride | null => {

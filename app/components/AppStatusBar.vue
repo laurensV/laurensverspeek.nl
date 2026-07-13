@@ -67,8 +67,10 @@
 </template>
 
 <script setup lang="ts">
-const terminal = useTerminal()
-const palette = useCommandPalette()
+// lightweight openers so the status bar doesn't drag the terminal/palette
+// command registries onto every page (the overlays are lazily mounted)
+const terminal = useTerminalLauncher()
+const palette = usePaletteLauncher()
 const colorMode = useColorMode()
 const online = useOnline()
 

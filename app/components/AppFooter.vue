@@ -39,7 +39,8 @@ import { profile } from '~/data/profile'
 import type { IconName } from '~/utils/icons'
 import { bugReportUrl } from '~/utils/bugReport'
 
-const { open, run } = useTerminal()
+// lightweight opener (keeps the terminal registry out of the footer/every page)
+const { open, run } = useTerminalLauncher()
 const bootDesktop = () => navigateTo('/desktop')
 
 const config = useRuntimeConfig()

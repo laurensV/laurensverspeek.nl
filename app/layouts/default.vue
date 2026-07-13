@@ -13,8 +13,11 @@
     </div>
     <AppStatusBar />
     <MobileNav />
-    <TerminalOverlay />
-    <CommandPalette />
+    <!-- the terminal + palette (and the ~45KB command registry they pull in) stay
+         out of the initial bundle until first opened; the keydown shims below flip
+         the shared flags so `~`/⌘K still work -->
+    <LazyTerminalOverlay v-if="terminalOpen" />
+    <LazyCommandPalette v-if="paletteOpen" />
     <ShortcutsHelp />
     <BootSplash />
     <WhatsNew />
@@ -32,8 +35,29 @@
 </template>
 
 <script setup lang="ts">
+import { onKeyStroke } from '@vueuse/core'
+
 // lvOS now lives on its own /desktop route (see pages/desktop.vue), so the shell
 // no longer mounts it here.
+
+// The terminal and command palette are lazily mounted (heavy command registry).
+// These tiny always-on shims OPEN them when closed; once open, the now-mounted
+// overlay owns the key for toggle/close and game input.
+const { isOpen: terminalOpen } = useTerminalLauncher()
+const { isOpen: paletteOpen } = usePaletteLauncher()
+
+onKeyStroke(['`', '~'], (event) => {
+  if (terminalOpen.value) return
+  const target = event.target as HTMLElement
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
+  event.preventDefault()
+  terminalOpen.value = true
+})
+onKeyStroke('k', (event) => {
+  if (!(event.ctrlKey || event.metaKey) || paletteOpen.value) return
+  event.preventDefault()
+  paletteOpen.value = true
+})
 
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the
 // terminal, so gate it behind its flag to keep it out of the initial bundle.

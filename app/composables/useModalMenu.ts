@@ -65,6 +65,10 @@ export function useModalMenu(
 
   let lastFocused: HTMLElement | null = null
 
+  // immediate so a modal that is MOUNTED already-open (e.g. the lazily-mounted
+  // terminal/palette overlays, which only exist once their open flag is true)
+  // still engages the scroll lock and focus trap; the false branch is a no-op on
+  // a fresh closed mount (nothing held, no lastFocused yet)
   watch(open, async (isOpen) => {
     if (!import.meta.client) return
     if (isOpen) {
@@ -78,7 +82,7 @@ export function useModalMenu(
       unlockScroll()
       lastFocused?.focus()
     }
-  })
+  }, { immediate: true })
   onUnmounted(() => {
     if (import.meta.client) unlockScroll()
   })

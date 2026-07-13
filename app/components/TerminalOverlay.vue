@@ -33,8 +33,24 @@
 import { onKeyStroke } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-const { isOpen, toggle, close, activeGame } = useTerminal()
+const { isOpen, toggle, close, activeGame, lines, greet, run } = useTerminal()
+const { pending } = useTerminalLauncher()
 const { name } = useIdentity()
+
+// this overlay is lazily mounted the moment it's opened, so the greeting and any
+// commands queued from chrome (footer's `git show`, the status-bar pet) that
+// useTerminal.open() used to handle now happen here on mount / when the queue grows
+onMounted(() => {
+  if (!lines.value.length) greet()
+})
+watch(pending, (queue) => {
+  if (!queue.length) return
+  pending.value = []
+  queue.forEach(run)
+}, { immediate: true })
+// closing unmounts the overlay: make sure the active game stops and the tab title
+// is restored on every close path (Esc, `exit`, the shim, clicking away)
+onBeforeUnmount(close)
 
 // aria-modal, honored: Tab stays inside the window and focus returns to the
 // trigger on close. The console focuses its own input, and Escape already has

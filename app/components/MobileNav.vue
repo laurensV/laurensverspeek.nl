@@ -27,7 +27,8 @@ import { useEventListener } from '@vueuse/core'
 // Slides away while scrolling down, returns on the first scroll up.
 
 const route = useRoute()
-const { isOpen, toggle } = useTerminal()
+// lightweight opener (keeps the terminal registry out of every page's bundle)
+const { isOpen, toggle } = useTerminalLauncher()
 
 const hidden = ref(false)
 let lastY = 0

@@ -5,6 +5,7 @@
 export const STATE_KEYS = {
   // terminal
   terminalOpen: 'terminal-open',
+  terminalPending: 'terminal-pending',
   terminalLines: 'terminal-lines',
   terminalHistory: 'terminal-history',
   terminalEnv: 'terminal-env',

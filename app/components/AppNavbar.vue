@@ -98,8 +98,10 @@
 import { profile } from '~/data/profile'
 
 const mobileMenu = ref(false)
-const palette = useCommandPalette()
-const terminal = useTerminal()
+// lightweight openers so the navbar doesn't pull the terminal/palette command
+// registries into every page's bundle (the overlays are lazily mounted)
+const palette = usePaletteLauncher()
+const terminal = useTerminalLauncher()
 
 // scroll-aware divider + the reading-progress rail along the bottom edge
 const { scrolled, progress } = useScrollProgress()
