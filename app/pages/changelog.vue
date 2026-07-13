@@ -3,7 +3,7 @@
     <div class="container changelog-container">
       <p class="overline mb-2">changelog $ git log --graph</p>
       <h1 class="title is-2">
-        changelog<span class="has-text-primary-on-scheme is-family-code">[{{ commits?.length ?? 0 }}]</span>
+        changelog<span class="changelog-count has-text-primary-on-scheme is-family-code">[{{ commits?.length ?? 0 }}]</span>
       </h1>
       <p class="subtitle is-5 has-text-grey mb-5">
         What changed on this site, straight from the repository — the same history the terminal's
@@ -91,6 +91,12 @@ const diffBlocks = (commit: GitCommit): ('add' | 'del' | 'idle')[] => {
 <style scoped lang="scss">
 .changelog-container {
   max-width: 44rem;
+}
+
+// keep the commit-count badge intact — Bulma's .title word-break would otherwise
+// split it mid-number ([6 / 27]) when the heading wraps on a narrow phone
+.changelog-count {
+  white-space: nowrap;
 }
 
 .changelog {

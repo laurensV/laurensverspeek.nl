@@ -85,6 +85,9 @@ useSeoMeta({
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
+  // keep '[ walk the floor ]' on one line so the closing bracket doesn't drop to
+  // its own row at 320px
+  white-space: nowrap;
 
   &.is-active,
   &:hover {
