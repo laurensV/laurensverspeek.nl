@@ -153,6 +153,11 @@ const send = () => {
       color: hsl(var(--lv-scheme-hs), 92%);
       font: inherit;
 
+      // 16px on touch so focusing the field doesn't zoom the desktop on iOS
+      @media (pointer: coarse) {
+        font-size: 16px;
+      }
+
       &[readonly] {
         color: hsl(var(--lv-scheme-hs), 60%);
       }
@@ -167,6 +172,10 @@ const send = () => {
     color: hsl(var(--lv-scheme-hs), 92%);
     font: inherit;
     resize: vertical;
+
+    @media (pointer: coarse) {
+      font-size: 16px;
+    }
   }
 
   .mail-send-row {

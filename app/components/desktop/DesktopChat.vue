@@ -119,6 +119,11 @@ watch(() => messages.value.length, async () => {
   color: hsl(var(--lv-scheme-hs), 90%);
   font: inherit;
 
+  // 16px on touch so focusing the field doesn't zoom the whole desktop on iOS
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
+
   &:focus {
     outline: none;
     border-color: hsla(var(--lv-primary-hsl), 0.6);

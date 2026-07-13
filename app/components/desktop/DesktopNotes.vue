@@ -203,6 +203,11 @@ const removeNote = (note: { path: string }) => {
   font-size: 0.78rem;
   line-height: 1.5;
 
+  // 16px on touch so focusing the note doesn't zoom the desktop on iOS
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
+
   &:focus {
     outline: none;
   }
