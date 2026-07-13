@@ -52,13 +52,16 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       description: 'System information',
       exec: () => {
         push('primary', ASCII_LOGO)
+        // the "work" line reads data/profile.ts (the single source) rather than a
+        // hand-copied third phrasing — the roles carrying an "@ <org>"
+        const work = profile.roles.filter(role => role.includes('@')).join(', ')
         const info: [string, string][] = [
           ['host', `${ctx.identity.name.value}@${profile.domain}`],
           ['os', 'Nuxt 4 (Vue 3) x86_64'],
           ['shell', 'lvsh 2.0.0'],
           ['theme', ctx.colorMode.value],
           ['location', profile.location],
-          ['work', 'Head of Dev @ Nosana, co-founder @ Effect.AI'],
+          ['work', work],
           ['uptime', `${new Date().getFullYear() - 2022} years (site v1 shipped in 2022)`]
         ]
         for (const [key, value] of info) {
