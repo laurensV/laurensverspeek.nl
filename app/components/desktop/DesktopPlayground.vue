@@ -169,6 +169,11 @@ const insertTab = (event: KeyboardEvent) => {
   tab-size: 2;
   caret-color: var(--bulma-primary);
   white-space: pre;
+
+  // 16px on touch so iOS doesn't zoom the page when you focus the editor
+  @media (pointer: coarse) {
+    font-size: 16px;
+  }
 }
 
 .play-preview-bar {
