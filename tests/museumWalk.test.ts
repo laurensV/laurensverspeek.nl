@@ -63,9 +63,10 @@ describe('the walkable museum', () => {
     expect(frame).toContain('@')
     expect(frame).toContain('?')
 
-    // the floor must stay a perfect monospace grid: every glyph is ASCII, since
-    // JetBrains Mono doesn't cover box/block/geometric characters (they fall
-    // back to a narrower proportional font and warp the walls)
-    expect(frame).toMatch(/^[\x20-\x7E·\n]+$/)
+    // the floor must stay a perfect monospace grid: every glyph is PURE ASCII.
+    // JetBrains Mono doesn't cover box/block/geometric characters, and even
+    // '·' (U+00B7), though "covered", renders at ~half an ASCII advance — both
+    // warp the walls. Only \x20-\x7E have a reliable full monospace width.
+    expect(frame).toMatch(/^[\x20-\x7E\n]+$/)
   })
 })

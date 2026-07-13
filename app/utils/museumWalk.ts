@@ -45,7 +45,10 @@ export function buildMuseumMap(wings: WalkWing[]): MuseumMap {
   )
 
   const wall = (x: number, y: number) => (grid[y]![x] = { ch: '#', walkable: false })
-  const floor = (x: number, y: number) => (grid[y]![x] = { ch: '·', walkable: true })
+  // floor MUST be a full-width ASCII glyph: '·' (U+00B7) is "covered" by
+  // JetBrains Mono but renders at ~half an ASCII advance, so floor rows used to
+  // collapse leftward and the whole grid looked jagged and shifted while walking
+  const floor = (x: number, y: number) => (grid[y]![x] = { ch: '.', walkable: true })
   const doorX = Math.floor(width / 2)
 
   const wingRows: MuseumMap['wingRows'] = []
