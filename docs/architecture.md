@@ -100,7 +100,14 @@ late joiners. Every subsystem degrades gracefully to solo/local when no relay
 is configured, and `scripts/relay-check.mjs` (`npm run test:relay`) boots a
 throwaway relay and asserts each protocol end-to-end. The co-draw whiteboard
 (`draw-core.mjs` + `useCoDraw` + `DesktopCoDraw.vue`) is the simplest current
-example of the whole pattern.
+example of the whole pattern — it also broadcasts live pen positions
+(`draw-cursor`), pruned client-side after a few seconds of silence and cleared
+by a `draw-cursor-gone` frame when a member leaves.
+
+Every per-connection rate limiter is a `CooldownGate` built through the server's
+`gate()` helper, which registers it so a single `forgetConnection(id)` on socket
+close clears that id from all of them — a new gate can't be forgotten and leak
+its per-id map for the relay's uptime.
 
 ## Styling
 
