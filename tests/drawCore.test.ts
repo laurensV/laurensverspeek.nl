@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { sanitizeStroke, validPen, DRAW_COLORS, MAX_STROKES } from '../realtime/draw-core.mjs'
 
 describe('sanitizeStroke', () => {
-  it('accepts and returns a clean in-range segment', () => {
-    expect(sanitizeStroke({ type: 'draw-stroke', x0: 0.1, y0: 0.2, x1: 0.9, y1: 0.8, c: 2 }))
-      .toEqual({ x0: 0.1, y0: 0.2, x1: 0.9, y1: 0.8, c: 2 })
+  it('accepts and returns a clean in-range segment with its pen-drag id', () => {
+    expect(sanitizeStroke({ type: 'draw-stroke', x0: 0.1, y0: 0.2, x1: 0.9, y1: 0.8, c: 2, sid: 7 }))
+      .toEqual({ x0: 0.1, y0: 0.2, x1: 0.9, y1: 0.8, c: 2, sid: 7 })
   })
 
-  it('clamps out-of-range coordinates into [0,1]', () => {
+  it('clamps out-of-range coordinates into [0,1] and defaults a missing sid to 0', () => {
     expect(sanitizeStroke({ x0: -1, y0: 2, x1: 0.5, y1: 0.5, c: 0 }))
-      .toEqual({ x0: 0, y0: 1, x1: 0.5, y1: 0.5, c: 0 })
+      .toEqual({ x0: 0, y0: 1, x1: 0.5, y1: 0.5, c: 0, sid: 0 })
   })
 
   it('rejects a non-finite coordinate', () => {
