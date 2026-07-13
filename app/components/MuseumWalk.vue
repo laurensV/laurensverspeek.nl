@@ -83,6 +83,15 @@ useEventListener('keydown', (event: KeyboardEvent) => {
   line-height: 1.15;
   overflow-x: auto;
   user-select: none;
+
+  // the floor is a fixed-width ASCII grid: at 320px the 0.55rem clamp floor plus
+  // 1rem of padding pushed the right columns ~27px into the scroll region, where
+  // they can't be seen while walking (the view doesn't pan). Shrink both so the
+  // whole map fits on the very narrowest phones.
+  @media (max-width: 360px) {
+    padding: 0.5rem;
+    font-size: 0.46rem;
+  }
 }
 
 .walk-hud {
