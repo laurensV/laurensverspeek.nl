@@ -30,7 +30,14 @@
           @click="pen = i"
         />
       </div>
-      <button class="codraw-clear" title="Clear the board for everyone" @click="clear">clear</button>
+      <button
+        class="codraw-clear"
+        :class="{ 'is-confirm': confirmClear }"
+        :title="confirmClear ? 'Tap again to wipe it for everyone' : 'Clear the board for everyone'"
+        @click="onClear"
+      >
+        {{ confirmClear ? 'clear all?' : 'clear' }}
+      </button>
     </div>
   </div>
 </template>
@@ -46,10 +53,21 @@ import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
 // size. Works solo (local only) when no relay is configured.
 
 const COLORS = DRAW_COLORS
-const { enabled, strokes, online, status, join, addStroke, clear } = useCoDraw()
+const { enabled, strokes, online, status, join, addStroke, clear: clearBoard } = useCoDraw()
 
 const canvasRef = ref<HTMLCanvasElement>()
 const pen = ref(2) // the amber pen by default
+
+// clear wipes the shared board for everyone with no undo, so ask once first: the
+// first tap arms it ("clear all?"), a second within 3s actually clears
+const confirmClear = ref(false)
+let confirmTimer: ReturnType<typeof setTimeout> | undefined
+const onClear = () => {
+  if (confirmTimer) clearTimeout(confirmTimer)
+  if (confirmClear.value) { confirmClear.value = false; clearBoard(); return }
+  confirmClear.value = true
+  confirmTimer = setTimeout(() => { confirmClear.value = false }, 3000)
+}
 
 const statusLabel = computed(() => {
   if (!enabled.value) return 'solo — no relay'
@@ -134,7 +152,7 @@ onMounted(() => {
   release = join()
   fit()
 })
-onUnmounted(() => release?.())
+onUnmounted(() => { release?.(); if (confirmTimer) clearTimeout(confirmTimer) })
 
 // remote strokes / init / clear all replace the array — repaint on any change,
 // and refit when the window is resized
@@ -219,6 +237,11 @@ useResizeObserver(canvasRef, fit)
   &:hover {
     border-color: hsla(var(--lv-primary-hsl), 0.6);
     color: hsl(var(--lv-scheme-hs), 95%);
+  }
+
+  &.is-confirm {
+    border-color: var(--bulma-danger);
+    color: var(--bulma-danger);
   }
 
   @media (pointer: coarse) {
