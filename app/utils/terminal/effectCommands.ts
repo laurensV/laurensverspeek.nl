@@ -17,6 +17,15 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
 
   // the pixel world speaks terminal (composable captured at factory time)
   const world = useWorld()
+  // acquire at most one world lease for the whole terminal session: `pixel place`
+  // used to call enter() every invocation, pushing a refcounted lease it never
+  // released, so the world socket could never close for the rest of the session
+  let enteredWorld = false
+  const ensureWorld = () => {
+    if (enteredWorld) return
+    enteredWorld = true
+    world.enter()
+  }
 
   const commands: Record<string, TerminalCommand> = {
     world: {
@@ -62,7 +71,7 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
         const x = Number(xRaw)
         const y = Number(yRaw)
         const c = Number(cRaw)
-        world.enter() // make sure the board exists (online or offline)
+        ensureWorld() // make sure the board exists (online or offline), once
         const wait = world.place(x, y, c)
         if (wait === -1) return error('pixel: out of bounds or bad color — the board is 128×128, colors 0-15')
         if (wait > 0) return error(`pixel: cooldown — try again in ${Math.ceil(wait / 1000)}s`)
