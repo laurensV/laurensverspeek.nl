@@ -30,6 +30,15 @@ describe('calcEvaluate arithmetic', () => {
     expect(calcEvaluate('(2+3')).toBeNull()
     expect(calcEvaluate('2 3')).toBeNull()
   })
+
+  it('evaluates unary minus (negative literals and results)', () => {
+    expect(calcEvaluate('-3')).toBe(-3)
+    expect(calcEvaluate('-3+2')).toBe(-1)
+    expect(calcEvaluate('3--2')).toBe(5) // 3 - (-2)
+    expect(calcEvaluate('--3')).toBe(3)
+    expect(calcEvaluate('(-3)^2')).toBe(9) // the ± → x² chain that used to error
+    expect(calcEvaluate('2^-2')).toBeCloseTo(0.25) // unary after an operator
+  })
 })
 
 describe('calcEvaluate programmer mode', () => {
@@ -53,6 +62,11 @@ describe('calcEvaluate programmer mode', () => {
   it('truncates integer division', () => {
     expect(calcEvaluate('7/2', 'prog')).toBe(3)
     expect(calcEvaluate('5/0', 'prog')).toBeNull()
+  })
+
+  it('evaluates a negative literal so the NOT base readout resolves', () => {
+    expect(calcEvaluate('-6', 'prog')).toBe(-6)
+    expect(calcBases(calcEvaluate('-6', 'prog')!)?.hex).toBe('FFFFFFFA')
   })
 })
 
