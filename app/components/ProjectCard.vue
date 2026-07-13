@@ -1,5 +1,5 @@
 <template>
-  <div class="project-card">
+  <div class="project-card" @mouseenter="playHover" @mouseleave="pauseHover" @focusin="playHover" @focusout="pauseHover">
     <span class="corner is-tl" aria-hidden="true" /><span class="corner is-tr" aria-hidden="true" /><span class="corner is-bl" aria-hidden="true" /><span class="corner is-br" aria-hidden="true" />
 
     <NuxtLink
@@ -20,8 +20,23 @@
           @load="imageLoaded = true"
           @error="imageFailed = true"
         >
+        <!-- hover preview: a lightweight muted loop video (converted from the old
+             multi-MB GIFs), or a plain image for non-video previews -->
+        <video
+          v-if="project.thumbnailHover && imageLoaded && hoverIsVideo"
+          ref="hoverVideo"
+          class="thumb thumb-hover"
+          muted
+          loop
+          playsinline
+          preload="none"
+          :aria-label="`${project.title} preview`"
+        >
+          <source :src="project.thumbnailHover" type="video/webm">
+          <source :src="project.thumbnailHover.replace(/\.webm$/, '.mp4')" type="video/mp4">
+        </video>
         <img
-          v-if="project.thumbnailHover && imageLoaded"
+          v-else-if="project.thumbnailHover && imageLoaded"
           class="thumb thumb-hover"
           :src="project.thumbnailHover"
           :alt="`${project.title} preview`"
@@ -83,6 +98,13 @@ const props = defineProps<{ project: Project }>()
 
 const imageLoaded = ref(false)
 const imageFailed = ref(false)
+
+// the hover preview is a muted loop video (converted from the old heavy GIFs);
+// play it only while the card is hovered/focused so nothing decodes at rest
+const hoverVideo = ref<HTMLVideoElement | null>(null)
+const hoverIsVideo = computed(() => /\.(webm|mp4)$/.test(props.project.thumbnailHover ?? ''))
+const playHover = () => { void hoverVideo.value?.play().catch(() => {}) }
+const pauseHover = () => hoverVideo.value?.pause()
 
 const { data: github } = useGithubStats()
 const stars = computed(() => {

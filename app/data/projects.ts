@@ -80,7 +80,7 @@ export const projects: Project[] = [
     thumbnail:
       '/img/projects/self-coding-website.png',
     thumbnailHover:
-      '/img/projects/self-coding-website-hover.gif',
+      '/img/projects/self-coding-website-hover.webm',
     source: 'https://github.com/laurensV/self-coding-website',
     url: 'https://laurensv.github.io/self-coding-website/',
     featured: true,
@@ -152,7 +152,7 @@ export const projects: Project[] = [
     category: 'hobby',
     tech: ['JavaScript', 'Canvas'],
     thumbnail: '/img/projects/kids-age.png',
-    thumbnailHover: '/img/projects/kids-age-hover.gif',
+    thumbnailHover: '/img/projects/kids-age-hover.webm',
     source: 'https://github.com/laurensV/age',
     url: 'https://laurensv.github.io/age/',
     year: '2021',
