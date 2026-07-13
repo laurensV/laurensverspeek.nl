@@ -72,7 +72,9 @@
         aria-label="More tray items"
         @click="toggleMore"
       >⋯</button>
-      <div class="lvos-tray-more" :class="{ 'is-open': moreOpen }">
+      <!-- tapping any item bubbles up and dismisses the collapsed tray, so it
+           doesn't hover over the app/window the tap just opened -->
+      <div class="lvos-tray-more" :class="{ 'is-open': moreOpen }" @click="moreOpen = false">
         <button
           v-if="weather.temp.value !== null"
           class="lvos-tray-btn lvos-weather"
