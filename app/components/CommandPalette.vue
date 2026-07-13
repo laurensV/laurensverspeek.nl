@@ -59,10 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { onKeyStroke } from '@vueuse/core'
 import type { PaletteAction } from '~/composables/useCommandPalette'
 
-const { isOpen, close, toggle, actions, recent, counts, recordUse } = useCommandPalette()
+const { isOpen, close, actions, recent, counts, recordUse } = useCommandPalette()
 
 const query = ref('')
 const activeId = ref('')
@@ -145,12 +144,9 @@ const move = (delta: number) => {
   })
 }
 
-onKeyStroke('k', (event) => {
-  if (event.ctrlKey || event.metaKey) {
-    event.preventDefault()
-    toggle()
-  }
-})
+// ⌘K/ctrl+K opening lives in the layout shim (the palette is lazily mounted, so
+// a single always-on opener avoids a second handler racing the async mount);
+// Escape / clicking away close it, as before.
 
 watch(isOpen, async (open) => {
   if (open) {

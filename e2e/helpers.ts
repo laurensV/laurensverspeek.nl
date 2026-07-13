@@ -13,6 +13,15 @@ export const pressTerminalKey = async (page: Page) => {
   }).toPass({ timeout: 15000 })
 }
 
+/** Press ctrl+K until the command palette opens. Like the terminal, the palette
+ * is lazily mounted, so its chunk can be a beat behind an early keypress. */
+export const openPalette = async (page: Page) => {
+  await expect(async () => {
+    await page.keyboard.press('Control+k')
+    await page.locator('.palette-input').waitFor({ timeout: 1000 })
+  }).toPass({ timeout: 15000 })
+}
+
 /** Open the interactive terminal the way a keyboard user would: `~`, then type. */
 export const openTerminal = async (page: Page) => {
   await page.goto('/')

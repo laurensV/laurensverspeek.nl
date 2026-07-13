@@ -1,7 +1,9 @@
 import { effectScope, watch } from 'vue'
 import type { Ref } from 'vue'
 import { loadFs, saveFs } from './filesystem'
+import type { Filesystem } from './filesystem'
 import { applySeeds, siteSeeds, blogSeeds } from './siteFs'
+import type { SeedablePost } from './siteFs'
 import { loadAliases, saveAliases, loadEnvExtras, saveEnvExtras } from './shellState'
 import { storageDegraded } from './storageHealth'
 import { persistState } from '~/utils/persistState'
@@ -10,9 +12,48 @@ import type { TerminalContext } from './types'
 // The terminal's persistence + site-seeding, lifted out of useTerminal so the
 // composable stays about the interpreter. These module flags fire once per
 // visit across every useTerminal() caller.
-let seededSite = false
+let fsInited = false
 let warnedStorageFull = false
 let wiredSync = false
+
+/**
+ * Restore the home filesystem from storage (and keep saving it), then seed the
+ * site's pages and blog posts as sys nodes. Runs exactly once per app lifetime.
+ *
+ * This is called BOTH from a client plugin on every page (see
+ * `plugins/terminalFs.client.ts`) and from the terminal when it opens: the
+ * terminal overlay is lazily mounted now, so without the plugin a plain blog
+ * page would have an empty VFS — breaking blog overrides, `reseed` and the
+ * Files app, all of which read this shared state directly. Only the FS lives
+ * here; aliases/env stay with the terminal (they only matter once it's open).
+ */
+export function initTerminalFs(fetchPosts: () => Promise<SeedablePost[]>): void {
+  if (fsInited) return
+  fsInited = true
+
+  const files = useState<Filesystem>(STATE_KEYS.terminalFs, () => ({}))
+
+  // restore the saved home filesystem once, then persist changes across visits
+  persistState(files, 'terminal-fs', {
+    deep: true,
+    restore: () => {
+      const savedFs = loadFs()
+      if (savedFs && Object.keys(savedFs).length) files.value = savedFs
+    },
+    persist: (fs) => saveFs(fs)
+  })
+
+  if (import.meta.client) {
+    files.value = applySeeds(files.value, siteSeeds())
+    void fetchPosts()
+      .then((posts) => {
+        files.value = applySeeds(files.value, blogSeeds(posts))
+      })
+      .catch(() => {
+        fsInited = false // let a later caller retry the posts
+      })
+  }
+}
 
 /**
  * Restore the home filesystem, aliases and exported env from storage and keep
@@ -29,27 +70,8 @@ export function wireTerminalStorage(
   ctx: TerminalContext,
   deps: { identityName: Ref<string>, cwd: Ref<string> }
 ): void {
-  // restore the saved home filesystem once, then persist changes across visits
-  persistState(ctx.files, 'terminal-fs', {
-    deep: true,
-    restore: () => {
-      const savedFs = loadFs()
-      if (savedFs && Object.keys(savedFs).length) ctx.files.value = savedFs
-    },
-    persist: (fs) => saveFs(fs)
-  })
-
-  if (import.meta.client && !seededSite) {
-    seededSite = true
-    ctx.files.value = applySeeds(ctx.files.value, siteSeeds())
-    void ctx.fetchPosts()
-      .then((posts) => {
-        ctx.files.value = applySeeds(ctx.files.value, blogSeeds(posts))
-      })
-      .catch(() => {
-        seededSite = false // let a later terminal open retry the posts
-      })
-  }
+  // restore + seed the home filesystem (shared with the client plugin, wires once)
+  initTerminalFs(ctx.fetchPosts)
 
   // aliases and exported env vars get the same treatment
   persistState(ctx.aliases, 'terminal-aliases', {

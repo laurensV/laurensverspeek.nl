@@ -243,7 +243,7 @@ export function siteSeeds(): SeedMap {
 
 // ---- blog posts as markdown files ----
 
-interface SeedablePost {
+export interface SeedablePost {
   path: string
   title: string
   date: string

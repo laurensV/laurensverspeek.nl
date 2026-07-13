@@ -42,22 +42,36 @@ import { onKeyStroke } from '@vueuse/core'
 // no longer mounts it here.
 
 // The terminal and command palette are lazily mounted (heavy command registry).
-// These tiny always-on shims OPEN them when closed; once open, the now-mounted
-// overlay owns the key for toggle/close and game input.
+// This tiny always-on opener is the SOLE `~`/⌘K handler so nothing races the
+// async mount: `~` outside a text field opens the terminal (typing `~` inside it
+// stays literal), ⌘K opens the palette. Closing is Escape / `exit` / clicking
+// away — the same way it always worked, since focus-in-input made `~` open-only.
 const { isOpen: terminalOpen } = useTerminalLauncher()
 const { isOpen: paletteOpen } = usePaletteLauncher()
 
 onKeyStroke(['`', '~'], (event) => {
-  if (terminalOpen.value) return
   const target = event.target as HTMLElement
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
   event.preventDefault()
   terminalOpen.value = true
 })
 onKeyStroke('k', (event) => {
-  if (!(event.ctrlKey || event.metaKey) || paletteOpen.value) return
+  if (!(event.ctrlKey || event.metaKey)) return
   event.preventDefault()
   paletteOpen.value = true
+})
+
+// warm the lazy overlay chunks during idle: they're kept off the initial/preload
+// path (the whole point), but prefetching once the page is quiet means the first
+// `~`/⌘K opens instantly instead of waiting on a cold chunk fetch
+onMounted(() => {
+  if (!import.meta.client) return
+  const warm = () => {
+    void import('~/components/TerminalOverlay.vue')
+    void import('~/components/CommandPalette.vue')
+  }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 3000 })
+  else setTimeout(warm, 1500)
 })
 
 // MatrixRain is a fairly heavy canvas component but only ever triggered from the

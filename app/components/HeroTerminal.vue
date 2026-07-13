@@ -70,15 +70,21 @@ const onKey = (event: KeyboardEvent) => {
   if (event.key === 'Enter' || event.key === ' ') return // let the button click
   if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
   event.preventDefault()
+  const key = event.key
   open()
-  void nextTick(() => {
+  // the terminal overlay is now lazily mounted, so its input can be a few frames
+  // away (chunk load + mount), not just one tick — poll for it before filling
+  const fill = (attempts = 0) => {
     const input = document.querySelector<HTMLInputElement>('#terminal-input')
     if (input) {
-      input.value = event.key
+      input.value = key
       input.dispatchEvent(new Event('input', { bubbles: true }))
       input.focus()
+    } else if (attempts < 60) {
+      requestAnimationFrame(() => fill(attempts + 1))
     }
-  })
+  }
+  void nextTick(() => fill())
 }
 </script>
 

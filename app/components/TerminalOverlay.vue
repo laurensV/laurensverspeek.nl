@@ -30,10 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { onKeyStroke } from '@vueuse/core'
 import { profile } from '~/data/profile'
 
-const { isOpen, toggle, close, activeGame, lines, greet, run } = useTerminal()
+const { isOpen, close, lines, greet, run } = useTerminal()
 const { pending } = useTerminalLauncher()
 const { name } = useIdentity()
 
@@ -42,6 +41,16 @@ const { name } = useIdentity()
 // useTerminal.open() used to handle now happen here on mount / when the queue grows
 onMounted(() => {
   if (!lines.value.length) greet()
+  // the console's own focus-on-active can miss during this nested lazy mount, so
+  // grab the input here too — without focus, Escape and typing wouldn't reach the
+  // terminal right after a lazy open. poll briefly since the input renders a tick
+  // or two into the mount.
+  const focusInput = (attempts = 0) => {
+    const input = document.querySelector<HTMLInputElement>('#terminal-input')
+    if (input) input.focus()
+    else if (attempts < 30) requestAnimationFrame(() => focusInput(attempts + 1))
+  }
+  void nextTick(() => focusInput())
 })
 watch(pending, (queue) => {
   if (!queue.length) return
@@ -67,16 +76,9 @@ const onModalKeydown = (event: KeyboardEvent) => {
   trapKeydown(event)
 }
 
-// Open with ~ or ` when not typing in another field (and not mid-game). The
-// overlay lives in the default layout, so it never mounts on the /desktop route
-// (where the terminal is its own window).
-onKeyStroke(['`', '~'], (event) => {
-  if (activeGame.value) return
-  const target = event.target as HTMLElement
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return
-  event.preventDefault()
-  toggle()
-})
+// The `~`/` open key lives in the layout shim now (app/layouts/default.vue): the
+// overlay is lazily mounted, so a single always-on opener avoids a second handler
+// racing the async mount. Closing is Escape / `exit` / clicking away, as before.
 </script>
 
 <style scoped lang="scss">
