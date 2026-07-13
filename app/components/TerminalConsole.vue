@@ -375,6 +375,10 @@ defineExpose({ focusInput })
 
 .terminal-input {
   flex: 1;
+  // let the flex input shrink below its intrinsic ~20-char width; without this
+  // (default min-width:auto) the input-row overflows on a narrow phone and the
+  // autofocus scrolls the whole pane ~50px left, clipping the prompt and welcome
+  min-width: 0;
   border: none;
   outline: none;
   background: none;
