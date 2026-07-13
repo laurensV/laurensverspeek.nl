@@ -100,6 +100,23 @@ export function saverProcs(): EffectProc[] {
   return [{ pid: SAVER_PID, name: 'screensaver.scr', running: () => hooks.running(), stop: () => hooks.wake() }]
 }
 
+// The boot splash / `reboot` replay is another fullscreen takeover, so like the
+// screensaver it earns a seat in the process table. BootSplash registers hooks
+// while mounted; `kill 200` (its z-index, as a mnemonic) finishes the sequence.
+export const BOOT_REPLAY_PID = 200
+let bootHooks: { running: () => boolean, stop: () => void } | null = null
+export const registerBootProc = (hooks: { running: () => boolean, stop: () => void }) => {
+  bootHooks = hooks
+}
+export const unregisterBootProc = () => {
+  bootHooks = null
+}
+export function bootProcs(): EffectProc[] {
+  if (!bootHooks) return []
+  const hooks = bootHooks
+  return [{ pid: BOOT_REPLAY_PID, name: 'boot-replay.sh', running: () => hooks.running(), stop: () => hooks.stop() }]
+}
+
 export type KillResult =
   | { ok: true, name: string }
   | { ok: false, reason: 'not-running' | 'not-permitted' | 'no-such-process' }

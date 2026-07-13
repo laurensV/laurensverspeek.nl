@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { usePreferredReducedMotion, useEventListener } from '@vueuse/core'
+import { registerBootProc, unregisterBootProc } from '~/utils/terminal/effectProcs'
 
 const BOOT_LINES = [
   'BIOS laurensverspeek.nl v2.0.0',
@@ -64,11 +65,16 @@ const play = () => {
 }
 
 onMounted(() => {
+  // a seat in the shared process table while the splash is on screen: it's a
+  // fullscreen takeover like the screensaver, so `kill 200` finishes it
+  registerBootProc({ running: () => visible.value, stop: finish })
   // once per browser session, never for reduced motion or repeat visitors in-session
   if (reducedMotion.value === 'reduce' || sessionStorage.getItem(STORAGE_KEY)) return
   sessionStorage.setItem(STORAGE_KEY, '1')
   play()
 })
+
+onBeforeUnmount(unregisterBootProc)
 
 watch(replayRequested, (requested) => {
   if (requested) {

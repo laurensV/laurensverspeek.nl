@@ -7,6 +7,7 @@ import {
   lvshProc,
   lvosSessionProc,
   saverProcs,
+  bootProcs,
   SYSTEM_PROCS
 } from '~/utils/terminal/effectProcs'
 import type { EffectProc } from '~/utils/terminal/effectProcs'
@@ -64,6 +65,7 @@ export function useProcessTable(shell: ProcessShell) {
     return [
       ...effectProcs(shell.effects),
       ...saverProcs(),
+      ...bootProcs(),
       ...windowProcs(windows.value, closeWindow),
       ...(gameName ? [gameProc(gameName, shell.game.stop)] : []),
       ...(route.path.startsWith('/desktop') ? [lvosSessionProc(() => void router.push('/'))] : []),
