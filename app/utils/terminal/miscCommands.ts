@@ -47,6 +47,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const nightLight = useNightLight()
   // which idle screensaver the desktop drifts into, shared with Settings/BIOS
   const screensaver = useScreensaverChoice()
+  // the manual "reduce motion" switch, shared with the Settings accessibility row
+  const motion = useReduceMotion()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
 
@@ -232,6 +234,22 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           nightLight.enabled.value = true
         }
         out(`night light ${nightLight.enabled.value ? 'on' : 'off'} (warmth ${nightLight.warmth.value}%)`)
+      }
+    },
+    reducemotion: {
+      category: 'system',
+      usage: 'reducemotion [on|off]',
+      description: 'Toggle the reduce-motion switch (same one as Settings)',
+      examples: ['reducemotion', 'reducemotion on'],
+      argCandidates: () => ['on', 'off'],
+      exec: (args) => {
+        const arg = args[0]?.toLowerCase()
+        if (arg === 'on') motion.enabled.value = true
+        else if (arg === 'off') motion.enabled.value = false
+        else if (!arg) motion.enabled.value = !motion.enabled.value
+        else return error(`reducemotion: expected on or off, got '${args[0]}'`)
+        out(`reduce motion ${motion.enabled.value ? 'on' : 'off'}`)
+        muted('flattens every animation site-wide, on top of your OS setting')
       }
     },
     reboot: {
