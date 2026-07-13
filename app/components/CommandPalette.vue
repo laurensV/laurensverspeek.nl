@@ -148,6 +148,9 @@ const move = (delta: number) => {
 // a single always-on opener avoids a second handler racing the async mount);
 // Escape / clicking away close it, as before.
 
+// immediate: the palette is lazily mounted only once it's already open, so a
+// non-immediate watch never fires on that first mount — activeId would stay ''
+// and Enter would be a no-op until you typed. Fire on mount to seed the selection.
 watch(isOpen, async (open) => {
   if (open) {
     query.value = ''
@@ -155,7 +158,7 @@ watch(isOpen, async (open) => {
     await nextTick()
     inputRef.value?.focus()
   }
-})
+}, { immediate: true })
 
 watch(flat, (list) => {
   if (!list.some((a) => a.id === activeId.value)) {
