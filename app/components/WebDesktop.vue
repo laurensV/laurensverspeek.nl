@@ -394,7 +394,10 @@ const nudgeUpdates = async () => {
 
 const onBootDone = () => {
   booting.value = false
-  notify('⚡', 'Welcome to lvOS 2.0', 'right-click the desktop for a menu')
+  // touch has no right-click — it long-presses the desktop instead (see the
+  // onDesktopTouchStart handler), so tell each pointer the truth
+  const coarse = window.matchMedia('(pointer: coarse)').matches
+  notify('⚡', 'Welcome to lvOS 2.0', coarse ? 'long-press the desktop for a menu' : 'right-click the desktop for a menu')
   setTimeout(() => void nudgeUpdates(), 12_000)
   // the battery nudge tells the truth where the Battery API exists, and
   // keeps the classic bit where it doesn't
