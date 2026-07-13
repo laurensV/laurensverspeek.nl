@@ -44,7 +44,8 @@ class Client {
     })
   }
 
-  /** @param {object} msg */
+  /** @param {unknown} msg — usually a frame object, but the robustness checks
+   * deliberately send null/string/number payloads too */
   send(msg) {
     this.ws.send(JSON.stringify(msg))
   }
@@ -374,6 +375,40 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 20))
     b.send({ type: 'draw-clear' })
     check('clear wipes the board for the others', !!(await a.next('draw-clear')))
+    a.close()
+    b.close()
+    c.close()
+  }
+
+  // ---- whiteboard undo (per-drawer, whole pen-drag) ---------------------------
+  console.log('draw undo:')
+  {
+    const a = new Client(URL)
+    const b = new Client(URL)
+    await Promise.all([a.open, b.open])
+    a.send({ type: 'draw-join' })
+    b.send({ type: 'draw-join' })
+    await Promise.all([a.next('draw-state'), b.next('draw-state')])
+    const gap = () => new Promise((resolve) => setTimeout(resolve, 20)) // clear the 8ms stroke gate
+    a.send({ type: 'draw-stroke', x0: 0.1, y0: 0.1, x1: 0.2, y1: 0.2, c: 2, sid: 1 })
+    await b.next('draw-stroke')
+    await gap()
+    a.send({ type: 'draw-stroke', x0: 0.3, y0: 0.3, x1: 0.4, y1: 0.4, c: 3, sid: 2 })
+    const second = await b.next('draw-stroke')
+    check('a stroke carries its drawer id + pen-drag id', typeof second?.by === 'number' && second?.sid === 2)
+    await gap()
+    a.send({ type: 'draw-undo' })
+    const undone = await b.next('draw-undo')
+    check("undo removes the drawer's most recent stroke for the others", undone?.sid === 2 && undone?.by === second?.by)
+    await gap()
+    a.send({ type: 'draw-undo' })
+    check('a second undo removes the previous stroke', (await b.next('draw-undo'))?.sid === 1)
+    const c = new Client(URL)
+    await c.open
+    c.send({ type: 'draw-join' })
+    const late = await c.next('draw-state')
+    const lateStrokes = /** @type {{ sid: number }[]} */ (late?.strokes ?? [])
+    check('both undone strokes are gone from the buffer', !lateStrokes.some((s) => s.sid === 1 || s.sid === 2))
     a.close()
     b.close()
     c.close()

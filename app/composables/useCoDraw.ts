@@ -1,10 +1,14 @@
-import type { DrawStroke, ServerMessage, DrawJoinIn, DrawLeaveIn, DrawStrokeIn, DrawClearIn, DrawCursorIn } from '../../realtime/protocol'
+import type { DrawStroke, ServerMessage, DrawJoinIn, DrawLeaveIn, DrawStrokeIn, DrawClearIn, DrawUndoIn, DrawCursorIn } from '../../realtime/protocol'
 import type { Ref } from 'vue'
 import { createRelayConnection, type RelayConnection } from '~/utils/relaySocket'
 import { MAX_STROKES } from '../../realtime/draw-core.mjs'
 
 /** Another visitor's live pen position over the board (normalized 0..1). */
 export interface DrawCursor { x: number, y: number, c: number, at: number }
+
+/** A segment as the drawing view produces it — the composable tags it with the
+ * drawer id + current pen-drag id before storing/sending. */
+export type DrawSegment = Pick<DrawStroke, 'x0' | 'y0' | 'x1' | 'y1' | 'c'>
 
 // The co-draw whiteboard, over the cursors relay. One shared canvas of freehand
 // segments (normalized 0..1). Strokes are drawn optimistically and the server
@@ -15,6 +19,13 @@ export interface DrawCursor { x: number, y: number, c: number, at: number }
 let conn: RelayConnection | null = null
 // mirrors the core's lease count so the LAST leaver says goodbye first
 let drawLeases = 0
+// our own connection id (from the relay's hello), stamped on strokes we draw so
+// undo can find them; 0 in solo mode, where every stroke is "ours" anyway
+let ownId = 0
+// a per-drawer pen-drag id: bumped on each pen-down, shared by that drag's
+// segments so the whole stroke undoes as one. Module-level so the terminal and
+// lvOS views of the one board keep a single, non-colliding sequence.
+let nextSid = 1
 
 export function useCoDraw() {
   const wsUrl = useRuntimeConfig().public.cursorsWs
@@ -36,14 +47,19 @@ export function useCoDraw() {
         onFail: () => { status.value = 'lost'; cursors.value = {} },
         onFrame: (raw) => {
           const msg = raw as ServerMessage
-          if (msg.type === 'draw-state') {
+          if (msg.type === 'hello') {
+            ownId = msg.id // stamp our strokes so we can undo exactly our own
+          } else if (msg.type === 'draw-state') {
             strokes.value = msg.strokes
             online.value = msg.online
             status.value = 'open'
           } else if (msg.type === 'draw-stroke') {
-            strokes.value = cap([...strokes.value, { x0: msg.x0, y0: msg.y0, x1: msg.x1, y1: msg.y1, c: msg.c }])
+            strokes.value = cap([...strokes.value, { x0: msg.x0, y0: msg.y0, x1: msg.x1, y1: msg.y1, c: msg.c, by: msg.by, sid: msg.sid }])
           } else if (msg.type === 'draw-clear') {
             strokes.value = []
+          } else if (msg.type === 'draw-undo') {
+            // another drawer took back their last stroke — drop that group
+            strokes.value = strokes.value.filter((s) => !(s.by === msg.by && s.sid === msg.sid))
           } else if (msg.type === 'draw-count') {
             online.value = msg.online
           } else if (msg.type === 'draw-cursor') {
@@ -95,11 +111,32 @@ export function useCoDraw() {
     if (changed) cursors.value = next
   }
 
+  // the pen-drag id for the stroke currently being drawn
+  let sid = 0
+
+  /** Begin a new pen-drag — call on pen-down so its segments share one sid and
+   * undo removes the whole stroke, not just the last segment. */
+  const startStroke = () => {
+    sid = nextSid++
+  }
+
   /** Draw a segment: optimistic locally, then sent for everyone else to mirror
-   * (or purely local when there's no relay). */
-  const addStroke = (stroke: DrawStroke) => {
+   * (or purely local when there's no relay). Tagged with our id + the current
+   * pen-drag id so it can be undone as part of its stroke. */
+  const addStroke = (segment: DrawSegment) => {
+    const stroke: DrawStroke = { ...segment, by: ownId, sid }
     strokes.value = cap([...strokes.value, stroke])
-    conn?.send({ type: 'draw-stroke', ...stroke } satisfies DrawStrokeIn)
+    conn?.send({ type: 'draw-stroke', ...segment, sid } satisfies DrawStrokeIn)
+  }
+
+  /** Take back our most recent stroke still on the board — for us right away,
+   * and (with a relay) for everyone else via the server. */
+  const undo = () => {
+    let lastSid = -1
+    for (const s of strokes.value) if (s.by === ownId && s.sid > lastSid) lastSid = s.sid
+    if (lastSid < 0) return
+    strokes.value = strokes.value.filter((s) => !(s.by === ownId && s.sid === lastSid))
+    conn?.send({ type: 'draw-undo' } satisfies DrawUndoIn)
   }
 
   /** Wipe the board for everyone (or just locally offline). */
@@ -108,5 +145,5 @@ export function useCoDraw() {
     conn?.send({ type: 'draw-clear' } satisfies DrawClearIn)
   }
 
-  return { enabled, strokes, online, status, cursors, join, addStroke, clear, sendCursor, pruneCursors }
+  return { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, clear, sendCursor, pruneCursors }
 }

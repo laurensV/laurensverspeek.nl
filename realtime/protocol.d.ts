@@ -39,9 +39,13 @@ export interface ChessMoveIn { type: 'chess-move', from: number, to: number }
 export interface DrawJoinIn { type: 'draw-join' }
 export interface DrawLeaveIn { type: 'draw-leave' }
 /** One freehand line segment, endpoints in normalized [0,1] space, `c` a pen
- * index into DRAW_COLORS. The server sanitizes/clamps before storing. */
-export interface DrawStrokeIn { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
+ * index into DRAW_COLORS, `sid` a per-drawer id shared by every segment of one
+ * pen-drag (so undo can remove a whole stroke). The server sanitizes/clamps. */
+export interface DrawStrokeIn { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number, sid: number }
 export interface DrawClearIn { type: 'draw-clear' }
+/** Undo the sender's most recent pen-drag — the server finds their highest-sid
+ * group still in the buffer, drops it, and tells the others to drop it too. */
+export interface DrawUndoIn { type: 'draw-undo' }
 /** A live pen position (where this visitor's cursor is over the board), so the
  * others can see where everyone is drawing. Ephemeral — never stored. */
 export interface DrawCursorIn { type: 'draw-cursor', x: number, y: number, c: number }
@@ -78,6 +82,7 @@ export type ClientMessage =
   | DrawLeaveIn
   | DrawStrokeIn
   | DrawClearIn
+  | DrawUndoIn
   | DrawCursorIn
 
 // ---- server → client ----
@@ -164,17 +169,21 @@ export interface RaceEndMsg { type: 'race-end', youWon: boolean, forfeit?: boole
 /** What the wpm-race client consumes. */
 export type RaceServerMessage = RaceWaitMsg | RaceStartMsg | RaceGoMsg | RaceFoeMsg | RaceEndMsg
 
-/** One whiteboard segment as stored/broadcast. */
-export interface DrawStroke { x0: number, y0: number, x1: number, y1: number, c: number }
+/** One whiteboard segment as stored/broadcast — `by` is the drawer's connection
+ * id (server-assigned) and `sid` groups a pen-drag, together identifying a
+ * stroke so undo can remove exactly one drawer's most recent one. */
+export interface DrawStroke { x0: number, y0: number, x1: number, y1: number, c: number, by: number, sid: number }
 export interface DrawStateMsg { type: 'draw-state', strokes: DrawStroke[], online: number }
-export interface DrawStrokeMsg { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number }
+export interface DrawStrokeMsg { type: 'draw-stroke', x0: number, y0: number, x1: number, y1: number, c: number, by: number, sid: number }
 export interface DrawClearMsg { type: 'draw-clear' }
+/** Remove one drawer's stroke (all segments with this by+sid). */
+export interface DrawUndoMsg { type: 'draw-undo', by: number, sid: number }
 export interface DrawCountMsg { type: 'draw-count', online: number }
 /** Another visitor's live pen position, tagged with their connection id. */
 export interface DrawCursorMsg { type: 'draw-cursor', id: number, x: number, y: number, c: number }
 /** A visitor left the board — drop their cursor dot. */
 export interface DrawCursorGoneMsg { type: 'draw-cursor-gone', id: number }
 /** What the co-draw whiteboard client consumes. */
-export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawCountMsg | DrawCursorMsg | DrawCursorGoneMsg
+export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawUndoMsg | DrawCountMsg | DrawCursorMsg | DrawCursorGoneMsg
 
 export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage | DrawServerMessage

@@ -162,7 +162,7 @@ const broadcastChatCount = () => {
 
 // ---- the co-draw whiteboard: one ephemeral shared canvas, a ring buffer of
 // recent freehand segments replayed to each new joiner ----
-/** @type {{ x0: number, y0: number, x1: number, y1: number, c: number }[]} */
+/** @type {{ x0: number, y0: number, x1: number, y1: number, c: number, by: number, sid: number }[]} */
 let drawLog = []
 /** @type {Set<import('ws').WebSocket>} */
 const drawMembers = new Set()
@@ -280,13 +280,27 @@ wss.on('connection', (socket) => {
     }
     if (msg.type === 'draw-stroke') {
       if (!drawMembers.has(socket)) return
-      const stroke = sanitizeStroke(msg)
-      if (!stroke) return
+      const clean = sanitizeStroke(msg)
+      if (!clean) return
       if (drawGate.check(id, Date.now()) > 0) return // drop flooded segments
+      // tag every segment with the drawer's connection id so undo (and the
+      // client's own repaint) can identify a whole stroke by by+sid
+      const stroke = { ...clean, by: id }
       drawLog.push(stroke)
       if (drawLog.length > MAX_STROKES) drawLog = drawLog.slice(-MAX_STROKES)
       // the sender already drew it optimistically — echo only to everyone else
       broadcastDraw(wire({ type: 'draw-stroke', ...stroke }), socket)
+      return
+    }
+    if (msg.type === 'draw-undo') {
+      if (!drawMembers.has(socket)) return
+      // find the sender's most recent pen-drag still in the buffer
+      let lastSid = -1
+      for (const s of drawLog) if (s.by === id && s.sid > lastSid) lastSid = s.sid
+      if (lastSid < 0) return
+      drawLog = drawLog.filter((s) => !(s.by === id && s.sid === lastSid))
+      // the sender removed it optimistically — tell everyone else which group
+      broadcastDraw(wire({ type: 'draw-undo', by: id, sid: lastSid }), socket)
       return
     }
     if (msg.type === 'draw-clear') {

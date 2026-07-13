@@ -42,6 +42,9 @@
         />
       </div>
       <div class="codraw-actions">
+        <button class="codraw-clear" title="Undo your last stroke (for everyone)" @click="undo">
+          undo
+        </button>
         <button class="codraw-clear" title="Save the board to the Gallery and download a PNG" @click="saveBoard">
           {{ saved ? 'saved ✓' : 'save' }}
         </button>
@@ -60,7 +63,6 @@
 
 <script setup lang="ts">
 import { useResizeObserver } from '@vueuse/core'
-import type { DrawStroke } from '../../../realtime/protocol'
 import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
 import { addToGallery } from '~/utils/gallery'
 
@@ -70,7 +72,7 @@ import { addToGallery } from '~/utils/gallery'
 // size. Works solo (local only) when no relay is configured.
 
 const COLORS = DRAW_COLORS
-const { enabled, strokes, online, status, cursors, join, addStroke, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
+const { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
 
 const canvasRef = ref<HTMLCanvasElement>()
 const pen = ref(2) // the amber pen by default
@@ -182,8 +184,9 @@ const onDown = (event: PointerEvent) => {
   last = p
   canvasRef.value?.setPointerCapture(event.pointerId)
   shareCursor(p.x, p.y)
+  startStroke() // open a new pen-drag so this whole stroke undoes as one
   // a tap leaves a dot: a zero-length segment
-  addStroke({ x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: pen.value } satisfies DrawStroke)
+  addStroke({ x0: p.x, y0: p.y, x1: p.x, y1: p.y, c: pen.value })
 }
 
 const onMove = (event: PointerEvent) => {
@@ -191,7 +194,7 @@ const onMove = (event: PointerEvent) => {
   if (!p) return
   shareCursor(p.x, p.y) // show the pen moving even while just hovering
   if (!last) return
-  addStroke({ x0: last.x, y0: last.y, x1: p.x, y1: p.y, c: pen.value } satisfies DrawStroke)
+  addStroke({ x0: last.x, y0: last.y, x1: p.x, y1: p.y, c: pen.value })
   last = p
 }
 

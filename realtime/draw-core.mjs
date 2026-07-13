@@ -34,10 +34,11 @@ export const validPen = (c) =>
 
 /**
  * Validate + clamp one raw stroke segment from the wire. Returns a clean
- * `{ x0, y0, x1, y1, c }` (coords in [0,1]) or null when it can't be trusted —
- * the server never stores or broadcasts an unsanitized segment.
+ * `{ x0, y0, x1, y1, c, sid }` (coords in [0,1], `sid` the drawer's pen-drag id
+ * used to group segments for undo) or null when it can't be trusted — the
+ * server never stores or broadcasts an unsanitized segment.
  * @param {any} raw
- * @returns {{ x0: number, y0: number, x1: number, y1: number, c: number } | null}
+ * @returns {{ x0: number, y0: number, x1: number, y1: number, c: number, sid: number } | null}
  */
 export const sanitizeStroke = (raw) => {
   if (!raw || typeof raw !== 'object') return null
@@ -47,5 +48,7 @@ export const sanitizeStroke = (raw) => {
   const y1 = clamp01(raw.y1)
   if ([x0, y0, x1, y1].some((n) => Number.isNaN(n))) return null
   if (!validPen(raw.c)) return null
-  return { x0, y0, x1, y1, c: raw.c }
+  // sid groups a pen-drag; a missing/absurd one just can't be undone as a group
+  const sid = Number.isInteger(raw.sid) && raw.sid >= 0 && raw.sid <= 0xffffffff ? raw.sid : 0
+  return { x0, y0, x1, y1, c: raw.c, sid }
 }
