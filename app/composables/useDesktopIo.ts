@@ -2,7 +2,7 @@ import type { Ref } from 'vue'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
 import { renderDesktopShot } from '~/utils/desktopShot'
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { addToGallery } from '~/utils/gallery'
 
 // The two "IO" actions the lvOS taskbar offers — the lvos.iso joke download and
 // the desktop screenshot → Gallery — pulled out of WebDesktop so the shell
@@ -83,8 +83,7 @@ export function useDesktopIo(deps: DesktopIoDeps) {
       terminalLines: terminal.lines.value.slice(-40).map((line) =>
         line.type === 'input' ? `$ ${line.text}` : line.text.replace(/<[^>]+>/g, ''))
     })
-    const existing = storageGetJson('lvos-shots', isStringArray) ?? []
-    if (!storageSetJson('lvos-shots', [shot, ...existing].slice(0, 6))) {
+    if (!addToGallery(shot)) {
       notify('⌜⌟', 'Screenshot failed', 'localStorage is full — empty the gallery a little')
       return
     }

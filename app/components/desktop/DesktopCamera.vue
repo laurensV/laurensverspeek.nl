@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { framePixelsToAscii } from '~/utils/asciiCam'
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { addToGallery } from '~/utils/gallery'
 
 // The terminal's asciicam toy, as a window: same pure luminance→glyph engine
 // (utils/asciiCam), plus a snap button that renders the current frame into the
@@ -88,8 +88,7 @@ const snap = () => {
   c.fillStyle = '#ffba00'
   c.font = `${cell}px monospace`
   rows.forEach((row, y) => c.fillText(row, 4, (y + 1) * cell))
-  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
-  if (storageSetJson('lvos-shots', [shot.toDataURL('image/png'), ...existing].slice(0, 6))) {
+  if (addToGallery(shot.toDataURL('image/png'))) {
     snapped.value = true
     setTimeout(() => (snapped.value = false), 1600)
   }

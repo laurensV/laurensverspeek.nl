@@ -47,13 +47,13 @@
 
 <script setup lang="ts">
 import { projects } from '~/data/projects'
-import { storageGetJson, isStringArray } from '~/utils/safeStorage'
+import { readGallery } from '~/utils/gallery'
 
 // An image viewer over the site's own generated art (OG cards + project
 // covers) plus lvOS screenshots — with zoom (buttons or ctrl+wheel, drag to
 // pan via the scroll container) and a download button.
 
-const shots = storageGetJson('lvos-shots', isStringArray) ?? []
+const shots = readGallery()
 
 const images = [
   ...shots.map((src, i) => ({ src, label: `screenshot ${shots.length - i}` })),

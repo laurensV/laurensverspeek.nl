@@ -62,7 +62,7 @@
 import { useResizeObserver } from '@vueuse/core'
 import type { DrawStroke } from '../../../realtime/protocol'
 import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { addToGallery } from '~/utils/gallery'
 
 // The lvOS face of the co-draw whiteboard. Same shared board as the terminal
 // `draw` command (useCoDraw's shared state + relay lease); freehand segments in
@@ -132,8 +132,7 @@ const saveBoard = () => {
   if (!ctx) return
   paintBoard(ctx, w, h, 2)
   const url = off.toDataURL('image/png')
-  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
-  storageSetJson('lvos-shots', [url, ...existing].slice(0, 6))
+  addToGallery(url)
   const a = document.createElement('a')
   a.href = url
   a.download = 'whiteboard.png'

@@ -40,7 +40,7 @@
 // Tiny paint app: pointer strokes on a canvas. Drawings can hang as the
 // wallpaper or land in the Gallery (same shelf the screenshot tool fills).
 
-import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
+import { addToGallery } from '~/utils/gallery'
 
 const COLORS = ['#ffba00', '#f5f5f5', '#f14668', '#3ec46d', '#3e8ed0', '#111111']
 
@@ -122,8 +122,7 @@ let galleryTimer: ReturnType<typeof setTimeout> | undefined
 const saveToGallery = () => {
   const drawing = exportDrawing()
   if (!drawing) return
-  const existing = storageGetJson('lvos-shots', isStringArray) ?? []
-  const saved = storageSetJson('lvos-shots', [drawing, ...existing].slice(0, 6))
+  const saved = addToGallery(drawing)
   galleryLabel.value = saved ? '[in the gallery ✓]' : '[storage said no]'
   clearTimeout(galleryTimer)
   galleryTimer = setTimeout(() => (galleryLabel.value = '[save to gallery]'), 2500)
