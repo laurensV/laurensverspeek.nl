@@ -65,7 +65,7 @@ export function useTerminal() {
   const cwd = computed(() => (fsCwd.value ? `~/${fsCwd.value}` : '~'))
   const colorMode = useColorMode()
   const effectFlags = useEffectFlags()
-  const { accent, accents, setAccent } = useAccent()
+  const { accent, accents, setAccent, applyCustom: applyCustomAccent } = useAccent()
   const { name: identityName, setName } = useIdentity()
 
   // command history survives visits (restored once, then kept in shared state)
@@ -203,7 +203,8 @@ export function useTerminal() {
     accent: {
       current: accent,
       names: accents.map((a) => a.name),
-      set: (name: string) => setAccent(name) !== undefined
+      set: (name: string) => setAccent(name) !== undefined,
+      applyCustom: applyCustomAccent
     },
     effects: effectFlags,
     // commands run from event handlers, outside the Nuxt instance — wrap

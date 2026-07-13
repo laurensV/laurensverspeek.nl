@@ -81,6 +81,7 @@ export interface TerminalContext {
     current: Ref<string>
     names: string[]
     set: (name: string) => boolean
+    applyCustom: (h: number, s: number, l: number) => void
   }
   effects: {
     matrix: Ref<boolean>

@@ -4,6 +4,7 @@ import { runJq } from '~/utils/terminal/jq'
 import { buildJsonResume } from '~/utils/resume'
 import { bugReportUrl } from '~/utils/bugReport'
 import { shellError } from '~/utils/terminal/errors'
+import { hexToRgb, rgbToHsl } from '~/utils/color'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -103,19 +104,36 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
     },
     colorscheme: {
       category: 'system',
-      usage: 'colorscheme <name>',
-      description: `Change the accent color (${ctx.accent.names.join(', ')})`,
-      examples: ['colorscheme emerald', 'colorscheme cyan'],
+      usage: 'colorscheme <name|#hex|h s l>',
+      description: `Change the accent color (${ctx.accent.names.join(', ')}, or any hex)`,
+      examples: ['colorscheme emerald', 'colorscheme #ff3e88', 'colorscheme 320 80 60'],
       argCandidates: () => ctx.accent.names,
       exec: (args) => {
-        const name = args[0]?.toLowerCase()
-        if (!name) {
+        const raw = args[0]
+        if (!raw) {
           out(`Current accent: ${ctx.accent.current.value}`)
-          muted(`Available: ${ctx.accent.names.join(', ')}`)
+          muted(`Available: ${ctx.accent.names.join(', ')} — or a custom #hex / h s l`)
           return
         }
-        if (ctx.accent.set(name)) out(`Accent set to ${name}.`)
-        else error(`colorscheme: unknown accent '${args[0]}'. Try: ${ctx.accent.names.join(', ')}`)
+        // a custom hex, reaching the same applyCustom the lvOS colour picker uses
+        const rgb = hexToRgb(raw)
+        if (rgb) {
+          const { h, s, l } = rgbToHsl(rgb.r, rgb.g, rgb.b)
+          ctx.accent.applyCustom(h, s, l)
+          out(`Accent set to ${raw.startsWith('#') ? raw : `#${raw}`}.`)
+          return
+        }
+        // a custom HSL triple: colorscheme 320 80 60
+        if (args.length >= 3 && args.slice(0, 3).every(a => /^\d+$/.test(a))) {
+          const [h, s, l] = args.slice(0, 3).map(Number)
+          ctx.accent.applyCustom(
+            Math.min(360, h!), Math.min(100, s!), Math.min(100, l!)
+          )
+          out(`Accent set to hsl(${Math.min(360, h!)}, ${Math.min(100, s!)}%, ${Math.min(100, l!)}%).`)
+          return
+        }
+        if (ctx.accent.set(raw.toLowerCase())) out(`Accent set to ${raw.toLowerCase()}.`)
+        else error(`colorscheme: unknown accent '${raw}'. Try a name (${ctx.accent.names.join(', ')}) or a hex like #ff3e88.`)
       }
     },
     fontsize: {
