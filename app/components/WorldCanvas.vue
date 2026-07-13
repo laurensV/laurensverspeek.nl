@@ -151,10 +151,17 @@ const fit = () => {
   const host = hostRef.value
   const canvas = canvasRef.value
   const mini = miniRef.value
-  if (!host || !canvas) return
+  // size the canvas from its flex:1 stage, which already reserves exactly what's
+  // left after the HUD/palette/lapse rows take their (possibly wrapped) height.
+  // the old hardcoded `host.clientHeight - 116` under-reserved once the palette
+  // wrapped to two rows on a phone, so the opaque canvas overflowed down over the
+  // coordinate HUD and the top swatch row.
+  const stage = canvas?.parentElement
+  if (!host || !canvas || !stage) return
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
-  const cssH = host.clientHeight - 116
-  canvas.width = host.clientWidth * dpr
+  const cssW = stage.clientWidth
+  const cssH = stage.clientHeight
+  canvas.width = cssW * dpr
   canvas.height = cssH * dpr
   canvas.style.height = `${cssH}px`
   ctx2d = canvas.getContext('2d')
