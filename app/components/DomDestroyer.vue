@@ -50,8 +50,8 @@ const SCROLL_EDGE = 130 // px from top/bottom where the ship starts flying the p
 const EDGE_PUSH = 5 // px/s of intent needed before the ship drives the page scroll
 const FIRE_CADENCE = 170 // ms between shots while space (or the pointer) is held
 
-// heading 0 points right; the ship starts nose-up
-const ship = { x: window.innerWidth / 2, y: window.innerHeight - 80, vx: 0, vy: 0, angle: -Math.PI / 2 }
+// heading 0 points right; the ship starts nose-up, centered in the viewport
+const ship = { x: window.innerWidth / 2, y: window.innerHeight / 2, vx: 0, vy: 0, angle: -Math.PI / 2 }
 
 // held controls: forward thrust and rotation (wasd + arrows)
 const FORWARD = new Set(['w', 'arrowup'])
@@ -398,9 +398,17 @@ onUnmounted(() => {
 
 .destroyer-hud {
   position: absolute;
-  top: 0.75rem;
+  // the ship spawns centered, so the score sits out of its way at the bottom on
+  // desktop; on touch the bottom belongs to the joystick + fire button, so it
+  // rides up top there instead
+  bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
+
+  @media (pointer: coarse) {
+    top: 0.75rem;
+    bottom: auto;
+  }
   display: flex;
   align-items: center;
   gap: 1rem;
