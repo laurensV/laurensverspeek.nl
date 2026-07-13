@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePreferredReducedMotion, useEventListener } from '@vueuse/core'
+import { useEventListener } from '@vueuse/core'
 import { playBootChime } from '~/utils/bootChime'
 
 // lvOS POST / BIOS check. Types out a few boot lines, then emits `done` and
@@ -40,7 +40,6 @@ const LINES: BootLine[] = [
 ]
 
 const visibleLines = ref<BootLine[]>([])
-const reducedMotion = usePreferredReducedMotion()
 // the same startup chime the site splash plays — it always claimed to sound when
 // "entering lvOS" but only BootSplash was wired to it; mute/volume-guarded
 const { volume, muted } = useVolume()
@@ -61,7 +60,7 @@ const tick = () => {
 
 onMounted(() => {
   if (!muted.value && volume.value > 0) playBootChime(volume.value / 100)
-  if (reducedMotion.value === 'reduce') {
+  if (prefersReducedMotion()) {
     visibleLines.value = LINES
     nextLine = LINES.length
     timer = setTimeout(() => emit('done'), 300)

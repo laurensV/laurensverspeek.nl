@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePreferredReducedMotion, useEventListener } from '@vueuse/core'
+import { useEventListener } from '@vueuse/core'
 import { registerBootProc, unregisterBootProc } from '~/utils/terminal/effectProcs'
 import { playBootChime } from '~/utils/bootChime'
 
@@ -43,7 +43,6 @@ const STORAGE_KEY = 'lv-booted'
 const visible = ref(false)
 const shownLines = ref<string[]>([])
 const done = ref(false)
-const reducedMotion = usePreferredReducedMotion()
 
 // `reboot` in the terminal replays the boot sequence on demand
 const replayRequested = useState(STATE_KEYS.bootReplay, () => false)
@@ -75,8 +74,9 @@ onMounted(() => {
   // a seat in the shared process table while the splash is on screen: it's a
   // fullscreen takeover like the screensaver, so `kill 200` finishes it
   registerBootProc({ running: () => visible.value, stop: finish })
-  // once per browser session, never for reduced motion or repeat visitors in-session
-  if (reducedMotion.value === 'reduce' || sessionStorage.getItem(STORAGE_KEY)) return
+  // once per browser session, never for reduced motion (OS query OR the manual
+  // switch) or repeat visitors in-session
+  if (prefersReducedMotion() || sessionStorage.getItem(STORAGE_KEY)) return
   sessionStorage.setItem(STORAGE_KEY, '1')
   play()
 })
