@@ -123,6 +123,14 @@ const send = () => {
   font: inherit;
   cursor: pointer;
 
+  // ~18px was well under the ~40px the rest of lvOS enforces on touch
+  @media (pointer: coarse) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.4rem;
+    padding: 0.3rem 0.6rem;
+  }
+
   &:hover {
     text-decoration: underline;
   }
