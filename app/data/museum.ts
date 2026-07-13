@@ -94,7 +94,7 @@ export const museum: Wing[] = [
     title: 'the hidden collection',
     intro: 'Pieces you have to earn. This label is already too generous.',
     exhibits: [
-      { name: 'the console hunt', how: 'open devtools, follow window.lv', blurb: 'A three-step riddle that ends in a party and a job-application command.' },
+      { name: 'the console hunt', how: 'open devtools, follow window.lv', blurb: 'Five rounds played from the devtools console — decode base64, inspect a live object, read a function’s own source, turn char codes back into text, then combine your answers. One line each, no trivia, no scripting — all real dev moves. Finishing it unlocks a command that exists nowhere else: an all-access backstage pass with a one-of-one code and a direct line.' },
       { name: 'the tamagotchi', how: 'pet adopt <name>', blurb: 'Lives in the status bar, wanders the lvOS desktop, hatches within the hour, sleeps at night, sulks when unfed. Forgives instantly.' },
       { name: 'the pet economy', how: 'pet coins, pet buy', blurb: 'Your game high scores mint coins; the shop spends them on snacks and a bowtie, top hat or pixel crown the sprite actually wears. No second ledger — the coins come from the hall of fame itself.' },
       { name: 'the 418 teapot', how: 'ask the terminal for coffee', blurb: 'RFC 2324, implemented: an ASCII teapot in real 3D, rendered with arithmetic and stubbornness. Drag it to pour.' },

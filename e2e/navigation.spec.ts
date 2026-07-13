@@ -339,29 +339,67 @@ test('triple-clicking the brand glyph toggles CRT mode', async ({ page }) => {
 
 declare global {
   interface Window {
-    lv: { hunt(): string, riddle(): string, answer(g: string): string }
+    lv: {
+      hunt(): string
+      solve(g: unknown): string
+      vault: { pass: string }
+      decode(reveal?: string): string
+      codes: number[]
+      finish(a?: string, b?: string): string
+    }
     __sawProgress?: boolean
   }
 }
 
-test('the console dev hunt chains clues to a reward', async ({ page }) => {
+test('the console dev hunt runs five rounds and unlocks the backstage reward', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   // the hunt object is exposed on window
   expect(await page.evaluate(() => typeof window.lv?.hunt)).toBe('function')
-  expect(await page.evaluate(() => window.lv.hunt())).toBe('step-1')
-  // the base64 clue decodes to the next call
-  expect(await page.evaluate(() => atob('bHYucmlkZGxlKCk='))).toBe('lv.riddle()')
-  expect(await page.evaluate(() => window.lv.riddle())).toBe('step-2')
-  // a wrong answer is rejected, the right one ('secrets') solves it and parties
-  expect(await page.evaluate(() => window.lv.answer('nope'))).toBe('wrong')
-  expect(await page.evaluate(() => window.lv.answer('secrets'))).toBe('solved')
-  await expect(page.locator('html.party-mode')).toHaveCount(1)
-  // and the reward command works in the terminal
+  // solving before starting is refused
+  expect(await page.evaluate(() => window.lv.solve('inspect'))).toBe('not-started')
+  expect(await page.evaluate(() => window.lv.hunt())).toBe('round-1')
+
+  // R1 · base64 decodes to the answer
+  expect(await page.evaluate(() => atob('aW5zcGVjdA=='))).toBe('inspect')
+  // a wrong answer keeps you on the round
+  expect(await page.evaluate(() => window.lv.solve('nope'))).toBe('wrong')
+  expect(await page.evaluate(() => window.lv.solve('inspect'))).toBe('round-2')
+
+  // R2 · inspect a live object and read the value out of it
+  expect(await page.evaluate(() => window.lv.vault.pass)).toBe('otter')
+  expect(await page.evaluate(() => window.lv.solve('otter'))).toBe('round-3')
+
+  // R3 · the answer lives in a function's own source
+  expect(await page.evaluate(() => String(window.lv.decode))).toContain('kernel')
+  expect(await page.evaluate(() => window.lv.solve('kernel'))).toBe('round-4')
+
+  // R4 · char codes reconstruct the word
+  expect(await page.evaluate(() => String.fromCharCode(...window.lv.codes))).toBe('packet')
+  expect(await page.evaluate(() => window.lv.solve('packet'))).toBe('round-5')
+
+  // R5 · feed rounds 3 and 4 back to earn the final word
+  expect(await page.evaluate(() => window.lv.finish('nope', 'nope'))).not.toBe('access')
+  expect(await page.evaluate(() => window.lv.finish('kernel', 'packet'))).toBe('access')
+  expect(await page.evaluate(() => window.lv.solve('access'))).toBe('unlocked')
+  // the win fires the fireworks show
+  await expect(page.locator('.fireworks-overlay')).toHaveCount(1)
+
+  // and the unlocked command reveals the backstage pass
   await pressTerminalKey(page)
-  await page.fill('#terminal-input', 'hire')
+  await page.fill('#terminal-input', 'backstage')
   await page.keyboard.press('Enter')
-  await expect(page.locator('.terminal-output')).toContainText('finished the console hunt')
+  await expect(page.locator('.terminal-output')).toContainText('ALL-ACCESS BACKSTAGE PASS')
+})
+
+test('the backstage command is inert until the hunt is solved', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('.hero-name').waitFor()
+  await pressTerminalKey(page)
+  await page.fill('#terminal-input', 'backstage')
+  await page.keyboard.press('Enter')
+  // before the hunt it behaves exactly like a command that does not exist
+  await expect(page.locator('.terminal-output')).toContainText('command not found: backstage')
 })
 
 test('the status bar shows a live clock', async ({ page }) => {

@@ -29,6 +29,8 @@ export const STATE_KEYS = {
   fxCelebrate: 'fx-celebrate',
   fxWorldRecord: 'fx-world-record',
   bootReplay: 'boot-replay',
+  // the console dev-hunt reward: unlocks the hidden `backstage` command
+  huntSolved: 'lv-hunt-solved',
   // the status-bar pet
   petState: 'pet-state',
   petNow: 'pet-now',

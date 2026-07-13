@@ -3,6 +3,7 @@ import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils
 import { runJq } from '~/utils/terminal/jq'
 import { buildJsonResume } from '~/utils/resume'
 import { bugReportUrl } from '~/utils/bugReport'
+import { shellError } from '~/utils/terminal/errors'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -51,6 +52,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const motion = useReduceMotion()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
+  // the console-hunt win, shared with the devtools plugin that unlocks `backstage`
+  const huntSolved = useState<boolean>(STATE_KEYS.huntSolved, () => false)
 
   return {
     mail: {
@@ -440,14 +443,47 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         ctx.link('  → inspect the teapot at /418', '/418')
       }
     },
-    hire: {
+    backstage: {
+      // The console-hunt reward. Deliberately kept out of `secrets` and shown
+      // by name only when the hunt is finished — before that it behaves like a
+      // command that doesn't exist, so it can't be found any other way.
       hidden: true,
-      description: 'The console-hunt reward',
+      description: 'All-access pass — earned in the console hunt',
       exec: () => {
-        push('primary', 'Nice — you finished the console hunt. 🕵️')
-        out('If you build things you are proud of, I would love to hear from you.')
-        link(`  → ${profile.email}`, `mailto:${profile.email}`)
-        muted('(the invitation stands whether or not you found the hunt)')
+        const solved = huntSolved.value || storageGet(STATE_KEYS.huntSolved) === '1'
+        if (!solved) {
+          error(shellError('command not found: backstage'))
+          muted(`Type 'help' for available commands.`)
+          return
+        }
+
+        // a deterministic, one-of-one code stamped from the visitor's identity
+        const holder = ctx.identity.name.value || 'visitor'
+        let h = 0
+        for (const ch of `${holder}::backstage`) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+        const code = `LV-${h.toString(36).toUpperCase().padStart(4, '0').slice(-4)}`
+
+        ctx.effects.fireworks.value = true
+
+        push('primary', '┌─ LV · ALL-ACCESS BACKSTAGE PASS ───────────┐')
+        push('output', '<span class="term-accent">│</span>', true)
+        push('output', `<span class="term-accent">│</span>  holder      <span class="term-accent">${holder}</span>`, true)
+        push('output', `<span class="term-accent">│</span>  clearance   ROOT — no questions asked`, true)
+        push('output', `<span class="term-accent">│</span>  pass code   <span class="term-accent">${code}</span> · one of one`, true)
+        push('output', '<span class="term-accent">│</span>', true)
+        push('primary', '└─────────────────────────────────────────────┘')
+        out('')
+        out('You are one of a small number of people who read the source, opened the')
+        out('console, and worked all five rounds. That is exactly the kind of stubborn')
+        out('curiosity I like building things with.')
+        out('')
+        out('So here is a real, direct line — not the one on the contact page:')
+        const subject = encodeURIComponent(`backstage pass ${code} — let's build something`)
+        const body = encodeURIComponent(
+          `Hi Laurens,\n\nI finished the console hunt (pass code ${code}). I wanted to reach out because…\n`
+        )
+        link(`  → email me with your pass`, `mailto:${profile.email}?subject=${subject}&body=${body}`)
+        muted(`(the ${code} subject tag jumps this straight to the top of my inbox — I answer these first.)`)
       }
     }
   }

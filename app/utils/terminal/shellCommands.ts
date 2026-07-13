@@ -242,7 +242,9 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
       exec: () => {
         push('primary', 'You found the secret list. The hidden commands are:')
         for (const [name, cmd] of Object.entries(ctx.getCommands())) {
-          if (!cmd.hidden || name === 'secrets') continue
+          // `backstage` is the console-hunt reward — never list it here; it's
+          // revealed only by finishing the hunt in the devtools console
+          if (!cmd.hidden || name === 'secrets' || name === 'backstage') continue
           push(
             'output',
             `<span class="term-accent">${name.padEnd(24, ' ')}</span> ${cmd.description}`,
