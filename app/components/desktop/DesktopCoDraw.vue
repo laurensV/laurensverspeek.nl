@@ -215,10 +215,13 @@ const saveBoard = () => {
 const fit = () => {
   const canvas = canvasRef.value
   if (!canvas) return
-  const rect = canvas.getBoundingClientRect()
+  // clientWidth/Height, not getBoundingClientRect: the layout box ignores the
+  // window's open-scale transform (so we don't bake in a too-small buffer while
+  // the window animates in) and excludes the border (so the buffer matches the
+  // drawable area exactly)
   dpr = Math.min(window.devicePixelRatio || 1, 2)
-  canvas.width = Math.max(1, Math.round(rect.width * dpr))
-  canvas.height = Math.max(1, Math.round(rect.height * dpr))
+  canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr))
+  canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr))
   redraw()
 }
 
@@ -328,9 +331,15 @@ useResizeObserver(canvasRef, fit)
 }
 
 .codraw-canvas {
-  flex: 1;
+  // absolute (out of flow) so the canvas can't size itself: fit() sets the pixel
+  // buffer from the canvas's own measured border-box, and while it was a flex
+  // child that fed straight back into the flex height — every ResizeObserver tick
+  // added the 1px border, so the board slowly grew taller for seconds after open.
+  // Out of flow, the .codraw-stage (flex:1, min-height) owns the size instead.
+  position: absolute;
+  inset: 0;
   width: 100%;
-  min-height: 0;
+  height: 100%;
   border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
   border-radius: var(--bulma-radius-small);
   background-color: #14141a; // DRAW_COLORS[0]; the canvas paints over it
