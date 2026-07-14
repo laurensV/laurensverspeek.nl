@@ -77,19 +77,30 @@ A desktop on its own route (`/desktop`). `WebDesktop.vue` is the shell;
 mechanics live in composables: `useWindowManager` (drag/resize/snap/z-order),
 `useDesktopShortcuts` (the keyboard), `useDesktopPower` (lock/logout/CRT
 power-off), `useDesktopContextMenu` (right-click + touch long-press menu),
-`useWallpaper`, `useDesktopToasts`. Apps are lazy components in
-`app/components/desktop/`, registered in `app/utils/desktopApps.ts` — that
-one registry drives the icon grid, window titles, wide-window hints, the
-Alt+R run dialog and process pids. The terminal `desktop <app>` command
-resolves a name through that same registry (`matchApp`), stashes the id in a
-`lvos-pending-app` state, and WebDesktop opens it on mount.
+`useWallpaper`, `useDesktopToasts`. The `~500ms` touch long-press-to-menu
+state machine is itself one shared `useLongPress` composable (the desktop menu
+and the Files row menu both use it). The taskbar's start menu is its own
+`DesktopStartMenu` component, reporting choices as a typed `StartAction` the
+taskbar routes. Apps are lazy components in `app/components/desktop/`,
+registered in `app/utils/desktopApps.ts` — that one registry drives the icon
+grid, window titles, wide-window hints, the Alt+R run dialog and process pids.
+The terminal `desktop <app>` command resolves a name through that same
+registry (`matchApp`), stashes the id in a `lvos-pending-app` state, and
+WebDesktop opens it on mount.
 
 Crucially, lvOS shares the site's state: the Files app, vim window and
 terminal edit the same virtual filesystem; the recycle bin catches `rm` from
-everywhere; the pet in the status bar is the pet on the desktop; the keyclick
-setting ticks in lvOS text fields as well as the terminal; and every copy
-(terminal, blog, vCard, colour picker, palette) flows through one
-`writeClipboard()` chokepoint that feeds the Clipboard app's history.
+everywhere; the pet in the status bar is the pet on the desktop (and the Pet
+app spends the same coins the terminal `pet` command does); the keyclick
+setting ticks in every lvOS text field (Vim and the Playground included) as
+well as the terminal; the terminal text scale has both a `fontsize` command
+and a Settings slider; the tray weather chip, the Weather app and the terminal
+`weather` command all read one shared `fetchCurrentWeather`; and every copy
+(terminal `| copy`, blog, vCard, colour picker, palette) flows through one
+`writeClipboard()` chokepoint that feeds the Clipboard app's history and the
+terminal `clip` command. Games (Snake … Asteroids) all feed one economy via
+`useHighScore`: a single `lv-<game>-highscore` key → hall of fame + global
+leaderboard + confetti + tamagotchi coins, no second ledger.
 
 ## Realtime (the cursors relay, opt-in)
 
@@ -110,7 +121,9 @@ example of the whole pattern — it also broadcasts live pen positions
 (`draw-cursor`), pruned client-side after a few seconds of silence and cleared
 by a `draw-cursor-gone` frame when a member leaves. Each stored segment carries
 the drawer's connection id (`by`, server-assigned) and a per-drag `sid`, so a
-`draw-undo` frame can drop one drawer's whole most-recent stroke for everyone.
+`draw-undo` frame (which carries the client's resolved `sid`, not a
+server-guessed "highest") can drop exactly one drawer's stroke for everyone —
+and nothing, staying silent, if a flood-dropped drag never reached the server.
 
 Every per-connection rate limiter is a `CooldownGate` built through the server's
 `gate()` helper, which registers it so a single `forgetConnection(id)` on socket
