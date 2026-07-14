@@ -45,7 +45,7 @@ export interface DrawStrokeIn { type: 'draw-stroke', x0: number, y0: number, x1:
 export interface DrawClearIn { type: 'draw-clear' }
 /** Undo the sender's most recent pen-drag — the server finds their highest-sid
  * group still in the buffer, drops it, and tells the others to drop it too. */
-export interface DrawUndoIn { type: 'draw-undo' }
+export interface DrawUndoIn { type: 'draw-undo', sid?: number }
 /** A live pen position (where this visitor's cursor is over the board), so the
  * others can see where everyone is drawing. Ephemeral — never stored. */
 export interface DrawCursorIn { type: 'draw-cursor', x: number, y: number, c: number }

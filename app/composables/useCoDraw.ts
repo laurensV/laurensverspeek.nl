@@ -136,7 +136,9 @@ export function useCoDraw() {
     for (const s of strokes.value) if (s.by === ownId && s.sid > lastSid) lastSid = s.sid
     if (lastSid < 0) return
     strokes.value = strokes.value.filter((s) => !(s.by === ownId && s.sid === lastSid))
-    conn?.send({ type: 'draw-undo' } satisfies DrawUndoIn)
+    // send the exact stroke we removed so the server can't undo a different one
+    // (its own "highest sid" could differ if the flood gate dropped a later drag)
+    conn?.send({ type: 'draw-undo', sid: lastSid } satisfies DrawUndoIn)
   }
 
   /** Wipe the board for everyone (or just locally offline). */

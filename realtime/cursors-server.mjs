@@ -294,13 +294,19 @@ wss.on('connection', (socket) => {
     }
     if (msg.type === 'draw-undo') {
       if (!drawMembers.has(socket)) return
-      // find the sender's most recent pen-drag still in the buffer
-      let lastSid = -1
-      for (const s of drawLog) if (s.by === id && s.sid > lastSid) lastSid = s.sid
-      if (lastSid < 0) return
-      drawLog = drawLog.filter((s) => !(s.by === id && s.sid === lastSid))
-      // the sender removed it optimistically — tell everyone else which group
-      broadcastDraw(wire({ type: 'draw-undo', by: id, sid: lastSid }), socket)
+      // honor the exact sid the client resolved from its own board (the stroke it
+      // just removed optimistically); older clients send none, so fall back to the
+      // sender's highest sid still in the buffer
+      let sid = Number.isInteger(msg.sid) ? msg.sid : -1
+      if (sid < 0) for (const s of drawLog) if (s.by === id && s.sid > sid) sid = s.sid
+      if (sid < 0) return
+      const before = drawLog.length
+      drawLog = drawLog.filter((s) => !(s.by === id && s.sid === sid))
+      // if that stroke never reached us (its segments were flood-dropped), remove
+      // nothing and stay quiet — the others never had it, so a broadcast would
+      // wrongly erase a *different* stroke that happens to share the id space
+      if (drawLog.length === before) return
+      broadcastDraw(wire({ type: 'draw-undo', by: id, sid }), socket)
       return
     }
     if (msg.type === 'draw-clear') {
