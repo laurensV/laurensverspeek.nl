@@ -45,6 +45,9 @@
         <button class="codraw-clear" :disabled="!canUndo" title="Undo your last stroke (for everyone)" @click="onUndo">
           {{ undone ? 'undone' : 'undo' }}
         </button>
+        <button class="codraw-clear" :disabled="!strokes.length || replaying" title="Replay the board stroke by stroke" @click="replay">
+          {{ replaying ? 'replaying…' : 'replay' }}
+        </button>
         <button class="codraw-clear" title="Save the board to the Gallery and download a PNG" @click="saveBoard">
           {{ saved ? 'saved ✓' : 'save' }}
         </button>
@@ -63,6 +66,7 @@
 
 <script setup lang="ts">
 import { useResizeObserver } from '@vueuse/core'
+import type { DrawStroke } from '../../../realtime/protocol'
 import { DRAW_COLORS } from '../../../realtime/draw-core.mjs'
 import { addToGallery } from '~/utils/gallery'
 
@@ -132,20 +136,23 @@ let dpr = 1
 
 // paint the whole board onto any 2D context at its pixel size — shared by the
 // live canvas and the fixed-size snapshot the save button renders
+// one segment onto a prepared context — shared by the full paint and the replay
+const drawSegment = (ctx: CanvasRenderingContext2D, s: DrawStroke, w: number, h: number, lineScale: number) => {
+  ctx.strokeStyle = COLORS[s.c] ?? COLORS[1]!
+  // the eraser (index 0, board colour) draws fatter so it clears cleanly
+  ctx.lineWidth = (s.c === 0 ? 16 : 3) * lineScale
+  ctx.beginPath()
+  ctx.moveTo(s.x0 * w, s.y0 * h)
+  ctx.lineTo(s.x1 * w, s.y1 * h)
+  ctx.stroke()
+}
+
 const paintBoard = (ctx: CanvasRenderingContext2D, w: number, h: number, lineScale: number) => {
   ctx.fillStyle = COLORS[0]!
   ctx.fillRect(0, 0, w, h)
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
-  for (const s of strokes.value) {
-    ctx.strokeStyle = COLORS[s.c] ?? COLORS[1]!
-    // the eraser (index 0, board colour) draws fatter so it clears cleanly
-    ctx.lineWidth = (s.c === 0 ? 16 : 3) * lineScale
-    ctx.beginPath()
-    ctx.moveTo(s.x0 * w, s.y0 * h)
-    ctx.lineTo(s.x1 * w, s.y1 * h)
-    ctx.stroke()
-  }
+  for (const s of strokes.value) drawSegment(ctx, s, w, h, lineScale)
 }
 
 const redraw = () => {
@@ -153,6 +160,35 @@ const redraw = () => {
   const ctx = canvas?.getContext('2d')
   if (!canvas || !ctx) return
   paintBoard(ctx, canvas.width, canvas.height, dpr)
+}
+
+// time-lapse: clear the board, then reveal every stroke in the order drawn (like
+// the pixel world's time-lapse) over ~2.5s, then resync with the live board
+const replaying = ref(false)
+let replayTimer: ReturnType<typeof setInterval> | undefined
+const replay = () => {
+  if (replaying.value) return
+  const list = [...strokes.value]
+  const canvas = canvasRef.value
+  const ctx = canvas?.getContext('2d')
+  if (!list.length || !canvas || !ctx) return
+  replaying.value = true
+  ctx.fillStyle = COLORS[0]!
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  let i = 0
+  const batch = Math.max(1, Math.ceil(list.length / 150)) // ~2.5s at any stroke count
+  replayTimer = setInterval(() => {
+    for (let n = 0; n < batch && i < list.length; n++, i++) {
+      drawSegment(ctx, list[i]!, canvas.width, canvas.height, dpr)
+    }
+    if (i >= list.length) {
+      clearInterval(replayTimer)
+      replaying.value = false
+      redraw() // any strokes that arrived mid-replay
+    }
+  }, 16)
 }
 
 // snapshot the board at a fixed size → the shared lvOS Gallery + a PNG download
@@ -251,11 +287,12 @@ onUnmounted(() => {
   if (confirmTimer) clearTimeout(confirmTimer)
   if (pruneTimer) clearInterval(pruneTimer)
   clearTimeout(undoneTimer)
+  clearInterval(replayTimer)
 })
 
 // remote strokes / init / clear all replace the array — repaint on any change,
 // and refit when the window is resized
-watch(strokes, redraw)
+watch(strokes, () => { if (!replaying.value) redraw() })
 useResizeObserver(canvasRef, fit)
 </script>
 
@@ -333,6 +370,7 @@ useResizeObserver(canvasRef, fit)
 
 .codraw-actions {
   display: flex;
+  flex-wrap: wrap; // undo · replay · save · clear can't all share one row at 320px
   gap: 0.4rem;
 }
 
