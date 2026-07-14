@@ -74,15 +74,17 @@ export const projects: Project[] = [
     slug: 'tappy',
     title: 'Tappy',
     description:
-      'Smart NFC products that share your contact details, socials and links with a single tap — no app to install. One tap opens your digital profile on any phone.',
+      'The easiest way to request a payment in crypto: create a payment link, share it anywhere, and get paid in USDC — non-custodial, no KYC, no fees.',
     category: 'work',
-    tech: ['NFC', 'Vue', 'Node.js'],
+    tech: ['Solana', 'Ethereum', 'USDC', 'Vue'],
+    thumbnail: '/img/projects/tappy.png',
     url: 'https://tappy.cc',
     year: '2022 — 2024',
     role: 'Co-founder',
     story: [
-      'Tappy makes networking physical again: NFC-enabled cards and products that, tapped against a phone, instantly open your digital profile — contact details, socials, links — without the other person installing anything.',
-      'As co-founder I helped take the product from idea to market: the tap-to-share web profiles, the dashboard where people manage what their tap reveals, and the NFC products that tie the two together.'
+      'Tappy makes requesting a crypto payment as easy as sharing a link. You connect a wallet, create a request for an amount, and send the link — the payer opens it and pays in a couple of taps, with no addresses to copy or chains to explain.',
+      'Under the hood it settles in USDC across Ethereum and Solana, and can swap other tokens into USDC automatically through DeFi so the recipient always gets the stablecoin they asked for. It is non-custodial (Tappy never holds anyone\'s funds), needs no KYC and charges no fees — a payment-request app, explicitly not a wallet.',
+      'As co-founder I helped shape the product and build it end to end: the payment-request flow, the multi-chain wallet connections, and the swaps that make "just tap to pay" actually work.'
     ]
   },
   {
@@ -114,6 +116,7 @@ export const projects: Project[] = [
       'This very website. Built with Nuxt 4, TypeScript and Bulma, featuring an interactive terminal mode and an animated flow-field background. Yes, it is finally finished(ish).',
     category: 'hobby',
     tech: ['Nuxt 4', 'TypeScript', 'Bulma'],
+    thumbnail: '/img/projects/portfolio.png',
     source: 'https://github.com/laurensV/laurensverspeek.nl',
     url: 'https://laurensverspeek.nl',
     year: '2022 — now',
@@ -178,18 +181,19 @@ export const projects: Project[] = [
     ]
   },
   {
-    slug: 'jouwwoordklok',
-    title: 'Jouw Woordklok',
+    slug: 'wordclock',
+    title: 'WordClock',
     description:
-      'A word clock that tells the time in words on a grid of glowing letters, driven by an ESP8266. I develop the firmware — WiFi onboarding, LED effects and time sync.',
+      'A clock that tells the time in words on a grid of glowing letters, driven by an ESP8266. I develop the firmware — WiFi onboarding, LED effects and time sync. Sold as Jouw Woordklok.',
     category: 'hobby',
     tech: ['ESP8266', 'C++', 'Arduino'],
+    thumbnail: '/img/projects/wordclock.png',
     url: 'https://www.jouwwoordklok.nl',
     year: '2023 — now',
     role: 'Software developer',
     story: [
-      'A "woordklok" (word clock) tells the time in full words: a grid of letters lights up to spell out the time — "het is tien over half drie" — instead of showing digits.',
-      'I develop the software that runs on the clock\'s ESP8266 microcontroller: the WiFi onboarding, the LED animations and color effects, and keeping the displayed time correct — so the clock keeps getting better after it is on your wall.'
+      'A word clock tells the time in full words: a grid of letters lights up to spell out the time — "it is ten past half three" — instead of showing digits. Mine ships to Dutch homes as Jouw Woordklok.',
+      'I develop the software that runs on the clock\'s ESP8266 microcontroller: the WiFi onboarding, the LED animations and colour effects, and keeping the displayed time correct — so the clock keeps getting better after it is on your wall.'
     ]
   },
   {
