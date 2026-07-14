@@ -94,3 +94,9 @@ export function appCandidates(query: string, apps: DesktopApp[] = DESKTOP_APPS):
     .filter((app) => app.id.startsWith(q) || app.label.toLowerCase().startsWith(q))
     .map((app) => app.id)
 }
+
+/** Every lvOS start-menu action, reported by DesktopStartMenu and routed by the
+ * taskbar onto its own emits. */
+export type StartAction =
+  | 'about' | 'settings' | 'terminal' | 'tile' | 'run' | 'iso'
+  | 'screenshot' | 'update' | 'lock' | 'logout' | 'reboot' | 'shutdown'

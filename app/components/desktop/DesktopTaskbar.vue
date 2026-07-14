@@ -9,34 +9,12 @@
     >
       ⚡ lvOS
     </button>
-    <div v-if="startOpen" class="lvos-start-menu">
-      <button @click="openFromStart('about-os')">ℹ about this computer</button>
-      <button @click="openFromStart('settings')">⚙ settings</button>
-      <button @click="terminalFromStart">>_ terminal</button>
-      <button @click="emit('tile'); startOpen = false">▦ tile windows</button>
-      <button @click="emit('run'); startOpen = false">▷ run… (alt+r)</button>
-      <button @click="emit('iso'); startOpen = false">⤓ download lvos.iso</button>
-      <button @click="emit('screenshot'); startOpen = false">⌜⌟ screenshot</button>
-      <button @click="emit('update'); startOpen = false">⟳ system update</button>
-      <p class="lvos-start-label">wallpaper</p>
-      <div class="lvos-wallpapers">
-        <button
-          v-for="(paper, i) in wallpapers"
-          :key="i"
-          class="lvos-wallpaper-swatch"
-          :class="{ 'is-active': wallpaper === i }"
-          :style="{ background: paper.swatch }"
-          :title="paper.name"
-          :aria-label="`Wallpaper: ${paper.name}`"
-          :aria-pressed="wallpaper === i"
-          @click="wallpaper = i"
-        />
-      </div>
-      <button @click="emit('lock')">🔒 lock</button>
-      <button @click="emit('logout')">← log out</button>
-      <button @click="emit('reboot')">↻ reboot</button>
-      <button @click="emit('shutdown')">⏻ shut down</button>
-    </div>
+    <DesktopStartMenu
+      v-if="startOpen"
+      v-model:wallpaper="wallpaper"
+      :wallpapers="wallpapers"
+      @select="onStartSelect"
+    />
 
     <!-- the open-window buttons scroll as a group on touch so they can never
          push the tray off the right edge of a narrow phone -->
@@ -165,6 +143,7 @@ import { useNow, useFullscreen } from '@vueuse/core'
 import type { DesktopWindow } from '~/composables/useWindowManager'
 import type { Wallpaper } from '~/composables/useWallpaper'
 import type { Toast } from '~/composables/useDesktopToasts'
+import type { StartAction } from '~/utils/desktopApps'
 
 defineProps<{ windows: DesktopWindow[], wallpapers: Wallpaper[], notifications: Toast[], unread: number }>()
 const emit = defineEmits<{
@@ -209,13 +188,23 @@ const weather = useWeatherChip()
 // browser fullscreen for the whole desktop page
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 
-const openFromStart = (id: string) => {
-  emit('open', id)
+// route the start menu's single `select` action onto the taskbar's own emits
+const onStartSelect = (action: StartAction) => {
   startOpen.value = false
-}
-const terminalFromStart = () => {
-  emit('terminal')
-  startOpen.value = false
+  switch (action) {
+    case 'about': emit('open', 'about-os'); break
+    case 'settings': emit('open', 'settings'); break
+    case 'terminal': emit('terminal'); break
+    case 'tile': emit('tile'); break
+    case 'run': emit('run'); break
+    case 'iso': emit('iso'); break
+    case 'screenshot': emit('screenshot'); break
+    case 'update': emit('update'); break
+    case 'lock': emit('lock'); break
+    case 'logout': emit('logout'); break
+    case 'reboot': emit('reboot'); break
+    case 'shutdown': emit('shutdown'); break
+  }
 }
 
 // the clock lives here; its calendar popover is DesktopCalendarPopover
@@ -315,41 +304,6 @@ const clock = computed(() =>
   text-align: right;
 }
 
-.lvos-start-menu {
-  position: absolute;
-  bottom: 2.6rem;
-
-  @media (pointer: coarse) {
-    bottom: 3.3rem;
-  }
-  left: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 11rem;
-  padding: 0.35rem;
-  border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
-  border-radius: var(--bulma-radius);
-
-  @include lv-glass(8%, 0.98, 0.8, 16px);
-
-  z-index: 10000;
-
-  button {
-    padding: 0.5rem 0.7rem;
-    border: none;
-    border-radius: var(--bulma-radius-small);
-    background: none;
-    color: hsl(var(--lv-scheme-hs), 88%);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-      background-color: hsla(var(--lv-primary-hsl), 0.15);
-    }
-  }
-}
-
 .lvos-tasks {
   display: flex;
   align-items: center;
@@ -426,33 +380,6 @@ const clock = computed(() =>
 @media (prefers-reduced-motion: reduce) {
   .lvos-task-preview {
     transition: none;
-  }
-}
-
-.lvos-start-label {
-  padding: 0.4rem 0.7rem 0.2rem;
-  color: hsl(var(--lv-scheme-hs), 50%);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.lvos-wallpapers {
-  display: flex;
-  gap: 0.4rem;
-  padding: 0.2rem 0.7rem 0.4rem;
-
-  .lvos-wallpaper-swatch {
-    width: 1.6rem;
-    height: 1.6rem;
-    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
-    border-radius: 2px;
-    cursor: pointer;
-
-    &.is-active {
-      border-color: var(--bulma-primary);
-      box-shadow: 0 0 0 1px var(--bulma-primary);
-    }
   }
 }
 
