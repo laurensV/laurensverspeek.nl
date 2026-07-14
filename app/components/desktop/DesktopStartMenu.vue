@@ -1,45 +1,122 @@
 <template>
   <div class="lvos-start-menu">
-    <button @click="emit('select', 'about')">ℹ about this computer</button>
-    <button @click="emit('select', 'settings')">⚙ settings</button>
-    <button @click="emit('select', 'terminal')">>_ terminal</button>
-    <button @click="emit('select', 'tile')">▦ tile windows</button>
-    <button @click="emit('select', 'run')">▷ run… (alt+r)</button>
-    <button @click="emit('select', 'iso')">⤓ download lvos.iso</button>
-    <button @click="emit('select', 'screenshot')">⌜⌟ screenshot</button>
-    <button @click="emit('select', 'update')">⟳ system update</button>
-    <p class="lvos-start-label">wallpaper</p>
-    <div class="lvos-wallpapers">
-      <button
-        v-for="(paper, i) in wallpapers"
-        :key="i"
-        class="lvos-wallpaper-swatch"
-        :class="{ 'is-active': wallpaper === i }"
-        :style="{ background: paper.swatch }"
-        :title="paper.name"
-        :aria-label="`Wallpaper: ${paper.name}`"
-        :aria-pressed="wallpaper === i"
-        @click="wallpaper = i"
-      />
+    <!-- search: focused the moment the menu opens, so you can just start typing
+         to find an app (Windows-style) instead of hunting the icon grid -->
+    <div class="lvos-start-search">
+      <AppIcon name="search" :size="13" class="lvos-start-search-icon" />
+      <input
+        ref="searchRef"
+        v-model="query"
+        type="text"
+        class="lvos-start-search-input"
+        placeholder="search apps…"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Search apps"
+        @keydown.enter="launchFirst"
+        @keydown.esc="onSearchEsc"
+      >
     </div>
-    <button @click="emit('select', 'lock')">🔒 lock</button>
-    <button @click="emit('select', 'logout')">← log out</button>
-    <button @click="emit('select', 'reboot')">↻ reboot</button>
-    <button @click="emit('select', 'shutdown')">⏻ shut down</button>
+
+    <!-- typing shows matching apps and launches them; empty shows the menu -->
+    <div v-if="query.trim()" class="lvos-start-results">
+      <button
+        v-for="app in results"
+        :key="app.id"
+        class="lvos-start-app"
+        @click="launch(app.id)"
+      >
+        <AppIcon :name="app.icon" :size="16" />
+        <span>{{ app.label }}</span>
+      </button>
+      <p v-if="!results.length" class="lvos-start-empty">no apps match “{{ query.trim() }}”</p>
+    </div>
+
+    <template v-else>
+      <p class="lvos-start-label">system</p>
+      <button @click="emit('select', 'about')">ℹ about this computer</button>
+      <button @click="emit('select', 'settings')">⚙ settings</button>
+      <button @click="emit('select', 'terminal')">&gt;_ terminal</button>
+      <button @click="emit('select', 'tile')">▦ tile windows</button>
+      <button @click="emit('select', 'run')">▷ run… (alt+r)</button>
+      <button @click="emit('select', 'screenshot')">⎙ screenshot</button>
+      <button @click="emit('select', 'iso')">⤓ download lvos.iso</button>
+      <button @click="emit('select', 'update')">⟳ system update</button>
+
+      <p class="lvos-start-label">wallpaper</p>
+      <div class="lvos-wallpapers">
+        <button
+          v-for="(paper, i) in wallpapers"
+          :key="i"
+          class="lvos-wallpaper-swatch"
+          :class="{ 'is-active': wallpaper === i }"
+          :style="{ background: paper.swatch }"
+          :title="paper.name"
+          :aria-label="`Wallpaper: ${paper.name}`"
+          :aria-pressed="wallpaper === i"
+          @click="wallpaper = i"
+        />
+      </div>
+
+      <!-- the four session/power actions as a compact icon row instead of four
+           full-width rows — the menu was getting very tall -->
+      <p class="lvos-start-label">session</p>
+      <div class="lvos-start-power">
+        <button title="Lock" aria-label="Lock" @click="emit('select', 'lock')">🔒</button>
+        <button title="Log out" aria-label="Log out" @click="emit('select', 'logout')">←</button>
+        <button title="Reboot" aria-label="Reboot" @click="emit('select', 'reboot')">↻</button>
+        <button title="Shut down" aria-label="Shut down" @click="emit('select', 'shutdown')">⏻</button>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Wallpaper } from '~/composables/useWallpaper'
-import type { StartAction } from '~/utils/desktopApps'
+import { DESKTOP_APPS, type StartAction } from '~/utils/desktopApps'
 
 // The lvOS start menu — pulled out of DesktopTaskbar so the bar stays about the
 // tray/clock/tasks. It reports every choice as one `select` action the taskbar
-// routes; the wallpaper swatch is a v-model so the pick lands in the shared state.
+// routes; the wallpaper swatch is a v-model so the pick lands in the shared
+// state. The search box launches any app by id — a `launch` action the taskbar
+// forwards to the same launcher Alt+R uses.
 
 defineProps<{ wallpapers: Wallpaper[] }>()
 const wallpaper = defineModel<number>('wallpaper', { default: 0 })
-const emit = defineEmits<{ select: [action: StartAction] }>()
+const emit = defineEmits<{ select: [action: StartAction], launch: [id: string] }>()
+
+const query = ref('')
+const searchRef = ref<HTMLInputElement>()
+
+// match on id or label so 'mines', 'time', 'terminal' all find their app; the
+// 'log out' entry is reachable from the session row, so keep it out of results
+const results = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  if (!q) return []
+  return DESKTOP_APPS.filter(
+    (app) => app.action !== 'logout' && (app.id.includes(q) || app.label.toLowerCase().includes(q))
+  )
+})
+
+const launch = (id: string) => {
+  query.value = ''
+  emit('launch', id)
+}
+const launchFirst = () => {
+  const first = results.value[0]
+  if (first) launch(first.id)
+}
+// esc clears a query first, then (empty) lets the desktop close the whole menu
+const onSearchEsc = (event: KeyboardEvent) => {
+  if (query.value) {
+    query.value = ''
+    event.stopPropagation()
+  }
+}
+
+// focus the search the instant the menu opens, so typing goes straight to it
+onMounted(() => searchRef.value?.focus())
 </script>
 
 <style scoped lang="scss">
@@ -55,7 +132,9 @@ const emit = defineEmits<{ select: [action: StartAction] }>()
   left: 0.5rem;
   display: flex;
   flex-direction: column;
-  min-width: 11rem;
+  min-width: 13rem;
+  max-height: min(72vh, 34rem);
+  overflow-y: auto;
   padding: 0.35rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.4);
   border-radius: var(--bulma-radius);
@@ -77,6 +156,80 @@ const emit = defineEmits<{ select: [action: StartAction] }>()
     &:hover {
       background-color: hsla(var(--lv-primary-hsl), 0.15);
     }
+  }
+}
+
+// search box pinned at the top of the menu
+.lvos-start-search {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.25);
+  border-radius: var(--bulma-radius-small);
+  background-color: hsla(var(--lv-scheme-hs), 50%, 0.08);
+
+  &:focus-within {
+    border-color: hsla(var(--lv-primary-hsl), 0.6);
+  }
+
+  .lvos-start-search-icon {
+    flex-shrink: 0;
+    color: hsl(var(--lv-scheme-hs), 55%);
+  }
+}
+
+.lvos-start-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: hsl(var(--lv-scheme-hs), 92%);
+  font: inherit;
+
+  &::placeholder {
+    color: hsl(var(--lv-scheme-hs), 45%);
+  }
+}
+
+// live app-search results
+.lvos-start-results {
+  display: flex;
+  flex-direction: column;
+}
+
+.lvos-start-menu .lvos-start-app {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+
+  :deep(svg) {
+    flex-shrink: 0;
+    color: var(--bulma-primary);
+  }
+}
+
+.lvos-start-empty {
+  padding: 0.5rem 0.7rem;
+  color: hsl(var(--lv-scheme-hs), 55%);
+  font-size: 0.72rem;
+}
+
+// the four session actions sit in one compact icon row, not four tall rows
+.lvos-start-power {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.1rem 0.2rem 0.2rem;
+
+  button {
+    flex: 1;
+    padding: 0.45rem 0;
+    text-align: center;
+    border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.2);
+    font-size: 0.95rem;
   }
 }
 

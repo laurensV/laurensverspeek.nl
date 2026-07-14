@@ -164,6 +164,7 @@
         @iso="downloadIso"
         @screenshot="takeScreenshot"
         @update="updateOpen = true"
+        @launch="launchById"
       />
 
       <!-- "System Update": installs real commits with maximum ceremony -->

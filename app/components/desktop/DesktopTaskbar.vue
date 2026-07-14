@@ -7,13 +7,14 @@
       aria-label="Start menu"
       @click="toggleStart"
     >
-      ⚡ lvOS
+      <AppIcon name="grid" :size="14" /> lvOS
     </button>
     <DesktopStartMenu
       v-if="startOpen"
       v-model:wallpaper="wallpaper"
       :wallpapers="wallpapers"
       @select="onStartSelect"
+      @launch="onStartLaunch"
     />
 
     <!-- the open-window buttons scroll as a group on touch so they can never
@@ -41,9 +42,13 @@
 
     <!-- the tray: weather, battery, tiling, fullscreen, bell and clock sit
          together at the right, like every desktop since 1995. On a phone the
-         first four collapse behind a ⋯ toggle so the row can't overflow. -->
+         two optional read-outs (weather, battery) collapse behind a ⋯ toggle so
+         the row can't overflow — and the toggle only appears when at least one
+         of them is actually present, so it's never a menu that opens onto
+         nothing. Tile and fullscreen stay in the row: they're always there. -->
     <div class="lvos-tray">
       <button
+        v-if="hasTrayExtras"
         class="lvos-tray-btn lvos-tray-toggle"
         :class="{ 'is-open': moreOpen }"
         :aria-expanded="moreOpen"
@@ -52,7 +57,7 @@
       >⋯</button>
       <!-- tapping any item bubbles up and dismisses the collapsed tray, so it
            doesn't hover over the app/window the tap just opened -->
-      <div class="lvos-tray-more" :class="{ 'is-open': moreOpen }" @click="moreOpen = false">
+      <div class="lvos-tray-more" :class="{ 'is-open': moreOpen && hasTrayExtras }" @click="moreOpen = false">
         <button
           v-if="weather.temp.value !== null"
           class="lvos-tray-btn lvos-weather"
@@ -66,26 +71,26 @@
           class="lvos-tray-btn lvos-battery"
           :title="`battery: ${battery.percent.value}% — ${battery.charging.value ? 'charging' : 'discharging'}`"
         >{{ battery.charging.value ? '⚡' : '▮' }}{{ battery.percent.value }}%</span>
-
-        <button
-          class="lvos-tray-btn lvos-tile"
-          title="Tile windows"
-          aria-label="Tile windows into a grid"
-          @click="emit('tile')"
-        >
-          <AppIcon name="grid" :size="14" />
-        </button>
-
-        <button
-          class="lvos-tray-btn lvos-fullscreen"
-          :aria-pressed="isFullscreen"
-          :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
-          aria-label="Toggle fullscreen"
-          @click="toggleFullscreen"
-        >
-          <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
-        </button>
       </div>
+
+      <button
+        class="lvos-tray-btn lvos-tile"
+        title="Tile windows"
+        aria-label="Tile windows into a grid"
+        @click="emit('tile')"
+      >
+        <AppIcon name="grid" :size="14" />
+      </button>
+
+      <button
+        class="lvos-tray-btn lvos-fullscreen"
+        :aria-pressed="isFullscreen"
+        :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+        aria-label="Toggle fullscreen"
+        @click="toggleFullscreen"
+      >
+        <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" />
+      </button>
 
       <button
         class="lvos-tray-btn lvos-volume"
@@ -162,6 +167,7 @@ const emit = defineEmits<{
   iso: []
   screenshot: []
   update: []
+  launch: [id: string]
 }>()
 
 // these are v-models so the parent can dismiss them on Escape
@@ -185,8 +191,22 @@ const battery = useBattery()
 // a live temperature chip (Amsterdam)
 const weather = useWeatherChip()
 
+// only these two are collapsible; the ⋯ toggle appears solely when one of them
+// is present, so it can never open onto an empty menu
+const hasTrayExtras = computed(() =>
+  weather.temp.value !== null ||
+  (battery.supported.value && battery.percent.value !== null)
+)
+
 // browser fullscreen for the whole desktop page
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
+
+// the start-menu search launches an app by id — close the menu and hand it to
+// the desktop's launcher (the same one Alt+R uses)
+const onStartLaunch = (id: string) => {
+  startOpen.value = false
+  emit('launch', id)
+}
 
 // route the start menu's single `select` action onto the taskbar's own emits
 const onStartSelect = (action: StartAction) => {
@@ -242,6 +262,9 @@ const clock = computed(() =>
 }
 
 .lvos-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   flex-shrink: 0;
   padding: 0.3rem 0.8rem;
 
@@ -409,8 +432,8 @@ const clock = computed(() =>
     justify-content: center;
   }
 
-  // weather / battery / tile / fullscreen collapse into a popover so the tray
-  // can't overflow a narrow phone; only volume, bell and clock stay in the row
+  // weather + battery collapse into a popover so the tray can't overflow a
+  // narrow phone; tile, fullscreen, volume, bell and clock stay in the row
   .lvos-tray-more {
     display: none;
 

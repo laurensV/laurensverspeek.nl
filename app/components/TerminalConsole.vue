@@ -100,7 +100,7 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ escape: [] }>()
 
-const { history, cwd, run, complete, activeGame, gameFrame, spinnerLabel, panes } = useTerminal()
+const { history, cwd, run, interrupt, complete, activeGame, gameFrame, spinnerLabel, panes } = useTerminal()
 
 // this console renders one pane's transcript (pane 0 unless told otherwise)
 const paneLines = computed(() => panes.linesFor(props.paneId))
@@ -219,9 +219,31 @@ const {
   startSearch, cancelSearch, onSearchKey
 } = useReverseSearch(history, input, () => void nextTick(focusInput))
 
+// ctrl+c interrupt, shell-style: quit the game, cancel the running command, or
+// clear the half-typed line. A live text selection means the user wants the
+// browser's copy instead, so bail and let ctrl+c through untouched.
+const interruptKey = (): boolean => {
+  const el = document.activeElement
+  const inputSelecting = el instanceof HTMLInputElement && el.selectionStart !== el.selectionEnd
+  if (window.getSelection()?.toString() || inputSelecting) return false
+  if (searchMode.value) cancelSearch()
+  interrupt(input.value)
+  input.value = ''
+  historyIndex.value = -1
+  resetCompletion()
+  void nextTick(focusInput)
+  return true
+}
+
 // keyboard for the active console: game keys, and search-mode typing
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (!props.active) return
+
+  // ctrl+c before everything else so it interrupts games and commands too
+  if (event.ctrlKey && !event.metaKey && !event.altKey && (event.key === 'c' || event.key === 'C')) {
+    if (interruptKey()) event.preventDefault()
+    return
+  }
 
   if (activeGame.value) {
     if (event.metaKey || event.altKey) return

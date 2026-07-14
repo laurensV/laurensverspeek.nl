@@ -184,6 +184,28 @@ export function useTerminal() {
     }
   }
 
+  // ctrl+c: like a real shell — quit a running game, cancel a fetching command's
+  // spinner, or just abandon the half-typed line, echoing ^C each time. Returns
+  // what it acted on so the console can reset its own input state. (An async
+  // command's promise can't truly be killed, but dropping the spinner and
+  // printing ^C gives the interrupt back to the user.)
+  const interrupt = (partial = ''): 'game' | 'command' | 'line' => {
+    if (activeGame.value) {
+      activeGame.value.stop()
+      activeGame.value = null
+      gameFrame.value = ''
+      push('input', '^C')
+      return 'game'
+    }
+    if (spinnerLabel.value) {
+      spinnerLabel.value = ''
+      push('input', '^C')
+      return 'command'
+    }
+    push('input', `${partial}^C`)
+    return 'line'
+  }
+
   const navigate = (page: string) => {
     const target = page === 'home' || page === '~' || page === '/' ? '/' : `/${page}`
     out(`Navigating to ${target} ...`)
@@ -499,5 +521,5 @@ export function useTerminal() {
 
   // files is shared with the lvOS Files app, which browses the same home fs;
   // game is exposed so the lvOS task manager can list and kill it
-  return { isOpen, lines, history, cwd, open, close, toggle, run, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files, panes, game }
+  return { isOpen, lines, history, cwd, open, close, toggle, run, interrupt, complete, greet, activeGame, gameFrame, spinnerLabel, files: ctx.files, panes, game }
 }

@@ -52,15 +52,15 @@ export const projects: Project[] = [
     ]
   },
   {
-    slug: 'effect-network',
-    title: 'Effect Network',
+    slug: 'effect-ai',
+    title: 'Effect.AI',
     description:
       'The first blockchain-based framework for the future of work: a global, on-demand, 24×7 scalable workforce for micro-tasking and AI data labeling, powered by the EFX token.',
     category: 'work',
     tech: ['EOS', 'Blockchain', 'Vue', 'Node.js'],
-    thumbnail: '/img/projects/effect-network.png',
-    source: 'https://effect.network/download/effect_whitepaper.pdf',
-    url: 'https://effect.network',
+    thumbnail: '/img/projects/effect-ai.png',
+    source: 'https://effect.ai/download/effect_whitepaper.pdf',
+    url: 'https://effect.ai',
     featured: true,
     year: '2017 — 2021',
     role: 'Co-founder',

@@ -13,7 +13,7 @@
         <span class="tree-glyph">{{ node.prefix }}</span>
         <template v-if="node.isGroup">{{ node.label }}</template>
         <template v-else>
-          <span class="skill-name">{{ node.label }}</span><span class="skill-version">@{{ node.version }}</span>
+          <span class="skill-name">{{ node.label }}</span>
         </template>
       </p>
     </div>
@@ -25,18 +25,10 @@ import { profile } from '~/data/profile'
 
 // The skills column of /about: an `npm ls` skill tree of grouped skills.
 
-// playful semver-ish "version" per skill, derived deterministically so it's
-// stable between renders (this is a package tree, after all)
-const skillVersion = (skill: string) => {
-  let hash = 0
-  for (const char of skill) hash = (hash * 17 + char.charCodeAt(0)) >>> 0
-  const major = (hash % 6) + 1
-  const minor = (hash >> 3) % 12
-  return `${major}.${minor}.0`
-}
-
-// flatten skills into an `npm ls` tree with the right ├─ │ └─ box characters
-interface SkillNode { key: string, prefix: string, label: string, isGroup: boolean, version?: string }
+// flatten skills into an `npm ls` tree with the right ├─ │ └─ box characters.
+// no version tags — real versions would drift out of date and fake ones are just
+// noise, so the leaves are the bare package names
+interface SkillNode { key: string, prefix: string, label: string, isGroup: boolean }
 
 const skillTree = computed<SkillNode[]>(() => {
   const nodes: SkillNode[] = []
@@ -56,8 +48,7 @@ const skillTree = computed<SkillNode[]>(() => {
         key: `${group.group}/${skill}`,
         prefix: `${rail}${lastItem ? '└─ ' : '├─ '}`,
         label: skill,
-        isGroup: false,
-        version: skillVersion(skill)
+        isGroup: false
       })
     })
   })
@@ -104,18 +95,9 @@ const laurensSnippet = `<span class="tok-kw">const</span> laurens: <span class="
       color: var(--bulma-text);
     }
 
-    .skill-version {
-      color: var(--bulma-text-weak);
-      opacity: 0.6;
-    }
-
     &:hover {
       .skill-name {
         color: var(--bulma-primary-on-scheme);
-      }
-
-      .skill-version {
-        opacity: 1;
       }
     }
   }

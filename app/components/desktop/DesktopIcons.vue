@@ -78,10 +78,14 @@ const onKey = (event: KeyboardEvent) => {
   overflow: auto;
 
   // on a phone the columns would wrap off the right edge and get clipped by the
-  // desktop's overflow:hidden; flow into rows that scroll vertically, like an
-  // app drawer, so every icon stays reachable
+  // desktop's overflow:hidden; flow into centered rows that scroll vertically,
+  // like an app drawer, so every icon stays reachable and the grid isn't shoved
+  // to the left with dead space on the right
   @media (pointer: coarse) {
+    inset: 1rem 0.75rem 4.5rem;
     flex-flow: row wrap;
+    justify-content: center;
+    gap: 0.5rem 0.6rem;
   }
 }
 
@@ -117,6 +121,25 @@ const onKey = (event: KeyboardEvent) => {
   color: hsl(var(--lv-scheme-hs), 90%);
   font-size: 0.7rem;
   cursor: pointer;
+
+  // four icons per row on most phones, three on the narrowest; narrower than the
+  // desktop tile so they don't overflow a 320px screen
+  @media (pointer: coarse) {
+    width: 4.6rem;
+    padding: 0.5rem 0.15rem;
+  }
+
+  // the label always reserves two lines' height so a two-line name ('time
+  // machine') stays the same tile height as the single-line ones — otherwise it
+  // shoves every icon after it out of alignment
+  .lvos-icon-label {
+    display: block;
+    width: 100%;
+    min-height: 2.2em;
+    line-height: 1.1;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
 
   .lvos-icon-glyph {
     display: flex;

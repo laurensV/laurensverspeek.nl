@@ -14,7 +14,7 @@
       <span class="line"><span class="prompt">$</span> whoami</span>
       <span class="line output">{{ profile.name }} — full-stack &amp; blockchain dev</span>
       <span class="line"><span class="prompt">$</span> ls projects</span>
-      <span class="line output">nosana.md&nbsp;&nbsp;effect-network.md&nbsp;&nbsp;…</span>
+      <span class="line output">nosana.md&nbsp;&nbsp;effect-ai.md&nbsp;&nbsp;…</span>
       <span class="line"><span class="prompt">$</span> cat mission.txt</span>
       <span class="line output">decentralize compute, ship cool things</span>
       <span class="line"><span class="prompt">$</span> {{ demoText }}<span class="blink-cursor" /></span>
