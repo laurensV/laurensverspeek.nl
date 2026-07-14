@@ -301,9 +301,12 @@ useResizeObserver(canvasRef, fit)
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: min(30rem, 100%);
-  height: 100%;
-  min-height: 0;
+  // fill the window width so a maximized whiteboard actually gets bigger, and
+  // use a min-height floor (like the pixel world) rather than height:100% — the
+  // latter, against the body's auto height, made the board creep taller for a
+  // second or two on open as the flex layout settled
+  width: 100%;
+  min-height: 18rem;
   font-size: 0.75rem;
 }
 
