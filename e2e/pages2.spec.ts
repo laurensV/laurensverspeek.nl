@@ -271,13 +271,17 @@ test('the boss key hides everything behind a spreadsheet until Esc', async ({ pa
   await page.locator('.hero-name').waitFor()
   // fire both b-keydowns in one tick: the arm needs the two taps within 600ms,
   // and CDP latency between two keyboard.press() calls can blow that window on a
-  // slow/loaded CI runner (the arming logic itself is what this test exercises)
-  await page.evaluate(() => {
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
-  })
+  // slow/loaded CI runner (the arming logic itself is what this test exercises).
+  // retry the double-tap until it lands — the global handler attaches on hydration,
+  // and a tap before that is simply missed
   const boss = page.locator('.boss')
-  await expect(boss).toBeVisible()
+  await expect(async () => {
+    await page.evaluate(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b' }))
+    })
+    await expect(boss).toBeVisible({ timeout: 500 })
+  }).toPass({ timeout: 6000 })
   await expect(boss).toContainText('Q3_forecast_v7_FINAL(2).xlsx')
   await expect(boss).toContainText('Revenue')
   await page.keyboard.press('Escape')

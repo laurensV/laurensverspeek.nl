@@ -125,8 +125,11 @@ test('navbar shows the >_ brand mark and links the svg favicon', async ({ page }
 test('? opens the shortcuts cheatsheet', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
-  await page.keyboard.press('?')
-  await expect(page.locator('.shortcuts-window')).toBeVisible()
+  // retry until the global key handler has hydrated (a press before that is missed)
+  await expect(async () => {
+    await page.keyboard.press('?')
+    await expect(page.locator('.shortcuts-window')).toBeVisible({ timeout: 500 })
+  }).toPass({ timeout: 6000 })
   await expect(page.locator('.shortcuts-window')).toContainText('command palette')
   await page.keyboard.press('Escape')
   await expect(page.locator('.shortcuts-window')).toHaveCount(0)
