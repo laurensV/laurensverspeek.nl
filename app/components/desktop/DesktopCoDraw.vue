@@ -42,8 +42,8 @@
         />
       </div>
       <div class="codraw-actions">
-        <button class="codraw-clear" title="Undo your last stroke (for everyone)" @click="undo">
-          undo
+        <button class="codraw-clear" :disabled="!canUndo" title="Undo your last stroke (for everyone)" @click="onUndo">
+          {{ undone ? 'undone' : 'undo' }}
         </button>
         <button class="codraw-clear" title="Save the board to the Gallery and download a PNG" @click="saveBoard">
           {{ saved ? 'saved ✓' : 'save' }}
@@ -72,7 +72,18 @@ import { addToGallery } from '~/utils/gallery'
 // size. Works solo (local only) when no relay is configured.
 
 const COLORS = DRAW_COLORS
-const { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
+const { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, canUndo, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
+
+// flash 'undone' on the button when an undo actually removed one of our strokes,
+// matching the way save flashes 'saved ✓'
+const undone = ref(false)
+let undoneTimer: ReturnType<typeof setTimeout> | undefined
+const onUndo = () => {
+  if (!undo()) return
+  undone.value = true
+  clearTimeout(undoneTimer)
+  undoneTimer = setTimeout(() => { undone.value = false }, 1200)
+}
 
 const rootRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
@@ -94,7 +105,7 @@ const isFrontWindow = (): boolean => {
 useEventListener('keydown', (event: KeyboardEvent) => {
   if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z' && isFrontWindow()) {
     event.preventDefault()
-    undo()
+    onUndo()
   }
 })
 const pen = ref(2) // the amber pen by default
@@ -239,6 +250,7 @@ onUnmounted(() => {
   release?.()
   if (confirmTimer) clearTimeout(confirmTimer)
   if (pruneTimer) clearInterval(pruneTimer)
+  clearTimeout(undoneTimer)
 })
 
 // remote strokes / init / clear all replace the array — repaint on any change,

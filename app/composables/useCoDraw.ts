@@ -129,16 +129,21 @@ export function useCoDraw() {
     conn?.send({ type: 'draw-stroke', ...segment, sid } satisfies DrawStrokeIn)
   }
 
+  /** Whether we have a stroke of our own on the board to take back. */
+  const canUndo = computed(() => strokes.value.some((s) => s.by === ownId))
+
   /** Take back our most recent stroke still on the board — for us right away,
-   * and (with a relay) for everyone else via the server. */
-  const undo = () => {
+   * and (with a relay) for everyone else via the server. Returns whether it
+   * removed anything (nothing of ours on the board → false). */
+  const undo = (): boolean => {
     let lastSid = -1
     for (const s of strokes.value) if (s.by === ownId && s.sid > lastSid) lastSid = s.sid
-    if (lastSid < 0) return
+    if (lastSid < 0) return false
     strokes.value = strokes.value.filter((s) => !(s.by === ownId && s.sid === lastSid))
     // send the exact stroke we removed so the server can't undo a different one
     // (its own "highest sid" could differ if the flood gate dropped a later drag)
     conn?.send({ type: 'draw-undo', sid: lastSid } satisfies DrawUndoIn)
+    return true
   }
 
   /** Wipe the board for everyone (or just locally offline). */
@@ -147,5 +152,5 @@ export function useCoDraw() {
     conn?.send({ type: 'draw-clear' } satisfies DrawClearIn)
   }
 
-  return { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, clear, sendCursor, pruneCursors }
+  return { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, canUndo, clear, sendCursor, pruneCursors }
 }
