@@ -1,0 +1,1 @@
+import{_ as o,o as r,c as n,a2 as s}from"./BBGUn4mc.js";const t={};function a(e,c){return r(),n("strong",null,[s(e.$slots,"default")])}const l=Object.assign(o(t,[["render",a]]),{__name:"ProseStrong"});export{l as default};

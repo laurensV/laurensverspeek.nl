@@ -1,0 +1,1 @@
+import{_ as s,o,c as r,a2 as n}from"./BBGUn4mc.js";const t={};function a(e,c){return o(),r("li",null,[n(e.$slots,"default")])}const _=Object.assign(s(t,[["render",a]]),{__name:"ProseLi"});export{_ as default};

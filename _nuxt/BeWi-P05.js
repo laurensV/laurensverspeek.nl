@@ -1,1 +1,0 @@
-import{O as u,w as c,g as i}from"./DT5U92V1.js";function l(o){let e=7;for(const t of o.toLowerCase())e=(e*31+t.charCodeAt(0))%1e5;return e%360}function m(o=1800){const e=i(!1);let t;const a=()=>{e.value=!0,clearTimeout(t),t=setTimeout(()=>e.value=!1,o)},s=async n=>{const r=await c(n);return r&&a(),r};return u(()=>clearTimeout(t)),{copied:e,copy:s,flag:a}}export{l as t,m as u};
