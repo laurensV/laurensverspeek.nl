@@ -4,7 +4,8 @@
 
 export const AMSTERDAM = { latitude: 52.37, longitude: 4.9 } as const
 
-/** A current-conditions reading from open-meteo (temp rounded). */
+/** A current-conditions reading from open-meteo (raw values — the tray chip
+ * rounds to whole degrees; the terminal report shows the decimal). */
 export interface CurrentWeather { temp: number, code: number, wind: number, humidity: number }
 
 /** Fetch current conditions for a spot — one call shared by the tray chip and
@@ -22,10 +23,10 @@ export async function fetchCurrentWeather(
     { query: { ...coords, current }, timeout: 10_000 }
   )
   return {
-    temp: Math.round(data.current.temperature_2m),
+    temp: data.current.temperature_2m,
     code: data.current.weather_code,
-    wind: Math.round(data.current.wind_speed_10m ?? 0),
-    humidity: Math.round(data.current.relative_humidity_2m ?? 0)
+    wind: data.current.wind_speed_10m ?? 0,
+    humidity: data.current.relative_humidity_2m ?? 0
   }
 }
 

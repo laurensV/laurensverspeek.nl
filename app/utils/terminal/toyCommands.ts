@@ -234,7 +234,7 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
             code: now.code
           }).forEach(out)
           // keep the tray chip in step when the terminal asked about its city
-          if (spot.name === 'Amsterdam') weatherChip.setCurrent(now.temp, now.code)
+          if (spot.name === 'Amsterdam') weatherChip.setCurrent(Math.round(now.temp), now.code)
         } catch {
           error('weather: the sky is unreachable right now (network error)')
         } finally {

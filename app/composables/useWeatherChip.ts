@@ -12,7 +12,7 @@ export function useWeatherChip() {
     fetched = true
     // the one shared current-weather fetch, also used by the terminal command
     void fetchCurrentWeather(AMSTERDAM).then((w) => {
-      temp.value = w.temp
+      temp.value = Math.round(w.temp) // the chip shows whole degrees
       code.value = w.code
     }).catch(() => { /* the tray simply stays quiet */ })
   }
