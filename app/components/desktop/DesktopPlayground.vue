@@ -19,6 +19,7 @@
         autocomplete="off"
         :aria-label="`${active} source`"
         @keydown.tab.prevent="insertTab"
+        @input="keyClick.click()"
       />
     </div>
     <div class="play-preview">
@@ -70,6 +71,8 @@ if (import.meta.client) {
 }
 
 const active = ref<Tab>('html')
+// the shared keyclick typing sound ticks in the code editor too
+const keyClick = useKeyClick()
 
 // debounced srcdoc so we don't rebuild the frame on every keystroke
 const srcdoc = ref('')

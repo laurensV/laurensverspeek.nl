@@ -7,6 +7,7 @@
       spellcheck="false"
       :readonly="mode !== 'insert'"
       @keydown="onKey"
+      @input="keyClick.click()"
     />
     <div class="vim-statusline">
       <span class="vim-mode" :class="`is-${mode}`">
@@ -32,6 +33,9 @@ const emit = defineEmits<{ close: [] }>()
 
 const LEGACY_KEY = 'lvos-vim-buffer'
 const { files } = useTerminal()
+// the shared keyclick typing sound ticks here too (only in insert mode, since the
+// buffer is readonly otherwise) — silent unless the setting is on and unmuted
+const keyClick = useKeyClick()
 const DEFAULT_BUFFER = `# notes.txt
 
 todo:
