@@ -57,6 +57,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'colorpicker', title: 'colour picker', label: 'colours', icon: 'pen' },
   { id: 'codraw', title: 'whiteboard — co-draw', label: 'whiteboard', icon: 'pen' },
   { id: 'clipboard', title: 'clipboard history', label: 'clipboard', icon: 'layers' },
+  { id: 'asteroids', title: 'asteroids', label: 'asteroids', icon: 'sparkles' },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

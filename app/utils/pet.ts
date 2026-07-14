@@ -121,6 +121,7 @@ export const SNACK_COST = 5
 
 export interface ScoreReadings {
   snake: number
+  asteroids: number
   tetris: number
   g2048: number
   wpm: number
@@ -137,6 +138,7 @@ export interface ScoreReadings {
 /** Total coins ever minted by the visitor's high scores. */
 export function coinsEarned(scores: ScoreReadings): number {
   return Math.floor(scores.snake / 10)
+    + Math.floor(scores.asteroids / 50)
     + Math.floor(scores.tetris / 100)
     + Math.floor(scores.g2048 / 100)
     + Math.floor(scores.wpm / 5)

@@ -15,6 +15,7 @@ const readScores = (): ScoreReadings => {
   }
   return {
     snake: num('lv-snake-highscore'),
+    asteroids: num('lv-asteroids-highscore'),
     tetris: num('lv-tetris-highscore'),
     g2048: num('lv-2048-highscore'),
     wpm: num('lv-wpm-highscore'),

@@ -14,6 +14,7 @@ export interface HallEntry {
 // each keeping its own list. The games write these keys; this reads them.
 export const HALL_OF_FAME: HallEntry[] = [
   { game: 'snake', key: 'lv-snake-highscore', unit: 'points' },
+  { game: 'asteroids', key: 'lv-asteroids-highscore', unit: 'points' },
   { game: 'tetris', key: 'lv-tetris-highscore', unit: 'points' },
   { game: '2048', key: 'lv-2048-highscore', unit: 'points' },
   { game: 'typing test', key: 'lv-wpm-highscore', unit: 'wpm' },

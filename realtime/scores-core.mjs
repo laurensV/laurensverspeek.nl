@@ -9,12 +9,13 @@
  */
 
 /** @type {string[]} The games that keep a high score (match the client keys). */
-export const LEADERBOARD_GAMES = ['snake', 'tetris', '2048', 'wpm', 'pong']
+export const LEADERBOARD_GAMES = ['snake', 'asteroids', 'tetris', '2048', 'wpm', 'pong']
 
 export const MAX_SCORES = 10
 // a generous but finite cap per game, so a hostile client can't submit Infinity
 const SCORE_CAP = {
   snake: 100000,
+  asteroids: 1000000,
   tetris: 9999999,
   2048: 10000000,
   wpm: 400,
