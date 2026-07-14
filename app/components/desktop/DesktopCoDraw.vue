@@ -1,5 +1,5 @@
 <template>
-  <div class="codraw is-family-code">
+  <div ref="rootRef" class="codraw is-family-code">
     <div class="codraw-head">
       <span>whiteboard</span>
       <span class="codraw-online">{{ statusLabel }}</span>
@@ -74,7 +74,29 @@ import { addToGallery } from '~/utils/gallery'
 const COLORS = DRAW_COLORS
 const { enabled, strokes, online, status, cursors, join, startStroke, addStroke, undo, clear: clearBoard, sendCursor, pruneCursors } = useCoDraw()
 
+const rootRef = ref<HTMLElement>()
 const canvasRef = ref<HTMLCanvasElement>()
+
+// Ctrl+Z / ⌘Z undoes the last stroke when the whiteboard is the front window —
+// z-index picks the front app so the shortcut can't fire under another window
+const isFrontWindow = (): boolean => {
+  const myWin = rootRef.value?.closest<HTMLElement>('.lvos-window')
+  if (!myWin) return true
+  if (myWin.classList.contains('is-minimized')) return false
+  let front: HTMLElement | null = null
+  let maxZ = -Infinity
+  for (const w of document.querySelectorAll<HTMLElement>('.lvos-window:not(.is-minimized)')) {
+    const z = Number(getComputedStyle(w).zIndex) || 0
+    if (z >= maxZ) { maxZ = z; front = w }
+  }
+  return myWin === front
+}
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z' && isFrontWindow()) {
+    event.preventDefault()
+    undo()
+  }
+})
 const pen = ref(2) // the amber pen by default
 
 // clear wipes the shared board for everyone with no undo, so ask once first: the
