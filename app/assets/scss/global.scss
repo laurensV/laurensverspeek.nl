@@ -135,9 +135,10 @@ kbd {
     pointer-events: none;
   }
 
-  // resting state: round dim dots (dotted borders render round in most browsers)
+  // resting state: round dots in the same color as the link text
+  // (dotted borders render round in most browsers)
   &::after {
-    border-bottom: 2px dotted hsla(var(--lv-primary-hsl), 0.55);
+    border-bottom: 2px dotted var(--bulma-primary-on-scheme);
   }
 
   // hover state: a solid amber line at the exact same height, faded in
