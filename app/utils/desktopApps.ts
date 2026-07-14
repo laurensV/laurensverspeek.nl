@@ -58,6 +58,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'codraw', title: 'whiteboard — co-draw', label: 'whiteboard', icon: 'pen' },
   { id: 'clipboard', title: 'clipboard history', label: 'clipboard', icon: 'layers' },
   { id: 'asteroids', title: 'asteroids', label: 'asteroids', icon: 'sparkles' },
+  { id: 'pet', title: 'tamagotchi', label: 'pet', icon: 'zap' },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

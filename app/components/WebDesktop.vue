@@ -214,7 +214,8 @@ const SIMPLE_APPS: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   colorpicker: defineAsyncComponent(() => import('~/components/desktop/DesktopColorPicker.vue')),
   codraw: defineAsyncComponent(() => import('~/components/desktop/DesktopCoDraw.vue')),
   clipboard: defineAsyncComponent(() => import('~/components/desktop/DesktopClipboard.vue')),
-  asteroids: defineAsyncComponent(() => import('~/components/desktop/DesktopAsteroids.vue'))
+  asteroids: defineAsyncComponent(() => import('~/components/desktop/DesktopAsteroids.vue')),
+  pet: defineAsyncComponent(() => import('~/components/desktop/DesktopPet.vue'))
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
