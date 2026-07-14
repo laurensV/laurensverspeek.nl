@@ -132,12 +132,22 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
     },
     gpg: {
       hidden: true,
-      usage: 'gpg --list-keys',
-      description: 'Show my PGP key (when one is published)',
-      exec: () => {
+      usage: 'gpg [--list-keys | --import]',
+      description: 'Show or import my PGP key (when one is published)',
+      examples: ['gpg --list-keys', 'gpg --import'],
+      exec: (args) => {
         if (!pgp.publicKey) {
           muted(`gpg: keybox '~/.gnupg/pubring.kbx' created`)
           out('gpg: no public key published on this build (yet)')
+          return
+        }
+        if (args.includes('--import')) {
+          // actually "import" the published key — the same one /pgp.txt serves
+          const keyid = pgp.fingerprint.replace(/\s+/g, '').slice(-16)
+          muted(`gpg: keybox '~/.gnupg/pubring.kbx' created`)
+          out(`gpg: key ${keyid}: public key "${profile.name} <${profile.email}>" imported`)
+          out('gpg: Total number processed: 1')
+          out('gpg:               imported: 1')
           return
         }
         out(`pub   ${pgp.fingerprint}`)

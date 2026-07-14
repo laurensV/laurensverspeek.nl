@@ -1,6 +1,10 @@
 // PGP publishing. /pgp.txt serves `publicKey` as text/plain, the contact page
 // shows the fingerprint + import line, and the terminal's `gpg` command works.
 // To rotate: paste a fresh ASCII-armored public key + its fingerprint and rebuild.
+// My SSH public key — the same one GitHub already exposes at github.com/laurensV.keys.
+// Public keys are safe to publish; this is what someone would add to authorized_keys.
+export const sshKey = 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDEnXQKXT8A07B7tJPsFn6wAPM8P5OMWyL3F1xVGBgpqoEViy+zeOfOAnNJDxJmFn7Q6lQ74TgucnsTvUU4eLK2EECIfoi91SVp7EIDDW2stgOWShxSDvnw49kiMop9IC1/3V9d9842jMvptVy58WJcZlMz0tL8HzETPcMTslDut7cfZElaWYmFJJA58F9Hht8TMcSaXztmV6nMSTfk2DfDwx/lrmBzIeEorCqLBTLYSVycSwBZbPimY3e2nI2WUyeX8gjYSbRiEiSeBGrsqDH3lL0+h+czo/p2RVWDF3LfIWNZyGNDIZBQmGNAKre1cHz8Bu1SDWxwF3BT55ZQLXl7 laurens@laurensverspeek.nl'
+
 export const pgp = {
   fingerprint: 'A0B4 BD58 7C98 CC7C 645B  BEEF 566B 20E9 06AB FCEB',
   publicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
