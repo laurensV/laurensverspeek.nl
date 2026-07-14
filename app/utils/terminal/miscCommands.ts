@@ -7,6 +7,8 @@ import { shellError } from '~/utils/terminal/errors'
 import { hexToRgb, rgbToHsl } from '~/utils/color'
 import { writeClipboard } from '~/utils/clipboard'
 import { escapeHtml } from '~/utils/escapeHtml'
+import { parseDuration, formatDuration } from '~/utils/terminal/duration'
+import { playBootChime } from '~/utils/bootChime'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -331,6 +333,27 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
       hidden: true,
       description: 'Alias for clip',
       exec: (args) => ctx.getCommands().clip!.exec(args)
+    },
+    timer: {
+      category: 'system',
+      usage: 'timer <duration>',
+      description: 'Set a countdown (e.g. timer 5m, timer 90s) — chimes when it is up',
+      examples: ['timer 5m', 'timer 30s', 'timer 1h30m'],
+      exec: (args) => {
+        const spec = args.join(' ').trim()
+        if (!spec) return error('timer: usage: timer <duration> (e.g. 5m, 90s, 1h30m)')
+        const ms = parseDuration(spec)
+        if (ms === null || ms <= 0) return error(`timer: could not read a duration from '${spec}'`)
+        if (ms > 24 * 3600_000) return error('timer: keep it under 24 hours')
+        const label = formatDuration(ms)
+        out(`⏳ timer set for ${label}`)
+        // fire-and-forget so the run queue isn't blocked; push lands in the shared
+        // transcript even if the terminal is closed and reopened later
+        setTimeout(() => {
+          push('primary', `⏰ time's up — your ${label} timer finished`)
+          playBootChime(sound.muted.value ? 0 : sound.volume.value / 100)
+        }, ms)
+      }
     },
     settings: {
       category: 'system',
