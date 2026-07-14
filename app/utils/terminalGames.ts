@@ -4,6 +4,7 @@
 
 export type { GameHandle, GameCallbacks } from '~/utils/games/types'
 export { createSnakeGame } from '~/utils/games/snake'
+export type { SnakeState } from '~/utils/games/snake'
 export { createTetrisGame } from '~/utils/games/tetris'
 export { create2048Game } from '~/utils/games/game2048'
 export { createTopGame } from '~/utils/games/top'

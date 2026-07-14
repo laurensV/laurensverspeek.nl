@@ -10,7 +10,21 @@ interface Cell {
   y: number
 }
 
-export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
+/** Structured board state, for renderers that draw pixels instead of ASCII
+ * (the lvOS desktop app) — the terminal keeps using the onFrame string. */
+export interface SnakeState {
+  width: number
+  height: number
+  /** snake[0] is the head */
+  snake: Cell[]
+  food: Cell
+  score: number
+}
+
+export function createSnakeGame(
+  { onFrame, onEnd }: GameCallbacks,
+  onState?: (state: SnakeState) => void
+): GameHandle {
   const snake: Cell[] = [
     { x: 8, y: 6 },
     { x: 7, y: 6 },
@@ -72,6 +86,13 @@ export function createSnakeGame({ onFrame, onEnd }: GameCallbacks): GameHandle {
     })
     const rows = grid.map((row) => row.join(' ')).join('\n')
     onFrame(`SNAKE  score: ${score}  (arrows/wasd move, q quits)\n\n${rows}`)
+    onState?.({
+      width: SNAKE_W,
+      height: SNAKE_H,
+      snake: snake.map((c) => ({ x: c.x, y: c.y })),
+      food: { x: food.x, y: food.y },
+      score
+    })
   }
 
   function end(message: string) {

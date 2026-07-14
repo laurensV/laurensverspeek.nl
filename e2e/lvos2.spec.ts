@@ -7,7 +7,9 @@ test('the lvOS snake app runs the shared game engine', async ({ page }) => {
   await page.locator('.lvos-icon', { hasText: /^snake$/ }).click()
   const snake = page.locator('.desktop-snake')
   await snake.waitFor()
-  await expect(snake.locator('.dsnake-frame')).toContainText('SNAKE')
+  // the board renders on a canvas now, with a live score readout above it
+  await expect(snake.locator('.dsnake-canvas')).toBeVisible()
+  await expect(snake.locator('.dsnake-score')).toContainText('score')
   // quitting shows the game-over result with a play-again button
   await snake.press('q')
   await expect(snake.locator('.dsnake-again')).toBeVisible()
