@@ -1,0 +1,1 @@
+import{_ as s,o,c as r,a0 as n}from"./DtVGLS-D.js";const t={};function a(e,c){return o(),r("p",null,[n(e.$slots,"default")])}const l=Object.assign(s(t,[["render",a]]),{__name:"ProseP"});export{l as default};
