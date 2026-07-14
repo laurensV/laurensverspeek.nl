@@ -4,7 +4,7 @@ import type { Deploy } from '../app/composables/useTimeMachine'
 
 // deploys are newest-first, like the baked manifest
 const deploys: Deploy[] = [
-  { sha: 'aaaaaaaaaaaa', date: '2026-07-14', source: '5d12e23', subject: 'newest' },
+  { sha: 'aaaaaaaaaaaa', date: '2026-07-14', source: '5d12e23', subject: 'newest', tag: 'v2.0.4' },
   { sha: 'bbbbbbbbbbbb', date: '2026-07-10', source: '2222222', subject: 'middle' },
   { sha: 'cccccccccccc', date: '2020-09-10', source: '0000000', subject: 'oldest' }
 ]
@@ -30,6 +30,12 @@ describe('resolveDeployRef', () => {
     expect(resolveDeployRef('5d12e23', deploys, commits)).toBe(deploys[0])
     expect(resolveDeployRef('aaaaaa', deploys, commits)).toBe(deploys[0]) // gh-pages sha prefix
     expect(resolveDeployRef('2222222', deploys, commits)).toBe(deploys[1])
+  })
+
+  it('matches a release tag / version, case-insensitively', () => {
+    expect(resolveDeployRef('v2.0.4', deploys, commits)).toBe(deploys[0])
+    expect(resolveDeployRef('V2.0.4', deploys, commits)).toBe(deploys[0])
+    expect(resolveDeployRef('v9.9.9', deploys, commits)).toBeNull()
   })
 
   it('resolves HEAD~n to n deploys back', () => {

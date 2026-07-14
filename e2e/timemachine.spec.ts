@@ -32,6 +32,11 @@ test('git checkout validates refs and leaves git log intact', async ({ page }) =
   await run(page, 'git log -n 3')
   await expect(out).toContainText('commit ')
 
+  // git tag lists the deploys as releases, back to the 2020 site
+  await run(page, 'git tag')
+  await expect(out).toContainText('releases')
+  await expect(out).toContainText('2020-09-10')
+
   // no argument prints usage, not an error
   await run(page, 'git checkout')
   await expect(out).toContainText('usage: git checkout')

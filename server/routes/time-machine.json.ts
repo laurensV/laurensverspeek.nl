@@ -22,6 +22,8 @@ interface Deploy {
   source: string
   /** The source commit's subject line — what actually changed */
   subject: string
+  /** The release tag (v2.0.x) on this deploy's commit, if it has one */
+  tag?: string
 }
 
 function sh(cmd: string): string {
@@ -51,6 +53,22 @@ function readDeploys(): Deploy[] {
     // no main history to join against — deploys still list, just without subjects
   }
 
+  // commit-sha → release tag (v2.0.x), so tagged deploys show their real version.
+  // %(*objectname) dereferences annotated tags to their commit; lightweight tags
+  // fall back to %(objectname). CI fetches tags (fetch-depth: 0).
+  const tags = new Map<string, string>()
+  try {
+    // a '|' delimiter (not spaces) so the empty *objectname of a lightweight tag
+    // doesn't collapse and shift the columns
+    for (const line of sh("git for-each-ref 'refs/tags/v*' --format='%(objectname)|%(*objectname)|%(refname:short)'").split('\n')) {
+      const [obj = '', deref = '', name = ''] = line.trim().split('|')
+      const commit = deref || obj
+      if (commit && name) tags.set(commit, name)
+    }
+  } catch {
+    // no tags available — deploys still list, just without versions
+  }
+
   const raw = sh('git log origin/gh-pages --pretty=format:%H%x1f%cs%x1f%s')
   return raw
     .split('\n')
@@ -60,11 +78,13 @@ function readDeploys(): Deploy[] {
       const [sha = '', date = '', message = ''] = line.split('\x1f')
       const sourceSha = /deploy:\s*([0-9a-f]{7,40})/i.exec(message)?.[1] ?? ''
       if (!sha || !sourceSha) return null
+      const tag = tags.get(sourceSha)
       return {
         sha,
         date,
         source: sourceSha.slice(0, 7),
-        subject: subjects.get(sourceSha) ?? ''
+        subject: subjects.get(sourceSha) ?? '',
+        ...(tag ? { tag } : {})
       }
     })
     .filter((deploy): deploy is Deploy => deploy !== null)

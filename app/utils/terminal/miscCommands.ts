@@ -402,26 +402,43 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     git: {
-      usage: 'git <log|show|status|checkout>',
+      usage: 'git <log|show|status|tag|checkout>',
       description: "This site's real commit history — and time travel",
       examples: [
         'git log            recent commits, baked in at build time',
         'git log --oneline  the compact version (pipes well into grep)',
         'git log -n 5       only the last five',
         'git show <hash>    one commit with its file diffstat',
+        'git tag            every release/deploy of this site, newest first',
         'git checkout <ref> TIME TRAVEL: load a past deploy of this site',
         'git checkout main  return to the present (live site)',
         'git status         you can guess'
       ],
-      argCandidates: () => ['log', 'show', 'status', 'checkout', 'blame', 'push'],
+      argCandidates: () => ['log', 'show', 'status', 'tag', 'checkout', 'blame', 'push'],
       exec: async (args) => {
         const [sub, ...rest] = args
         switch (sub) {
           case undefined:
-            out('usage: git <log|show|status|checkout|blame|push>')
+            out('usage: git <log|show|status|tag|checkout|blame|push>')
             muted("this is the real history of this website's repository")
             muted("try 'git checkout <hash>' to actually travel back to that version of the site")
             return
+          case 'tag': {
+            const deploys = await timeMachine.load().catch(() => [])
+            if (!deploys.length) return error('git: no releases found')
+            const tagged = deploys.filter((deploy) => deploy.tag).length
+            out(`${deploys.length} releases — every deploy of this site, newest first${tagged ? ` (${tagged} version-tagged)` : ''}`)
+            muted("travel to one with 'git checkout <version | date | hash>'")
+            out('')
+            for (const deploy of deploys) {
+              const cell = deploy.tag
+                ? `<span class="term-accent">${escapeHtml(deploy.tag)}</span>${' '.repeat(Math.max(1, 8 - deploy.tag.length))}`
+                : `<span class="term-muted">·</span>       `
+              const subject = escapeHtml(deploy.subject.slice(0, 56))
+              push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${subject}`, true)
+            }
+            return
+          }
           case 'status':
             out('On branch main')
             out("Your branch is up to date with 'origin/main'.")

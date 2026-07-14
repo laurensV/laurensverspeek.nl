@@ -13,6 +13,8 @@ export interface Deploy {
   source: string
   /** The source commit's subject — what changed in this version */
   subject: string
+  /** The release tag (v2.0.x) on this deploy's commit, if it has one */
+  tag?: string
 }
 
 /** A resolved `git checkout` target: a past build, or a return to the live site. */
@@ -63,8 +65,10 @@ export function resolveDeployRef(rawRef: string, deploys: Deploy[], commits: { h
     return deploys.find((d) => d.date <= ref) ?? deploys.at(-1) ?? null
   }
 
-  // an exact deploy: its gh-pages sha, or the source commit it shipped
-  const exact = deploys.find((d) => d.sha.startsWith(ref) || d.source.startsWith(ref))
+  // an exact deploy: its release tag (v2.0.4), gh-pages sha, or source commit
+  const exact = deploys.find(
+    (d) => d.tag?.toLowerCase() === ref || d.sha.startsWith(ref) || d.source.startsWith(ref)
+  )
   if (exact) return exact
 
   // any other real commit from the log → the deploy that shipped it

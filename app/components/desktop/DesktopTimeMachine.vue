@@ -40,6 +40,7 @@
             <p class="tm-date">
               {{ row.deploy.date }}
               <span v-if="row.latest" class="tm-tag">live now</span>
+              <span v-if="row.deploy.tag" class="tm-ver">{{ row.deploy.tag }}</span>
               <span class="tm-hash">{{ row.deploy.source }}</span>
             </p>
             <p class="tm-subject">{{ row.deploy.subject || '(no message)' }}</p>
@@ -242,6 +243,15 @@ async function visit(deploy: Deploy) {
 .tm-hash {
   font-size: 0.68rem;
   opacity: 0.6;
+}
+.tm-ver {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--bulma-primary);
+  border: 1px solid color-mix(in srgb, var(--bulma-primary) 55%, transparent);
+  padding: 0.02rem 0.32rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
 }
 .tm-tag {
   font-size: 0.6rem;
