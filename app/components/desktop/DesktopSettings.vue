@@ -69,6 +69,14 @@
       </div>
     </div>
     <p class="settings-note">// yes, this changes the real site behind the desktop</p>
+    <div class="settings-row">
+      <span class="settings-label">terminal text</span>
+      <div class="settings-volume">
+        <input v-model.number="fontScale.scale.value" type="range" min="0.7" max="1.6" step="0.1" aria-label="Terminal text scale">
+        <span class="settings-volume-pct">{{ fontScale.scale.value.toFixed(1) }}×</span>
+      </div>
+    </div>
+    <p class="settings-note">// the terminal's text scale — the same one `fontsize` and ctrl+= / ctrl+- set</p>
 
     <p class="settings-section mt-4"># effects</p>
     <div class="settings-row">
@@ -203,6 +211,8 @@ const { saver, saverIds, saverNames } = useScreensaverChoice()
 const nightLight = useNightLight()
 const sound = useVolume()
 const keyclick = useKeyClick()
+// the terminal text scale — the one persisted pref that used to be terminal-only
+const fontScale = useTermFontScale()
 const reduceMotion = useReduceMotion()
 
 const { name, setName } = useIdentity()
