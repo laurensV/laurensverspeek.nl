@@ -18,6 +18,7 @@ export const profile = {
   ],
   socials: [
     { label: 'GitHub', icon: 'github', url: 'https://github.com/laurensV' },
+    { label: 'Keybase', icon: 'key', url: 'https://keybase.io/laurensv6' },
     { label: 'Email', icon: 'mail', url: 'mailto:contact@laurensverspeek.nl' }
     // Add more here, e.g.:
     // { label: 'LinkedIn', icon: 'linkedin', url: 'https://linkedin.com/in/...' }
