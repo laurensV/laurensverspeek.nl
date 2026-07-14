@@ -467,7 +467,9 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             }
             const deploys = await timeMachine.load().catch(() => [])
             if (!deploys.length) return error('git: no deploy snapshots are available to check out')
-            const target = timeMachine.resolveRef(ref, deploys)
+            // the full log lets a non-deploy commit resolve to the deploy that shipped it
+            const commits = await loadGitHistory().catch(() => [])
+            const target = timeMachine.resolveRef(ref, deploys, commits)
             if (target === null) {
               error(`error: pathspec '${ref}' did not match any deployed version`)
               muted("try a commit hash from 'git log', a date (2021-05-01), or HEAD~3")
@@ -481,6 +483,10 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             out(`Note: switching to '${ref}'.`)
             out('')
             out(`HEAD is now at ${target.source} ${escapeHtml(target.subject)}`)
+            // if the ref wasn't itself a deploy, say which deploy actually shipped it
+            if (!target.sha.startsWith(ref) && !target.source.startsWith(ref)) {
+              muted(`${ref} first shipped in the ${target.date} deploy (${target.source}) — loading that build`)
+            }
             muted(`Loading laurensverspeek.nl as it was on ${target.date} — welcome to the past…`)
             // let the lines paint before the reload swaps in the old build
             await new Promise((resolve) => setTimeout(resolve, 450))

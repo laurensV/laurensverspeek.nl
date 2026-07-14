@@ -20,8 +20,37 @@ export type TravelTarget = Deploy | 'present' | null
 
 const REFS_TO_PRESENT = new Set(['main', 'master', 'head', '-', 'present', 'live', 'now', 'tip'])
 
-/** Resolve a terminal ref (hash, HEAD~n, date, branch name) to a deploy. */
-export function resolveDeployRef(rawRef: string, deploys: Deploy[]): TravelTarget {
+/** Two SHA prefixes refer to the same commit if either abbreviation contains the other. */
+const sameCommit = (a: string, b: string) => a.startsWith(b) || b.startsWith(a)
+
+/**
+ * The deploy that shipped a given commit: most source commits were never a
+ * deploy point of their own (deploys batch several commits), so a hash from
+ * `git log` maps to the first deploy cut at-or-after it. `commits` is the full
+ * newest-first history; `i` is the target commit's index in it.
+ */
+function deployForCommitIndex(deploys: Deploy[], commits: { hash: string }[], i: number): Deploy | null {
+  let best: Deploy | null = null
+  let bestIndex = -1
+  for (const deploy of deploys) {
+    const di = commits.findIndex((c) => sameCommit(c.hash, deploy.source))
+    // newest-first indexing: a smaller index is newer. The shipping deploy is
+    // the newest one that is still older-or-equal to the commit (largest di ≤ i).
+    if (di >= 0 && di <= i && di > bestIndex) {
+      bestIndex = di
+      best = deploy
+    }
+  }
+  // commit newer than every deploy (not shipped yet) → the newest build we have
+  return best ?? deploys[0] ?? null
+}
+
+/**
+ * Resolve a terminal ref (hash, HEAD~n, date, branch name) to a deploy. Pass the
+ * `git log` history so a commit that wasn't itself a deploy still resolves to
+ * the deploy that shipped it.
+ */
+export function resolveDeployRef(rawRef: string, deploys: Deploy[], commits: { hash: string }[] = []): TravelTarget {
   const ref = rawRef.trim().toLowerCase()
   if (!ref || REFS_TO_PRESENT.has(ref)) return 'present'
 
@@ -34,8 +63,15 @@ export function resolveDeployRef(rawRef: string, deploys: Deploy[]): TravelTarge
     return deploys.find((d) => d.date <= ref) ?? deploys.at(-1) ?? null
   }
 
-  // a gh-pages or source SHA prefix
-  return deploys.find((d) => d.sha.startsWith(ref) || d.source.startsWith(ref)) ?? null
+  // an exact deploy: its gh-pages sha, or the source commit it shipped
+  const exact = deploys.find((d) => d.sha.startsWith(ref) || d.source.startsWith(ref))
+  if (exact) return exact
+
+  // any other real commit from the log → the deploy that shipped it
+  const i = commits.findIndex((c) => sameCommit(c.hash, ref))
+  if (i >= 0) return deployForCommitIndex(deploys, commits, i)
+
+  return null
 }
 
 async function messageServiceWorker(message: unknown): Promise<{ ok?: boolean } | null> {
