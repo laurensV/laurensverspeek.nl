@@ -6,6 +6,9 @@ on:
       - main
   # PRs get the full check suite, but never the deploy step
   pull_request:
+  # deploys are manual now: pushes to main run the checks but do NOT deploy —
+  # trigger "Run workflow" (workflow_dispatch) to actually cut a release and ship
+  workflow_dispatch:
 
 # serialize deploys on a branch so two overlapping runs can't compute the same
 # release version and collide on the tag/GitHub Release (queue, don't cancel a
@@ -27,11 +30,11 @@ jobs:
           # repo, and the release step reads the latest tag to bump the version
           fetch-depth: 0
 
-      # every push to main cuts the next patch release; SITE_VERSION is baked into
+      # a manual deploy cuts the next patch release; SITE_VERSION is baked into
       # the build (status bar, terminal banner, BIOS splash) and the tag/Release
       # is created after a successful deploy
       - name: Compute next release version
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         run: |
           latest=$(git tag -l 'v*' --sort=-v:refname | head -n1)
           if [ -z "$latest" ]; then
@@ -74,7 +77,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Deploy
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -83,7 +86,7 @@ jobs:
       # tag this commit and publish a GitHub Release for the version that just
       # shipped (creates the tag at the deployed commit)
       - name: Create GitHub Release
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
