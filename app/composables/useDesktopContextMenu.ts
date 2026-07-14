@@ -17,41 +17,16 @@ export function useDesktopContextMenu() {
   const closeContextMenu = () => { contextMenu.open = false }
 
   // touch has no right-click, so a ~500ms long-press summons the desktop menu
-  let pressTimer: ReturnType<typeof setTimeout> | undefined
-  let pressAt: { x: number, y: number } | null = null
-  let longPressed = false
-  const onDesktopTouchStart = (event: TouchEvent) => {
-    const touch = event.touches[0]
-    if (!touch) return
-    longPressed = false
-    pressAt = { x: touch.clientX, y: touch.clientY }
-    const target = event.target as HTMLElement
-    pressTimer = setTimeout(() => {
-      longPressed = true
-      showContextMenu(target, pressAt!.x, pressAt!.y)
-    }, 500)
-  }
-  const onDesktopTouchMove = (event: TouchEvent) => {
-    const touch = event.touches[0]
-    if (pressAt && touch && (Math.abs(touch.clientX - pressAt.x) > 10 || Math.abs(touch.clientY - pressAt.y) > 10)) {
-      clearTimeout(pressTimer)
-    }
-  }
-  const onDesktopTouchEnd = (event: TouchEvent) => {
-    clearTimeout(pressTimer)
-    // suppress the synthesised click so it can't immediately dismiss the menu the
-    // long-press just opened (works regardless of how long the finger was held)
-    if (longPressed) event.preventDefault()
-  }
-  onUnmounted(() => clearTimeout(pressTimer))
+  // (the shared press-hold machine the Files app's row menu uses too)
+  const press = useLongPress(({ x, y, target }) => showContextMenu(target, x, y))
 
   return {
     contextMenu,
     showContextMenu,
     openContextMenu,
     closeContextMenu,
-    onDesktopTouchStart,
-    onDesktopTouchMove,
-    onDesktopTouchEnd
+    onDesktopTouchStart: press.start,
+    onDesktopTouchMove: press.move,
+    onDesktopTouchEnd: press.end
   }
 }

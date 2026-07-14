@@ -74,9 +74,9 @@
               draggable="true"
               @click="selected = i; openVfsEntry(entry)"
               @contextmenu.prevent.stop="openFileMenu(entry, $event)"
-              @touchstart="onFilePressStart(entry, $event)"
-              @touchmove="onFilePressMove($event)"
-              @touchend="onFilePressEnd($event)"
+              @touchstart="filePress.start($event, entry)"
+              @touchmove="filePress.move($event)"
+              @touchend="filePress.end($event)"
               @dragstart="onDragStart(entry, $event)"
               @dragend="dragPath = null; dropTarget = null"
               @dragover="entry.dir ? (dropTarget = entryPath(entry.name)) : null"
@@ -175,34 +175,11 @@ const {
 })
 
 // touch has no right-click: long-press a file (~½s) to open its row menu, so
-// rename / edit-in-vim / properties are reachable with a thumb
-let filePressTimer: ReturnType<typeof setTimeout> | undefined
-let filePressAt: { x: number, y: number } | null = null
-let fileLongPressed = false
-const onFilePressStart = (entry: VfsEntry, event: TouchEvent) => {
-  const touch = event.touches[0]
-  if (!touch) return
-  fileLongPressed = false
-  filePressAt = { x: touch.clientX, y: touch.clientY }
-  const el = event.currentTarget as HTMLElement
-  filePressTimer = setTimeout(() => {
-    fileLongPressed = true
-    openFileMenu(entry, { currentTarget: el, clientX: filePressAt!.x, clientY: filePressAt!.y } as unknown as MouseEvent)
-  }, 500)
-}
-const onFilePressMove = (event: TouchEvent) => {
-  const touch = event.touches[0]
-  if (filePressAt && touch && (Math.abs(touch.clientX - filePressAt.x) > 10 || Math.abs(touch.clientY - filePressAt.y) > 10)) {
-    clearTimeout(filePressTimer)
-  }
-}
-const onFilePressEnd = (event: TouchEvent) => {
-  clearTimeout(filePressTimer)
-  // a long-press must not also fire the tap-to-open (nor the click that would
-  // instantly dismiss the menu it just opened)
-  if (fileLongPressed) event.preventDefault()
-}
-onUnmounted(() => clearTimeout(filePressTimer))
+// rename / edit-in-vim / properties are reachable with a thumb (the same
+// press-hold machine the desktop context menu uses)
+const filePress = useLongPress<VfsEntry>(({ x, y, currentTarget, payload }) => {
+  openFileMenu(payload, { currentTarget, clientX: x, clientY: y } as unknown as MouseEvent)
+})
 </script>
 
 <style scoped lang="scss">
