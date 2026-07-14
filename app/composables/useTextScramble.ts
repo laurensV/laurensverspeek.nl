@@ -30,20 +30,23 @@ export function useTextScramble() {
     const existing = timers.get(el)
     if (existing) clearInterval(existing)
 
-    // Lock the box so wider glyphs can never reflow the page: every frame has the
-    // same character count (spaces preserved), so pinning the exact width+height
-    // and clipping overflow keeps the footprint — and the line count — identical
-    // to the final text. Crucially we only promote *inline* elements (nav links,
-    // which ignore width) to inline-block; a block heading already honours width,
-    // and forcing it to inline-block shifted it onto the text baseline and, with
-    // the height clip, made it visibly jump and flash. The real text lives in
-    // aria-label, so all of this is purely visual.
+    // Lock the box so the animation is pixel-stable. The random glyphs
+    // (`{}#%&…`) are WIDER than the resolved letters in a proportional heading
+    // font, so at the same character count the scrambled string is wider than the
+    // final text. Pinning the width without `nowrap` made that wider string WRAP
+    // onto a second line, which the locked height + `overflow:hidden` then clipped
+    // — so the right half of the heading blanked out and popped back as it settled
+    // (the "white flicker"). `nowrap` keeps it on one line (the few extra-wide
+    // glyphs just clip at the edge instead of blanking a whole line). We only
+    // promote *inline* elements (nav links, which ignore width) to inline-block;
+    // block headings already honour width. The real text lives in aria-label.
     const rect = el.getBoundingClientRect()
     const wasInline = getComputedStyle(el).display === 'inline'
-    const prev = { width: el.style.width, height: el.style.height, overflow: el.style.overflow, display: el.style.display }
+    const prev = { width: el.style.width, height: el.style.height, overflow: el.style.overflow, whiteSpace: el.style.whiteSpace, display: el.style.display }
     el.style.width = `${rect.width}px`
     el.style.height = `${rect.height}px`
     el.style.overflow = 'hidden'
+    el.style.whiteSpace = 'nowrap'
     if (wasInline) el.style.display = 'inline-block'
 
     let frame = 0
@@ -56,6 +59,7 @@ export function useTextScramble() {
         el.style.width = prev.width
         el.style.height = prev.height
         el.style.overflow = prev.overflow
+        el.style.whiteSpace = prev.whiteSpace
         el.style.display = prev.display
         clearInterval(timer)
         timers.delete(el)
