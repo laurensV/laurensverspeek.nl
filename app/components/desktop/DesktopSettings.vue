@@ -165,7 +165,7 @@
 
     <p class="settings-section mt-4"># system</p>
     <p class="settings-note">
-      lvOS 2.0 · kernel nuxt 4 · {{ windowCount }} window(s) open<br>
+      lvOS {{ version }} · kernel nuxt 4 · {{ windowCount }} window(s) open<br>
       settings are applied instantly and some persist in localStorage
     </p>
 
@@ -227,6 +227,8 @@ const applyName = () => {
 // read the shared window state directly — no need for the manager's listeners
 const windows = useState<DesktopWindow[]>(STATE_KEYS.lvosWindows, () => [])
 const windowCount = computed(() => windows.value.length)
+// the auto-incrementing site version, baked at build (see nuxt.config.ts)
+const version = useRuntimeConfig().public.buildVersion
 
 // the rabbit hole opens right here — the desktop layout renders the rain
 const enterMatrix = () => {

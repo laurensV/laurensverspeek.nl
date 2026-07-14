@@ -1,7 +1,7 @@
 <template>
   <div class="lvos-about is-family-code is-size-7">
     <p class="lvos-about-logo" aria-hidden="true">⚡</p>
-    <p><b>lvOS 2.0</b> — a very serious operating system</p>
+    <p><b>lvOS {{ version }}</b> — a very serious operating system</p>
     <table class="lvos-about-specs">
       <tbody>
         <tr><th>kernel</th><td>nuxt 4 (vue 3), fully static</td></tr>
@@ -20,6 +20,8 @@
 // About This Computer: real specs, lovingly framed. WebDesktop passes its
 // mount time so uptime is the desktop session's, like a real machine's.
 const props = defineProps<{ since: number }>()
+// the auto-incrementing site version, baked at build (see nuxt.config.ts)
+const version = useRuntimeConfig().public.buildVersion
 const now = ref(props.since)
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
