@@ -30,15 +30,21 @@ export function useTextScramble() {
     const existing = timers.get(el)
     if (existing) clearInterval(existing)
 
-    // Lock the box so wider glyphs can never reflow the page. Width keeps a nav
-    // link from shoving its neighbours; height + overflow keep a heading that's
-    // near the edge of a line from briefly wrapping to a second line and back
-    // (its final text is preserved in aria-label, so this is purely visual).
+    // Lock the box so wider glyphs can never reflow the page: every frame has the
+    // same character count (spaces preserved), so pinning the exact width+height
+    // and clipping overflow keeps the footprint — and the line count — identical
+    // to the final text. Crucially we only promote *inline* elements (nav links,
+    // which ignore width) to inline-block; a block heading already honours width,
+    // and forcing it to inline-block shifted it onto the text baseline and, with
+    // the height clip, made it visibly jump and flash. The real text lives in
+    // aria-label, so all of this is purely visual.
     const rect = el.getBoundingClientRect()
+    const wasInline = getComputedStyle(el).display === 'inline'
+    const prev = { width: el.style.width, height: el.style.height, overflow: el.style.overflow, display: el.style.display }
     el.style.width = `${rect.width}px`
     el.style.height = `${rect.height}px`
-    el.style.display = 'inline-block'
     el.style.overflow = 'hidden'
+    if (wasInline) el.style.display = 'inline-block'
 
     let frame = 0
     const totalFrames = text.length * 2 + 4
@@ -47,10 +53,10 @@ export function useTextScramble() {
       el.textContent = scrambleFrame(text, frame, totalFrames)
       if (frame >= totalFrames) {
         el.textContent = text
-        el.style.width = ''
-        el.style.height = ''
-        el.style.display = ''
-        el.style.overflow = ''
+        el.style.width = prev.width
+        el.style.height = prev.height
+        el.style.overflow = prev.overflow
+        el.style.display = prev.display
         clearInterval(timer)
         timers.delete(el)
       }
