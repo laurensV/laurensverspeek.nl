@@ -58,6 +58,9 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const keyClick = useKeyClick()
   // the same rolling copy history the lvOS Clipboard app shows
   const clipboard = useClipboardHistory()
+  // the time machine, shared with the lvOS Time Machine app — `git checkout`
+  // resolves a ref to a past deploy and hands it to the service worker
+  const timeMachine = useTimeMachine()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
   // the console-hunt win, shared with the devtools plugin that unlocks `backstage`
@@ -399,22 +402,25 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
       }
     },
     git: {
-      usage: 'git <log|show|status>',
-      description: "This site's real commit history",
+      usage: 'git <log|show|status|checkout>',
+      description: "This site's real commit history — and time travel",
       examples: [
         'git log            recent commits, baked in at build time',
         'git log --oneline  the compact version (pipes well into grep)',
         'git log -n 5       only the last five',
         'git show <hash>    one commit with its file diffstat',
+        'git checkout <ref> TIME TRAVEL: load a past deploy of this site',
+        'git checkout main  return to the present (live site)',
         'git status         you can guess'
       ],
-      argCandidates: () => ['log', 'show', 'status', 'blame', 'push'],
+      argCandidates: () => ['log', 'show', 'status', 'checkout', 'blame', 'push'],
       exec: async (args) => {
         const [sub, ...rest] = args
         switch (sub) {
           case undefined:
-            out('usage: git <log|show|status|blame|push>')
+            out('usage: git <log|show|status|checkout|blame|push>')
             muted("this is the real history of this website's repository")
+            muted("try 'git checkout <hash>' to actually travel back to that version of the site")
             return
           case 'status':
             out('On branch main')
@@ -446,6 +452,40 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             const commit = findCommit(commits, rest[0] ?? '')
             if (!commit) return error(`fatal: bad revision '${rest[0] ?? ''}'`)
             for (const line of formatGitShow(commit)) push(line.type, line.text, line.html)
+            return
+          }
+          case 'checkout': {
+            const ref = rest[0]
+            if (!ref) {
+              out('usage: git checkout <hash | date | HEAD~n | main>')
+              muted('time-travel to a past deploy of this site — the service worker serves the real old build.')
+              muted("'git checkout main' (or -) returns you to the present.")
+              return
+            }
+            if (!timeMachine.isAvailable()) {
+              return error('git: the time machine needs the built site (service worker unavailable here)')
+            }
+            const deploys = await timeMachine.load().catch(() => [])
+            if (!deploys.length) return error('git: no deploy snapshots are available to check out')
+            const target = timeMachine.resolveRef(ref, deploys)
+            if (target === null) {
+              error(`error: pathspec '${ref}' did not match any deployed version`)
+              muted("try a commit hash from 'git log', a date (2021-05-01), or HEAD~3")
+              return
+            }
+            if (target === 'present') {
+              out('Already on the live site (the present).')
+              void timeMachine.returnToPresent()
+              return
+            }
+            out(`Note: switching to '${ref}'.`)
+            out('')
+            out(`HEAD is now at ${target.source} ${escapeHtml(target.subject)}`)
+            muted(`Loading laurensverspeek.nl as it was on ${target.date} — welcome to the past…`)
+            // let the lines paint before the reload swaps in the old build
+            await new Promise((resolve) => setTimeout(resolve, 450))
+            const ok = await timeMachine.travelTo(target)
+            if (!ok) error('git: could not reach the time machine (service worker not ready) — try again in a moment')
             return
           }
           default:

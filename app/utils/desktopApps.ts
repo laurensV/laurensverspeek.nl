@@ -59,6 +59,7 @@ export const DESKTOP_APPS: DesktopApp[] = [
   { id: 'clipboard', title: 'clipboard history', label: 'clipboard', icon: 'layers' },
   { id: 'asteroids', title: 'asteroids', label: 'asteroids', icon: 'sparkles' },
   { id: 'pet', title: 'tamagotchi', label: 'pet', icon: 'zap' },
+  { id: 'timemachine', title: 'time machine — travel the deploy history', label: 'time machine', icon: 'clock', wide: true },
   { id: 'logout', title: 'log out', label: 'log out', icon: 'close', action: 'logout' }
 ]
 

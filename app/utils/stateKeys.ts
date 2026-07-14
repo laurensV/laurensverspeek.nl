@@ -73,7 +73,10 @@ export const STATE_KEYS = {
   // an app id the terminal `desktop <app>` command wants opened once lvOS mounts
   lvosPendingApp: 'lvos-pending-app',
   // recent clipboard copies, for the lvOS Clipboard app
-  clipboardHistory: 'clipboard-history'
+  clipboardHistory: 'clipboard-history',
+  // time machine: the loaded deploy manifest + the active travel target
+  timeMachineDeploys: 'time-machine-deploys',
+  timeMachineTarget: 'time-machine-target'
 } as const
 
 export type StateKey = (typeof STATE_KEYS)[keyof typeof STATE_KEYS]

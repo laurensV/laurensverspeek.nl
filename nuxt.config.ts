@@ -88,6 +88,10 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: null,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,xml}'],
+      // lvOS Time Machine: loaded first inside the generated SW so its fetch
+      // listener runs before Workbox's. Dormant unless you're time-travelling,
+      // when it serves past builds of the site from jsDelivr (public/sw-timemachine.js).
+      importScripts: ['/sw-timemachine.js'],
       // static site: cache pages as visited, serve from cache when offline —
       // and when neither network nor cache has it, fall back to /offline.html
       runtimeCaching: [
@@ -169,7 +173,7 @@ export default defineNuxtConfig({
     prerender: {
       // /desktop is client-only (lvOS), but prerender the shell so a direct hit
       // to the shareable URL gets a real file instead of only the SPA fallback
-      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/contact.vcf', '/resume.json', '/desktop', '/life', '/keyboard', '/status', ...(pgp.publicKey ? ['/pgp.txt'] : [])]
+      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/time-machine.json', '/contact.vcf', '/resume.json', '/desktop', '/life', '/keyboard', '/status', ...(pgp.publicKey ? ['/pgp.txt'] : [])]
     }
   },
 
