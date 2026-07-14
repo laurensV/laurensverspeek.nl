@@ -4,7 +4,7 @@
 // the client just predicts.
 
 export const WORLD_SIZE = 128
-export const WORLD_COOLDOWN_MS = 5000
+export const WORLD_COOLDOWN_MS = 300000 // 5 minutes — building the world is a team effort
 
 // 16 colors: the amber brand front and center, then a friendly r/place-ish set
 export const WORLD_PALETTE = [

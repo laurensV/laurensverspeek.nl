@@ -22,7 +22,7 @@
         {{ connected ? `● ${online} here · ${recent} pixels/10min` : '○ offline world — pixels stay in this browser' }}
       </span>
       <span class="world-coords">({{ hover.x }}, {{ hover.y }})</span>
-      <span v-if="cooldownLeft > 0" class="world-cooldown">next pixel in {{ Math.ceil(cooldownLeft / 1000) }}s</span>
+      <span v-if="cooldownLeft > 0" class="world-cooldown">next pixel in {{ cooldownText }}</span>
       <span v-else class="world-ready">ready to place</span>
     </div>
 
@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener, useRafFn } from '@vueuse/core'
+import { useResizeObserver, useRafFn } from '@vueuse/core'
 import { boardToScreen, screenToBoard, visibleRange, clampCamera } from '~/utils/worldCamera'
 import type { Camera } from '~/utils/worldCamera'
 
@@ -93,6 +93,11 @@ const view = () => ({ w: canvasRef.value?.clientWidth ?? 0, h: canvasRef.value?.
 // permanent rAF loop would paint 60 no-op frames/s the whole time the window
 // is open
 const cooldownLeft = ref(0)
+// with a multi-minute cooldown a bare "300s" reads badly — show m ss over a minute
+const cooldownText = computed(() => {
+  const s = Math.ceil(cooldownLeft.value / 1000)
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`
+})
 const { pause: pauseCooldown, resume: resumeCooldown } = useRafFn(() => {
   cooldownLeft.value = Math.max(0, nextPlaceAt.value - Date.now())
   if (cooldownLeft.value === 0) pauseCooldown()
@@ -173,7 +178,10 @@ const fit = () => {
   }
   draw()
 }
-useEventListener('resize', fit)
+// observe the host, not just window resize: maximizing the lvOS window (or any
+// layout change) grows the stage without firing a window `resize`, which would
+// otherwise leave the backbuffer stale and CSS-stretch it into skewed pixels
+useResizeObserver(hostRef, fit)
 
 const draw = () => {
   const context = ctx2d
