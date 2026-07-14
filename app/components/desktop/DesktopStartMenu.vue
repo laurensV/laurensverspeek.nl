@@ -59,14 +59,22 @@
         />
       </div>
 
-      <!-- the four session/power actions as a compact icon row instead of four
-           full-width rows — the menu was getting very tall -->
+      <!-- the four session/power actions as a compact labelled row instead of
+           four full-width rows — the menu was getting very tall -->
       <p class="lvos-start-label">session</p>
       <div class="lvos-start-power">
-        <button title="Lock" aria-label="Lock" @click="emit('select', 'lock')">🔒</button>
-        <button title="Log out" aria-label="Log out" @click="emit('select', 'logout')">←</button>
-        <button title="Reboot" aria-label="Reboot" @click="emit('select', 'reboot')">↻</button>
-        <button title="Shut down" aria-label="Shut down" @click="emit('select', 'shutdown')">⏻</button>
+        <button title="Lock" @click="emit('select', 'lock')">
+          <span class="pw-glyph">🔒</span><span class="pw-label">lock</span>
+        </button>
+        <button title="Log out" @click="emit('select', 'logout')">
+          <span class="pw-glyph">←</span><span class="pw-label">log out</span>
+        </button>
+        <button title="Reboot" @click="emit('select', 'reboot')">
+          <span class="pw-glyph">↻</span><span class="pw-label">reboot</span>
+        </button>
+        <button title="Shut down" @click="emit('select', 'shutdown')">
+          <span class="pw-glyph">⏻</span><span class="pw-label">shut down</span>
+        </button>
       </div>
     </template>
   </div>
@@ -218,18 +226,32 @@ onMounted(() => searchRef.value?.focus())
   font-size: 0.72rem;
 }
 
-// the four session actions sit in one compact icon row, not four tall rows
+// the four session actions sit in one compact labelled row, not four tall rows
 .lvos-start-power {
   display: flex;
   gap: 0.3rem;
   padding: 0.1rem 0.2rem 0.2rem;
 
   button {
+    display: flex;
     flex: 1;
-    padding: 0.45rem 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.4rem 0.1rem;
     text-align: center;
     border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.2);
+  }
+
+  .pw-glyph {
     font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .pw-label {
+    font-size: 0.56rem;
+    white-space: nowrap;
+    color: hsl(var(--lv-scheme-hs), 65%);
   }
 }
 

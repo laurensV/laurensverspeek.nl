@@ -99,7 +99,11 @@ test('windows resize from an edge handle (not just the corner)', async ({ page }
 
 test('Alt+Tab cycles focus between open windows', async ({ page }) => {
   await bootDesktop(page)
-  await page.locator('.lvos-icon', { hasText: 'calculator' }).click()
+  // open the calculator via Alt+R so the test doesn't depend on the icon's
+  // position — the readme window opens over the icon column on boot
+  await page.keyboard.press('Alt+r')
+  await page.locator('.run-input').fill('calc')
+  await page.keyboard.press('Enter')
   await page.locator('.calc').waitFor()
   const winByTitle = (t: string) =>
     page.locator('.lvos-window').filter({ has: page.locator('.lvos-window-title', { hasText: t }) })

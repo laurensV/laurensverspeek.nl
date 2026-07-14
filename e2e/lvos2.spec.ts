@@ -120,10 +120,17 @@ test('rm moves files to the recycle bin, which restores or empties them', async 
 
 test('tile windows arranges every open window into a grid', async ({ page }) => {
   await bootDesktop(page)
-  // readme is open; add the calculator so there are two windows
+  // close readme so exactly two windows remain, and open both via Alt+R so the
+  // test doesn't depend on icon positions (an open window sits over the icons)
   await page.locator('.lvos-window-actions button[title="Close"]').first().click()
-  await page.locator('.lvos-icon', { hasText: 'calculator' }).click()
-  await page.locator('.lvos-icon', { hasText: /^clock$/ }).click()
+  await page.keyboard.press('Alt+r')
+  await page.locator('.run-input').fill('calc')
+  await page.keyboard.press('Enter')
+  await page.locator('.calc').waitFor()
+  await page.keyboard.press('Alt+r')
+  await page.locator('.run-input').fill('clock')
+  await page.keyboard.press('Enter')
+  await page.locator('.lvos-window[data-win="clock"]').waitFor()
   await page.locator('.lvos-start').click()
   await page.locator('.lvos-start-menu button', { hasText: 'tile windows' }).click()
   // two windows side by side, together spanning the full width
@@ -541,6 +548,8 @@ test('the code playground runs edited html/css/js in a sandboxed preview', async
 test('the camera app renders ascii frames and snaps to the gallery', async ({ page, context }) => {
   await context.grantPermissions(['camera'])
   await bootDesktop(page)
+  // the readme window opens over the icon column on boot — close it first
+  await page.locator('.lvos-window-actions button[title="Close"]').first().click()
   await page.locator('.lvos-icon', { hasText: /^camera$/ }).click()
   // opt-in: nothing runs until the visitor turns the camera on
   const win = page.locator('.lvos-window', { hasText: 'asciicam' })
