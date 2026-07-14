@@ -1,4 +1,4 @@
-import { AMSTERDAM, weatherGlyph } from '~/utils/weather'
+import { AMSTERDAM, weatherGlyph, fetchCurrentWeather } from '~/utils/weather'
 
 // A tiny live-temperature chip for the lvOS tray. Amsterdam, keyless
 // open-meteo, fetched once on mount — no geolocation prompt, no dependency.
@@ -10,12 +10,10 @@ export function useWeatherChip() {
 
   if (import.meta.client && !fetched) {
     fetched = true
-    void $fetch<{ current: { temperature_2m: number, weather_code: number } }>(
-      'https://api.open-meteo.com/v1/forecast',
-      { params: { ...AMSTERDAM, current: 'temperature_2m,weather_code' } }
-    ).then((data) => {
-      temp.value = Math.round(data.current.temperature_2m)
-      code.value = data.current.weather_code
+    // the one shared current-weather fetch, also used by the terminal command
+    void fetchCurrentWeather(AMSTERDAM).then((w) => {
+      temp.value = w.temp
+      code.value = w.code
     }).catch(() => { /* the tray simply stays quiet */ })
   }
 

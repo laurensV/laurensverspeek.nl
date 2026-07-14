@@ -3,6 +3,7 @@ import type { GameHandle } from '~/utils/terminalGames'
 import { cowsay, fortune, figlet } from '~/utils/terminalToys'
 import { PET_SHOP, SNACK_COST } from '~/utils/pet'
 import { formatWeather } from '~/utils/terminal/weather'
+import { fetchCurrentWeather } from '~/utils/weather'
 import { framePixelsToAscii } from '~/utils/asciiCam'
 
 // ASCII toys: cowsay & friends, live weather and the webcam.
@@ -59,14 +60,6 @@ async function startAsciiCam(ctx: TerminalContext): Promise<void> {
 interface GeoResult {
   results?: { name: string, country?: string, latitude: number, longitude: number }[]
 }
-interface ForecastResult {
-  current: {
-    temperature_2m: number
-    weather_code: number
-    wind_speed_10m: number
-    relative_humidity_2m: number
-  }
-}
 
 export function createToyCommands(ctx: TerminalContext): Record<string, TerminalCommand> {
   const { push, out, muted, error } = ctx
@@ -75,6 +68,9 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
   // the SAME chiptune engine the lvOS media app plays through (and the same
   // shared volume) — pausing here pauses there, one jukebox for the whole site
   const jukebox = useChiptune()
+  // the tray weather chip's shared reading — a `weather` for Amsterdam feeds it
+  // so the tray and the terminal never disagree on the city's temperature
+  const weatherChip = useWeatherChip()
 
   return {
     music: {
@@ -228,21 +224,17 @@ export function createToyCommands(ctx: TerminalContext): Record<string, Terminal
           })
           const spot = geo.results?.[0]
           if (!spot) return error(`weather: unknown place '${query}'`)
-          const forecast = await $fetch<ForecastResult>('https://api.open-meteo.com/v1/forecast', {
-            timeout: 10_000,
-            query: {
-              latitude: spot.latitude,
-              longitude: spot.longitude,
-              current: 'temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m'
-            }
-          })
+          // the one shared current-weather fetch (the tray chip uses it too)
+          const now = await fetchCurrentWeather({ latitude: spot.latitude, longitude: spot.longitude }, true)
           const place = spot.country ? `${spot.name}, ${spot.country}` : spot.name
           formatWeather(place, {
-            temperature: forecast.current.temperature_2m,
-            wind: forecast.current.wind_speed_10m,
-            humidity: forecast.current.relative_humidity_2m,
-            code: forecast.current.weather_code
+            temperature: now.temp,
+            wind: now.wind,
+            humidity: now.humidity,
+            code: now.code
           }).forEach(out)
+          // keep the tray chip in step when the terminal asked about its city
+          if (spot.name === 'Amsterdam') weatherChip.setCurrent(now.temp, now.code)
         } catch {
           error('weather: the sky is unreachable right now (network error)')
         } finally {
