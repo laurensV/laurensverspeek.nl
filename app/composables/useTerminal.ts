@@ -142,6 +142,14 @@ export function useTerminal() {
   }
   const toggle = () => (isOpen.value ? close() : open())
 
+  // `exit` closes the overlay AND bumps this signal, which the lvOS terminal
+  // window watches to close itself (the window isn't gated by isOpen)
+  const exitSignal = useState(STATE_KEYS.terminalExit, () => 0)
+  const exit = () => {
+    exitSignal.value++
+    close()
+  }
+
   const startGame = (create: (callbacks: GameCallbacks) => GameHandle, name = 'game') => {
     // stop any game already running, or its timers keep firing and clobber the
     // new one's frames (reachable via `sh` scripts that launch two games)
@@ -195,6 +203,7 @@ export function useTerminal() {
     link,
     navigate,
     close,
+    exit,
     spin,
     startGame,
     game,

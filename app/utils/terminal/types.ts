@@ -61,7 +61,11 @@ export interface TerminalContext {
   error: (text: string) => void
   link: (label: string, url: string) => void
   navigate: (page: string) => void
+  /** Close the terminal overlay (Esc, navigation) */
   close: () => void
+  /** The `exit` command: close the overlay AND signal the lvOS terminal window
+   * (if that's where the shell is running) to close itself */
+  exit: () => void
   /** Show an animated "working…" line while a command fetches; call the
    * returned stop() when done (usually in finally) */
   spin: (label: string) => () => void

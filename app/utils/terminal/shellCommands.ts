@@ -233,7 +233,7 @@ export function createShellCommands(ctx: TerminalContext): Record<string, Termin
           return
         }
         out('logout')
-        setTimeout(ctx.close, 200)
+        setTimeout(ctx.exit, 200)
       }
     },
     secrets: {

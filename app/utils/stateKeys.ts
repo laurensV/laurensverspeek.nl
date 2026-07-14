@@ -18,6 +18,8 @@ export const STATE_KEYS = {
   terminalPanes: 'terminal-panes',
   terminalActivePane: 'terminal-active-pane',
   terminalPaneDir: 'terminal-pane-dir',
+  // bumped by the `exit` command so the lvOS terminal window can close itself
+  terminalExit: 'terminal-exit',
   // site-wide effects
   fxMatrix: 'fx-matrix',
   fxCrt: 'fx-crt',

@@ -242,6 +242,10 @@ const {
   tileAll
 } = useWindowManager(WINDOW_TITLES)
 
+// `exit` in the lvOS terminal closes its window, not just the (shared) overlay flag
+const terminalExit = useState(STATE_KEYS.terminalExit, () => 0)
+watch(terminalExit, () => closeWindow('terminal'))
+
 // genie effect: aim each window's minimize at its own taskbar button rather
 // than a generic point, by measuring the two rects at minimize time
 const genie = reactive<Record<string, Record<string, string>>>({})
