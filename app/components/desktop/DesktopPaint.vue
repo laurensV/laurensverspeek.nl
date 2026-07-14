@@ -54,7 +54,7 @@ let drawing = false
 // to pop) taken just before each drag or clear; canUndo mirrors its depth
 // reactively without making the ImageData itself reactive
 const UNDO_MAX = 20
-let undoStack: ImageData[] = []
+const undoStack: ImageData[] = []
 const canUndo = ref(false)
 const snapshot = () => {
   const canvas = canvasRef.value
