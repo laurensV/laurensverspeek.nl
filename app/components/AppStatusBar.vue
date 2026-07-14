@@ -16,6 +16,13 @@
         :title="version"
         @click="versionClick"
       >{{ version }}</button>
+      <!-- only shows when reduced motion is on, as a one-click way back to full motion -->
+      <button
+        v-if="reduceMotion.enabled.value"
+        class="status-item status-button status-reduce"
+        title="Reduced motion is on — click to turn animations back on"
+        @click="reduceMotion.enabled.value = false"
+      >⏸ reduced motion</button>
       <button
         v-if="visitors.enabled.value && visitors.count.value > 0"
         class="status-item status-button status-visitors"
@@ -76,6 +83,8 @@ const online = useOnline()
 
 // the auto-incrementing site version, baked at build (see nuxt.config.ts)
 const version = useRuntimeConfig().public.buildVersion
+// reduced-motion switch — the status pill only appears while it's on
+const reduceMotion = useReduceMotion()
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')
@@ -192,6 +201,11 @@ const {
 .status-pending {
   color: var(--bulma-primary);
   font-weight: 700;
+}
+
+// reduced-motion pill: stands out in accent so it's an obvious "click to undo"
+.status-reduce {
+  color: var(--bulma-primary);
 }
 
 // the network dropped: a theme-aware warning amber that stays legible on the

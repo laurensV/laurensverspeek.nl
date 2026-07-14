@@ -19,6 +19,8 @@ export function scrambleFrame(text: string, frame: number, totalFrames: number, 
 /** Drives the decode animation on an element's textContent (used by nav links). */
 export function useTextScramble() {
   const timers = new Map<HTMLElement, ReturnType<typeof setInterval>>()
+  // combined OS + site "reduce motion" — reactive, so a mid-session toggle counts
+  const reducedMotion = useReducedMotion()
 
   // a mid-animation unmount must not leave intervals writing to detached nodes
   onScopeDispose(() => {
@@ -30,23 +32,33 @@ export function useTextScramble() {
     const existing = timers.get(el)
     if (existing) clearInterval(existing)
 
-    // Lock the box so the animation is pixel-stable. The random glyphs
-    // (`{}#%&…`) are WIDER than the resolved letters in a proportional heading
-    // font, so at the same character count the scrambled string is wider than the
-    // final text. Pinning the width without `nowrap` made that wider string WRAP
-    // onto a second line, which the locked height + `overflow:hidden` then clipped
-    // — so the right half of the heading blanked out and popped back as it settled
-    // (the "white flicker"). `nowrap` keeps it on one line (the few extra-wide
-    // glyphs just clip at the edge instead of blanking a whole line). We only
-    // promote *inline* elements (nav links, which ignore width) to inline-block;
-    // block headings already honour width. The real text lives in aria-label.
+    // reduced motion (OS or the site switch): no animation, just the final text
+    if (reducedMotion.value) {
+      el.textContent = text
+      return
+    }
+
+    // Render the scramble in a MONOSPACE font so every random glyph has the same
+    // advance width — no per-frame jiggle from proportional glyph widths. The box
+    // is locked to the final text's footprint and overflow clipped. Whitespace is
+    // the key: the random glyphs (`{}#%&…`) are wider than the resolved letters,
+    // so on a single-line heading we force `nowrap` (the extra width clips at the
+    // edge instead of wrapping to a clipped second line, which was the old "white
+    // flicker" blanking); a heading whose FINAL text genuinely wraps keeps
+    // `normal`, and monospace keeps that wrapping identical on every frame. Only
+    // *inline* elements (nav links) need promoting to inline-block. The real text
+    // lives in aria-label, so all of this is purely visual.
     const rect = el.getBoundingClientRect()
-    const wasInline = getComputedStyle(el).display === 'inline'
-    const prev = { width: el.style.width, height: el.style.height, overflow: el.style.overflow, whiteSpace: el.style.whiteSpace, display: el.style.display }
+    const styles = getComputedStyle(el)
+    const fontSize = parseFloat(styles.fontSize) || 16
+    const singleLine = rect.height < fontSize * 1.8
+    const wasInline = styles.display === 'inline'
+    const prev = { width: el.style.width, height: el.style.height, overflow: el.style.overflow, whiteSpace: el.style.whiteSpace, fontFamily: el.style.fontFamily, display: el.style.display }
     el.style.width = `${rect.width}px`
     el.style.height = `${rect.height}px`
     el.style.overflow = 'hidden'
-    el.style.whiteSpace = 'nowrap'
+    el.style.whiteSpace = singleLine ? 'nowrap' : 'normal'
+    el.style.fontFamily = "'JetBrains Mono', ui-monospace, 'Courier New', monospace"
     if (wasInline) el.style.display = 'inline-block'
 
     let frame = 0
@@ -60,6 +72,7 @@ export function useTextScramble() {
         el.style.height = prev.height
         el.style.overflow = prev.overflow
         el.style.whiteSpace = prev.whiteSpace
+        el.style.fontFamily = prev.fontFamily
         el.style.display = prev.display
         clearInterval(timer)
         timers.delete(el)
