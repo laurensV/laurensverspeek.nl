@@ -43,6 +43,8 @@ const emit = defineEmits<{ select: [action: StartAction] }>()
 </script>
 
 <style scoped lang="scss">
+@use '~/assets/scss/mixins' as *;
+
 .lvos-start-menu {
   position: absolute;
   bottom: 2.6rem;
