@@ -15,6 +15,8 @@ export interface Deploy {
   subject: string
   /** The release tag (v2.0.x) on this deploy's commit, if it has one */
   tag?: string
+  /** True for the live build (HEAD): the present, not a travellable past snapshot */
+  current?: boolean
 }
 
 /** A resolved `git checkout` target: a past build, or a return to the live site. */
@@ -51,7 +53,8 @@ function deployForCommitIndex(deploys: Deploy[], commits: { hash: string }[], i:
  * The commits each deploy shipped. A deploy isn't one commit — it's everything
  * since the previous deploy, so a release's commits are the slice of the
  * newest-first log from this deploy's tip down to (not including) the next-older
- * deploy's tip. Returns a map keyed by the deploy's gh-pages sha.
+ * deploy's tip. Returns a map keyed by the deploy's source commit (unique, and
+ * present even for the live entry whose gh-pages sha is empty).
  */
 export function releaseCommits<T extends { hash: string }>(deploys: Deploy[], commits: T[]): Map<string, T[]> {
   const tipOf = (source: string) => commits.findIndex((c) => sameCommit(c.hash, source))
@@ -60,13 +63,13 @@ export function releaseCommits<T extends { hash: string }>(deploys: Deploy[], co
     const deploy = deploys[di]!
     const start = tipOf(deploy.source)
     if (start < 0) {
-      map.set(deploy.sha, [])
+      map.set(deploy.source, [])
       continue
     }
     const older = deploys[di + 1]
     const olderTip = older ? tipOf(older.source) : commits.length
     const end = olderTip > start ? olderTip : commits.length
-    map.set(deploy.sha, commits.slice(start, end))
+    map.set(deploy.source, commits.slice(start, end))
   }
   return map
 }
@@ -91,13 +94,17 @@ export function resolveDeployRef(rawRef: string, deploys: Deploy[], commits: { h
 
   // an exact deploy: its release tag (v2.0.4), gh-pages sha, or source commit
   const exact = deploys.find(
-    (d) => d.tag?.toLowerCase() === ref || d.sha.startsWith(ref) || d.source.startsWith(ref)
+    (d) => d.tag?.toLowerCase() === ref || (!!d.sha && d.sha.startsWith(ref)) || d.source.startsWith(ref)
   )
-  if (exact) return exact
+  // the live build is the present, not a snapshot to travel to
+  if (exact) return exact.current ? 'present' : exact
 
   // any other real commit from the log → the deploy that shipped it
   const i = commits.findIndex((c) => sameCommit(c.hash, ref))
-  if (i >= 0) return deployForCommitIndex(deploys, commits, i)
+  if (i >= 0) {
+    const shipped = deployForCommitIndex(deploys, commits, i)
+    return shipped?.current ? 'present' : shipped
+  }
 
   return null
 }
@@ -147,6 +154,8 @@ export function useTimeMachine() {
 
   /** Travel to a past build: point the SW at it, then reload onto the old home page. */
   async function travelTo(deploy: Deploy): Promise<boolean> {
+    // the live build has no snapshot — "travelling" there is just the present
+    if (deploy.current || !deploy.sha) return returnToPresent()
     const ack = await messageServiceWorker({
       type: 'tm-travel',
       sha: deploy.sha,

@@ -77,10 +77,10 @@ describe('releaseCommits', () => {
   it('groups each release as the commits from its tip to the next-older deploy', () => {
     const map = releaseCommits(deploys, commits)
     // a deploy batches every commit since the previous deploy, not just its tip
-    expect(map.get(deploys[0]!.sha)!.map((c) => c.hash)).toEqual(['5d12e23', 'aaa1111'])
-    expect(map.get(deploys[1]!.sha)!.map((c) => c.hash)).toEqual(['2222222', 'bbb3333'])
+    expect(map.get(deploys[0]!.source)!.map((c) => c.hash)).toEqual(['5d12e23', 'aaa1111'])
+    expect(map.get(deploys[1]!.source)!.map((c) => c.hash)).toEqual(['2222222', 'bbb3333'])
     // the oldest deploy sweeps in every remaining ancestor commit
-    expect(map.get(deploys[2]!.sha)!.map((c) => c.hash)).toEqual(['0000000', 'ccc5555'])
+    expect(map.get(deploys[2]!.source)!.map((c) => c.hash)).toEqual(['0000000', 'ccc5555'])
   })
 
   it('partitions the whole log across releases with no gaps or overlaps', () => {
@@ -92,6 +92,23 @@ describe('releaseCommits', () => {
   it('is empty for a deploy whose tip is missing from the log', () => {
     const orphan: Deploy = { sha: 'ffff', date: '2019-01-01', source: 'nope999', subject: 'orphan' }
     const map = releaseCommits([...deploys, orphan], commits)
-    expect(map.get('ffff')).toEqual([])
+    expect(map.get('nope999')).toEqual([])
+  })
+})
+
+describe('resolveDeployRef with a live/current entry', () => {
+  // the manifest prepends a synthetic HEAD entry (no gh-pages sha) for the live build
+  const live: Deploy = { sha: '', date: '2026-07-15', source: '9999999', subject: 'live', current: true, tag: 'v2.0.7' }
+  const withLive = [live, ...deploys]
+  const liveCommits = [{ hash: '9999999' }, ...commits]
+
+  it('resolves the live version (tag or hash) to the present, not a snapshot', () => {
+    expect(resolveDeployRef('v2.0.7', withLive, liveCommits)).toBe('present')
+    expect(resolveDeployRef('9999999', withLive, liveCommits)).toBe('present')
+  })
+
+  it('still resolves older releases to their snapshot', () => {
+    expect(resolveDeployRef('v2.0.4', withLive, liveCommits)).toBe(deploys[0])
+    expect(resolveDeployRef('2222222', withLive, liveCommits)).toBe(deploys[1])
   })
 })

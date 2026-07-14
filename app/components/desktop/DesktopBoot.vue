@@ -19,11 +19,14 @@ import { playBootChime } from '~/utils/bootChime'
 
 const emit = defineEmits<{ done: [] }>()
 
+// the real build version (v2.0.x from the release tag), shared with the splash,
+// status bar and terminal banner — not a hardcoded "2.0"
+const buildVersion = useRuntimeConfig().public.buildVersion
 const LOGO = String.raw` _       ______  _____
 | |     / / __ \/ ___/
 | | /| / / / / /\__ \
 | |/ |/ / /_/ /___/ /
-|__/|__/\____//____/   BIOS v2.0`
+|__/|__/\____//____/   BIOS ${buildVersion}`
 
 interface BootLine { text: string, type: 'ok' | 'info' | 'primary' }
 

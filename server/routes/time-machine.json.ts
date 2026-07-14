@@ -24,6 +24,8 @@ interface Deploy {
   subject: string
   /** The release tag (v2.0.x) on this deploy's commit, if it has one */
   tag?: string
+  /** True for the live build (HEAD): the present, not a travellable past snapshot */
+  current?: boolean
 }
 
 function sh(cmd: string): string {
@@ -70,7 +72,7 @@ function readDeploys(): Deploy[] {
   }
 
   const raw = sh('git log origin/gh-pages --pretty=format:%H%x1f%cs%x1f%s')
-  return raw
+  const deploys = raw
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -88,6 +90,31 @@ function readDeploys(): Deploy[] {
       }
     })
     .filter((deploy): deploy is Deploy => deploy !== null)
+
+  // gh-pages always lags by one: the deploy being built right now isn't in its
+  // history yet. Prepend a synthetic "current" entry for HEAD so the live
+  // version shows up (and is marked live) instead of the previous deploy. It has
+  // no gh-pages sha — you don't travel to the present, you're already on it.
+  try {
+    const head = sh('git rev-parse HEAD').trim()
+    const headShort = head.slice(0, 7)
+    const alreadyListed = deploys.some((d) => head.startsWith(d.source) || d.source.startsWith(headShort))
+    if (head && !alreadyListed) {
+      const version = process.env.SITE_VERSION || tags.get(head)
+      deploys.unshift({
+        sha: '',
+        date: sh('git log -1 --format=%cs HEAD').trim(),
+        source: headShort,
+        subject: subjects.get(head) ?? sh('git log -1 --format=%s HEAD').trim(),
+        current: true,
+        ...(version ? { tag: version } : {})
+      })
+    }
+  } catch {
+    // no HEAD info — the list is just the gh-pages deploys, lag and all
+  }
+
+  return deploys
 }
 
 export default defineEventHandler((event) => {

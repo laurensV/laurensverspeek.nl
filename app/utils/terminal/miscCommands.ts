@@ -438,10 +438,11 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
               const cell = deploy.tag
                 ? `<span class="term-accent">${escapeHtml(deploy.tag)}</span>${' '.repeat(Math.max(1, 8 - deploy.tag.length))}`
                 : `<span class="term-muted">·</span>       `
-              const n = counts?.get(deploy.sha)?.length ?? 0
+              const n = counts?.get(deploy.source)?.length ?? 0
               const count = n ? `<span class="term-muted">${String(n).padStart(3)}c</span> ` : '     '
               const subject = escapeHtml(deploy.subject.slice(0, 52))
-              push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${count}${subject}`, true)
+              const live = deploy.current ? ' <span class="term-accent">← live</span>' : ''
+              push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${count}${subject}${live}`, true)
             }
             return
           }
@@ -480,7 +481,7 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
               (d) => d.tag?.toLowerCase() === ref || (!!ref && (d.source.startsWith(ref) || ref.startsWith(d.source)))
             )
             if (release) {
-              const relCommits = releaseCommits(deploys, commits).get(release.sha) ?? []
+              const relCommits = releaseCommits(deploys, commits).get(release.source) ?? []
               for (const line of formatRelease(release, relCommits)) push(line.type, line.text, line.html)
               return
             }

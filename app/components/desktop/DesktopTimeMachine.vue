@@ -43,27 +43,27 @@
               <span v-if="row.deploy.tag" class="tm-ver">{{ row.deploy.tag }}</span>
               <span class="tm-hash">{{ row.deploy.source }}</span>
               <button
-                v-if="countFor(row.deploy.sha) > 1"
+                v-if="countFor(row.deploy.source) > 1"
                 class="tm-count"
-                :aria-expanded="expanded.has(row.deploy.sha)"
-                @click="toggle(row.deploy.sha)"
+                :aria-expanded="expanded.has(row.deploy.source)"
+                @click="toggle(row.deploy.source)"
               >
-                {{ countFor(row.deploy.sha) }} commits {{ expanded.has(row.deploy.sha) ? '▾' : '▸' }}
+                {{ countFor(row.deploy.source) }} commits {{ expanded.has(row.deploy.source) ? '▾' : '▸' }}
               </button>
             </p>
             <p class="tm-subject">{{ row.deploy.subject || '(no message)' }}</p>
           </div>
           <button
             class="tm-go"
-            :disabled="!available || busy"
-            :title="`Load the site as it was on ${row.deploy.date}`"
+            :disabled="!available || busy || row.deploy.current"
+            :title="row.deploy.current ? 'This is the live site' : `Load the site as it was on ${row.deploy.date}`"
             @click="visit(row.deploy)"
           >
-            {{ busySha === row.deploy.sha ? 'entering…' : '⏱ visit' }}
+            {{ row.deploy.current ? '● here' : busySha === row.deploy.source ? 'entering…' : '⏱ visit' }}
           </button>
         </li>
-        <li v-if="expanded.has(row.deploy.sha)" class="tm-commits">
-          <span v-for="commit in commitsFor(row.deploy.sha)" :key="commit.hash" class="tm-commit">
+        <li v-if="expanded.has(row.deploy.source)" class="tm-commits">
+          <span v-for="commit in commitsFor(row.deploy.source)" :key="commit.hash" class="tm-commit">
             <code>{{ commit.hash }}</code> {{ commit.subject }}
           </span>
         </li>
@@ -107,12 +107,12 @@ onMounted(async () => {
   }
 })
 
-const countFor = (sha: string) => relMap.value.get(sha)?.length ?? 0
-const commitsFor = (sha: string) => relMap.value.get(sha) ?? []
-function toggle(sha: string) {
+const countFor = (source: string) => relMap.value.get(source)?.length ?? 0
+const commitsFor = (source: string) => relMap.value.get(source) ?? []
+function toggle(source: string) {
   const next = new Set(expanded.value)
-  if (next.has(sha)) next.delete(sha)
-  else next.add(sha)
+  if (next.has(source)) next.delete(source)
+  else next.add(source)
   expanded.value = next
 }
 
@@ -132,10 +132,14 @@ const shown = computed<Row[]>(() => {
         (d) => d.subject.toLowerCase().includes(query) || d.date.includes(query) || d.source.includes(query)
       )
     : deploys.value
+  const anyCurrent = deploys.value.some((d) => d.current)
   let lastYear = ''
   return list.map((deploy) => {
     const year = deploy.date.slice(0, 4)
-    const row: Row = { deploy, latest: deploy.sha === deploys.value[0]?.sha }
+    // the live build is flagged current; if the manifest has none (no lag), the
+    // newest deploy stands in as live
+    const latest = deploy.current ?? (!anyCurrent && deploy === deploys.value[0])
+    const row: Row = { deploy, latest }
     if (year !== lastYear) {
       row.year = year
       lastYear = year
@@ -145,9 +149,9 @@ const shown = computed<Row[]>(() => {
 })
 
 async function visit(deploy: Deploy) {
-  if (!available || busy.value) return
+  if (!available || busy.value || deploy.current) return
   busy.value = true
-  busySha.value = deploy.sha
+  busySha.value = deploy.source
   const ok = await travelTo(deploy)
   if (!ok) {
     busy.value = false
@@ -158,58 +162,61 @@ async function visit(deploy: Deploy) {
 </script>
 
 <style scoped>
+/* lvOS apps are always dark, independent of the site's light/dark theme, so
+   colours come from --lv-scheme-hs (hue+sat, fixed low lightness) and
+   --lv-primary-hsl — the same palette the other desktop apps use. */
 .tm {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--bulma-scheme-main);
-  color: var(--bulma-text);
+  background: hsl(var(--lv-scheme-hs), 9%);
+  color: hsl(var(--lv-scheme-hs), 88%);
   font-size: 0.82rem;
 }
 
 .tm-head {
   padding: 0.75rem 0.9rem 0.6rem;
-  border-bottom: 1px solid var(--bulma-border-weak);
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 55%, 0.16);
   flex: 0 0 auto;
 }
 .tm-title {
   display: flex;
   gap: 0.6rem;
   align-items: center;
-  color: var(--bulma-primary);
+  color: hsl(var(--lv-primary-hsl));
 }
 .tm-h {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
 .tm-sub {
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
   font-size: 0.72rem;
 }
 .tm-sub strong {
-  color: var(--bulma-text);
+  color: hsl(var(--lv-scheme-hs), 88%);
 }
 .tm-search {
   margin-top: 0.6rem;
   width: 100%;
   padding: 0.4rem 0.6rem;
-  border: 1px solid var(--bulma-border);
+  border: 1px solid hsla(var(--lv-scheme-hs), 55%, 0.3);
   border-radius: 6px;
-  background: var(--bulma-scheme-main-bis);
-  color: var(--bulma-text);
+  background: hsla(var(--lv-scheme-hs), 60%, 0.08);
+  color: hsl(var(--lv-scheme-hs), 88%);
   font: inherit;
   font-size: 0.75rem;
 }
 .tm-search:focus {
   outline: none;
-  border-color: var(--bulma-primary);
+  border-color: hsl(var(--lv-primary-hsl));
 }
 
 .tm-note {
   padding: 0.4rem 0.9rem;
   font-size: 0.68rem;
-  color: var(--bulma-text-weak);
-  border-bottom: 1px solid var(--bulma-border-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
+  border-bottom: 1px solid hsla(var(--lv-scheme-hs), 55%, 0.16);
   flex: 0 0 auto;
 }
 .tm-warn {
@@ -219,7 +226,7 @@ async function visit(deploy: Deploy) {
 .tm-empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
 }
 
 .tm-list {
@@ -234,7 +241,7 @@ async function visit(deploy: Deploy) {
   padding: 0.5rem 0.9rem 0.2rem;
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--bulma-primary);
+  color: hsl(var(--lv-primary-hsl));
   opacity: 0.8;
   letter-spacing: 0.08em;
 }
@@ -244,17 +251,17 @@ async function visit(deploy: Deploy) {
   align-items: center;
   gap: 0.7rem;
   padding: 0.5rem 0.9rem;
-  border-left: 2px solid var(--bulma-border-weak);
+  border-left: 2px solid hsla(var(--lv-scheme-hs), 55%, 0.16);
   margin-left: 1.1rem;
   position: relative;
   transition: background 0.12s ease;
 }
 .tm-row:hover {
-  background: var(--bulma-scheme-main-bis);
+  background: hsla(var(--lv-scheme-hs), 60%, 0.07);
 }
 .tm-row.is-latest .tm-dot {
-  background: var(--bulma-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bulma-primary) 30%, transparent);
+  background: hsl(var(--lv-primary-hsl));
+  box-shadow: 0 0 0 3px hsla(var(--lv-primary-hsl), 0.3);
 }
 .tm-dot {
   position: absolute;
@@ -262,7 +269,7 @@ async function visit(deploy: Deploy) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--bulma-border);
+  background: hsla(var(--lv-scheme-hs), 55%, 0.4);
   flex: 0 0 auto;
 }
 .tm-meta {
@@ -274,7 +281,7 @@ async function visit(deploy: Deploy) {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.72rem;
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
 }
 .tm-hash {
   font-size: 0.68rem;
@@ -283,8 +290,8 @@ async function visit(deploy: Deploy) {
 .tm-ver {
   font-size: 0.62rem;
   font-weight: 700;
-  color: var(--bulma-primary);
-  border: 1px solid color-mix(in srgb, var(--bulma-primary) 55%, transparent);
+  color: hsl(var(--lv-primary-hsl));
+  border: 1px solid hsla(var(--lv-primary-hsl), 0.55);
   padding: 0.02rem 0.32rem;
   border-radius: 4px;
   letter-spacing: 0.02em;
@@ -292,17 +299,17 @@ async function visit(deploy: Deploy) {
 .tm-count {
   font: inherit;
   font-size: 0.62rem;
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
   background: transparent;
-  border: 1px solid var(--bulma-border-weak);
+  border: 1px solid hsla(var(--lv-scheme-hs), 55%, 0.16);
   border-radius: 999px;
   padding: 0.02rem 0.4rem;
   cursor: pointer;
   white-space: nowrap;
 }
 .tm-count:hover {
-  color: var(--bulma-text);
-  border-color: var(--bulma-primary);
+  color: hsl(var(--lv-scheme-hs), 88%);
+  border-color: hsl(var(--lv-primary-hsl));
 }
 
 .tm-commits {
@@ -311,18 +318,18 @@ async function visit(deploy: Deploy) {
   gap: 0.15rem;
   margin: 0 0 0.3rem 2.3rem;
   padding: 0.3rem 0 0.4rem;
-  border-left: 1px dashed var(--bulma-border-weak);
+  border-left: 1px dashed hsla(var(--lv-scheme-hs), 55%, 0.16);
   padding-left: 0.7rem;
 }
 .tm-commit {
   font-size: 0.7rem;
-  color: var(--bulma-text-weak);
+  color: hsl(var(--lv-scheme-hs), 58%);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .tm-commit code {
-  color: var(--bulma-primary);
+  color: hsl(var(--lv-primary-hsl));
   font-size: 0.66rem;
   margin-right: 0.35rem;
 }
@@ -330,14 +337,14 @@ async function visit(deploy: Deploy) {
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: var(--bulma-primary);
-  color: var(--bulma-primary-invert);
+  background: hsl(var(--lv-primary-hsl));
+  color: hsl(var(--lv-scheme-hs), 8%);
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
   font-weight: 700;
 }
 .tm-subject {
-  color: var(--bulma-text);
+  color: hsl(var(--lv-scheme-hs), 88%);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -346,9 +353,9 @@ async function visit(deploy: Deploy) {
 
 .tm-go {
   flex: 0 0 auto;
-  border: 1px solid var(--bulma-primary);
+  border: 1px solid hsl(var(--lv-primary-hsl));
   background: transparent;
-  color: var(--bulma-primary);
+  color: hsl(var(--lv-primary-hsl));
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   font: inherit;
@@ -359,8 +366,8 @@ async function visit(deploy: Deploy) {
   transition: background 0.12s ease, color 0.12s ease;
 }
 .tm-go:hover:not(:disabled) {
-  background: var(--bulma-primary);
-  color: var(--bulma-primary-invert);
+  background: hsl(var(--lv-primary-hsl));
+  color: hsl(var(--lv-scheme-hs), 8%);
 }
 .tm-go:disabled {
   opacity: 0.4;

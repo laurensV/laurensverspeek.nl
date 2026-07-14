@@ -13,7 +13,7 @@
           <span class="boot-ok">[ ok ]</span> {{ line }}
         </p>
         <p v-if="done" class="boot-line boot-ready">
-          laurensverspeek.nl 2.0 ready — press any key
+          laurensverspeek.nl {{ buildVersion }} ready — press any key
         </p>
       </div>
       <p class="boot-skip">click or press any key to skip</p>
