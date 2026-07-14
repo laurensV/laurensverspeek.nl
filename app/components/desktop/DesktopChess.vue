@@ -201,6 +201,7 @@ onMounted(houseReply)
 
 <style scoped lang="scss">
 .chess {
+  container-type: inline-size;
   display: flex;
   gap: 1rem;
   align-items: flex-start;
@@ -208,8 +209,10 @@ onMounted(houseReply)
 }
 
 .chess-board {
-  // shrinks with the viewport so the 8-wide board fits the non-wide window on small phones
-  --chess-cell: min(2.1rem, calc((100vw - 5.5rem) / 8));
+  // scale the board with the window (container query on .chess) so a maximized
+  // window gets a big board instead of a tiny one pinned top-left; clamped so it
+  // still fits a small phone window and never dwarfs a huge monitor
+  --chess-cell: clamp(1.8rem, 9cqw, 5rem);
   display: grid;
   grid-template-columns: repeat(8, var(--chess-cell));
   border: 1px solid var(--bulma-border);
