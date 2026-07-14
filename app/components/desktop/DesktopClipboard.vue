@@ -9,11 +9,12 @@
       nothing copied yet — copy a terminal line, a code block, the vCard or a colour and it lands here.
     </p>
     <ul v-else class="clip-list">
-      <li v-for="(entry, i) in items" :key="`${entry.at}-${i}`">
+      <li v-for="(entry, i) in items" :key="`${entry.at}-${i}`" class="clip-row">
         <button class="clip-item" :title="`click to copy again — ${entry.text}`" @click="recopy(entry.text)">
           <span class="clip-text">{{ preview(entry.text) }}</span>
           <span class="clip-when">{{ justCopied === entry.text ? 'copied ✓' : ago(entry.at) }}</span>
         </button>
+        <button class="clip-del" aria-label="Forget this copy" title="Forget this copy" @click="remove(entry.text)">×</button>
       </li>
     </ul>
   </div>
@@ -27,7 +28,7 @@ import { writeClipboard } from '~/utils/clipboard'
 // `| copy`, blog code/inline copy, the vCard email, the colour picker, the
 // palette share link — every copy flows through writeClipboard). Click an entry
 // to copy it again, which also bumps it back to the top.
-const { items, clear } = useClipboardHistory()
+const { items, remove, clear } = useClipboardHistory()
 
 const justCopied = ref('')
 let flashTimer: ReturnType<typeof setTimeout> | undefined
@@ -109,12 +110,19 @@ const ago = (at: number) => {
   padding: 0;
 }
 
+.clip-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.3rem;
+}
+
 .clip-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.6rem;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 0.4rem 0.55rem;
   border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.22);
   border-radius: var(--bulma-radius-small);
@@ -144,5 +152,26 @@ const ago = (at: number) => {
   flex-shrink: 0;
   color: hsl(var(--lv-scheme-hs), 52%);
   font-size: 0.7rem;
+}
+
+.clip-del {
+  flex-shrink: 0;
+  padding: 0 0.5rem;
+  border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.22);
+  border-radius: var(--bulma-radius-small);
+  background: none;
+  color: hsl(var(--lv-scheme-hs), 45%);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--bulma-danger);
+    color: var(--bulma-danger);
+  }
+
+  @media (pointer: coarse) {
+    min-width: 2.4rem;
+  }
 }
 </style>

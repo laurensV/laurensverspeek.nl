@@ -28,7 +28,10 @@ export function useClipboardHistory() {
     persist([{ text: t, at: Date.now() }, ...items.value.filter((e) => e.text !== t)].slice(0, MAX))
   }
 
+  /** Forget a single entry (by its text — entries are de-duplicated by text). */
+  const remove = (text: string) => persist(items.value.filter((e) => e.text !== text))
+
   const clear = () => persist([])
 
-  return { items, record, clear }
+  return { items, record, remove, clear }
 }
