@@ -12,7 +12,10 @@
       <span class="saver-logo-text">lvOS</span>
       <span class="saver-logo-time is-family-code">{{ clock }}</span>
     </div>
-    <p class="saver-hint is-family-code">move the mouse or press a key to wake</p>
+    <p class="saver-hint is-family-code">
+      <span class="saver-hint-fine">move the mouse or press a key to wake</span>
+      <span class="saver-hint-coarse">tap to wake</span>
+    </p>
   </div>
 </template>
 
@@ -123,5 +126,20 @@ onBeforeUnmount(() => cancelAnimationFrame(raf))
   text-align: center;
   font-size: 0.75rem;
   color: hsl(var(--lv-scheme-hs), 40%);
+}
+
+// a touch phone has neither a mouse nor a keyboard — show it the truth
+.saver-hint-coarse {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .saver-hint-fine {
+    display: none;
+  }
+
+  .saver-hint-coarse {
+    display: inline;
+  }
 }
 </style>
