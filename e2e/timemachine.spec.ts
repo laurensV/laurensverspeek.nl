@@ -37,6 +37,11 @@ test('git checkout validates refs and leaves git log intact', async ({ page }) =
   await expect(out).toContainText('releases')
   await expect(out).toContainText('2020-09-10')
 
+  // git show <version> expands a release into its commits + a diffstat
+  await run(page, 'git show v2.0.1')
+  await expect(out).toContainText('release v2.0.1')
+  await expect(out).toContainText('insertions(+)')
+
   // no argument prints usage, not an error
   await run(page, 'git checkout')
   await expect(out).toContainText('usage: git checkout')

@@ -1,5 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { formatGitLog, formatGitShow, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { formatGitLog, formatGitShow, formatRelease, findCommit, type GitCommit } from '~/utils/terminal/gitLog'
+import { releaseCommits } from '~/composables/useTimeMachine'
 import { runJq } from '~/utils/terminal/jq'
 import { buildJsonResume } from '~/utils/resume'
 import { bugReportUrl } from '~/utils/bugReport'
@@ -409,6 +410,7 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         'git log --oneline  the compact version (pipes well into grep)',
         'git log -n 5       only the last five',
         'git show <hash>    one commit with its file diffstat',
+        'git show <version> all the commits in a release (e.g. git show v2.0.3)',
         'git tag            every release/deploy of this site, newest first',
         'git checkout <ref> TIME TRAVEL: load a past deploy of this site',
         'git checkout main  return to the present (live site)',
@@ -426,16 +428,20 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           case 'tag': {
             const deploys = await timeMachine.load().catch(() => [])
             if (!deploys.length) return error('git: no releases found')
+            const history = await loadGitHistory().catch(() => [])
+            const counts = history.length ? releaseCommits(deploys, history) : null
             const tagged = deploys.filter((deploy) => deploy.tag).length
             out(`${deploys.length} releases — every deploy of this site, newest first${tagged ? ` (${tagged} version-tagged)` : ''}`)
-            muted("travel to one with 'git checkout <version | date | hash>'")
+            muted("expand one with 'git show <version | hash>', or 'git checkout' to travel there")
             out('')
             for (const deploy of deploys) {
               const cell = deploy.tag
                 ? `<span class="term-accent">${escapeHtml(deploy.tag)}</span>${' '.repeat(Math.max(1, 8 - deploy.tag.length))}`
                 : `<span class="term-muted">·</span>       `
-              const subject = escapeHtml(deploy.subject.slice(0, 56))
-              push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${subject}`, true)
+              const n = counts?.get(deploy.sha)?.length ?? 0
+              const count = n ? `<span class="term-muted">${String(n).padStart(3)}c</span> ` : '     '
+              const subject = escapeHtml(deploy.subject.slice(0, 52))
+              push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${count}${subject}`, true)
             }
             return
           }
@@ -466,8 +472,20 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
           case 'show': {
             const commits = await loadGitHistory().catch(() => null)
             if (!commits) return error('git: could not load the commit history')
-            const commit = findCommit(commits, rest[0] ?? '')
-            if (!commit) return error(`fatal: bad revision '${rest[0] ?? ''}'`)
+            const raw = rest[0] ?? ''
+            const ref = raw.toLowerCase()
+            // a version tag or an exact deploy tip → expand the whole release
+            const deploys = await timeMachine.load().catch(() => [])
+            const release = deploys.find(
+              (d) => d.tag?.toLowerCase() === ref || (!!ref && (d.source.startsWith(ref) || ref.startsWith(d.source)))
+            )
+            if (release) {
+              const relCommits = releaseCommits(deploys, commits).get(release.sha) ?? []
+              for (const line of formatRelease(release, relCommits)) push(line.type, line.text, line.html)
+              return
+            }
+            const commit = findCommit(commits, raw)
+            if (!commit) return error(`fatal: bad revision '${raw}'`)
             for (const line of formatGitShow(commit)) push(line.type, line.text, line.html)
             return
           }

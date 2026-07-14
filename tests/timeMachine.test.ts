@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveDeployRef } from '../app/composables/useTimeMachine'
+import { resolveDeployRef, releaseCommits } from '../app/composables/useTimeMachine'
 import type { Deploy } from '../app/composables/useTimeMachine'
 
 // deploys are newest-first, like the baked manifest
@@ -70,5 +70,28 @@ describe('resolveDeployRef', () => {
     expect(resolveDeployRef('zzzzzzz', deploys, commits)).toBeNull()
     // with no log to consult, an unknown hash simply misses
     expect(resolveDeployRef('deadbee', deploys)).toBeNull()
+  })
+})
+
+describe('releaseCommits', () => {
+  it('groups each release as the commits from its tip to the next-older deploy', () => {
+    const map = releaseCommits(deploys, commits)
+    // a deploy batches every commit since the previous deploy, not just its tip
+    expect(map.get(deploys[0]!.sha)!.map((c) => c.hash)).toEqual(['5d12e23', 'aaa1111'])
+    expect(map.get(deploys[1]!.sha)!.map((c) => c.hash)).toEqual(['2222222', 'bbb3333'])
+    // the oldest deploy sweeps in every remaining ancestor commit
+    expect(map.get(deploys[2]!.sha)!.map((c) => c.hash)).toEqual(['0000000', 'ccc5555'])
+  })
+
+  it('partitions the whole log across releases with no gaps or overlaps', () => {
+    const map = releaseCommits(deploys, commits)
+    const total = [...map.values()].reduce((sum, list) => sum + list.length, 0)
+    expect(total).toBe(commits.length)
+  })
+
+  it('is empty for a deploy whose tip is missing from the log', () => {
+    const orphan: Deploy = { sha: 'ffff', date: '2019-01-01', source: 'nope999', subject: 'orphan' }
+    const map = releaseCommits([...deploys, orphan], commits)
+    expect(map.get('ffff')).toEqual([])
   })
 })

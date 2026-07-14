@@ -42,6 +42,14 @@
               <span v-if="row.latest" class="tm-tag">live now</span>
               <span v-if="row.deploy.tag" class="tm-ver">{{ row.deploy.tag }}</span>
               <span class="tm-hash">{{ row.deploy.source }}</span>
+              <button
+                v-if="countFor(row.deploy.sha) > 1"
+                class="tm-count"
+                :aria-expanded="expanded.has(row.deploy.sha)"
+                @click="toggle(row.deploy.sha)"
+              >
+                {{ countFor(row.deploy.sha) }} commits {{ expanded.has(row.deploy.sha) ? '▾' : '▸' }}
+              </button>
             </p>
             <p class="tm-subject">{{ row.deploy.subject || '(no message)' }}</p>
           </div>
@@ -54,18 +62,27 @@
             {{ busySha === row.deploy.sha ? 'entering…' : '⏱ visit' }}
           </button>
         </li>
+        <li v-if="expanded.has(row.deploy.sha)" class="tm-commits">
+          <span v-for="commit in commitsFor(row.deploy.sha)" :key="commit.hash" class="tm-commit">
+            <code>{{ commit.hash }}</code> {{ commit.subject }}
+          </span>
+        </li>
       </template>
     </ol>
   </div>
 </template>
 
 <script setup lang="ts">
+import { releaseCommits } from '~/composables/useTimeMachine'
 import type { Deploy } from '~/composables/useTimeMachine'
+import type { GitCommit } from '~/utils/terminal/gitLog'
 
 // lvOS Time Machine: a browsable timeline of every deploy of this site. Picking
 // one hands its gh-pages SHA to the service worker (via useTimeMachine) and
 // reloads onto that frozen build. Same shared state the terminal `git checkout`
-// command drives — one manifest, one travel mechanism.
+// command drives — one manifest, one travel mechanism. Rows expand to the
+// commits each release shipped (a deploy batches several), via the same
+// releaseCommits() join the terminal `git show <version>` uses.
 
 const { deploys, load, isAvailable, travelTo } = useTimeMachine()
 
@@ -75,10 +92,29 @@ const busy = ref(false)
 const busySha = ref('')
 const available = isAvailable()
 
+// deploy sha → the commits it shipped; and which rows are expanded
+const relMap = ref<Map<string, GitCommit[]>>(new Map())
+const expanded = ref<Set<string>>(new Set())
+
 onMounted(async () => {
   await load()
   loading.value = false
+  try {
+    const commits = await $fetch<GitCommit[]>('/git-log.json', { timeout: 10_000 })
+    relMap.value = releaseCommits(deploys.value, commits)
+  } catch {
+    // counts just won't show; travel still works
+  }
 })
+
+const countFor = (sha: string) => relMap.value.get(sha)?.length ?? 0
+const commitsFor = (sha: string) => relMap.value.get(sha) ?? []
+function toggle(sha: string) {
+  const next = new Set(expanded.value)
+  if (next.has(sha)) next.delete(sha)
+  else next.add(sha)
+  expanded.value = next
+}
 
 const oldestDate = computed(() => deploys.value.at(-1)?.date ?? '—')
 
@@ -252,6 +288,43 @@ async function visit(deploy: Deploy) {
   padding: 0.02rem 0.32rem;
   border-radius: 4px;
   letter-spacing: 0.02em;
+}
+.tm-count {
+  font: inherit;
+  font-size: 0.62rem;
+  color: var(--bulma-text-weak);
+  background: transparent;
+  border: 1px solid var(--bulma-border-weak);
+  border-radius: 999px;
+  padding: 0.02rem 0.4rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tm-count:hover {
+  color: var(--bulma-text);
+  border-color: var(--bulma-primary);
+}
+
+.tm-commits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0 0 0.3rem 2.3rem;
+  padding: 0.3rem 0 0.4rem;
+  border-left: 1px dashed var(--bulma-border-weak);
+  padding-left: 0.7rem;
+}
+.tm-commit {
+  font-size: 0.7rem;
+  color: var(--bulma-text-weak);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-commit code {
+  color: var(--bulma-primary);
+  font-size: 0.66rem;
+  margin-right: 0.35rem;
 }
 .tm-tag {
   font-size: 0.6rem;

@@ -48,6 +48,30 @@ function deployForCommitIndex(deploys: Deploy[], commits: { hash: string }[], i:
 }
 
 /**
+ * The commits each deploy shipped. A deploy isn't one commit — it's everything
+ * since the previous deploy, so a release's commits are the slice of the
+ * newest-first log from this deploy's tip down to (not including) the next-older
+ * deploy's tip. Returns a map keyed by the deploy's gh-pages sha.
+ */
+export function releaseCommits<T extends { hash: string }>(deploys: Deploy[], commits: T[]): Map<string, T[]> {
+  const tipOf = (source: string) => commits.findIndex((c) => sameCommit(c.hash, source))
+  const map = new Map<string, T[]>()
+  for (let di = 0; di < deploys.length; di++) {
+    const deploy = deploys[di]!
+    const start = tipOf(deploy.source)
+    if (start < 0) {
+      map.set(deploy.sha, [])
+      continue
+    }
+    const older = deploys[di + 1]
+    const olderTip = older ? tipOf(older.source) : commits.length
+    const end = olderTip > start ? olderTip : commits.length
+    map.set(deploy.sha, commits.slice(start, end))
+  }
+  return map
+}
+
+/**
  * Resolve a terminal ref (hash, HEAD~n, date, branch name) to a deploy. Pass the
  * `git log` history so a commit that wasn't itself a deploy still resolves to
  * the deploy that shipped it.

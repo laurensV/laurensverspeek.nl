@@ -78,6 +78,39 @@ export function formatGitLog(commits: GitCommit[], opts: { oneline?: boolean, li
   return lines
 }
 
+/** A release (deploy) as a header, its commit list and an aggregate diffstat. */
+export function formatRelease(
+  deploy: { tag?: string, date: string, source: string },
+  commits: GitCommit[]
+): GitOutLine[] {
+  const title = deploy.tag ?? `deploy ${deploy.source}`
+  const lines: GitOutLine[] = [
+    { type: 'primary', text: `release ${title}` },
+    { type: 'muted', text: `Date:   ${deploy.date}   (${commits.length} commit${commits.length === 1 ? '' : 's'})` },
+    { type: 'output', text: '' }
+  ]
+  if (!commits.length) {
+    lines.push({ type: 'muted', text: '    (no commits recorded for this release)' })
+    return lines
+  }
+  for (const commit of commits) {
+    lines.push({
+      type: 'output',
+      text: `<span class="term-accent">${commit.hash}</span> ${escapeHtml(commit.subject)}`,
+      html: true
+    })
+  }
+  lines.push({ type: 'output', text: '' })
+  const plus = commits.reduce((sum, commit) => sum + commit.plus, 0)
+  const minus = commits.reduce((sum, commit) => sum + commit.minus, 0)
+  const files = new Set(commits.flatMap((commit) => commit.files.map((file) => file.path))).size
+  lines.push({
+    type: 'muted',
+    text: ` ${files} files changed, ${plus} insertions(+), ${minus} deletions(-)`
+  })
+  return lines
+}
+
 /** hash prefix or HEAD (= newest) → the commit, or undefined */
 export function findCommit(commits: GitCommit[], ref: string): GitCommit | undefined {
   if (!ref || ref.toUpperCase() === 'HEAD') return commits[0]
