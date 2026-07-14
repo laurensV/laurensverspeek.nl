@@ -71,6 +71,7 @@ export function buildContribGraph(days: DayCount[], today: Date, weeks = 13): st
   })
 
   const total = days.reduce((sum, d) => sum + d.count, 0)
-  const legend = `less ${SHADES.join('')} more   ${total} contributions in the last ${weeks} weeks`
+  const span = weeks >= 52 ? 'year' : `${weeks} weeks`
+  const legend = `less ${SHADES.join('')} more   ${total} contributions in the last ${span}`
   return [header, ...rows, '', legend]
 }

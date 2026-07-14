@@ -1,20 +1,16 @@
+import { githubSnapshot, type GithubContribDay } from '~/data/github'
+
 export const GITHUB_USER = 'laurensV'
-
-interface GithubUser {
-  followers: number
-  public_repos: number
-}
-
-interface GithubRepo {
-  name: string
-  stargazers_count: number
-}
 
 export interface GithubStats {
   followers: number
   publicRepos: number
   totalStars: number
   starsByRepo: Record<string, number>
+  contributions: GithubContribDay[]
+  totalContributions: number
+  /** When the snapshot was baked at build time (YYYY-MM-DD) */
+  generatedAt: string
 }
 
 /** Extracts `repo` from a github.com/<user>/<repo> URL owned by GITHUB_USER */
@@ -24,32 +20,21 @@ export function githubRepoFromUrl(url?: string): string | undefined {
 }
 
 /**
- * Public GitHub stats, fetched client-side so the static site always shows live data.
- * Shared across components through the asyncData key.
+ * GitHub stats + the last-year contribution calendar, baked into the static
+ * build by scripts/fetch-github.mjs. Previously this fetched live from every
+ * visitor's browser (rate-limited, and the events feed only ever saw ~90 days);
+ * now the whole site shares one honest snapshot with an "updated" date. The
+ * `{ data, pending, error }` shape is kept so existing callers don't change.
  */
 export function useGithubStats() {
-  return useLazyAsyncData<GithubStats>(
-    'github-stats',
-    async () => {
-      const [user, repos] = await Promise.all([
-        $fetch<GithubUser>(`https://api.github.com/users/${GITHUB_USER}`),
-        $fetch<GithubRepo[]>(`https://api.github.com/users/${GITHUB_USER}/repos?per_page=100`)
-      ])
-
-      const starsByRepo: Record<string, number> = {}
-      let totalStars = 0
-      for (const repo of repos) {
-        starsByRepo[repo.name] = repo.stargazers_count
-        totalStars += repo.stargazers_count
-      }
-
-      return {
-        followers: user.followers,
-        publicRepos: user.public_repos,
-        totalStars,
-        starsByRepo
-      }
-    },
-    { server: false }
-  )
+  const data = useState<GithubStats>('github-stats', () => ({
+    followers: githubSnapshot.followers,
+    publicRepos: githubSnapshot.publicRepos,
+    totalStars: githubSnapshot.totalStars,
+    starsByRepo: githubSnapshot.starsByRepo,
+    contributions: githubSnapshot.contributions,
+    totalContributions: githubSnapshot.totalContributions,
+    generatedAt: githubSnapshot.generatedAt
+  }))
+  return { data, pending: ref(false), error: ref(false) }
 }

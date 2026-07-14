@@ -3,6 +3,9 @@ import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
 import { now as nowData } from '~/data/now'
 import { buildContribGraph } from '~/utils/terminal/contribGraph'
+import { museum, exhibitCount } from '~/data/museum'
+import { escapeHtml } from '~/utils/escapeHtml'
+import { githubSnapshot } from '~/data/github'
 import { HALL_OF_FAME, readBest } from '~/utils/hallOfFame'
 import { migrateScoreKey } from '~/utils/terminalGameKit'
 
@@ -52,9 +55,22 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
     museum: {
       hidden: true,
       description: 'Tour every feature and easter egg, as exhibits',
+      examples: ['museum', 'museum | less'],
       exec: () => {
+        // render the collection right here — no reason to leave the terminal for it
         muted('unlocking the museum after hours ...')
-        ctx.navigate('museum')
+        push('primary', `★ THE MUSEUM ★  ${exhibitCount} exhibits across ${museum.length} wings`)
+        out('')
+        for (const wing of museum) {
+          push('primary', `## ${wing.title}`)
+          muted(wing.intro)
+          for (const ex of wing.exhibits) {
+            push('output', `<span class="term-accent">${escapeHtml(ex.name)}</span>  <span class="has-text-grey">${escapeHtml(ex.how)}</span>`, true)
+            out(`  ${ex.blurb}`)
+          }
+          out('')
+        }
+        muted(`the full walkable floor is at /museum — try 'goto museum'`)
       }
     },
     say: {
@@ -217,30 +233,34 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
     },
     contributions: {
       category: 'content',
-      description: 'Recent GitHub activity as a heatmap',
-      examples: ['contributions', 'contributions | less'],
-      exec: () => {
-        const stopSpin = ctx.spin('fetching public events from api.github.com ...')
-        // the events API is keyless but only covers ~90 days / 300 events, so
-        // this is an honest recent-activity graph, not the full-year calendar
-        return $fetch<{ type: string, created_at: string, payload?: { size?: number } }[]>(
-          `https://api.github.com/users/${GITHUB_USER}/events/public?per_page=100`,
-          { timeout: 10_000 }
-        )
-          .then((events) => {
-            const perDay = new Map<string, number>()
-            for (const event of events) {
-              const day = event.created_at.slice(0, 10)
-              const weight = event.type === 'PushEvent' ? (event.payload?.size ?? 1) : 1
-              perDay.set(day, (perDay.get(day) ?? 0) + weight)
-            }
-            const days = [...perDay].map(([date, count]) => ({ date, count }))
-            push('primary', `${GITHUB_USER} — recent contributions`)
-            for (const gline of buildContribGraph(days, new Date())) out(gline)
-            muted(`(GitHub's public events feed — the last ~90 days, not the full calendar)`)
-          })
-          .catch(() => error('contributions: API unreachable (rate limit or offline)'))
-          .finally(stopSpin)
+      usage: 'contributions [year]',
+      description: 'My GitHub contributions over the last year, as a heatmap',
+      examples: ['contributions', 'contributions 2024', 'contributions | less'],
+      exec: async (args) => {
+        const yearArg = args[0]
+        if (yearArg && /^\d{4}$/.test(yearArg)) {
+          // the baked snapshot is only the trailing 12 months; fetch a specific
+          // calendar year live (keyless) on demand
+          const stopSpin = ctx.spin(`fetching ${yearArg} from github ...`)
+          try {
+            const res = await $fetch<{ total: Record<string, number>, contributions: { date: string, count: number }[] }>(
+              `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=${yearArg}`,
+              { timeout: 10_000 }
+            )
+            push('primary', `${GITHUB_USER} — ${yearArg} contributions`)
+            for (const gline of buildContribGraph(res.contributions, new Date(`${yearArg}-12-31T00:00:00Z`), 53)) out(gline)
+          } catch {
+            error('contributions: could not fetch that year (rate limit or offline)')
+          } finally {
+            stopSpin()
+          }
+          return
+        }
+        // default: the full last-year calendar, baked at build time — no network,
+        // and the same numbers GitHub shows on my profile
+        push('primary', `${GITHUB_USER} — contributions in the last year`)
+        for (const gline of buildContribGraph(githubSnapshot.contributions, new Date(), 53)) out(gline)
+        muted(`updated ${githubSnapshot.generatedAt} · try 'contributions <year>' for a past year`)
       }
     }
   }

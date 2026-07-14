@@ -109,7 +109,7 @@ const pauseHover = () => hoverVideo.value?.pause()
 const { data: github } = useGithubStats()
 const stars = computed(() => {
   const repo = githubRepoFromUrl(props.project.source)
-  return repo ? github.value?.starsByRepo[repo] : undefined
+  return repo ? github.value.starsByRepo[repo] : undefined
 })
 
 const categoryColor = computed(

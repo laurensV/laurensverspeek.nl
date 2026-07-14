@@ -27,6 +27,7 @@
           <RevealBlock>
             <h2 class="title is-4 mt-6 mb-4">GitHub</h2>
             <GithubStats />
+            <GithubContributions />
           </RevealBlock>
 
           <RevealBlock>

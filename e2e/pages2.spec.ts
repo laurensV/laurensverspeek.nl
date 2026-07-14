@@ -60,16 +60,15 @@ test('the service worker precaches the no-uplink offline fallback', async ({ pag
     .toBe(true)
 })
 
-test('github stats count up to the fetched values', async ({ page }) => {
-  await page.route('**/api.github.com/users/**', (route) =>
-    route.request().url().includes('/repos')
-      ? route.fulfill({ json: [{ name: 'x', stargazers_count: 12, fork: false }] })
-      : route.fulfill({ json: { followers: 42, public_repos: 7 } })
-  )
+test('github stats show the baked build-time values', async ({ page }) => {
   await page.goto('/about')
-  // the animation ends on the real numbers
-  await expect(page.locator('.stat-value').nth(2)).toHaveText('42', { timeout: 10000 })
-  await expect(page.locator('.stat-value').nth(0)).toHaveText('7')
+  // stats are baked at build time now (no live API call per visitor); the tiles
+  // roll up to real integers rather than a loading dash
+  await expect(page.locator('.stat-value').nth(0)).toHaveText(/^\d+$/, { timeout: 10000 })
+  await expect(page.locator('.stat-value').nth(1)).toHaveText(/^\d+$/)
+  await expect(page.locator('.stat-value').nth(2)).toHaveText(/^\d+$/)
+  // and the contribution heatmap renders from the same snapshot
+  await expect(page.locator('.gh-contrib-grid .gh-day').first()).toBeVisible()
 })
 
 test('the 404 shell hides a playable snake behind `play`', async ({ page }) => {
@@ -102,16 +101,6 @@ test('the hero canvas has a pointer trail overlay (skipped under reduced motion)
     return false
   })
   expect(painted).toBe(true)
-})
-
-test('loading skeletons share the shimmer treatment', async ({ page }) => {
-  // hang the github api so the stats skeleton stays on screen
-  await page.route('**/api.github.com/**', () => {})
-  await page.goto('/about')
-  const skeleton = page.locator('.stat-value.is-skeleton').first()
-  await skeleton.waitFor({ timeout: 10000 })
-  const shimmer = await skeleton.evaluate((el) => getComputedStyle(el, '::after').animationName)
-  expect(shimmer).toContain('skeleton-shimmer')
 })
 
 test('blog posts print cleanly with link urls as footnotes', async ({ page }) => {
@@ -177,11 +166,14 @@ test('project cards support arrow-key navigation', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/projects')
   const cards = page.locator('.project-card .project-thumb')
-  await cards.first().focus()
-  // right moves to the second card
-  await page.keyboard.press('ArrowRight')
-  await expect(cards.nth(1)).toBeFocused()
-  // down moves a full row (>= 2 columns at this width), then Enter follows the link
+  // retry until hydration has wired the grid's keydown handler (a single press
+  // before that lands nowhere and focus stays on the first card)
+  await expect(async () => {
+    await cards.first().focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(cards.nth(1)).toBeFocused({ timeout: 500 })
+  }).toPass({ timeout: 5000 })
+  // down moves a full row (>= 2 columns at this width)
   await cards.first().focus()
   await page.keyboard.press('ArrowDown')
   const focusedIndex = await page.evaluate(() => {
@@ -239,20 +231,22 @@ test('/stats explains itself when analytics is not configured', async ({ page })
   await expect(page.locator('.stats-off')).toContainText('analytics is not enabled on this build')
 })
 
-test('pgp stays hidden while no key is published', async ({ page, request }) => {
-  // not prerendered — the static host serves its fallback page, never a key
+test('the published pgp key is served and surfaced', async ({ page, request }) => {
+  // /pgp.txt is prerendered with the armored public key
   const body = await (await request.get('/pgp.txt')).text()
-  expect(body).not.toContain('BEGIN PGP')
+  expect(body).toContain('BEGIN PGP PUBLIC KEY BLOCK')
+  // the contact page shows the fingerprint + import line
   await page.goto('/contact')
-  await expect(page.locator('.pgp-line')).toHaveCount(0)
-  // the hidden gpg command explains the situation (from home — the contact
+  await expect(page.locator('.pgp-line')).toHaveCount(1)
+  await expect(page.locator('.pgp-line')).toContainText('/pgp.txt')
+  // the hidden gpg command prints the key summary (from home — the contact
   // wizard autofocuses its own input, which would swallow the backtick)
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   await pressTerminalKey(page)
   await page.fill('#terminal-input', 'gpg --list-keys')
   await page.keyboard.press('Enter')
-  await expect(page.locator('.terminal-output')).toContainText('no public key published on this build')
+  await expect(page.locator('.terminal-output')).toContainText('the armored key lives at /pgp.txt')
 })
 
 test('changelog commits carry github-style diffstat blocks', async ({ page }) => {
@@ -310,13 +304,15 @@ test('/museum catalogues the exhibits and the terminal knows the way', async ({ 
   await expect(page.getByText('pieces on display')).toBeVisible()
   await expect(page.getByText('the terminal wing')).toBeVisible()
   await expect(page.locator('.museum-plaque', { hasText: 'the process table' })).toBeVisible()
-  // the hidden museum command navigates here
+  // the hidden museum command now renders the exhibits inline, without leaving the terminal
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
   await pressTerminalKey(page)
   await page.fill('#terminal-input', 'museum')
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/\/museum/, { timeout: 5000 })
+  await expect(page.locator('.terminal-output')).toContainText('THE MUSEUM')
+  await expect(page.locator('.terminal-output')).toContainText('the terminal wing')
+  await expect(page).toHaveURL(/\/$/)
 })
 
 test('/418 serves an interactive teapot and the terminal refuses to brew', async ({ page }) => {
