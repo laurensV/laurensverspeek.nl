@@ -108,7 +108,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
           ['dpr', String(window.devicePixelRatio)],
           ['storage', `${storageKb} KB in localStorage`],
           ['uptime', `${uptime}s on this page`],
-          ['shell', 'lvsh 2.0']
+          ['shell', 'lvsh 2.0.0']
         ]
         const logo = ASCII_LOGO.split('\n').filter(Boolean)
         const maxRows = Math.max(logo.length, rows.length)

@@ -143,7 +143,7 @@
         <button :class="{ 'is-active': !keyclick.enabled.value }" @click="keyclick.toggle(false)">[off]</button>
       </div>
     </div>
-    <p class="settings-note">// a subtle mechanical tick per terminal keystroke, through the shared volume (also the terminal's `keyclick`)</p>
+    <p class="settings-note">// a subtle mechanical tick per keystroke, in the terminal and lvOS text fields, through the shared volume (also the terminal's `keyclick`)</p>
 
     <p class="settings-section mt-4"># accessibility</p>
     <div class="settings-row">

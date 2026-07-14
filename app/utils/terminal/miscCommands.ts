@@ -277,7 +277,7 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
     keyclick: {
       category: 'system',
       usage: 'keyclick [on|off]',
-      description: 'Toggle mechanical-keyboard typing sounds in the terminal',
+      description: 'Toggle mechanical-keyboard typing sounds (terminal and lvOS text fields)',
       examples: ['keyclick', 'keyclick on'],
       argCandidates: () => ['on', 'off'],
       exec: (args) => {

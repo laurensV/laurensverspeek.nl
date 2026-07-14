@@ -165,7 +165,7 @@ const formatDate = (date: string) => {
   const parsed = new Date(date)
   // an override's frontmatter is hand-typed — show it verbatim if unparsable
   if (Number.isNaN(parsed.getTime())) return date
-  return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+  return parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 // swipe between posts on touch, matching the on-screen order (older on the

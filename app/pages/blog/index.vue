@@ -92,7 +92,7 @@ const { data: posts, pending, error } = await useAsyncData('blog-posts', () =>
 )
 
 const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' })
+  new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
 // tag filtering, kept shareable in the URL (?tag=games); clicking the active
 // tag (or [clear]) removes the filter again
