@@ -17,7 +17,7 @@
   <rect x="0" y="0" width="10" height="630" fill="#ffba00"/>
   <text x="80" y="150" class="eyebrow">projects/tappy</text>
   <text x="80" y="300" class="title">Tappy</text>
-  <text x="80" y="404" class="desc">Smart NFC products that share your contact details,</text><text x="80" y="444" class="desc">socials…</text>
+  <text x="80" y="404" class="desc">The easiest way to request a payment in crypto: create a</text><text x="80" y="444" class="desc">payment…</text>
   <text x="80" y="560" class="brand">~/laurens</text>
   <text x="1120" y="560" text-anchor="end" class="domain">laurensverspeek.nl</text>
 </svg>

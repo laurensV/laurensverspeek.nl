@@ -1,1 +1,0 @@
-import{_ as o,o as s,c as r,a2 as t}from"./BBGUn4mc.js";const n={};function a(e,c){return s(),r("tbody",null,[t(e.$slots,"default")])}const l=Object.assign(o(n,[["render",a]]),{__name:"ProseTbody"});export{l as default};
