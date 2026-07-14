@@ -1,5 +1,5 @@
 <template>
-  <div class="terminal-console is-family-code" :style="{ '--term-font-scale': fontScale.scale.value }" @click="focusInput">
+  <div class="terminal-console is-family-code" :style="{ '--term-font-scale': fontScale.scale.value }" @click="onConsoleClick">
     <!-- role=log lets screen readers announce command results; the game frame
          and spinner repaint every tick, so they stay out of the live region -->
     <div ref="outputRef" class="terminal-output" role="log" aria-live="polite" aria-label="Terminal output">
@@ -129,6 +129,13 @@ const focusInput = () => {
   if (!props.active) return
   if (gameWantsText.value) gameCaptureRef.value?.focus()
   else inputRef.value?.focus()
+}
+
+// clicking the console focuses the input — but not while the user is selecting
+// transcript text to copy, since focusing collapses the selection
+const onConsoleClick = () => {
+  if (window.getSelection()?.toString()) return
+  focusInput()
 }
 
 // forward each typed character into the game, then clear so the field never
