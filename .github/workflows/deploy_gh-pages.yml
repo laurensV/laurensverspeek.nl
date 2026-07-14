@@ -7,6 +7,13 @@ on:
   # PRs get the full check suite, but never the deploy step
   pull_request:
 
+# serialize deploys on a branch so two overlapping runs can't compute the same
+# release version and collide on the tag/GitHub Release (queue, don't cancel a
+# mid-deploy)
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
