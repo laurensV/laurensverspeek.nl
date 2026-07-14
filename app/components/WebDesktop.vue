@@ -648,10 +648,10 @@ useDesktopShortcuts({
 
   // on a phone the front app is maximized, so a bottom-anchored toast lands
   // squarely on its bottom control strip (Chat's compose field, the whiteboard
-  // tools, Gallery's 'set as wallpaper'). Move to the top, over the titlebar
-  // drag-area which has no inputs to cover.
+  // tools). Move it near the top — but BELOW the ~45px titlebar, whose window
+  // buttons (–/□/×) a top-flush toast would otherwise cover.
   @media (pointer: coarse) {
-    inset: 0.75rem 1rem auto; // top / left+right / bottom:auto
+    inset: 3rem 1rem auto; // clears the titlebar / left+right / bottom:auto
     max-width: none;
   }
 }
