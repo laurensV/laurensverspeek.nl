@@ -5,6 +5,8 @@ import { buildJsonResume } from '~/utils/resume'
 import { bugReportUrl } from '~/utils/bugReport'
 import { shellError } from '~/utils/terminal/errors'
 import { hexToRgb, rgbToHsl } from '~/utils/color'
+import { writeClipboard } from '~/utils/clipboard'
+import { escapeHtml } from '~/utils/escapeHtml'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 
@@ -52,6 +54,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   // the manual "reduce motion" switch, shared with the Settings accessibility row
   const motion = useReduceMotion()
   const keyClick = useKeyClick()
+  // the same rolling copy history the lvOS Clipboard app shows
+  const clipboard = useClipboardHistory()
   // captured at factory time for the `bug` command's issue context
   const buildHash = useRuntimeConfig().public.buildHash
   // the console-hunt win, shared with the devtools plugin that unlocks `backstage`
@@ -289,6 +293,44 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         out(`keyclick ${keyClick.enabled.value ? 'on' : 'off'}`)
         muted('a subtle tick per keystroke, through the shared volume (silent when muted)')
       }
+    },
+    clip: {
+      category: 'system',
+      usage: 'clip [n]',
+      description: 'Show the clipboard history (shared with the lvOS Clipboard app), or re-copy entry n',
+      examples: ['clip', 'clip 2'],
+      argCandidates: () => clipboard.items.value.map((_, index) => String(index + 1)),
+      exec: async (args) => {
+        const items = clipboard.items.value
+        if (!items.length) {
+          muted('clipboard: nothing copied yet — pipe something through `| copy` first')
+          return
+        }
+        const pick = args[0]
+        if (pick) {
+          const n = Number(pick)
+          const entry = Number.isInteger(n) && n >= 1 && n <= items.length ? items[n - 1] : undefined
+          if (!entry) return error(`clip: no entry ${pick} — run 'clip' to list (1–${items.length})`)
+          const ok = await writeClipboard(entry.text)
+          if (ok) out(`copied entry ${n} to the clipboard`)
+          else error('clip: the clipboard said no')
+          return
+        }
+        push('primary', 'clipboard history — newest first')
+        items.forEach((entry, index) => {
+          // clipboard text is user-derived, so escape it before out() (v-html)
+          const oneLine = entry.text.replace(/\s+/g, ' ').trim()
+          const preview = oneLine.length > 60 ? `${oneLine.slice(0, 57)}…` : oneLine
+          out(`  ${String(index + 1).padStart(2)}  ${escapeHtml(preview)}`)
+        })
+        muted('`clip <n>` copies an entry again')
+      }
+    },
+    clipboard: {
+      category: 'system',
+      hidden: true,
+      description: 'Alias for clip',
+      exec: (args) => ctx.getCommands().clip!.exec(args)
     },
     settings: {
       category: 'system',
