@@ -1,0 +1,1 @@
+import{_ as s,o,c as r,a2 as t}from"./DQUur0Rv.js";const n={};function a(e,c){return o(),r("td",null,[t(e.$slots,"default")])}const l=Object.assign(s(n,[["render",a]]),{__name:"ProseTd"});export{l as default};
