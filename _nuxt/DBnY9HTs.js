@@ -1,1 +1,0 @@
-import{_ as s,o,c as r,a0 as n}from"./DSrdAWND.js";const t={};function a(e,c){return o(),r("ul",null,[n(e.$slots,"default")])}const _=Object.assign(s(t,[["render",a]]),{__name:"ProseUl"});export{_ as default};

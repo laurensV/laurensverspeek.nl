@@ -1,1 +1,0 @@
-import{Z as u,w as i,g as c}from"./DSrdAWND.js";function f(r=1800){const e=c(!1);let o;const t=()=>{e.value=!0,clearTimeout(o),o=setTimeout(()=>e.value=!1,r)},s=async n=>{const a=await i(n);return a&&t(),a};return u(()=>clearTimeout(o)),{copied:e,copy:s,flag:t}}export{f as u};
