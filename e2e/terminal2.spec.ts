@@ -177,7 +177,8 @@ test('the destroyer ship flies the page: diving scrolls it, manual scrolling is 
 test('five quick clicks on the status bar version arm destroy mode', async ({ page }) => {
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
-  const version = page.locator('.status-bar button', { hasText: 'v2.0.0' })
+  // the version auto-increments per release, so match the shape, not a literal
+  const version = page.locator('.status-bar button', { hasText: /^v\d+\.\d+\.\d+$/ })
   for (let i = 0; i < 5; i++) await version.click()
   await expect(page.locator('.destroyer')).toBeVisible()
   await page.keyboard.press('Escape')

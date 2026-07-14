@@ -13,9 +13,9 @@
       <!-- stays visible on mobile: its 5-tap easter egg must be findable by thumb too -->
       <button
         class="status-item status-button"
-        title="v2.0.0"
+        :title="version"
         @click="versionClick"
-      >v2.0.0</button>
+      >{{ version }}</button>
       <button
         v-if="visitors.enabled.value && visitors.count.value > 0"
         class="status-item status-button status-visitors"
@@ -73,6 +73,9 @@ const terminal = useTerminalLauncher()
 const palette = usePaletteLauncher()
 const colorMode = useColorMode()
 const online = useOnline()
+
+// the auto-incrementing site version, baked at build (see nuxt.config.ts)
+const version = useRuntimeConfig().public.buildVersion
 
 // which-key: shows "g-" while a vim go-to chord is waiting for its second key
 const pendingKey = useState(STATE_KEYS.vimPendingKey, () => '')

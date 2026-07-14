@@ -25,13 +25,15 @@
 import { useEventListener } from '@vueuse/core'
 import { registerBootProc, unregisterBootProc } from '~/utils/terminal/effectProcs'
 import { playBootChime } from '~/utils/bootChime'
+import { projects } from '~/data/projects'
 
 const { volume, muted } = useVolume()
+const buildVersion = useRuntimeConfig().public.buildVersion
 
 const BOOT_LINES = [
-  'BIOS laurensverspeek.nl v2.0.0',
+  `BIOS laurensverspeek.nl ${buildVersion}`,
   'loading kernel modules... vue@3 nuxt@4 bulma@1',
-  'mounting ~/projects (8 entries)',
+  `mounting ~/projects (${projects.length} entries)`,
   'starting flow-field.service',
   'starting terminal.service on tty~',
   'establishing uplink to github.com',

@@ -10,11 +10,33 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # needed to push the release tag + create the GitHub Release on each deploy
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          # full history: the terminal's `git log` is baked from the real repo
+          # full history + tags: the terminal's `git log` is baked from the real
+          # repo, and the release step reads the latest tag to bump the version
           fetch-depth: 0
+
+      # every push to main cuts the next patch release; SITE_VERSION is baked into
+      # the build (status bar, terminal banner, BIOS splash) and the tag/Release
+      # is created after a successful deploy
+      - name: Compute next release version
+        if: github.event_name == 'push'
+        run: |
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            next="v2.0.1"
+          else
+            version=${latest#v}
+            major=${version%%.*}; rest=${version#*.}
+            minor=${rest%%.*}; patch=${rest#*.}
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+          echo "SITE_VERSION=$next" >> "$GITHUB_ENV"
+          echo "Next release: $next"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -50,3 +72,15 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./.output/public
+
+      # tag this commit and publish a GitHub Release for the version that just
+      # shipped (creates the tag at the deployed commit)
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$SITE_VERSION" \
+            --title "$SITE_VERSION" \
+            --target "$GITHUB_SHA" \
+            --notes "Automated release — deployed to https://laurensverspeek.nl (build ${GITHUB_SHA:0:7})."

@@ -10,6 +10,19 @@ const buildHash = (() => {
   }
 })()
 
+// the site version, shown in the status bar, terminal banner and BIOS splash.
+// CI sets SITE_VERSION to the release tag it's about to cut (the latest GitHub
+// Release, patch-bumped); locally we fall back to the newest git tag, then to
+// package.json — so dev and PR builds still show a sensible version.
+const buildVersion = (() => {
+  if (process.env.SITE_VERSION) return process.env.SITE_VERSION
+  try {
+    return execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim()
+  } catch {
+    return `v${process.env.npm_package_version ?? '2.0.0'}`
+  }
+})()
+
 // when a file last really changed, per git — /now's "last updated" is honest
 const gitFileDate = (file: string) => {
   try {
@@ -145,6 +158,7 @@ export default defineNuxtConfig({
       // set NUXT_PUBLIC_CURSORS_WS (wss://...) to enable live visitor cursors
       cursorsWs: '',
       buildHash,
+      buildVersion,
       buildDate: new Date().toISOString().slice(0, 10),
       nowUpdated: gitFileDate('app/data/now.ts') || new Date().toISOString().slice(0, 10),
       postUpdated

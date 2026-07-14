@@ -21,6 +21,9 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
   const { push, out, muted } = ctx
   // captured at factory time; exec runs outside the Nuxt instance
   const battery = useBattery()
+  // the auto-incrementing build version, without the leading 'v' so it reads
+  // like a kernel/shell version in uname and neofetch (see nuxt.config.ts)
+  const version = useRuntimeConfig().public.buildVersion.replace(/^v/, '')
 
   return {
     id: {
@@ -59,7 +62,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
         const info: [string, string][] = [
           ['host', `${ctx.identity.name.value}@${profile.domain}`],
           ['os', 'Nuxt 4 (Vue 3) x86_64'],
-          ['shell', 'lvsh 2.0.0'],
+          ['shell', `lvsh ${version}`],
           ['theme', ctx.colorMode.value],
           ['location', profile.location],
           ['work', work],
@@ -90,7 +93,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
       argCandidates: () => ['-a'],
       exec: (args) =>
         out(args.includes('-a')
-          ? `lvsh ${profile.domain} 2.0.0 #1 SMP Vue3 x86_64 lvOS`
+          ? `lvsh ${profile.domain} ${version} #1 SMP Vue3 x86_64 lvOS`
           : 'lvsh')
     },
     sysinfo: {
@@ -108,7 +111,7 @@ export function createInfoCommands(ctx: TerminalContext): Record<string, Termina
           ['dpr', String(window.devicePixelRatio)],
           ['storage', `${storageKb} KB in localStorage`],
           ['uptime', `${uptime}s on this page`],
-          ['shell', 'lvsh 2.0.0']
+          ['shell', `lvsh ${version}`]
         ]
         const logo = ASCII_LOGO.split('\n').filter(Boolean)
         const maxRows = Math.max(logo.length, rows.length)

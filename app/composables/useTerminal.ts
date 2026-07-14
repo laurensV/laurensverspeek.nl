@@ -58,6 +58,8 @@ export function useTerminal() {
 
   const router = useRouter()
   const nuxtApp = useNuxtApp()
+  // the auto-incrementing site version, baked at build (see nuxt.config.ts)
+  const buildVersion = useRuntimeConfig().public.buildVersion
 
   // current directory inside the home filesystem ('' = home). The prompt is
   // purely filesystem-driven — the same shell shows the same place whether it
@@ -109,7 +111,7 @@ export function useTerminal() {
   }
 
   const greet = () => {
-    push('primary', `Welcome to ${profile.domain} v2.0.0`)
+    push('primary', `Welcome to ${profile.domain} ${buildVersion}`)
     muted(greetingLine(new Date().getHours()))
     muted(`Type 'help' to see available commands, 'exit' or Esc to close.`)
   }

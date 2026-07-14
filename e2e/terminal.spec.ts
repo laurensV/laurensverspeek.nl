@@ -158,7 +158,8 @@ test('cal prints the current month, which resolves builtins, uname reports the s
   await run(page, 'which nope-not-real')
   await expect(out).toContainText('which: no nope-not-real in (lvsh builtins)')
   await run(page, 'uname -a')
-  await expect(out).toContainText('lvsh laurensverspeek.nl 2.0.0')
+  // version auto-increments per release — assert the shape, not a literal
+  await expect(out).toContainText(/lvsh laurensverspeek\.nl \d+\.\d+\.\d+ #1 SMP/)
 })
 
 test('tab-completes command names and arguments', async ({ page }) => {
