@@ -71,6 +71,21 @@ export const projects: Project[] = [
     ]
   },
   {
+    slug: 'tappy',
+    title: 'Tappy',
+    description:
+      'Smart NFC products that share your contact details, socials and links with a single tap — no app to install. One tap opens your digital profile on any phone.',
+    category: 'work',
+    tech: ['NFC', 'Vue', 'Node.js'],
+    url: 'https://tappy.cc',
+    year: '2022 — 2024',
+    role: 'Co-founder',
+    story: [
+      'Tappy makes networking physical again: NFC-enabled cards and products that, tapped against a phone, instantly open your digital profile — contact details, socials, links — without the other person installing anything.',
+      'As co-founder I helped take the product from idea to market: the tap-to-share web profiles, the dashboard where people manage what their tap reveals, and the NFC products that tie the two together.'
+    ]
+  },
+  {
     slug: 'self-coding-website',
     title: 'Self-Coding Website',
     description:
@@ -160,6 +175,21 @@ export const projects: Project[] = [
     story: [
       'Built for the most demanding clients I have: kids. The site shows exactly how old a kid is — down to the second — and on their birthday the page erupts in interactive canvas fireworks you can launch by clicking.',
       'It ships in a boy and a girl theme and makes a surprisingly good "how long until my birthday" countdown for impatient young stakeholders.'
+    ]
+  },
+  {
+    slug: 'jouwwoordklok',
+    title: 'Jouw Woordklok',
+    description:
+      'A word clock that tells the time in words on a grid of glowing letters, driven by an ESP8266. I develop the firmware — WiFi onboarding, LED effects and time sync.',
+    category: 'hobby',
+    tech: ['ESP8266', 'C++', 'Arduino'],
+    url: 'https://www.jouwwoordklok.nl',
+    year: '2023 — now',
+    role: 'Software developer',
+    story: [
+      'A "woordklok" (word clock) tells the time in full words: a grid of letters lights up to spell out the time — "het is tien over half drie" — instead of showing digits.',
+      'I develop the software that runs on the clock\'s ESP8266 microcontroller: the WiFi onboarding, the LED animations and color effects, and keeping the displayed time correct — so the clock keeps getting better after it is on your wall.'
     ]
   },
   {
