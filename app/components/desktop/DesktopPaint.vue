@@ -18,6 +18,7 @@
           @click="brushSize = size"
         >{{ size }}px</button>
       </div>
+      <button class="paint-wallpaper paint-undo" :disabled="!canUndo" title="Undo the last stroke" @click="undo">[undo]</button>
       <button class="paint-clear" @click="clear">[clear]</button>
       <button class="paint-wallpaper paint-gallery" @click="saveToGallery">{{ galleryLabel }}</button>
       <button class="paint-wallpaper paint-hang" @click="hangOnWall">{{ wallLabel }}</button>
@@ -49,6 +50,28 @@ const brushColor = ref(COLORS[0]!)
 const brushSize = ref(5)
 let drawing = false
 
+// undo is a bounded stack of canvas snapshots (raster, so there are no strokes
+// to pop) taken just before each drag or clear; canUndo mirrors its depth
+// reactively without making the ImageData itself reactive
+const UNDO_MAX = 20
+let undoStack: ImageData[] = []
+const canUndo = ref(false)
+const snapshot = () => {
+  const canvas = canvasRef.value
+  const ctx = canvas?.getContext('2d')
+  if (!canvas || !ctx) return
+  undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height))
+  if (undoStack.length > UNDO_MAX) undoStack.shift()
+  canUndo.value = true
+}
+const undo = () => {
+  const ctx = canvasRef.value?.getContext('2d')
+  const prev = undoStack.pop()
+  if (!ctx || !prev) return
+  ctx.putImageData(prev, 0, 0)
+  canUndo.value = undoStack.length > 0
+}
+
 const canvasPoint = (event: PointerEvent) => {
   const canvas = canvasRef.value!
   const rect = canvas.getBoundingClientRect()
@@ -62,6 +85,7 @@ const startStroke = (event: PointerEvent) => {
   drawing = true
   const ctx = canvasRef.value?.getContext('2d')
   if (!ctx) return
+  snapshot() // remember the canvas before this drag, so undo can restore it
   const { x, y } = canvasPoint(event)
   ctx.beginPath()
   ctx.moveTo(x, y)
@@ -86,7 +110,9 @@ const endStroke = () => {
 
 const clear = () => {
   const canvas = canvasRef.value
-  canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+  if (!canvas) return
+  snapshot() // a clear is undoable too
+  canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
 }
 
 // export the drawing over the desktop's dark tone (the canvas itself is
@@ -180,8 +206,8 @@ onUnmounted(() => {
   }
 }
 
-.paint-clear {
-  margin-left: auto;
+.paint-undo {
+  margin-left: auto; // leads the right-hand action group (undo · clear · save · hang)
 }
 
 .paint-clear,
@@ -192,6 +218,11 @@ onUnmounted(() => {
   font: inherit;
   font-size: 0.7rem;
   cursor: pointer;
+}
+
+.paint-undo:disabled {
+  color: hsl(var(--lv-scheme-hs), 30%);
+  cursor: default;
 }
 
 .paint-clear:hover {
