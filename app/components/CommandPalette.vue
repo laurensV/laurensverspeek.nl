@@ -258,6 +258,9 @@ watch(flat, (list) => {
 
   .palette-label {
     flex: 1;
+    // without this the label can't shrink below its content, so a long hint
+    // (e.g. a Time Machine deploy subject) crushes it into a 3-line wrap
+    min-width: 0;
 
     .palette-match {
       background: none;
@@ -267,8 +270,13 @@ watch(flat, (list) => {
   }
 
   .palette-hint {
+    flex-shrink: 0;
+    max-width: 45%;
+    overflow: hidden;
     font-size: 0.7rem;
     color: var(--bulma-text-weak);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
