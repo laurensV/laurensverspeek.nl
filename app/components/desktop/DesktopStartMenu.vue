@@ -212,6 +212,12 @@ onMounted(() => searchRef.value?.focus())
     flex-shrink: 0;
     color: var(--bulma-primary);
   }
+
+  // the search results are a fresh tap surface — give the rows a full 44px
+  // touch target on coarse pointers (the shared menu padding is only ~34px)
+  @media (pointer: coarse) {
+    min-height: 2.75rem;
+  }
 }
 
 .lvos-start-empty {
