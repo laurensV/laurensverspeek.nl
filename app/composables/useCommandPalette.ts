@@ -10,7 +10,7 @@ export interface PaletteAction {
   label: string
   hint?: string
   icon: IconName
-  section: 'Pages' | 'Projects' | 'Blog' | 'Uses' | 'Theme' | 'Actions' | 'Socials'
+  section: 'Pages' | 'Projects' | 'Blog' | 'Uses' | 'Theme' | 'Actions' | 'Socials' | 'Time Machine'
   keywords?: string
   perform: () => void
 }
@@ -83,6 +83,7 @@ export function useCommandPalette() {
   const terminal = useTerminal()
   const { toggleCrt } = useSiteEffects()
   const { accents, setAccent } = useAccent()
+  const timeMachine = useTimeMachine()
 
   const open = () => (isOpen.value = true)
   const close = () => (isOpen.value = false)
@@ -120,6 +121,11 @@ export function useCommandPalette() {
   const { data: posts } = useLazyAsyncData('palette-posts', () =>
     queryCollection('blog').order('date', 'DESC').all()
   )
+
+  // deploy history, so the palette can offer time-travel jumps (same
+  // useTimeMachine the terminal `git checkout` and the lvOS app use); load()
+  // fills the shared deploys ref the actions read
+  void useLazyAsyncData('palette-deploys', () => timeMachine.load())
 
   const actions = computed<PaletteAction[]>(() => [
     { id: 'home', label: 'Home', icon: 'terminal', section: 'Pages', keywords: 'index start', perform: () => go('/') },
@@ -263,6 +269,39 @@ export function useCommandPalette() {
         void writeClipboard(window.location.href)
       }
     },
+    // jump to a past deploy without opening the terminal — only when the
+    // time machine is actually usable (service worker + public gh-pages history)
+    ...(timeMachine.isAvailable() && timeMachine.active.value
+      ? [{
+          id: 'travel-present',
+          label: 'Return to the present',
+          hint: 'exit time travel',
+          icon: 'clock' as IconName,
+          section: 'Time Machine' as const,
+          keywords: 'return present exit time travel now live current',
+          perform: () => {
+            close()
+            void timeMachine.returnToPresent()
+          }
+        }]
+      : []),
+    ...(timeMachine.isAvailable()
+      ? timeMachine.deploys.value
+          .filter((deploy) => !deploy.current)
+          .slice(0, 25)
+          .map<PaletteAction>((deploy) => ({
+            id: `travel-${deploy.source}`,
+            label: `Travel to ${deploy.tag ?? deploy.date}`,
+            hint: deploy.subject.slice(0, 42),
+            icon: 'clock',
+            section: 'Time Machine',
+            keywords: `time machine travel history deploy version snapshot ${deploy.date} ${deploy.tag ?? ''} ${deploy.source}`,
+            perform: () => {
+              close()
+              void timeMachine.travelTo(deploy)
+            }
+          }))
+      : []),
     ...profile.socials.map<PaletteAction>((social) => ({
       id: `social-${social.label}`,
       label: social.label,
