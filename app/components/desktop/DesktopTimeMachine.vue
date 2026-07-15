@@ -55,11 +55,11 @@
           </div>
           <button
             class="tm-go"
-            :disabled="!available || busy || row.deploy.current"
-            :title="row.deploy.current ? 'This is the live site' : `Load the site as it was on ${row.deploy.date}`"
+            :disabled="!available || busy || row.latest"
+            :title="row.latest ? 'This is the live site' : `Load the site as it was on ${row.deploy.date}`"
             @click="visit(row.deploy)"
           >
-            {{ row.deploy.current ? '● here' : busySha === row.deploy.source ? 'entering…' : '⏱ visit' }}
+            {{ row.latest ? '● here' : busySha === row.deploy.source ? 'entering…' : '⏱ visit' }}
           </button>
         </li>
         <li v-if="expanded.has(row.deploy.source)" class="tm-commits">
