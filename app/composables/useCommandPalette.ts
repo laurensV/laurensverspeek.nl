@@ -127,6 +127,31 @@ export function useCommandPalette() {
   // fills the shared deploys ref the actions read
   void useLazyAsyncData('palette-deploys', () => timeMachine.load())
 
+  // "Travel to <version>" entries — every deploy except the live one. Normally
+  // the newest carries current:true, but when gh-pages already has HEAD the
+  // manifest has no current flag, so the newest entry stands in as live (the
+  // same fallback the terminal `git tag` and the lvOS app use), and is excluded.
+  const travelActions = computed<PaletteAction[]>(() => {
+    if (!timeMachine.isAvailable()) return []
+    const deploys = timeMachine.deploys.value
+    const anyCurrent = deploys.some((d) => d.current)
+    return deploys
+      .filter((deploy, i) => !(deploy.current || (!anyCurrent && i === 0)))
+      .slice(0, 25)
+      .map<PaletteAction>((deploy) => ({
+        id: `travel-${deploy.source}`,
+        label: `Travel to ${deploy.tag ?? deploy.date}`,
+        hint: deploy.subject.slice(0, 42),
+        icon: 'clock',
+        section: 'Time Machine',
+        keywords: `time machine travel history deploy version snapshot ${deploy.date} ${deploy.tag ?? ''} ${deploy.source}`,
+        perform: () => {
+          close()
+          void timeMachine.travelTo(deploy)
+        }
+      }))
+  })
+
   const actions = computed<PaletteAction[]>(() => [
     { id: 'home', label: 'Home', icon: 'terminal', section: 'Pages', keywords: 'index start', perform: () => go('/') },
     { id: 'projects', label: 'Projects', icon: 'code', section: 'Pages', keywords: 'work portfolio', perform: () => go('/projects') },
@@ -269,39 +294,9 @@ export function useCommandPalette() {
         void writeClipboard(window.location.href)
       }
     },
-    // jump to a past deploy without opening the terminal — only when the
-    // time machine is actually usable (service worker + public gh-pages history)
-    ...(timeMachine.isAvailable() && timeMachine.active.value
-      ? [{
-          id: 'travel-present',
-          label: 'Return to the present',
-          hint: 'exit time travel',
-          icon: 'clock' as IconName,
-          section: 'Time Machine' as const,
-          keywords: 'return present exit time travel now live current',
-          perform: () => {
-            close()
-            void timeMachine.returnToPresent()
-          }
-        }]
-      : []),
-    ...(timeMachine.isAvailable()
-      ? timeMachine.deploys.value
-          .filter((deploy) => !deploy.current)
-          .slice(0, 25)
-          .map<PaletteAction>((deploy) => ({
-            id: `travel-${deploy.source}`,
-            label: `Travel to ${deploy.tag ?? deploy.date}`,
-            hint: deploy.subject.slice(0, 42),
-            icon: 'clock',
-            section: 'Time Machine',
-            keywords: `time machine travel history deploy version snapshot ${deploy.date} ${deploy.tag ?? ''} ${deploy.source}`,
-            perform: () => {
-              close()
-              void timeMachine.travelTo(deploy)
-            }
-          }))
-      : []),
+    // jump to a past deploy without opening the terminal (the newest build is
+    // "the present", so it's excluded — see travelActions)
+    ...travelActions.value,
     ...profile.socials.map<PaletteAction>((social) => ({
       id: `social-${social.label}`,
       label: social.label,
