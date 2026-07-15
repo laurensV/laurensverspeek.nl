@@ -17,7 +17,7 @@ npm run generate   # static build → .output/public
 npm run preview    # preview the production build
 ```
 
-CI (`.github/workflows/deploy_gh-pages.yml`) runs `lint`, `typecheck`, `test`, `generate` and the Playwright `test:e2e` on every push to `main`, then deploys `.output/public` to GitHub Pages — all must pass, so run them before committing.
+CI (`.github/workflows/deploy_gh-pages.yml`) runs `lint`, `typecheck`, `test`, `generate` and the Playwright `test:e2e` on every push to `main` (the `build` job) — all must pass, so run them before committing. The `deploy` job then **waits for manual approval**: it's gated by the `production` GitHub Environment (Settings → Environments → production → Required reviewers), so after a green build it shows as "Waiting" in the same run until someone clicks **Review deployments → Approve**, which ships `.output/public` to GitHub Pages and cuts the release tag. PRs run the build only.
 
 ## Content lives in data files, not components
 
