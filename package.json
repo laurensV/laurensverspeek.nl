@@ -18,7 +18,7 @@
     "test": "vitest run",
     "og": "node scripts/generate-og.mjs",
     "pregenerate": "node scripts/fetch-github.mjs && node scripts/generate-og.mjs",
-    "postgenerate": "node scripts/generate-og-png.mjs && node scripts/generate-resume.mjs",
+    "postgenerate": "node scripts/generate-og-png.mjs && node scripts/generate-resume.mjs && node scripts/generate-pwa-screenshots.mjs",
     "resume": "node scripts/generate-resume.mjs",
     "test:e2e": "playwright test",
     "test:relay": "node scripts/relay-check.mjs",
