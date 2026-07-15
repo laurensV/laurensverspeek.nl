@@ -42,7 +42,7 @@ const commands: Record<string, TerminalCommand> = {
 
 State lives in `useState`, so the navbar button, the footer link and the overlay all talk to the same terminal instance rather than three lookalikes. Commands can navigate the router, toggle the theme, fetch the GitHub API, or take over the keyboard entirely.
 
-The rule that keeps it from being a toy: it reads the same data the pages do. `about` prints the same profile the `/about` page renders; `uses` prints the same gear list. There's no second copy of me to drift out of date.
+The rule that keeps it from being a toy: it reads the same data the pages do. `about` prints the same profile the `/about` page renders; `blog` lists the same posts the `/blog` index does. There's no second copy of me to drift out of date.
 
 ## a game is a string factory
 
