@@ -145,16 +145,13 @@ onKeyStroke('Escape', () => {
 })
 
 const ogImage = `${SITE_URL}/og/project-${project.slug}.png`
-useHead({ title: `${project.title} — Laurens Verspeek` })
-useSeoMeta({
+useSeo({
+  title: `${project.title} — Laurens Verspeek`,
   description: project.description,
-  ogTitle: project.title,
-  ogDescription: project.description,
-  ogType: 'article',
-  ogUrl: `${SITE_URL}/projects/${project.slug}`,
-  ogImage,
-  twitterImage: ogImage,
-  twitterTitle: project.title
+  path: `/projects/${project.slug}`,
+  image: ogImage,
+  type: 'article',
+  ogTitle: project.title
 })
 
 useJsonLd({

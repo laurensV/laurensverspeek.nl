@@ -121,16 +121,13 @@ const related = computed(() => {
 })
 
 const ogImage = `${SITE_URL}/og/blog-${slugParam}.png`
-useHead({ title: `${post.value.title} — Laurens Verspeek` })
-useSeoMeta({
+useSeo({
+  title: `${post.value.title} — Laurens Verspeek`,
   description: post.value.description,
-  ogTitle: post.value.title,
-  ogDescription: post.value.description,
-  ogType: 'article',
-  ogUrl: `${SITE_URL}${post.value.path}`,
-  ogImage,
-  twitterImage: ogImage,
-  twitterTitle: post.value.title
+  path: post.value.path,
+  image: ogImage,
+  type: 'article',
+  ogTitle: post.value.title
 })
 
 useJsonLd(() => ({
