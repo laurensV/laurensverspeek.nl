@@ -9,6 +9,7 @@ const DISMISS_KEY = 'lv-pwa-dismissed'
 // terminal `install` command, so both drive the same native prompt
 const deferred = ref<InstallPromptEvent | null>(null)
 const installed = ref(false)
+const dismissed = ref(false)
 let wired = false
 
 /**
@@ -20,20 +21,24 @@ let wired = false
 export function usePwaInstall() {
   if (import.meta.client && !wired) {
     wired = true
+    dismissed.value = storageGet(DISMISS_KEY) === '1'
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault()
-      // never re-offer once the visitor waved it off
-      if (storageGet(DISMISS_KEY) === '1') return
+      // stash the prompt even after a dismissal — the chip stays hidden, but
+      // the terminal `install` command is an explicit ask and must still work
       deferred.value = event as InstallPromptEvent
     })
     window.addEventListener('appinstalled', () => {
       installed.value = true
       deferred.value = null
+      dismissed.value = true
       storageSet(DISMISS_KEY, '1')
     })
   }
 
   const canInstall = computed(() => !!deferred.value)
+  // the proactive chip also honours "never re-offer once waved off"
+  const chipVisible = computed(() => !!deferred.value && !dismissed.value)
 
   // replay the native prompt; returns what happened so the chip and the terminal
   // command can report it
@@ -47,9 +52,10 @@ export function usePwaInstall() {
   }
 
   const dismiss = () => {
-    deferred.value = null
+    // hide the chip only; keep the deferred prompt for explicit installs
+    dismissed.value = true
     if (import.meta.client) storageSet(DISMISS_KEY, '1')
   }
 
-  return { canInstall, installed, promptInstall, dismiss }
+  return { canInstall, chipVisible, installed, promptInstall, dismiss }
 }

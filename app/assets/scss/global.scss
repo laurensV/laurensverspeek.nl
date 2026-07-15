@@ -491,8 +491,13 @@ html.crt-mode {
 }
 
 @media print {
+  // A4 pages are narrower than the 768px mobile breakpoint, so the fixed
+  // mobile tab bar (and other floating chrome) would repeat on every sheet
   .app-navbar,
   .app-footer,
+  .mobile-nav,
+  .live-cursors,
+  .whatsnew,
   .flow-field,
   .skip-link,
   .boot-splash,

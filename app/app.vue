@@ -1,5 +1,7 @@
 <template>
   <div>
+    <!-- injects the <link rel="manifest"> — without it the PWA is never installable -->
+    <VitePwaManifest />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

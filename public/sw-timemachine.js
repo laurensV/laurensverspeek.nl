@@ -115,6 +115,10 @@ function tmOverlay(html, state) {
     '#__tm_ck:not(:checked)~#__tm_bar{transform:translateY(110%);}' +
     '#__tm_ck:not(:checked)~#__tm_handle{display:inline-flex;}' +
     '#__tm_handle:hover~#__tm_bar{transform:none;}' +
+    // the peeked bar slides up OVER the handle and steals its :hover — without
+    // this the bar instantly collapses again (flicker loop); hovering the bar
+    // itself must also hold it open, so you can reach its buttons
+    '#__tm_ck:not(:checked)~#__tm_bar:hover{transform:none;}' +
     '.__tm_link{color:#101014;background:#ffba00;text-decoration:none;' +
     'padding:.26rem .7rem;border-radius:999px;font-weight:700;white-space:nowrap;}' +
     '.__tm_min{cursor:pointer;color:#f5f5f7;opacity:.55;padding:0 .3rem;font-weight:700;user-select:none;}' +

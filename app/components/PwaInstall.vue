@@ -1,6 +1,6 @@
 <template>
   <Transition name="pwa-in">
-    <div v-if="canInstall" class="pwa-install is-family-code no-print" role="dialog" aria-label="Install this site as an app">
+    <div v-if="chipVisible" class="pwa-install is-family-code no-print" role="dialog" aria-label="Install this site as an app">
       <span class="pwa-glyph" aria-hidden="true">⤓</span>
       <span class="pwa-text">install lvOS as an app?</span>
       <button class="pwa-yes" @click="install">install</button>
@@ -12,7 +12,7 @@
 <script setup lang="ts">
 // the deferred install prompt now lives in a shared composable, so the terminal
 // `install` command drives the same native prompt this chip does
-const { canInstall, promptInstall, dismiss } = usePwaInstall()
+const { chipVisible, promptInstall, dismiss } = usePwaInstall()
 
 const install = () => {
   void promptInstall()
