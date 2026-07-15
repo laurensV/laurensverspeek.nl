@@ -55,10 +55,9 @@ export const isStringArray = (value: unknown): value is string[] =>
 
 /**
  * Factory reset: wipe everything this site stored in the browser (files,
- * edits, scores, pet, trash, settings, history, …) except `keep` keys —
- * the site gate stays open so a reset doesn't lock the visitor out.
+ * edits, scores, pet, trash, settings, history, …) except `keep` keys.
  */
-export function storageWipe(keep: string[] = ['lv-gate-open']): void {
+export function storageWipe(keep: string[] = []): void {
   try {
     const preserved = keep
       .map((key) => [key, localStorage.getItem(key)] as const)

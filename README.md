@@ -14,7 +14,7 @@ A minimalist developer portfolio on the surface, with an unusual amount hidden a
 
 Press <kbd>~</kbd> (or <kbd>`</kbd>) anywhere to open the interactive shell. It is the centerpiece — a real command interpreter shared by the navbar, footer and the lvOS desktop.
 
-- **Navigate & read** — `about`, `projects`, `blog`, `now`, `uses`, `cv`, `contact`, `github`, `stats`, `changelog`, `search <term>` (full-text over blog posts), `open <thing>`.
+- **Navigate & read** — `about`, `projects`, `blog`, `cv`, `contact`, `github`, `stats`, `changelog`, `search <term>` (full-text over blog posts), `open <thing>`.
 - **A persistent virtual filesystem** — `ls`, `cd` (incl. `cd -`, `pushd`/`popd`), `pwd`, `tree`, `cat`, `mkdir`, `touch`, `rm`, `cp`, `mv` — with `*` wildcards, and it survives across visits. Edit files with the real **`nano`** and modal **`vim`**/`vi`. Anything you `rm` lands in the lvOS **recycle bin**, restorable from the desktop.
 - **Pipes, redirection & scripts** — `help | grep blog | sort | uniq | wc`, `… > file`, `… >> file`, `… | copy` to the clipboard, chaining with `&&`/`||`/`;`, and real **shell scripts**: write lines to a file and run them with `sh file.sh` (with an `sh -x` trace and a fork-bomb guard).
 - **tmux panes** — <kbd>Ctrl</kbd>+<kbd>B</kbd> then `%` or `"` splits the terminal into up to four panes with independent scrollback; arrows move focus, `x` closes. `tmux` works too.

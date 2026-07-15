@@ -16,15 +16,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     colorScheme: 'dark',
-    trace: 'retain-on-failure',
-    // the private-preview gate stays open for the suite (it has its own test)
-    storageState: {
-      cookies: [],
-      origins: [{
-        origin: `http://localhost:${PORT}`,
-        localStorage: [{ name: 'lv-gate-open', value: '1' }]
-      }]
-    }
+    trace: 'retain-on-failure'
   },
   projects: [{
     name: 'chromium',
