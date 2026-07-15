@@ -51,6 +51,9 @@ const JUDGEMENTS = [
 ]
 
 const attempt = () => {
+  // any new attempt revokes a pending unlock — a wrong guess fired inside the
+  // 900ms grace window must not still open the desktop
+  clearTimeout(unlockTimer)
   const guess = password.value.trim()
   if (!guess) {
     hint.value = 'empty? even this lock has standards.'
@@ -94,6 +97,8 @@ onUnmounted(() => clearTimeout(unlockTimer))
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  // the judged-guess hint line runs wide — keep it off the edges at 320px
+  padding: 0 1.25rem;
   text-align: center;
 }
 
