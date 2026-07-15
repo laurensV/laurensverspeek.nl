@@ -157,6 +157,11 @@ const onModalKeydown = (event: KeyboardEvent) => {
 
   .terminal-title {
     flex: 1;
+    // one line always: at 320px the user@domain string would wrap to three
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     text-align: center;
     font-size: 0.8rem;
     color: hsl(var(--lv-scheme-hs), 60%);
