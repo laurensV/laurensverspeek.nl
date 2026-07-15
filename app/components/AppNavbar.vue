@@ -360,10 +360,12 @@ onUnmounted(crtArmer.dispose)
 .mobile-menu {
   position: fixed;
   inset: 3.25rem 0 0;
-  z-index: 29;
+  // above the fixed tab bar + status bar (both 40): the menu's own footer
+  // actions live where those sit, and must win the tap
+  z-index: 41;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: 1.5rem 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px));
   background-color: hsla(var(--lv-scheme-hs), var(--bulma-scheme-main-l), 0.98);
   backdrop-filter: blur(16px);
   overflow-y: auto;
