@@ -114,11 +114,15 @@ function tmOverlay(html, state) {
     'box-shadow:0 2px 12px rgba(0,0,0,.4);}' +
     '#__tm_ck:not(:checked)~#__tm_bar{transform:translateY(110%);}' +
     '#__tm_ck:not(:checked)~#__tm_handle{display:inline-flex;}' +
+    // hover-peek is mouse-only: touch browsers stick :hover on the last tap,
+    // which would hold the bar open right after tapping ▾ to collapse it
+    '@media (hover:hover){' +
     '#__tm_handle:hover~#__tm_bar{transform:none;}' +
     // the peeked bar slides up OVER the handle and steals its :hover — without
     // this the bar instantly collapses again (flicker loop); hovering the bar
     // itself must also hold it open, so you can reach its buttons
     '#__tm_ck:not(:checked)~#__tm_bar:hover{transform:none;}' +
+    '}' +
     '.__tm_link{color:#101014;background:#ffba00;text-decoration:none;' +
     'padding:.26rem .7rem;border-radius:999px;font-weight:700;white-space:nowrap;}' +
     '.__tm_min{cursor:pointer;color:#f5f5f7;opacity:.55;padding:0 .3rem;font-weight:700;user-select:none;}' +
