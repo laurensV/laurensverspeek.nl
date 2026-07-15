@@ -37,14 +37,14 @@ const areas: { icon: IconName; title: string; description: string; file: string 
     title: 'Full-stack Web',
     file: 'full-stack.ts',
     description:
-      'From pixel-perfect Vue and Nuxt frontends to scalable Node.js backends — I build complete products, end to end.'
+      'From pixel-perfect Vue and Nuxt frontends to scalable Node.js backends. I build complete complex products, end to end.'
   },
   {
     icon: 'layers',
     title: 'Blockchain',
     file: 'blockchain.sol',
     description:
-      'Smart contracts, token economics and decentralized infrastructure on Solana and EOS. Co-founded two blockchain companies.'
+      'Smart contracts, token economics and decentralized infrastructure on Solana. Co-founded and worked for multiple blockchain companies.'
   },
   {
     icon: 'cpu',

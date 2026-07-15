@@ -13,7 +13,7 @@ export const profile = {
     'computer scientist'
   ],
   bio: [
-    'Hey, I am Laurens — a full-stack developer with a background in Computer Science and a love for blockchain.',
+    'Hey, I’m Laurens, a full-stack developer with a background in Computer Science and a passion for building with blockchain and AI.',
     'I co-founded Effect.AI, a blockchain-powered micro-tasking platform providing work for thousands of people around the globe. Today I am Head of Development at Nosana, a decentralized GPU compute grid on Solana powering AI inference workloads.'
   ],
   socials: [
@@ -45,25 +45,25 @@ export const profile = {
       period: '2021 — now',
       title: 'Head of Development — Nosana',
       description:
-        'Leading development of a decentralized GPU compute grid on Solana: from decentralized CI/CD pipelines to a marketplace for AI inference.',
-      stack: ['Solana', 'Rust', 'TypeScript', 'Vue']
+        'Joined Nosana at its inception and leading the development of its decentralized GPU computing platform, combining technical strategy, architecture and team leadership.',
+      stack: ['Solana', 'Rust', 'TypeScript', 'Vue', 'Node.js']
     },
     {
-      period: '2017 — 2021',
+      period: '2017 — now',
       title: 'Co-founder — Effect.AI',
       description:
-        'Blockchain-based framework for the future of work. Built a micro-tasking platform for AI data labeling, powered by the EFX token.',
-      stack: ['Blockchain', 'Vue', 'Node.js']
+        'Co-founded Effect.AI and building a global decentralized platform connecting people, businesses and AI through blockchain technology.',
+      stack: ['Blockchain', 'Vue', 'TypeScript', 'Node.js']
     },
     {
-      period: '2015 — 2017',
+      period: '2014 — 2016',
       title: 'MSc Computer Science — University of Amsterdam',
       description:
-        'Graduated on automated multivariate web design optimization using genetic algorithms.',
-      stack: ['Python', 'Genetic algorithms']
+        'Graduated on automated multivariate web design optimization using AI genetic algorithms.',
+      stack: ['Python', 'AI', 'LaTex', 'Genetic algorithms']
     },
     {
-      period: '2011 — 2015',
+      period: '2011 — 2014',
       title: 'BSc Computer Science',
       description:
         'Thesis on detecting malicious websites through geographical consistency of website components.',
