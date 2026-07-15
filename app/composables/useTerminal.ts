@@ -385,8 +385,9 @@ export function useTerminal() {
         return
       }
       if (!result.length) muted('(no output)')
-      const target = paneLines(activePane.value)
-      result.forEach((line) => target.push(line))
+      // route through writeToPane so a large piped result (e.g. `seq … | cat`)
+      // still respects SCROLLBACK_MAX instead of pushing straight to the pane
+      result.forEach((line) => writeToPane(line))
     }
     try {
       const outcome = command.exec(args)
