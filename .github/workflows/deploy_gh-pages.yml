@@ -4,37 +4,30 @@ on:
   push:
     branches:
       - main
-  # PRs get the full check suite, but never the deploy step
+  # PRs get the full check suite, but never the deploy job
   pull_request:
-  # deploys are manual now: pushes to main run the checks but do NOT deploy —
-  # trigger "Run workflow" (workflow_dispatch) to actually cut a release and ship
-  workflow_dispatch:
-
-# serialize deploys on a branch so two overlapping runs can't compute the same
-# release version and collide on the tag/GitHub Release (queue, don't cancel a
-# mid-deploy)
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
-  deploy:
+  # Every push and PR runs the whole check suite and builds the site. On a push
+  # to main the build is uploaded as an artifact for the deploy job to ship.
+  build:
     runs-on: ubuntu-latest
-    # needed to push the release tag + create the GitHub Release on each deploy
-    permissions:
-      contents: write
+    outputs:
+      site_version: ${{ steps.version.outputs.site_version }}
     steps:
       - uses: actions/checkout@v4
         with:
           # full history + tags: the terminal's `git log` is baked from the real
-          # repo, and the release step reads the latest tag to bump the version
+          # repo, and the version step reads the latest tag to bump the release
           fetch-depth: 0
 
-      # a manual deploy cuts the next patch release; SITE_VERSION is baked into
-      # the build (status bar, terminal banner, BIOS splash) and the tag/Release
-      # is created after a successful deploy
+      # a deploy cuts the next patch release; SITE_VERSION is baked into the build
+      # (status bar, terminal banner, BIOS splash) and handed to the deploy job so
+      # it can tag + create the Release. Only computed for main pushes — PR builds
+      # fall back to the latest tag (see nuxt.config.ts).
       - name: Compute next release version
-        if: github.event_name == 'workflow_dispatch'
+        id: version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           latest=$(git tag -l 'v*' --sort=-v:refname | head -n1)
           if [ -z "$latest" ]; then
@@ -46,6 +39,7 @@ jobs:
             next="v${major}.${minor}.$((patch + 1))"
           fi
           echo "SITE_VERSION=$next" >> "$GITHUB_ENV"
+          echo "site_version=$next" >> "$GITHUB_OUTPUT"
           echo "Next release: $next"
 
       - name: Setup Node
@@ -76,19 +70,55 @@ jobs:
       - name: End-to-end tests
         run: npm run test:e2e
 
+      # hand the built site to the deploy job (only needed for a real deploy)
+      - name: Upload site artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: ./.output/public
+          retention-days: 1
+          include-hidden-files: true
+
+  # The deploy is gated by the `production` environment: configure Required
+  # reviewers on it (Settings → Environments → production) and this job pauses as
+  # "Waiting" after a green build. Approve it from the same workflow run and it
+  # ships — no second pipeline. Never runs on PRs.
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://laurensverspeek.nl
+    # push the release tag + create the GitHub Release, and let peaceiris push to
+    # the gh-pages branch
+    permissions:
+      contents: write
+    # serialize deploys so two approved runs can't collide on the tag/Release
+    # (queue, don't cancel a mid-deploy)
+    concurrency:
+      group: deploy-gh-pages
+      cancel-in-progress: false
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: ./.output/public
+
       - name: Deploy
-        if: github.event_name == 'workflow_dispatch'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./.output/public
 
-      # tag this commit and publish a GitHub Release for the version that just
-      # shipped (creates the tag at the deployed commit)
+      # tag the deployed commit and publish a GitHub Release for the version that
+      # was baked into this build (creates the tag at that commit)
       - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_VERSION: ${{ needs.build.outputs.site_version }}
         run: |
           gh release create "$SITE_VERSION" \
             --title "$SITE_VERSION" \
