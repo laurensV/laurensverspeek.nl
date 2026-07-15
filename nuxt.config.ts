@@ -76,7 +76,10 @@ export default defineNuxtConfig({
       background_color: '#101014',
       icons: [
         { src: '/pwa-192.png', sizes: '192x192', type: 'image/png' },
-        { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' }
+        { src: '/pwa-512.png', sizes: '512x512', type: 'image/png' },
+        // full-bleed variant so Android adaptive icons mask cleanly (the glyph
+        // sits inside the maskable safe zone, background bleeds to every edge)
+        { src: '/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
       ],
       // long-press / right-click shortcuts on the installed app icon
       shortcuts: [
@@ -103,6 +106,10 @@ export default defineNuxtConfig({
           handler: 'NetworkFirst',
           options: {
             cacheName: 'pages',
+            // cap the runtime cache so it can't grow unbounded (one entry per
+            // navigated URL, query strings included) — the whole site is
+            // precached anyway, this is just a ceiling on the runtime layer
+            expiration: { maxEntries: 50 },
             // the manifest strips .html, so the precache key is extensionless
             precacheFallback: { fallbackURL: '/offline' }
           }
