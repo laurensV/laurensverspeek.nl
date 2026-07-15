@@ -192,8 +192,9 @@ test('ctrl+c interrupts a running game and echoes ^C to the transcript', async (
   const frame = page.locator('.game-frame')
   await expect(frame).toContainText('WPM TEST')
   await page.keyboard.press('Control+c')
-  // the game is gone and ^C lands in the visible transcript (not swallowed)
-  await expect(frame).not.toContainText('WPM TEST')
+  // the game is gone (its frame unmounts) and ^C lands in the visible
+  // transcript (not swallowed into a capture sink)
+  await expect(frame).toHaveCount(0)
   await expect(out).toContainText('^C')
 })
 
