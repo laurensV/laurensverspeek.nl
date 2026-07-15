@@ -87,7 +87,10 @@ export default defineNuxtConfig({
     },
     workbox: {
       navigateFallback: null,
-      globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,xml}'],
+      // include wasm so Nuxt Content's SQLite engine (_nuxt/sqlite3*.wasm) is
+      // precached — without it a cold offline launch can't run client-side
+      // content queries (palette blog search, terminal `blog`, latest-posts)
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,xml,wasm}'],
       // lvOS Time Machine: loaded first inside the generated SW so its fetch
       // listener runs before Workbox's. Dormant unless you're time-travelling,
       // when it serves past builds of the site from jsDelivr (public/sw-timemachine.js).
