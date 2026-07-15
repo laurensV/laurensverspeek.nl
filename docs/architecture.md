@@ -86,7 +86,10 @@ registered in `app/utils/desktopApps.ts` — that one registry drives the icon
 grid, window titles, wide-window hints, the Alt+R run dialog and process pids.
 The terminal `desktop <app>` command resolves a name through that same
 registry (`matchApp`), stashes the id in a `lvos-pending-app` state, and
-WebDesktop opens it on mount.
+WebDesktop opens it on mount. Name resolution is single-sourced: the start-menu
+search, the Alt+R run dialog and `desktop <app>` all go through `matchApp` /
+`searchApps` in `desktopApps.ts`, so a query like `machine` resolves to Time
+Machine everywhere rather than launching from one surface and erroring in another.
 
 Crucially, lvOS shares the site's state: the Files app, vim window and
 terminal edit the same virtual filesystem; the recycle bin catches `rm` from
@@ -100,7 +103,23 @@ and a Settings slider; the tray weather chip, the Weather app and the terminal
 `writeClipboard()` chokepoint that feeds the Clipboard app's history and the
 terminal `clip` command. Games (Snake … Asteroids) all feed one economy via
 `useHighScore`: a single `lv-<game>-highscore` key → hall of fame + global
-leaderboard + confetti + tamagotchi coins, no second ledger.
+leaderboard + confetti + tamagotchi coins, no second ledger. The Time Machine's
+deploy history (`useTimeMachine`) is reachable three ways off one manifest: the
+lvOS app, the terminal `git checkout`/`tag`, and a "Travel to…" section in the
+⌘K command palette.
+
+## SEO & structured data
+
+The site is statically generated, so all meta is baked at build. Every page
+routes its head through one `useSeo()` helper (`app/composables/useSeo.ts`) that
+sets the search-facing `title`/`description` *and* the full Open Graph + Twitter
+card in a single call — so a page can't set a good title yet fall back to the
+site's generic social card. Per-page OG images are branded SVGs generated (and
+pruned) by `scripts/generate-og.mjs`, rasterized to PNG at build. JSON-LD
+(`useJsonLd`, `breadcrumbList`) adds a `BreadcrumbList` to every content page
+(the visible `PathBreadcrumbs` on most, a bare block on the full-viewport
+`/life` and `/desktop`), plus `Person`/`Article`/`CreativeWork` where they fit.
+The sitemap and RSS are prerendered server routes.
 
 ## Realtime (the cursors relay, opt-in)
 
