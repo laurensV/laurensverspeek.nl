@@ -61,6 +61,9 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
   twitterImage: ogImage
 })
+// this full-viewport page opts out of the visible breadcrumb strip, but still
+// emits the BreadcrumbList structured data every other content page carries
+useJsonLd(breadcrumbList([{ name: 'life', item: `${SITE_URL}/life` }]))
 
 const cellSize = ref(16) // px per cell; the zoom control changes this
 

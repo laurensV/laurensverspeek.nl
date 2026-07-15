@@ -25,4 +25,7 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
   twitterImage: ogImage
 })
+// the desktop layout has no visible breadcrumb strip; still emit the
+// BreadcrumbList structured data every other content page carries
+useJsonLd(breadcrumbList([{ name: 'desktop', item: `${SITE_URL}/desktop` }]))
 </script>
