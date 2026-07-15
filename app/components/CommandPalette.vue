@@ -251,6 +251,11 @@ watch(flat, (list) => {
   color: var(--bulma-text);
   cursor: pointer;
 
+  // full 44px touch rows on phones, same as the start-menu search results
+  @media (pointer: coarse) {
+    min-height: 2.75rem;
+  }
+
   &.is-active {
     background-color: hsla(var(--lv-primary-hsl), 0.12);
     color: var(--bulma-text-strong);
