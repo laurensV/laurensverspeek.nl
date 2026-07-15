@@ -119,6 +119,13 @@ function tmOverlay(html, state) {
     'padding:.26rem .7rem;border-radius:999px;font-weight:700;white-space:nowrap;}' +
     '.__tm_min{cursor:pointer;color:#f5f5f7;opacity:.55;padding:0 .3rem;font-weight:700;user-select:none;}' +
     '.__tm_min:hover{opacity:1;}' +
+    // fatten the collapse toggle, the show-bar handle and the return link to
+    // ~44px touch targets on coarse pointers (they're tiny for a mouse)
+    '@media (pointer:coarse){' +
+    '.__tm_min{padding:.5rem .7rem;opacity:.75;}' +
+    '#__tm_handle{padding:.55rem .8rem;}' +
+    '.__tm_link{padding:.5rem .9rem;}' +
+    '}' +
     '</style>'
   const bar =
     '<input type="checkbox" id="__tm_ck" checked aria-hidden="true">' +
