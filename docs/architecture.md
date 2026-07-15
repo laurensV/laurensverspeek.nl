@@ -104,9 +104,12 @@ and a Settings slider; the tray weather chip, the Weather app and the terminal
 terminal `clip` command. Games (Snake … Asteroids) all feed one economy via
 `useHighScore`: a single `lv-<game>-highscore` key → hall of fame + global
 leaderboard + confetti + tamagotchi coins, no second ledger. The Time Machine's
-deploy history (`useTimeMachine`) is reachable three ways off one manifest: the
-lvOS app, the terminal `git checkout`/`tag`, and a "Travel to…" section in the
-⌘K command palette.
+deploy history (`useTimeMachine`) is reachable four ways off one manifest: the
+lvOS app, the terminal `git checkout`/`tag`, a "Travel to…" section in the ⌘K
+command palette, and a shareable `/?v=<version>` link (`plugins/timeTravel.client.ts`)
+that auto-travels on load. The PWA install prompt is shared too: `usePwaInstall`
+holds the deferred `beforeinstallprompt` so both the install chip and the
+terminal `install` command fire the same native prompt.
 
 ## SEO & structured data
 
@@ -120,6 +123,14 @@ pruned) by `scripts/generate-og.mjs`, rasterized to PNG at build. JSON-LD
 (the visible `PathBreadcrumbs` on most, a bare block on the full-viewport
 `/life` and `/desktop`), plus `Person`/`Article`/`CreativeWork` where they fit.
 The sitemap and RSS are prerendered server routes.
+
+The site is a PWA (`@vite-pwa/nuxt`, `registerType: 'autoUpdate'`). There is ONE
+service worker: Workbox precaches the whole build (including the Nuxt Content
+SQLite `wasm`, so client-side content queries work offline) and `importScripts`
+the Time Machine SW (`public/sw-timemachine.js`) into it — no second
+registration. Navigations are NetworkFirst with a capped runtime cache, falling
+back to a self-contained `/offline` page (with a pocket snake) when both network
+and cache miss.
 
 ## Realtime (the cursors relay, opt-in)
 
