@@ -1,18 +1,164 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>laurensverspeek.nl — blog</title>
     <link>https://laurensverspeek.nl/blog</link>
+    <atom:link href="https://laurensverspeek.nl/rss.xml" rel="self" type="application/rss+xml" />
     <description>Occasional writing about code, blockchain and this website.</description>
     <language>en</language>
+    <lastBuildDate>Wed, 15 Jul 2026 00:00:00 GMT</lastBuildDate>
     <item>
-      <title><![CDATA[a window manager in a div]]></title>
-      <link>https://laurensverspeek.nl/blog/a-window-manager-in-a-div</link>
-      <guid>https://laurensverspeek.nl/blog/a-window-manager-in-a-div</guid>
-      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[dragging, snapping and alt-tab for lvOS — the fake desktop hiding in my portfolio — with one pointermove listener and a z-index counter.]]></description>
-      <content:encoded><![CDATA[<p>Type <code>desktop</code> in <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">the terminal</a> and my site boots <strong>lvOS</strong>: a pretend operating system with draggable windows, a taskbar and a start menu. None of it is real. Every &quot;window&quot; is a <code>&lt;div&gt;</code>, and the whole window manager is about 150 lines of composable. Here's how it holds together.</p>
-<h2>a window is just data</h2>
+      <title><![CDATA[stop rebasing the past: merge vs rebase without lying to history]]></title>
+      <link>https://laurensverspeek.nl/blog/git-merge-vs-rebase</link>
+      <guid>https://laurensverspeek.nl/blog/git-merge-vs-rebase</guid>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[interactive rebase is a scalpel. integration rebase is time travel. the merge strategy I settled on, and why I want history to stay a record rather than a story.]]></description>
+      <content:encoded><![CDATA[<p>Every dev team has this argument sooner or later.</p>
+<p>Someone wants a clean, linear history and reaches for rebase. Someone else insists rewriting history is dangerous and pushes for merge.</p>
+<p>Both sides have a point — and they usually talk past each other, because &quot;rebase&quot; and &quot;merge&quot; mean different things in different contexts. The result is either a rigid rule nobody can fully explain (&quot;we always rebase&quot;) or a free-for-all where the same repository ends up with three strategies and no one is quite sure what the history actually represents.</p>
+<p>And it matters. That history is how you revert a bad release, track down a regression with <code>git bisect</code>, or explain to a colleague why a change landed the way it did. If the graph looks tidy but the commits no longer match what was ever built or tested, you've traded clarity for a story that's easier to read and harder to trust.</p>
+<p>I've worked with merge-heavy, rebase-heavy and squash-heavy workflows. This post is the position I've settled on — not the only valid one, but one that keeps history accurate while still allowing clean branches:</p>
+<ul><li>Clean your branch locally with <strong>interactive rebase</strong>.</li><li>Don't rewrite integration history with <strong>rebase onto main</strong>.</li><li>Keep feature boundaries explicit with <strong><code>--no-ff</code> merges</strong>.</li><li>Use <strong>squash merges</strong> sparingly — only if the branch will be deleted afterwards.</li></ul>
+<p>The rest of this explains why, and how to get there without the usual holy war.</p>
+<h2>there are two kinds of rebase</h2>
+<p>Most Git debates fall apart because &quot;rebase&quot; gets treated as one thing. It isn't. There are two fundamentally different uses, and almost every disagreement is really about which one someone has in mind.</p>
+<h3>1. interactive rebase (commit cleanup)</h3>
+<pre><code class="language-bash">git rebase -i origin/main</code></pre>
+<p>Reword commits, squash fixups, reorder changes, clean up your branch. This edits the shape of your branch <strong>without changing its base</strong> — you're polishing your own history before sharing it.</p>
+<p>The rule: only do this before the branch is shared. Rewriting unpublished history is safe. Rewriting shared history is not.</p>
+<blockquote><p>Interactive rebase is a cleanup tool — not an integration strategy.</p></blockquote>
+<h3>2. integration rebase (rebasing onto main)</h3>
+<pre><code class="language-bash">git fetch origin
+git rebase origin/main</code></pre>
+<p>This replays your commits on top of a new base. If conflicts occur, you resolve them <em>while</em> replaying history. That can produce commits which:</p>
+<ul><li>never existed in that form,</li><li>were never developed against that base,</li><li>and contain conflict resolutions baked into rewritten commits.</li></ul>
+<p>Afterwards, history claims: <em>&quot;these commits were developed on top of this base.&quot;</em> But they weren't. It's a cleaner story, not a literal record. <code>git bisect</code> can land on a commit that never truly existed — so &quot;the bug was introduced here&quot; may point at a synthetic state.</p>
+<h2>seeing the difference</h2>
+<p>A <code>--no-ff</code> merge keeps the feature branch as it was:</p>
+<pre><code class="language-text">main:     A---B-------M
+               \     /
+                C---D   (feature)</code></pre>
+<p>C and D remain exactly as developed, M marks the integration point, and the history reflects reality.</p>
+<p>An integration rebase rewrites them. Before:</p>
+<pre><code class="language-text">main:     A---B
+feature:       C---D</code></pre>
+<p>After <code>git rebase main</code>:</p>
+<pre><code class="language-text">main:     A---B---C'---D'</code></pre>
+<p>C and D became C' and D'. Conflict resolutions may be embedded in them, and history now implies they were developed on top of B.</p>
+<p>Interactive rebase looks superficially similar but does something else entirely. Before:</p>
+<pre><code class="language-text">A---B---C---D---E</code></pre>
+<p>After <code>git rebase -i</code> (squashing D and E into C):</p>
+<pre><code class="language-text">A---B---C'</code></pre>
+<p>No base change, no upstream integration — just cleanup. That's history <em>editing</em>, not integration <em>rewriting</em>.</p>
+<h2>the strategies, compared</h2>
+<table><thead><tr><th>Strategy</th><th>What it does</th><th>Pros</th><th>Cons</th></tr></thead><tbody><tr><td>Fast-forward merge</td><td>Moves the branch pointer forward</td><td>Clean linear history</td><td>Loses the feature boundary</td></tr><tr><td>Merge <code>--no-ff</code></td><td>Creates an explicit merge commit</td><td>Clear feature grouping, easy revert</td><td>Extra merge commits</td></tr><tr><td>Rebase and merge</td><td>Rewrites the branch onto main, then fast-forwards</td><td>Linear history, no merge commits</td><td>Rewrites integration history</td></tr><tr><td>Squash merge</td><td>Collapses the branch into one commit</td><td>Very clean main</td><td>Original commits not marked merged</td></tr></tbody></table>
+<p>Note that interactive rebase isn't in the table. It's not an integration strategy — it's a local cleanup tool used <em>before</em> integration.</p>
+<h2>but what about a clean linear history?</h2>
+<p>The main argument for integration rebasing is that linear history is easier to read. Visually, this:</p>
+<pre><code class="language-text">A---B---C---D---E</code></pre>
+<p>is simpler than this:</p>
+<pre><code class="language-text">A---B-------M
+     \     /
+      C---D</code></pre>
+<p>No branches, no merge commits, just a straight line. Some teams happily take that trade: a single line of commits is easier to scan, especially if they rarely inspect individual commits or use bisect.</p>
+<p>But linear history has a cost. Feature boundaries disappear. Integration points vanish. Commits get rewritten to fit a base they weren't developed on, and conflict resolutions get baked into them.</p>
+<p>Linear history optimizes for visual simplicity. Merge history optimizes for structural clarity and historical accuracy. If you live in the GitHub or GitLab UI, topology may not matter much. If you explore history via Git itself, debug regressions, or analyze how an architecture moved over time, it matters a lot. You have to choose what you value.</p>
+<h2>why I prefer <code>--no-ff</code></h2>
+<p>If features always go through merge requests and never directly into <code>main</code>, then:</p>
+<pre><code class="language-bash">git merge --no-ff feature-branch</code></pre>
+<p>produces:</p>
+<pre><code class="language-text">*   Merge branch 'feature-x'
+|\
+| * commit 3
+| * commit 2
+| * commit 1
+|/
+* previous main</code></pre>
+<p>Clear feature grouping, real integration markers, easy feature-level reverts, and a graph that reflects how the work actually happened. Merge commits become the table of contents of your history.</p>
+<p>Fast-forward, by contrast, removes the branch boundary entirely — you lose the grouping, the integration moment, and any structure in <code>git log --graph</code>.</p>
+<h2>squash: simplifying at the cost of history</h2>
+<p>Squash turns a branch into one commit — <code>A---B---C</code> becomes <code>A---S</code>. It's useful for small features, noisy branches, and cases where the intermediate history genuinely doesn't matter.</p>
+<p>But Git does not mark the original commits as merged. The feature branch still contains its history, future merges from it get confusing, and you lose commit-level visibility in <code>main</code>. So: only squash if you delete the feature branch immediately, locally and remotely.</p>
+<p>Squash isn't more powerful than interactive rebase. It's just collapsing, done at integration time.</p>
+<h2>keeping history clean anyway</h2>
+<p>If you use <code>--no-ff</code>, messy commits will land in <code>main</code> unless you do something about it. Three options, best used together:</p>
+<p><strong>Clean before sharing.</strong> <code>git rebase -i origin/main</code> — squash, reword, refine — before you push.</p>
+<p><strong>Make merge commits the curated layer.</strong> Write merge messages that carry the story:</p>
+<pre><code class="language-text">feat: add billing dashboard (MR !1234)
+
+- Invoice overview
+- Filtering
+- New API endpoint</code></pre>
+<p><strong>Enforce commit discipline.</strong> No &quot;fix&quot; commits, no &quot;wip&quot; commits, meaningful messages. Cultural, but effective.</p>
+<h2>catching conflicts without rebasing</h2>
+<p>You don't need integration rebase to stay up to date:</p>
+<pre><code class="language-bash">git fetch origin
+git merge origin/main</code></pre>
+<p>Do this <strong>before opening or updating your pull request</strong>, so the merge result is what gets reviewed and tested. It surfaces conflicts early, preserves real integration states, and rewrites nothing. Require CI on updated branches or merge results and you get the safety without the rewriting.</p>
+<p>Both GitHub and GitLab can enforce this: require merge commits (disable &quot;squash and merge&quot; or &quot;rebase and merge&quot; if you prefer), and protect <code>main</code> so force-pushes are blocked.</p>
+<h2>the workflow I recommend</h2>
+<ol><li>No direct pushes to <code>main</code>.</li><li>Use merge requests.</li><li>Prefer <code>--no-ff</code>.</li><li>Use interactive rebase only before sharing.</li><li>Avoid integration rebasing onto <code>main</code>.</li><li>Only squash if you're deleting the branch.</li><li>Require CI on merge results.</li></ol>
+<p>That preserves clarity without rewriting the past.</p>
+<h2>final thoughts</h2>
+<blockquote><p>Interactive rebase is a scalpel. Integration rebase is time travel.</p></blockquote>
+<p>One cleans up your work. The other rewrites how it appears to have happened.</p>
+<p>Plenty of experienced engineers prefer rebasing, and there are smart teams on both sides. For me the deciding factor is simple: I value structural clarity and historical accuracy over visual linearity. That's a trade-off, not a universal rule. If your team prefers a linear history and accepts rewriting integration commits, that can work — as long as you understand what it costs.</p>
+<p>So I'm curious: do you optimize for a straight line, or for a faithful record of how things evolved?</p>
+<p><strong>Further reading:</strong> <a href="https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging">Git — Branching and Merging</a> and <a href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing">Git — Rebasing</a> in the official Git documentation.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title><![CDATA[rebuilding my portfolio after 4 years of "coming soon(ish)"]]></title>
+      <link>https://laurensverspeek.nl/blog/rebuilding-this-site</link>
+      <guid>https://laurensverspeek.nl/blog/rebuilding-this-site</guid>
+      <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[from an unfinished nuxt 2 page to a nuxt 4 site with a terminal, a fake OS, a game of life engine that renders four different ways, and too many easter eggs.]]></description>
+      <content:encoded><![CDATA[<p>For four years, my personal website consisted of a hero, six project cards, and the sentence <em>&quot;My personal slice of the web is still under construction and will be live if I can find some time to finish it ;)&quot;</em>.</p>
+<p>I never found the time. So instead of finishing v1, I deleted it.</p>
+<p>What replaced it is less a portfolio than a playground: a terminal you can actually use, a pretend operating system with draggable windows, Conway's Game of Life running in four places off one engine, and a service worker that can show you this site as it looked six months ago. This post is the tour, and the handful of ideas that kept all of it from collapsing under its own cuteness.</p>
+<h2>the stack</h2>
+<p>The rebuild is <a href="https://nuxt.com">Nuxt 4</a> + TypeScript + <a href="https://bulma.io">Bulma 1</a>, generated as a fully static site. Bulma might seem like an odd choice next to the utility-CSS crowd, but v1 moved everything to CSS variables, which makes theming almost free:</p>
+<pre><code class="language-scss">@use &quot;bulma/sass&quot; with (
+  $family-primary: '&quot;Inter&quot;, sans-serif',
+  $family-code: '&quot;JetBrains Mono&quot;, monospace',
+  $primary: #ffba00
+);</code></pre>
+<p>Dark mode is just <code>data-theme=&quot;dark&quot;</code> on the <code>&lt;html&gt;</code> element — Bulma swaps every variable, and anything custom reads <code>var(--bulma-*)</code> so it follows along. Even the canvas animations read their colours from the CSS variables at runtime, which is why the amber cells in the hero know they're in dark mode.</p>
+<p>Everything else follows from one constraint I set early: <strong>the site must stay statically generated</strong>. No runtime server, no API I have to keep alive. Anything dynamic is either client-side or an opt-in external service. That constraint turned out to be a feature — it forced most of the &quot;backend&quot; ideas below to become honest little client-side systems instead.</p>
+<h2>the terminal</h2>
+<p>The gimmick I actually wanted to build: press <code>~</code> and you get a terminal. It's not an emulator — it's a Vue component and a composable with a command map:</p>
+<pre><code class="language-ts">const commands: Record&lt;string, TerminalCommand&gt; = {
+  help:     { description: 'List available commands', exec: () =&gt; ... },
+  projects: { description: 'List projects', exec: (args) =&gt; ... },
+  cd:       { description: 'Go to a page', exec: (args) =&gt; navigate(args[0]) },
+  // ...50 or so more
+}</code></pre>
+<p>State lives in <code>useState</code>, so the navbar button, the footer link and the overlay all talk to the same terminal instance rather than three lookalikes. Commands can navigate the router, toggle the theme, fetch the GitHub API, or take over the keyboard entirely.</p>
+<p>The rule that keeps it from being a toy: it reads the same data the pages do. <code>about</code> prints the same profile the <code>/about</code> page renders; <code>uses</code> prints the same gear list. There's no second copy of me to drift out of date.</p>
+<h2>a game is a string factory</h2>
+<p>Taking over the keyboard is how <code>snake</code> ended up in there. The fun constraint: the &quot;screen&quot; is just a <code>&lt;pre&gt;</code> element. No canvas, no WebGL — monospace text re-rendered eight times a second.</p>
+<p>A game is a function handed two callbacks, one to draw a frame and one to report the final output:</p>
+<pre><code class="language-ts">export interface GameCallbacks {
+  onFrame(frame: string): void
+  onEnd(lines: string[]): void
+}</code></pre>
+<p>Every tick, snake builds the entire board as a string — box-drawing characters for the walls, <code>█</code> for the body, <code>●</code> for the food — and hands it over. Because the font is monospace, the &quot;pixels&quot; line up:</p>
+<pre><code class="language-ts">function render() {
+  const grid = buildGrid()          // 26 × 12 characters
+  grid[food.y][food.x] = '●'
+  snake.forEach((cell, i) =&gt; {
+    grid[cell.y][cell.x] = i === 0 ? '▓' : '█'
+  })
+  onFrame(header + grid.map((row) =&gt; row.join(' ')).join('\n'))
+}</code></pre>
+<p>Diffing a full-frame string sounds wasteful, but the frame is ~700 characters. The DOM update is nothing; your GPU yawns.</p>
+<p>Stealing the keyboard is the other half. The terminal normally routes keys to an <code>&lt;input&gt;</code>; while a game is active, the input is hidden and a window-level listener feeds keys to the game:</p>
+<pre><code class="language-ts">useEventListener('keydown', (event) =&gt; {
+  if (!isOpen.value || !activeGame.value) return
+  if (activeGame.value.onKey(event.key)) event.preventDefault()
+})</code></pre>
+<p>The game returns <code>true</code> for keys it consumed, so arrows stop scrolling the page but <code>F5</code> still works, and <code>q</code> ends the game rather than closing the terminal. That last one took a bug report from myself to get right.</p>
+<h2>a window manager in a div</h2>
+<p>Type <code>desktop</code> and the site boots <strong>lvOS</strong>: a pretend operating system with draggable windows, a taskbar and a start menu. None of it is real. Every &quot;window&quot; is a <code>&lt;div&gt;</code>, and the window manager is about 150 lines.</p>
 <p>There is no window object, only a row in an array:</p>
 <pre><code class="language-ts">interface DesktopWindow {
   id: string
@@ -20,113 +166,30 @@
   x: number
   y: number
   z: number
-  width?: number
-  height?: number
   minimized: boolean
   maximized: boolean
   // rect to restore after un-maximizing/un-snapping
   restore?: { x: number, y: number, width?: number, height?: number }
 }</code></pre>
-<p>The template <code>v-for</code>s over the array and positions each window with an inline <code>style</code>. Rendering is Vue's problem; the composable only ever mutates numbers.</p>
-<h2>focus is a z-index counter</h2>
-<p>&quot;Bring to front&quot; is the oldest trick in the book: keep a monotonic counter and hand the focused window the next value.</p>
+<p>The template <code>v-for</code>s over the array and positions each window with an inline style. Rendering is Vue's problem; the composable only ever mutates numbers.</p>
+<p>&quot;Bring to front&quot; is the oldest trick in the book — a monotonic counter:</p>
 <pre><code class="language-ts">let zCounter = 10
 const focusWindow = (win: DesktopWindow) =&gt; {
   win.z = ++zCounter
 }</code></pre>
-<p>That single line also powers <strong>alt-tab</strong>. If focus is just &quot;highest z&quot;, switching windows is sorting the open ones by <code>z</code> and bumping whichever comes next:</p>
-<pre><code class="language-ts">const cycleWindows = (dir = 1) =&gt; {
-  const open = windows.value.filter((w) =&gt; !w.minimized)
-  if (open.length &lt; 2) return
-  const byStack = [...open].sort((a, b) =&gt; a.z - b.z)
-  const top = byStack.length - 1
-  focusWindow(byStack[(top + dir + byStack.length) % byStack.length])
-}</code></pre>
-<p>(Caveat: the OS usually eats real Alt+Tab before the page sees it. The taskbar stays the reliable switcher — this is a bonus for whoever's window manager doesn't grab it.)</p>
-<h2>one listener drags every window</h2>
-<p>Each titlebar's <code>pointerdown</code> records which window is being dragged and the grab offset. Then a <em>single</em> window-level <code>pointermove</code> does the math for whichever window is currently active — no per-window listeners to add and tear down:</p>
-<pre><code class="language-ts">useEventListener('pointermove', (event) =&gt; {
-  if (!dragging) return
-  dragging.x = clamp(event.clientX - dragOffset.x, 0, innerWidth - 120)
-  dragging.y = clamp(event.clientY - dragOffset.y, 0, innerHeight - 80)
-  snapHint.value = edgeZone(event.clientX, event.clientY)
-})</code></pre>
-<h2>snapping needs a ghost</h2>
-<p>Aero-snap has a secret: the preview. Drag a window to the edge and Windows shows a translucent rectangle of where it will land <em>before</em> you let go. Without it, snapping feels like the app twitching.</p>
-<p>So <code>edgeZone()</code> returns <code>'left' | 'right' | 'top' | null</code> based on how close the pointer is to a screen edge, and a computed turns that into a rectangle:</p>
-<pre><code class="language-ts">const snapPreview = computed(() =&gt; {
-  if (!snapHint.value) return null
-  const half = Math.floor(innerWidth / 2)
-  const height = innerHeight - TASKBAR_PX
-  if (snapHint.value === 'left') return { x: 0, y: 0, width: half, height }
-  if (snapHint.value === 'right') return { x: half, y: 0, width: half, height }
-  return { x: 0, y: 0, width: innerWidth, height } // top → maximize
-})</code></pre>
-<p>The desktop renders one ghost <code>&lt;div&gt;</code> at that rect with a CSS transition on <code>left/top/width/height</code>, so it glides as you slide along the edge. On <code>pointerup</code>, the same <code>edgeZone</code> decides whether to actually snap — the preview never lies, because it runs the exact function the drop does.</p>
-<h2>the restore rect</h2>
-<p>Maximizing and snapping both need an undo. Before either, we stash the current geometry; restoring pops it back:</p>
-<pre><code class="language-ts">const toggleMaximize = (win) =&gt; {
-  if (win.maximized) { win.maximized = false; restoreRect(win) }
-  else { saveRestoreRect(win); win.maximized = true }
-}</code></pre>
-<p>Dragging a maximized window &quot;peels&quot; it off under the cursor — clear <code>maximized</code>, restore the old size, re-centre it on the pointer, keep dragging. Little touches like that are the difference between &quot;divs that move&quot; and something that feels like a desktop.</p>
-<p>None of this is load-bearing. It's a portfolio easter egg. But building a window manager is one of those exercises where the real thing turns out to be a surprisingly small pile of good ideas — a counter, an array, and one honest preview.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title><![CDATA[giving my fake OS its own route]]></title>
-      <link>https://laurensverspeek.nl/blog/an-os-on-its-own-route</link>
-      <guid>https://laurensverspeek.nl/blog/an-os-on-its-own-route</guid>
-      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[lvOS was a fixed overlay with a dead scrollbar and no shareable URL. moving it to /desktop fixed both — and taught me where overlays quietly lie.]]></description>
-      <content:encoded><![CDATA[<p><a href="https://laurensverspeek.nl/blog/a-window-manager-in-a-div">lvOS</a> — the pretend desktop hiding in this site — started life as an <em>overlay</em>. Type <code>desktop</code> in the terminal, a <code>useState</code> flag flips to <code>true</code>, and a <code>position: fixed</code> <code>&lt;div&gt;</code> slams over the whole page at <code>z-index: 95</code>. It worked. It also had two tells that it wasn't really a screen of its own.</p>
-<h2>the dead scrollbar</h2>
-<p>The overlay covered the viewport, but the <em>page underneath it was still there</em> — hero, footer, all of it, taller than the screen. So the browser still showed a scrollbar. You could scroll a page you couldn't see, behind an OS that didn't move. A tiny thing, but it broke the illusion every time.</p>
-<p>The honest fix isn't &quot;hide the scrollbar.&quot; It's to stop having a tall page behind the desktop at all. That means the desktop shouldn't be an overlay on a page — it should <em>be</em> the page.</p>
-<h2>overlay → route</h2>
-<p>So lvOS moved to a real route, <code>/desktop</code>, with a bare layout that renders nothing but the desktop:</p>
-<pre><code class="language-vue">&lt;!-- layouts/desktop.vue --&gt;
-&lt;template&gt;
-  &lt;div class=&quot;lvos-shell&quot;&gt;&lt;slot /&gt;&lt;/div&gt;
-&lt;/template&gt;</code></pre>
-<pre><code class="language-vue">&lt;!-- pages/desktop.vue --&gt;
-&lt;template&gt;
-  &lt;ClientOnly&gt;
-    &lt;WebDesktop /&gt;
-  &lt;/ClientOnly&gt;
-&lt;/template&gt;
-
-&lt;script setup lang=&quot;ts&quot;&gt;
-definePageMeta({ layout: 'desktop' })
-useHead({ title: 'lvOS — Laurens Verspeek', htmlAttrs: { class: 'is-lvos' } })
-&lt;/script&gt;</code></pre>
-<p>No navbar, no footer, no background field — so there's no tall content to scroll. The <code>is-lvos</code> class on <code>&lt;html&gt;</code> locks it down for good:</p>
-<pre><code class="language-scss">html.is-lvos,
-html.is-lvos body {
-  overflow: hidden;
-}</code></pre>
-<p>Scrollbar gone, because there's genuinely nothing to scroll.</p>
-<h2>the flag becomes a URL</h2>
-<p>The nicest part is what <em>disappeared</em>. The old model needed a global <code>desktopActive</code> flag, a plugin to read <code>?desktop</code> from the query string, a watcher to lazy-mount the component, and <code>desktopActive.value = false</code> sprinkled through every &quot;log out&quot; and &quot;open this project&quot; handler. All of it existed to fake navigation.</p>
-<p>Once <code>/desktop</code> is a real route, navigation is navigation:</p>
-<pre><code class="language-ts">// booting the desktop is now just... going there
-const logout = () =&gt; router.push('/')
+<p>That single line also powers alt-tab. If focus is just &quot;highest z&quot;, then switching windows is sorting the open ones by <code>z</code> and bumping whichever comes next. One idea, two features.</p>
+<p>Dragging is one window-level <code>pointermove</code> doing the math for whichever window is active — no per-window listeners to add and tear down. And snapping needs a ghost: aero-snap's secret is the preview, the translucent rectangle showing where the window will land <em>before</em> you let go. Without it, snapping feels like the app twitching. So <code>edgeZone()</code> returns <code>'left' | 'right' | 'top' | null</code>, a computed turns that into a rect, and one ghost <code>&lt;div&gt;</code> glides to it. On <code>pointerup</code>, the same <code>edgeZone</code> decides where the window actually goes — the preview never lies, because it runs the exact function the drop does.</p>
+<h2>the overlay that had to become a route</h2>
+<p>lvOS started as an <em>overlay</em>: a <code>useState</code> flag flipped to <code>true</code> and a <code>position: fixed</code> div slammed over the page at <code>z-index: 95</code>. It worked, and it had two tells.</p>
+<p>The first was a dead scrollbar. The overlay covered the viewport, but the page underneath was still there — hero, footer, all of it, taller than the screen. So the browser still showed a scrollbar. You could scroll a page you couldn't see, behind an OS that didn't move.</p>
+<p>The honest fix isn't &quot;hide the scrollbar&quot;. It's to stop having a tall page behind the desktop at all — which means the desktop shouldn't be an overlay <em>on</em> a page, it should <em>be</em> the page. So lvOS moved to a real route, <code>/desktop</code>, with a bare layout that renders nothing else and an <code>is-lvos</code> class on <code>&lt;html&gt;</code> that locks scrolling for good. Scrollbar gone, because there is genuinely nothing to scroll.</p>
+<p>The nicer part is what disappeared. The old model needed a global flag, a plugin to read <code>?desktop</code> from the query string, a watcher to lazy-mount the component, and <code>desktopActive.value = false</code> sprinkled through every &quot;log out&quot; and &quot;open this project&quot; handler. All of it existed to fake navigation. Once <code>/desktop</code> is a route, navigation is just navigation:</p>
+<pre><code class="language-ts">const logout = () =&gt; router.push('/')
 const openProject = (slug: string) =&gt; router.push(`/projects/${slug}`)</code></pre>
-<p>The terminal's <code>desktop</code> command, the command palette, and the footer link all <code>navigateTo('/desktop')</code>. The <code>?desktop</code> plugin got deleted. A whole piece of shared state evaporated, replaced by the router — which was always the right tool for &quot;show a different screen.&quot;</p>
-<p>And because it's a route, it's shareable: <a href="https://laurensverspeek.nl/desktop">laurensverspeek.nl/desktop</a> boots you straight in. A taskbar button hands it to the real Fullscreen API for the full effect:</p>
-<pre><code class="language-ts">const { isFullscreen, toggle } = useFullscreen()</code></pre>
-<h2>the lesson</h2>
-<p>An overlay is a screen you're <em>pretending</em> is on top. Most of the time the pretense is free. But the moment the thing underneath can still scroll, or someone wants to link to it, the seams show. If a view is really its own place, give it its own route — the framework already knows how to get there.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title><![CDATA[one Game of Life, four places]]></title>
-      <link>https://laurensverspeek.nl/blog/game-of-life-everywhere</link>
-      <guid>https://laurensverspeek.nl/blog/game-of-life-everywhere</guid>
-      <pubDate>Wed, 08 Jul 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[the hero, a full page, an ASCII terminal toy and a desktop window all run the same 30-line Conway engine. a small lesson in keeping the rules pure.]]></description>
-      <content:encoded><![CDATA[<p>The centerpiece on my <a href="https://laurensverspeek.nl/">home page</a> is Conway's Game of Life — a field of amber cells quietly evolving, that you can draw into and click to open <a href="https://laurensverspeek.nl/life">full-screen</a>. It also runs as an ASCII toy in the <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">terminal</a> (<code>life</code>) and as a window inside <a href="https://laurensverspeek.nl/blog/a-window-manager-in-a-div">lvOS</a>. Four surfaces, one engine.</p>
-<p>The trick to that isn't cleverness — it's <em>refusing to mix the rules with the pixels</em>.</p>
-<h2>the rules are 30 lines and no canvas</h2>
-<p>The simulation knows nothing about drawing, DOM, or Vue. It's a <code>Uint8Array</code> and one function:</p>
+<p>A whole piece of shared state evaporated, replaced by the router — which was always the right tool for &quot;show a different screen&quot;. An overlay is a screen you're <em>pretending</em> is on top; the moment the thing underneath can still scroll, or someone wants to link to it, the seams show.</p>
+<h2>one Game of Life, four places</h2>
+<p>The centrepiece on the <a href="https://laurensverspeek.nl/">home page</a> is Conway's Game of Life — a field of amber cells you can draw into, and click to open <a href="https://laurensverspeek.nl/life">full-screen</a>. It also runs as an ASCII toy in the terminal (<code>life</code>) and as a window inside lvOS. Four surfaces, one engine.</p>
+<p>The trick isn't cleverness. It's <em>refusing to mix the rules with the pixels</em>. The simulation knows nothing about drawing, DOM or Vue — it's a <code>Uint8Array</code> and one function:</p>
 <pre><code class="language-ts">export function step(grid: Grid, cols: number, rows: number, next = new Uint8Array(grid.length)): Grid {
   for (let y = 0; y &lt; rows; y++) {
     for (let x = 0; x &lt; cols; x++) {
@@ -145,89 +208,16 @@ const openProject = (slug: string) =&gt; router.push(`/projects/${slug}`)</code>
   }
   return next
 }</code></pre>
-<p>Because it's pure, it's <em>testable</em> — a blinker oscillates with period two, a block stays put, a lone cell dies. Those are unit tests, not something I eyeball in the browser:</p>
-<pre><code class="language-ts">it('oscillates a blinker with period 2', () =&gt; {
-  const gen1 = step(horizontal, 5, 5)
-  expect([...gen1]).toEqual([...vertical])
-  expect([...step(gen1, 5, 5)]).toEqual([...horizontal])
-})</code></pre>
-<p>The board wraps at the edges (<code>% cols</code>), which is why gliders sail off one side and reappear on the other instead of dying in a corner.</p>
-<h2>the canvas boilerplate is a composable</h2>
-<p>Every on-screen version needs the same tedious ceremony: size the canvas to its container, scale for the device pixel ratio, pause the loop when the tab is hidden or the visitor prefers reduced motion, and clean up on unmount. That's <code>useCanvasScene</code>:</p>
-<pre><code class="language-ts">const { redraw } = useCanvasScene(canvasRef, containerRef, {
-  onResize: (ctx, w, h) =&gt; { /* size the grid, seed, draw one frame */ },
-  onFrame:  (ctx, dt)   =&gt; { acc += dt; if (acc &gt;= STEP_MS) { acc = 0; advance() } }
-})</code></pre>
-<p>The hero and the <code>/life</code> page hand it different <code>onFrame</code> callbacks — the hero ticks on a fixed interval, the page paces itself off a speed slider — but neither re-implements resize or the animation loop. The ASCII terminal version skips the composable entirely; its &quot;canvas&quot; is a <code>&lt;pre&gt;</code>, so it just joins <code>█</code> and space into strings.</p>
-<h2>the payoff</h2>
-<p>When I wanted Life in a fourth place — a draggable lvOS window — it was an afternoon, not a project. Import the engine, hand <code>useCanvasScene</code> a draw function, add three buttons. No rules were rewritten, so no rules could drift out of sync between the hero and the window.</p>
-<p>The general shape keeps showing up: the <em>interesting</em> part (Conway's four rules) is tiny and pure; the <em>bulky</em> part (canvas lifecycles) is boring and shared. Keep those two apart and the same idea renders anywhere you point it — even at a <code>&lt;pre&gt;</code>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title><![CDATA[putting a playable snake game in a fake terminal]]></title>
-      <link>https://laurensverspeek.nl/blog/snake-in-the-terminal</link>
-      <guid>https://laurensverspeek.nl/blog/snake-in-the-terminal</guid>
-      <pubDate>Tue, 07 Jul 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[a game loop, a <pre> tag, and stealing the keyboard from vue — no canvas required.]]></description>
-      <content:encoded><![CDATA[<p>My site has a <a href="https://laurensverspeek.nl/blog/rebuilding-this-site">terminal</a> — so obviously it needed <code>snake</code>. The fun constraint: the &quot;screen&quot; is just a <code>&lt;pre&gt;</code> element in a Vue component. No canvas, no WebGL, just monospace text re-rendered 8 times per second.</p>
-<h2>the game is a string factory</h2>
-<p>A game here is a function that receives two callbacks: one to draw a frame, one to report the final output when the game ends.</p>
-<pre><code class="language-ts">export interface GameCallbacks {
-  onFrame(frame: string): void
-  onEnd(lines: string[]): void
-}</code></pre>
-<p>Every tick, snake builds the whole board as a string — box-drawing characters for the walls, <code>█</code> for the body, <code>●</code> for the food — and hands it to <code>onFrame</code>. Vue re-renders the <code>&lt;pre&gt;</code>, and because the font is monospace, the &quot;pixels&quot; line up perfectly:</p>
-<pre><code class="language-ts">function render() {
-  const grid = buildGrid()          // 26 × 12 characters
-  grid[food.y][food.x] = '●'
-  snake.forEach((cell, i) =&gt; {
-    grid[cell.y][cell.x] = i === 0 ? '▓' : '█'
-  })
-  onFrame(header + grid.map((row) =&gt; row.join(' ')).join('\n'))
-}</code></pre>
-<p>Diffing a full-frame string sounds wasteful, but the frame is ~700 characters. The DOM update is nothing; your GPU yawns.</p>
-<h2>stealing the keyboard</h2>
-<p>The terminal normally routes keys to an <code>&lt;input&gt;</code>. While a game is active, the input is hidden and a window-level listener feeds keys to the game instead:</p>
-<pre><code class="language-ts">useEventListener('keydown', (event) =&gt; {
-  if (!isOpen.value || !activeGame.value) return
-  if (activeGame.value.onKey(event.key)) event.preventDefault()
-})</code></pre>
-<p>The game returns <code>true</code> for keys it consumed, so arrows stop scrolling the page but <code>F5</code> still works. <code>q</code> and <code>Escape</code> end the game instead of closing the terminal — that one took a bug report from myself to get right.</p>
-<h2>the segfault</h2>
-<p>When you die, the terminal prints:</p>
-<pre><code class="language-bash">game over — the snake has encountered a segfault
-final score: 120
-new high score! previous best: 80</code></pre>
-<p>High scores persist in <code>localStorage</code>, because if you're going to lose to a snake made of Unicode blocks, the least I can do is remember it.</p>
-<p>Try it: press <code>~</code>, type <code>snake</code>. My high score is embarrassing, please beat it.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title><![CDATA[rebuilding my portfolio after 4 years of "coming soon(ish)"]]></title>
-      <link>https://laurensverspeek.nl/blog/rebuilding-this-site</link>
-      <guid>https://laurensverspeek.nl/blog/rebuilding-this-site</guid>
-      <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[from an unfinished nuxt 2 page to a nuxt 4 site with a terminal, games and too many easter eggs.]]></description>
-      <content:encoded><![CDATA[<p>For four years, my personal website consisted of a hero, six project cards, and the sentence <em>&quot;My personal slice of the web is still under construction and will be live if I can find some time to finish it ;)&quot;</em>.</p>
-<p>I never found the time. So instead of finishing v1, I deleted it.</p>
-<h2>the stack</h2>
-<p>The rebuild is <a href="https://nuxt.com">Nuxt 4</a> + TypeScript + <a href="https://bulma.io">Bulma 1</a>. Bulma might seem like an odd choice next to the utility-css crowd, but v1 moved everything to CSS variables, which makes theming almost free:</p>
-<pre><code class="language-scss">@use &quot;bulma/sass&quot; with (
-  $family-primary: '&quot;Inter&quot;, sans-serif',
-  $family-code: '&quot;JetBrains Mono&quot;, monospace',
-  $primary: #ffba00
-);</code></pre>
-<p>Dark mode is just <code>data-theme=&quot;dark&quot;</code> on the <code>&lt;html&gt;</code> element — Bulma swaps every variable, and anything custom reads <code>var(--bulma-*)</code> so it follows along. Even the canvas animations read their colors from the CSS variables at runtime.</p>
-<h2>the terminal</h2>
-<p>The gimmick I actually wanted to build: press <code>~</code> and you get a terminal. It's not an emulator — it's a Vue component and a composable with a command map:</p>
-<pre><code class="language-ts">const commands: Record&lt;string, TerminalCommand&gt; = {
-  help:     { description: 'List available commands', exec: () =&gt; ... },
-  projects: { description: 'List projects', exec: (args) =&gt; ... },
-  cd:       { description: 'Go to a page', exec: (args) =&gt; navigate(args[0]) },
-  // ...30 or so more
-}</code></pre>
-<p>State lives in <code>useState</code> so the navbar button, the footer link and the overlay all talk to the same terminal. Commands can navigate the router, toggle the theme, fetch the GitHub API, or take over the keyboard entirely — which is how <a href="https://laurensverspeek.nl/blog/snake-in-the-terminal">snake ended up in there</a>.</p>
+<p>Because it's pure, it's <em>testable</em> — a blinker oscillates with period two, a block stays put, a lone cell dies. Those are unit tests, not something I eyeball in the browser.</p>
+<p>The bulky, boring half — sizing the canvas to its container, scaling for device pixel ratio, pausing when the tab is hidden or the visitor prefers reduced motion, cleaning up on unmount — lives once, in a <code>useCanvasScene</code> composable. The hero and the <code>/life</code> page hand it different <code>onFrame</code> callbacks; neither reimplements the animation loop. The ASCII version skips the composable entirely, because its canvas is a <code>&lt;pre&gt;</code>.</p>
+<p>The payoff: when I wanted Life in a fourth place, it was an afternoon, not a project. No rules were rewritten, so no rules could drift.</p>
+<p>That shape kept showing up across the whole rebuild. The <em>interesting</em> part is usually tiny and pure; the <em>bulky</em> part is boring and shared. Keep them apart and the same idea renders anywhere you point it.</p>
+<h2>a time machine, sort of</h2>
+<p>The newest piece is the one I'm most fond of. The site deploys to GitHub Pages, which means every past build still exists in the <code>gh-pages</code> branch history — and a public repo means a CDN will happily serve any of them. So there's a service worker that intercepts navigations and rewrites them to fetch a <em>past</em> deploy instead of the current one.</p>
+<p>Type <code>git checkout v1.4.0</code> in the terminal and the site becomes itself, six months ago, in place. It's reachable four ways off one manifest — the lvOS app, the terminal, the ⌘K palette, and a shareable <code>/?v=&lt;version&gt;</code> link that travels on load — but there's only one <code>useTimeMachine</code> behind all four.</p>
+<p>That's also the ruling principle for the PWA. There is exactly <strong>one</strong> service worker: Workbox precaches the build (including the Nuxt Content SQLite wasm, so content queries work offline) and <code>importScripts</code> the time-machine worker into it. Two registrations fighting over the same scope is a bug that only shows up on someone else's phone, three weeks later.</p>
 <h2>the easter eggs</h2>
-<p>I won't list them all (run <code>secrets</code>), but the rule I set myself: every easter egg has to be discoverable from a hint somewhere else. The console hints at the terminal, the terminal hints at the hidden commands, the hidden commands hint at... you get it.</p>
+<p>I won't list them all — run <code>secrets</code>, or visit the <code>/museum</code>, which catalogues every feature as an exhibit. The rule I set myself: every easter egg has to be discoverable from a hint somewhere else. The console hints at the terminal, the terminal hints at the hidden commands, the hidden commands hint at… you get it.</p>
 <p>If you find one that isn't hinted at anywhere, that's a bug. Or is it?</p>]]></content:encoded>
     </item>
   </channel>
