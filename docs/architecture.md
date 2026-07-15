@@ -130,7 +130,18 @@ SQLite `wasm`, so client-side content queries work offline) and `importScripts`
 the Time Machine SW (`public/sw-timemachine.js`) into it — no second
 registration. Navigations are NetworkFirst with a capped runtime cache, falling
 back to a self-contained `/offline` page (with a pocket snake) when both network
-and cache miss.
+and cache miss. The manifest `<link>` itself is emitted by `<VitePwaManifest />`
+in `app.vue` — the module does NOT inject it on its own, and without it nothing
+is installable. Dismissing the install chip only hides the chip: the deferred
+`beforeinstallprompt` stays parked so the explicit terminal `install` command
+keeps working. The manifest also carries install-sheet `screenshots` (one wide,
+one narrow), captured from the real build by
+`scripts/generate-pwa-screenshots.mjs` in postgenerate, so Chrome shows the
+rich install UI. When time-travelling, the injected bottom bar collapses to a
+corner handle; its hover-peek (hold-open while the mouse is on the bar) is
+scoped to `(hover:hover)` devices because touch browsers stick `:hover` on the
+last tap, and the SW distinguishes a snapshot page that truly wasn't in a
+deploy (404) from jsDelivr being unreachable (503 with honest copy).
 
 ## Realtime (the cursors relay, opt-in)
 
