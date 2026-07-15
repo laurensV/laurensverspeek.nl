@@ -15,12 +15,11 @@
 import { projects } from '~/data/projects'
 
 const ogImage = `${SITE_URL}/og/page-projects.png`
-useHead({ title: 'Projects — Laurens Verspeek' })
-useSeoMeta({
-  ogTitle: 'Projects',
-  ogUrl: `${SITE_URL}/projects`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+useSeo({
+  title: 'Projects — Laurens Verspeek',
+  description: 'Selected projects by Laurens Verspeek — web apps, blockchain tooling and playful web experiments, each with the story behind it.',
+  path: '/projects',
+  image: ogImage,
+  ogTitle: 'Projects'
 })
 </script>

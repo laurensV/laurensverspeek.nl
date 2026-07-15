@@ -63,14 +63,12 @@
 // pixel-world numbers come from useWorld once we join on mount. Everything reads
 // "offline" when NUXT_PUBLIC_CURSORS_WS is unset — no fake zeros.
 const ogImage = `${SITE_URL}/og/default.png`
-useHead({ title: 'Status — Laurens Verspeek' })
-useSeoMeta({
+useSeo({
+  title: 'Status — Laurens Verspeek',
   description: 'Live health of the multiplayer layer on laurensverspeek.nl — relay status, who is online now, and which realtime features are available.',
-  ogTitle: 'Multiplayer status',
-  ogUrl: `${SITE_URL}/status`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/status',
+  image: ogImage,
+  ogTitle: 'Multiplayer status'
 })
 
 const relayConfigured = Boolean(useRuntimeConfig().public.cursorsWs)

@@ -77,14 +77,12 @@
 <script setup lang="ts">
 import { tagHue } from '~/utils/tagHue'
 
-useHead({ title: 'Blog — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-blog.png`
-useSeoMeta({
+useSeo({
+  title: 'Blog — Laurens Verspeek',
   description: 'Blog of Laurens Verspeek: code, blockchain and website experiments.',
-  ogUrl: `${SITE_URL}/blog`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/blog',
+  image: ogImage
 })
 
 const { data: posts, pending, error } = await useAsyncData('blog-posts', () =>

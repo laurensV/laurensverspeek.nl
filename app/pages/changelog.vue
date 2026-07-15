@@ -58,14 +58,12 @@
 <script setup lang="ts">
 import type { GitCommit } from '~/utils/terminal/gitLog'
 
-useHead({ title: 'Changelog — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-changelog.png`
-useSeoMeta({
+useSeo({
+  title: 'Changelog — Laurens Verspeek',
   description: 'The living changelog of laurensverspeek.nl — real commits, baked at build time.',
-  ogUrl: `${SITE_URL}/changelog`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/changelog',
+  image: ogImage
 })
 
 // the same prerendered history the terminal's git command reads

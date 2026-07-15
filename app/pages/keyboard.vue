@@ -29,14 +29,12 @@
 import { siteShortcuts, desktopShortcuts } from '~/data/shortcuts'
 
 const ogImage = `${SITE_URL}/og/page-keyboard.png`
-useHead({ title: 'Keyboard reference — Laurens Verspeek' })
-useSeoMeta({
+useSeo({
+  title: 'Keyboard reference — Laurens Verspeek',
   description: 'Every keyboard shortcut and trick across laurensverspeek.nl — the site, the terminal and lvOS.',
-  ogTitle: 'Keyboard reference',
-  ogUrl: `${SITE_URL}/keyboard`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/keyboard',
+  image: ogImage,
+  ogTitle: 'Keyboard reference'
 })
 
 const print = () => window.print()

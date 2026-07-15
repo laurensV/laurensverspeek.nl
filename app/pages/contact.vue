@@ -76,14 +76,12 @@ const sshShort = computed(() => {
   return `${type} ${body.slice(0, 12)}…${body.slice(-8)}`
 })
 
-useHead({ title: 'Contact — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-contact.png`
-useSeoMeta({
+useSeo({
+  title: 'Contact — Laurens Verspeek',
   description: 'Contact Laurens Verspeek — run the contact.sh wizard or send a plain email.',
-  ogUrl: `${SITE_URL}/contact`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/contact',
+  image: ogImage
 })
 
 // half-block ascii QR pointing at the prerendered vCard — built client-side from

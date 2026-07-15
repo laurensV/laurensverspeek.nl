@@ -40,14 +40,12 @@ import { now } from '~/data/now'
 // derived from git at build time: when app/data/now.ts last actually changed
 const updated = useRuntimeConfig().public.nowUpdated
 
-useHead({ title: 'Now — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-now.png`
-useSeoMeta({
+useSeo({
+  title: 'Now — Laurens Verspeek',
   description: 'What Laurens Verspeek is building, learning and tinkering with right now.',
-  ogUrl: `${SITE_URL}/now`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/now',
+  image: ogImage
 })
 
 // a process per "now" item — a running program is what a `now` page really is

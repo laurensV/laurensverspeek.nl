@@ -44,14 +44,12 @@
 // A public stats page over GoatCounter's tokenless counter endpoints. They
 // expose per-path totals only (time series need an API token), so this renders
 // honest terminal-style bars per page rather than fake sparklines.
-useHead({ title: 'Stats — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-stats.png`
-useSeoMeta({
+useSeo({
+  title: 'Stats — Laurens Verspeek',
   description: 'Public, cookie-free visitor stats for laurensverspeek.nl.',
-  ogUrl: `${SITE_URL}/stats`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/stats',
+  image: ogImage
 })
 
 const { goatcounter: code } = useRuntimeConfig().public

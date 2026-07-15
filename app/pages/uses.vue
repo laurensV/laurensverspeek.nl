@@ -48,14 +48,12 @@
 <script setup lang="ts">
 import { uses } from '~/data/uses'
 
-useHead({ title: 'Uses — Laurens Verspeek' })
 const ogImage = `${SITE_URL}/og/page-uses.png`
-useSeoMeta({
+useSeo({
+  title: 'Uses — Laurens Verspeek',
   description: 'The gear, software and stack Laurens Verspeek uses to build things.',
-  ogUrl: `${SITE_URL}/uses`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/uses',
+  image: ogImage
 })
 
 const kebab = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-')

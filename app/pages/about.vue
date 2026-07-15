@@ -49,12 +49,11 @@
 import { profile } from '~/data/profile'
 
 const ogImage = `${SITE_URL}/og/page-about.png`
-useHead({ title: 'About — Laurens Verspeek' })
-useSeoMeta({
-  ogTitle: 'About Laurens',
-  ogUrl: `${SITE_URL}/about`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+useSeo({
+  title: 'About — Laurens Verspeek',
+  description: 'About Laurens Verspeek — full-stack developer and blockchain engineer, co-founder of Nosana and Effect.AI. The story, skills and timeline behind the work.',
+  path: '/about',
+  image: ogImage,
+  ogTitle: 'About Laurens'
 })
 </script>

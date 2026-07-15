@@ -52,14 +52,12 @@ import { museum, exhibitCount } from '~/data/museum'
 const mode = ref<'catalog' | 'walk'>('catalog')
 
 const ogImage = `${SITE_URL}/og/page-museum.png`
-useHead({ title: 'The Museum — Laurens Verspeek' })
-useSeoMeta({
+useSeo({
+  title: 'The Museum — Laurens Verspeek',
   description: 'Every feature and easter egg on laurensverspeek.nl, catalogued like museum exhibits.',
-  ogTitle: 'The Museum',
-  ogUrl: `${SITE_URL}/museum`,
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/museum',
+  image: ogImage,
+  ogTitle: 'The Museum'
 })
 </script>
 

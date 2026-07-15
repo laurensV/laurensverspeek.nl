@@ -22,17 +22,14 @@
 <script setup lang="ts">
 // A hidden corner: not in the nav, not in the sitemap — found through the
 // terminal (`world open`), the museum, or word of mouth.
-useHead({
-  title: 'The Pixel World — Laurens Verspeek',
-  meta: [{ name: 'robots', content: 'noindex' }]
-})
+useHead({ meta: [{ name: 'robots', content: 'noindex' }] })
 const ogImage = `${SITE_URL}/og/page-world.png`
-useSeoMeta({
+useSeo({
+  title: 'The Pixel World — Laurens Verspeek',
   description: 'A hidden, shared pixel canvas. One pixel at a time.',
-  ogTitle: 'The Pixel World',
-  ogImage,
-  twitterCard: 'summary_large_image',
-  twitterImage: ogImage
+  path: '/world',
+  image: ogImage,
+  ogTitle: 'The Pixel World'
 })
 </script>
 
