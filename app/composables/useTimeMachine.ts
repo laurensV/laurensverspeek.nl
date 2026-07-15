@@ -83,28 +83,30 @@ export function resolveDeployRef(rawRef: string, deploys: Deploy[], commits: { h
   const ref = rawRef.trim().toLowerCase()
   if (!ref || REFS_TO_PRESENT.has(ref)) return 'present'
 
+  // the live build is the present, not a snapshot you travel to — resolving any
+  // ref (HEAD~0, today's date, the newest tag) to the current deploy means
+  // "present", so the checkout handler returns you home instead of theatrically
+  // pretending to time-travel and then snapping back.
+  const asTarget = (d: Deploy | null | undefined): TravelTarget => (d ? (d.current ? 'present' : d) : null)
+
   // HEAD~N / @~N / ~N — N deploys back (0 = newest)
   const rel = /^(?:head|@)?~(\d+)$/.exec(ref)
-  if (rel) return deploys[Number(rel[1])] ?? null
+  if (rel) return asTarget(deploys[Number(rel[1])])
 
   // a date — the version that was live on (or most recently before) that day
   if (/^\d{4}-\d{2}-\d{2}$/.test(ref)) {
-    return deploys.find((d) => d.date <= ref) ?? deploys.at(-1) ?? null
+    return asTarget(deploys.find((d) => d.date <= ref) ?? deploys.at(-1))
   }
 
   // an exact deploy: its release tag (v2.0.4), gh-pages sha, or source commit
   const exact = deploys.find(
     (d) => d.tag?.toLowerCase() === ref || (!!d.sha && d.sha.startsWith(ref)) || d.source.startsWith(ref)
   )
-  // the live build is the present, not a snapshot to travel to
-  if (exact) return exact.current ? 'present' : exact
+  if (exact) return asTarget(exact)
 
   // any other real commit from the log → the deploy that shipped it
   const i = commits.findIndex((c) => sameCommit(c.hash, ref))
-  if (i >= 0) {
-    const shipped = deployForCommitIndex(deploys, commits, i)
-    return shipped?.current ? 'present' : shipped
-  }
+  if (i >= 0) return asTarget(deployForCommitIndex(deploys, commits, i))
 
   return null
 }

@@ -111,4 +111,15 @@ describe('resolveDeployRef with a live/current entry', () => {
     expect(resolveDeployRef('v2.0.4', withLive, liveCommits)).toBe(deploys[0])
     expect(resolveDeployRef('2222222', withLive, liveCommits)).toBe(deploys[1])
   })
+
+  it('resolves HEAD~0 and the current date to the present, not the live snapshot', () => {
+    // HEAD~0 / ~0 point at the newest (live) deploy, and a date on/after the live
+    // build resolves to it too — both must mean "present" so `git checkout` returns
+    // home instead of faking a trip to the past
+    expect(resolveDeployRef('HEAD~0', withLive, liveCommits)).toBe('present')
+    expect(resolveDeployRef('~0', withLive, liveCommits)).toBe('present')
+    expect(resolveDeployRef('2026-07-15', withLive, liveCommits)).toBe('present')
+    // older HEAD~N still snapshots
+    expect(resolveDeployRef('HEAD~1', withLive, liveCommits)).toBe(deploys[0])
+  })
 })
