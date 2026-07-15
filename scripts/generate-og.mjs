@@ -3,7 +3,7 @@
 // preview card without a runtime server or a rasterizer dependency.
 // Runs automatically before `nuxt generate` via the `pregenerate` npm script.
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { createJiti } from 'jiti'
@@ -153,4 +153,15 @@ for (const file of readdirSync(blogDir).filter((f) => f.endsWith('.md'))) {
   }))
 }
 
-console.log(`[og] generated ${written.length} OG images → public/og/`)
+// prune stale cards a previous run left behind (e.g. project-<oldslug>.svg after
+// a slug rename) so no orphan card is copied into the build and rasterized
+const keep = new Set(written.map((name) => `${name}.svg`))
+let pruned = 0
+for (const file of readdirSync(outDir).filter((f) => f.endsWith('.svg'))) {
+  if (!keep.has(file)) {
+    unlinkSync(join(outDir, file))
+    pruned++
+  }
+}
+
+console.log(`[og] generated ${written.length} OG images → public/og/${pruned ? ` (pruned ${pruned} stale)` : ''}`)
