@@ -5,7 +5,7 @@ import { searchSections } from '~/utils/terminal/search'
 import { postSlug, postSlugCandidates, createPostTools } from '~/utils/terminal/postHelpers'
 
 // pages cd used to warp to; now `goto` does, plus the deeper cuts
-const GOTO_PAGES: string[] = [...PAGES, 'stats', 'changelog', 'museum', 'life', 'world', 'desktop']
+const GOTO_PAGES: string[] = [...PAGES, 'stats', 'changelog', 'museum', 'life', 'world', 'desktop', 'keyboard', 'status']
 
 // Commands for browsing the site's content: projects, blog posts, search.
 
@@ -34,7 +34,7 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
       category: 'content',
       usage: 'goto <page>',
       description: `Navigate the site (${PAGES.join(', ')}, …)`,
-      examples: ['goto blog', 'goto uses', `goto desktop  (cd stays in the shell — goto is the door)`],
+      examples: ['goto blog', 'goto keyboard', `goto desktop  (cd stays in the shell — goto is the door)`],
       argCandidates: () => [...GOTO_PAGES],
       exec: (args) => {
         const arg = args[0]
