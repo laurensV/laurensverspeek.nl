@@ -91,23 +91,49 @@ function tmCandidates(pathname, isNav) {
   return [pathname, '/404.html']
 }
 
+// The overlay injected into every snapshot page. It's collapsible so it never
+// permanently blocks the old site's footer: the ⏱ checkbox (checked = open)
+// slides the full bar away to a tiny corner handle that brings it back on click
+// (and peeks it on hover). CSS-only — the old build's own JS may be broken, and
+// a checkbox toggle keeps working regardless.
 function tmOverlay(html, state) {
   const date = (state.date || '').replace(/[<>&"]/g, '')
   const short = (state.sha || '').slice(0, 7)
+  const css =
+    '<style id="__tm_style">' +
+    '#__tm_ck{position:absolute;width:0;height:0;opacity:0;pointer-events:none;}' +
+    '#__tm_bar{position:fixed;left:0;right:0;bottom:0;z-index:2147483647;' +
+    'display:flex;gap:.6rem;align-items:center;justify-content:center;flex-wrap:wrap;' +
+    'padding:.4rem .8rem;background:#101014;color:#f5f5f7;border-top:2px solid #ffba00;' +
+    "font:600 12px/1.4 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;" +
+    'box-shadow:0 -6px 24px rgba(0,0,0,.35);transition:transform .25s ease;}' +
+    '#__tm_handle{position:fixed;left:.6rem;bottom:.6rem;z-index:2147483647;display:none;' +
+    'align-items:center;gap:.35rem;padding:.3rem .55rem;background:#101014;color:#ffba00;' +
+    'border:1px solid #ffba00;border-radius:999px;cursor:pointer;' +
+    "font:700 12px/1 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;" +
+    'box-shadow:0 2px 12px rgba(0,0,0,.4);}' +
+    '#__tm_ck:not(:checked)~#__tm_bar{transform:translateY(110%);}' +
+    '#__tm_ck:not(:checked)~#__tm_handle{display:inline-flex;}' +
+    '#__tm_handle:hover~#__tm_bar{transform:none;}' +
+    '.__tm_link{color:#101014;background:#ffba00;text-decoration:none;' +
+    'padding:.26rem .7rem;border-radius:999px;font-weight:700;white-space:nowrap;}' +
+    '.__tm_min{cursor:pointer;color:#f5f5f7;opacity:.55;padding:0 .3rem;font-weight:700;user-select:none;}' +
+    '.__tm_min:hover{opacity:1;}' +
+    '</style>'
   const bar =
-    '<div id="__tm_bar" role="status" style="position:fixed;left:0;right:0;bottom:0;z-index:2147483647;' +
-    'display:flex;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;' +
-    'padding:.5rem .9rem;background:#101014;color:#f5f5f7;border-top:2px solid #ffba00;' +
-    "font:600 13px/1.4 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;" +
-    'box-shadow:0 -6px 24px rgba(0,0,0,.35);pointer-events:auto;">' +
+    '<input type="checkbox" id="__tm_ck" checked aria-hidden="true">' +
+    '<label id="__tm_handle" for="__tm_ck" title="time machine — show bar" ' +
+    'role="button" aria-label="Show time machine bar">⏱ <span style="opacity:.6">' + short + '</span></label>' +
+    '<div id="__tm_bar" role="status">' +
     '<span style="opacity:.92">⏱ time machine — viewing this site as it was on ' +
     '<b style="color:#ffba00">' + date + '</b> <span style="opacity:.5">· ' + short + '</span></span>' +
-    '<a href="/?__tm_exit=1" style="color:#101014;background:#ffba00;text-decoration:none;' +
-    'padding:.28rem .7rem;border-radius:999px;font-weight:700;white-space:nowrap;">↩ return to the present</a>' +
+    '<a href="/?__tm_exit=1" class="__tm_link">↩ return to the present</a>' +
+    '<label class="__tm_min" for="__tm_ck" title="collapse" aria-label="Collapse time machine bar">▾</label>' +
     '</div>'
-  if (html.includes('</body>')) return html.replace('</body>', bar + '</body>')
-  if (html.includes('</html>')) return html.replace('</html>', bar + '</html>')
-  return html + bar
+  const inject = css + bar
+  if (html.includes('</body>')) return html.replace('</body>', inject + '</body>')
+  if (html.includes('</html>')) return html.replace('</html>', inject + '</html>')
+  return html + inject
 }
 
 async function tmFetchInto(cache, sha, path) {
