@@ -2,20 +2,11 @@
 # Lint only the staged files, without lint-staged's git-stash backup step —
 # lint-staged 16 on git 2.25 throws "Needed a single revision" whenever an
 # untracked file is present, which forced every commit to use --no-verify.
-# This is check-only and touches nothing in the working tree, so it works on
-# any git version. Mirrors CI (eslint . / stylelint) but scoped to staged files.
-staged=$(git diff --cached --name-only --diff-filter=ACMR)
-[ -z "$staged" ] && exit 0
-
-js=$(printf '%s\n' "$staged" | grep -E '\.(ts|vue|mjs)$' || true)
-styles=$(printf '%s\n' "$staged" | grep -E '\.(scss|vue)$' || true)
-
+# Check-only, touches nothing in the working tree, works on any git version.
+# NUL-delimited end to end (git -z | grep -z | xargs -0) so filenames with
+# spaces or newlines are handled; xargs -r skips the linter when nothing matches.
 status=0
-if [ -n "$js" ]; then
-  echo "$js" | xargs eslint || status=1
-fi
-if [ -n "$styles" ]; then
-  echo "$styles" | xargs stylelint || status=1
-fi
+git diff --cached --name-only -z --diff-filter=ACMR | grep -zE '\.(ts|vue|mjs)$' | xargs -0 -r eslint || status=1
+git diff --cached --name-only -z --diff-filter=ACMR | grep -zE '\.(scss|vue)$' | xargs -0 -r stylelint || status=1
 [ "$status" != 0 ] && echo "pre-commit: fix the lint errors above, or commit with --no-verify to skip"
 exit $status
