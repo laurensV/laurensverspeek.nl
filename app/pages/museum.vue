@@ -129,6 +129,15 @@ useSeoMeta({
   white-space: nowrap;
 }
 
+// long `how` values (e.g. "type desktop, or desktop <app>") can't stay on one
+// line at 320px without pushing the plaque — and the page body — off-screen
+@media (max-width: 24rem) {
+  .museum-how {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 .museum-blurb {
   font-size: 0.85rem;
   color: var(--bulma-text);
