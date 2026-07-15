@@ -89,6 +89,11 @@ export function useTerminal() {
   // grows unbounded for the whole session (tail -f alone feeds it ~1.2 lines/s)
   const SCROLLBACK_MAX = 1500
 
+  const writeToPane = (line: TerminalLine) => {
+    const pane = paneLines(activePane.value)
+    pane.push(line)
+    if (pane.length > SCROLLBACK_MAX) pane.splice(0, pane.length - SCROLLBACK_MAX)
+  }
   const push = (type: TerminalLine['type'], text: string, html = false) => {
     const line: TerminalLine = { id: lineId++, type, text, html }
     if (type === 'error') runFailed = true
@@ -96,10 +101,14 @@ export function useTerminal() {
       sink(line)
       return
     }
-    const pane = paneLines(activePane.value)
-    pane.push(line)
-    if (pane.length > SCROLLBACK_MAX) pane.splice(0, pane.length - SCROLLBACK_MAX)
+    writeToPane(line)
   }
+  // ^C must reach the visible transcript even while an async command holds a
+  // capture sink open (`| copy`, `> file`, `| jq`) — routing it through push()
+  // would divert the echo into the captured output and corrupt the
+  // clipboard/file/filter with a stray ^C line.
+  const pushDirect = (type: TerminalLine['type'], text: string) =>
+    writeToPane({ id: lineId++, type, text, html: false })
   const out = (text: string) => push('output', text)
   const muted = (text: string) => push('muted', text)
   const error = (text: string) => push('error', text)
@@ -194,15 +203,15 @@ export function useTerminal() {
       activeGame.value.stop()
       activeGame.value = null
       gameFrame.value = ''
-      push('input', '^C')
+      pushDirect('input', '^C')
       return 'game'
     }
     if (spinnerLabel.value) {
       spinnerLabel.value = ''
-      push('input', '^C')
+      pushDirect('input', '^C')
       return 'command'
     }
-    push('input', `${partial}^C`)
+    pushDirect('input', `${partial}^C`)
     return 'line'
   }
 

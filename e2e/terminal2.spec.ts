@@ -185,6 +185,18 @@ test('five quick clicks on the status bar version arm destroy mode', async ({ pa
   await expect(page.locator('.destroyer')).toHaveCount(0)
 })
 
+test('ctrl+c interrupts a running game and echoes ^C to the transcript', async ({ page }) => {
+  await openTerminal(page)
+  const out = page.locator('.terminal-output')
+  await run(page, 'wpm')
+  const frame = page.locator('.game-frame')
+  await expect(frame).toContainText('WPM TEST')
+  await page.keyboard.press('Control+c')
+  // the game is gone and ^C lands in the visible transcript (not swallowed)
+  await expect(frame).not.toContainText('WPM TEST')
+  await expect(out).toContainText('^C')
+})
+
 test('nano edits and saves a file in the vfs', async ({ page }) => {
   await openTerminal(page)
   const out = page.locator('.terminal-output')
