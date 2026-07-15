@@ -119,7 +119,10 @@ export function formatRelease(
 /** hash prefix or HEAD (= newest) → the commit, or undefined */
 export function findCommit(commits: GitCommit[], ref: string): GitCommit | undefined {
   if (!ref || ref.toUpperCase() === 'HEAD') return commits[0]
-  return commits.find((commit) => commit.hash.startsWith(ref.toLowerCase()))
+  const wanted = ref.toLowerCase()
+  // match both ways: the stored hashes are 7 chars, but a ref can be longer
+  // (a full sha pasted from GitHub, or an 8-char stamp from an older build)
+  return commits.find((commit) => commit.hash.startsWith(wanted) || wanted.startsWith(commit.hash))
 }
 
 const BAR_WIDTH = 24

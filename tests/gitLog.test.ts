@@ -70,6 +70,12 @@ describe('findCommit', () => {
     expect(findCommit(commits, 'def')!.hash).toBe('def5678')
     expect(findCommit(commits, 'ffffff')).toBeUndefined()
   })
+
+  it('resolves refs LONGER than the stored 7-char hashes (8-char CI stamp, full sha)', () => {
+    expect(findCommit(commits, 'def5678a')!.hash).toBe('def5678')
+    expect(findCommit(commits, 'abc1234def5678abc1234def5678abc1234def56')!.hash).toBe('abc1234')
+    expect(findCommit(commits, 'def5679a')).toBeUndefined()
+  })
 })
 
 describe('formatGitShow', () => {

@@ -1,10 +1,13 @@
 import { execSync } from 'node:child_process'
 import { pgp } from './app/data/pgp'
 
-// baked into the footer's build stamp; the hash links into the terminal's git command
+// baked into the footer's build stamp; the hash links into the terminal's git
+// command. --short=7 is load-bearing, like the changelog's --abbrev=7: plain
+// --short honours core.abbrev=auto, which yields 8 chars on a CI clone and
+// then never matches the 7-char git-log.json hashes.
 const buildHash = (() => {
   try {
-    return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+    return execSync('git rev-parse --short=7 HEAD', { encoding: 'utf8' }).trim()
   } catch {
     return 'dev'
   }
