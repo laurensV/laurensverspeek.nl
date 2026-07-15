@@ -434,14 +434,19 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             out(`${deploys.length} releases — every deploy of this site, newest first${tagged ? ` (${tagged} version-tagged)` : ''}`)
             muted("expand one with 'git show <version | hash>', or 'git checkout' to travel there")
             out('')
-            for (const deploy of deploys) {
+            // when gh-pages already has HEAD the manifest carries no `current`
+            // flag, so mark the newest deploy live instead — same fallback the
+            // lvOS Time Machine app uses, so the two never disagree on "live"
+            const anyCurrent = deploys.some((deploy) => deploy.current)
+            for (const [i, deploy] of deploys.entries()) {
               const cell = deploy.tag
                 ? `<span class="term-accent">${escapeHtml(deploy.tag)}</span>${' '.repeat(Math.max(1, 8 - deploy.tag.length))}`
                 : `<span class="term-muted">·</span>       `
               const n = counts?.get(deploy.source)?.length ?? 0
               const count = n ? `<span class="term-muted">${String(n).padStart(3)}c</span> ` : '     '
               const subject = escapeHtml(deploy.subject.slice(0, 52))
-              const live = deploy.current ? ' <span class="term-accent">← live</span>' : ''
+              const isLive = deploy.current || (!anyCurrent && i === 0)
+              const live = isLive ? ' <span class="term-accent">← live</span>' : ''
               push('output', `${cell}<span class="term-muted">${deploy.date}</span>  ${deploy.source}  ${count}${subject}${live}`, true)
             }
             return
