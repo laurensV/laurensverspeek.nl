@@ -59,6 +59,8 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
   const keyClick = useKeyClick()
   // the same rolling copy history the lvOS Clipboard app shows
   const clipboard = useClipboardHistory()
+  // the deferred PWA install prompt, shared with the install chip (PwaInstall.vue)
+  const pwa = usePwaInstall()
   // the time machine, shared with the lvOS Time Machine app — `git checkout`
   // resolves a ref to a past deploy and hands it to the service worker
   const timeMachine = useTimeMachine()
@@ -283,6 +285,30 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
         out(`reduce motion ${motion.enabled.value ? 'on' : 'off'}`)
         muted('flattens every animation site-wide, on top of your OS setting')
       }
+    },
+    install: {
+      category: 'system',
+      usage: 'install',
+      description: 'Install this site as an app (fires the browser install prompt)',
+      exec: async () => {
+        if (pwa.installed.value) return out('lvOS is already installed as an app.')
+        if (!pwa.canInstall.value) {
+          out('No install prompt available right now.')
+          muted('the browser only offers it when the PWA is installable — try its “Install app” menu, or you may have it already / dismissed it')
+          return
+        }
+        out('Opening the install prompt…')
+        const outcome = await pwa.promptInstall()
+        if (outcome === 'accepted') out('Installing lvOS — check your home screen / app launcher.')
+        else if (outcome === 'dismissed') muted('install cancelled.')
+        else error('install: the prompt vanished — try again.')
+      }
+    },
+    pwa: {
+      category: 'system',
+      hidden: true,
+      description: 'Alias for install',
+      exec: (args) => ctx.getCommands().install!.exec(args)
     },
     keyclick: {
       category: 'system',

@@ -1,6 +1,6 @@
 <template>
   <Transition name="pwa-in">
-    <div v-if="visible" class="pwa-install is-family-code no-print" role="dialog" aria-label="Install this site as an app">
+    <div v-if="canInstall" class="pwa-install is-family-code no-print" role="dialog" aria-label="Install this site as an app">
       <span class="pwa-glyph" aria-hidden="true">⤓</span>
       <span class="pwa-text">install lvOS as an app?</span>
       <button class="pwa-yes" @click="install">install</button>
@@ -10,47 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
+// the deferred install prompt now lives in a shared composable, so the terminal
+// `install` command drives the same native prompt this chip does
+const { canInstall, promptInstall, dismiss } = usePwaInstall()
 
-// beforeinstallprompt isn't in the standard lib types
-interface InstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-const DISMISS_KEY = 'lv-pwa-dismissed'
-const deferred = ref<InstallPromptEvent | null>(null)
-const visible = ref(false)
-
-// Chrome/Edge/Android fire this when the PWA is installable; stash it so a tap
-// can replay the native prompt. Never show it again once the visitor waved it off.
-useEventListener(window, 'beforeinstallprompt', (event: Event) => {
-  event.preventDefault()
-  if (storageGet(DISMISS_KEY) === '1') return
-  deferred.value = event as InstallPromptEvent
-  visible.value = true
-})
-
-// installed (from our chip or the browser UI): drop the offer
-useEventListener(window, 'appinstalled', () => {
-  visible.value = false
-  deferred.value = null
-  storageSet(DISMISS_KEY, '1')
-})
-
-const install = async () => {
-  const event = deferred.value
-  visible.value = false
-  if (!event) return
-  await event.prompt()
-  await event.userChoice
-  deferred.value = null
-}
-
-const dismiss = () => {
-  visible.value = false
-  deferred.value = null
-  storageSet(DISMISS_KEY, '1')
+const install = () => {
+  void promptInstall()
 }
 </script>
 
