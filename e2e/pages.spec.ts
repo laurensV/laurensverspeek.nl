@@ -357,8 +357,10 @@ test('/changelog renders the baked git history', async ({ page }) => {
   const entries = page.locator('.changelog-entry')
   await expect(entries.first()).toBeVisible()
   expect(await entries.count()).toBeGreaterThan(10)
-  // hashes, HEAD marker and diffstat counts all come from the real repo
-  await expect(page.locator('.changelog-hash').first()).toHaveText(/^[0-9a-f]{7}$/)
+  // hashes, HEAD marker and diffstat counts all come from the real repo.
+  // {7,} not {7}: --abbrev=7 is a floor, and git still lengthens a hash it
+  // can't disambiguate at 7 — matching the other short-hash assertions.
+  await expect(page.locator('.changelog-hash').first()).toHaveText(/^[0-9a-f]{7,}$/)
   await expect(page.locator('.changelog-ref').first()).toContainText('HEAD')
   await expect(page.locator('.changelog-stat').first()).toContainText('+')
 })

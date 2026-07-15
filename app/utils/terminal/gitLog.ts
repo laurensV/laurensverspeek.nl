@@ -22,8 +22,13 @@ export interface GitCommit {
   truncated?: number
 }
 
-/** Matches the --pretty format below: \x1e starts a commit, \x1f separates fields. */
-export const GIT_LOG_ARGS = '--date=short --numstat --pretty=format:%x1e%h%x1f%ad%x1f%s'
+/**
+ * Matches the --pretty format below: \x1e starts a commit, \x1f separates fields.
+ * --abbrev=7 is load-bearing: without it %h uses git's `core.abbrev=auto`, which
+ * scales the short hash with the repo's object count — so the same commit renders
+ * as 7 chars locally and 8 on a CI clone. Pin it so the changelog can't wobble.
+ */
+export const GIT_LOG_ARGS = '--abbrev=7 --date=short --numstat --pretty=format:%x1e%h%x1f%ad%x1f%s'
 
 export function parseGitNumstat(raw: string): GitCommit[] {
   return raw
