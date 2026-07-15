@@ -151,6 +151,8 @@ function tmOverlay(html, state) {
   return html + inject
 }
 
+// resolves to the response, null for a real CDN 404, or the string 'network'
+// when jsDelivr couldn't be reached at all — the two must render differently
 async function tmFetchInto(cache, sha, path) {
   const url = cdnUrl(sha, path)
   let res = await cache.match(url)
@@ -158,7 +160,7 @@ async function tmFetchInto(cache, sha, path) {
   try {
     res = await fetch(url, { redirect: 'follow' })
   } catch {
-    return null
+    return 'network'
   }
   if (res && res.ok) {
     try { await cache.put(url, res.clone()) } catch {}
@@ -170,8 +172,10 @@ async function tmFetchInto(cache, sha, path) {
 async function tmServe(request, url, state) {
   const isNav = request.mode === 'navigate'
   const cache = await caches.open(snapCache(state.sha))
+  let networkFailed = false
   for (const path of tmCandidates(url.pathname, isNav)) {
     const res = await tmFetchInto(cache, state.sha, path)
+    if (res === 'network') { networkFailed = true; continue }
     if (!res) continue
     if (isNav || /\.html$/i.test(path)) {
       const html = tmOverlay(await res.text(), state)
@@ -182,6 +186,19 @@ async function tmServe(request, url, state) {
     if (type) headers.set('content-type', type)
     headers.delete('content-security-policy')
     return new Response(res.body, { status: 200, headers })
+  }
+  if (isNav && networkFailed) {
+    // don't tell the visitor the page "did not exist" when the truth is we
+    // couldn't reach the archive (blocked/offline jsDelivr is common on
+    // corporate networks) — the overlay's return link is the way out
+    return new Response(
+      tmOverlay('<!doctype html><meta charset=utf-8><title>snapshot archive unreachable</title>' +
+        '<body style="background:#101014;color:#f5f5f7;font-family:monospace;padding:3rem;text-align:center">' +
+        '<h1>couldn\'t reach the snapshot archive</h1>' +
+        '<p>Past builds are served from cdn.jsdelivr.net, which didn\'t answer — it may be blocked on this network, or you\'re offline.</p>' +
+        '<p>Try again in a moment, or return to the present below.</p></body>', state),
+      { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } }
+    )
   }
   if (isNav) {
     return new Response(
