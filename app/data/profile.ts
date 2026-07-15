@@ -25,7 +25,7 @@ export const profile = {
   skills: [
     {
       group: 'Frontend',
-      items: ['Vue', 'Nuxt', 'TypeScript', 'SCSS', 'Bulma']
+      items: ['Vue', 'Nuxt', 'React', 'TypeScript', 'Tailwind', 'SCSS', 'Bulma']
     },
     {
       group: 'Backend',
@@ -33,11 +33,19 @@ export const profile = {
     },
     {
       group: 'Blockchain',
-      items: ['Solana', 'Rust', 'EOS', 'Smart Contracts', 'Token Economics']
+      items: ['Solana', 'Ethereum', 'Rust', 'EOS', 'Smart Contracts', 'Token Economics']
+    },
+    {
+      group: 'Databases',
+      items: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis']
+    },
+    {
+      group: 'Infra',
+      items: ['Docker', 'Kubernetes', 'CI/CD', 'Linux']
     },
     {
       group: 'Other',
-      items: ['AI / Genetic Algorithms', 'CI/CD', 'Docker', 'Linux']
+      items: ['AI / Genetic Algorithms', 'Git']
     }
   ],
   timeline: [
@@ -56,11 +64,32 @@ export const profile = {
       stack: ['Blockchain', 'Vue', 'TypeScript', 'Node.js']
     },
     {
+      period: '2022 — 2024',
+      title: 'Co-founder — Tappy',
+      description:
+        'Co-founded Tappy, a Web3 platform for simple, secure and shareable crypto payment links. Led product and technical development from concept to launch, making crypto payments approachable for people who never want to see an address.',
+      stack: ['Solana', 'Ethereum', 'TypeScript', 'Vue', 'USDC']
+    },
+    {
+      period: '2016 — 2018',
+      title: 'Lead Developer — Itsavirus',
+      description:
+        'Led the development of digital platforms for major clients around the world, combining hands-on engineering with technical direction and team leadership.',
+      stack: ['PHP', 'JavaScript', 'MySQL', 'Docker']
+    },
+    {
       period: '2014 — 2016',
       title: 'MSc Computer Science — University of Amsterdam',
       description:
         'Graduated on automated multivariate web design optimization using AI genetic algorithms.',
       stack: ['Python', 'AI', 'LaTex', 'Genetic algorithms']
+    },
+    {
+      period: '2012 — 2016',
+      title: 'Web Developer — Itsavirus',
+      description:
+        'Built websites and web applications for clients across the Randstad and beyond, from first pixel to production.',
+      stack: ['PHP', 'JavaScript', 'MySQL', 'HTML & CSS']
     },
     {
       period: '2011 — 2014',

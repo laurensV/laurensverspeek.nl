@@ -35,7 +35,7 @@ test('404 shell tab-completes commands', async ({ page }) => {
 })
 
 test('blog post shows a table of contents, copy buttons and a reading time', async ({ page }) => {
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/rebuilding-this-site')
   await expect(page.locator('.post-toc')).toBeVisible()
   await expect(page.locator('.code-copy').first()).toBeVisible()
   // reading time is computed from the rendered AST, so a value proves the walk works
@@ -164,7 +164,7 @@ test('home shows terminal-style skill cards', async ({ page }) => {
 
 test('blog headings expose a copyable deep-link anchor', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-  await page.goto('/blog/game-of-life-everywhere')
+  await page.goto('/blog/rebuilding-this-site')
   // clear the one-time boot splash so it doesn't intercept the click
   await page.locator('.boot-splash').waitFor({ state: 'detached', timeout: 8000 }).catch(() => {})
   const heading = page.locator('.post-body h2[id]').first()
@@ -180,21 +180,12 @@ test('blog headings expose a copyable deep-link anchor', async ({ page, context 
 })
 
 test('blog code blocks highlight called-out lines', async ({ page }) => {
-  await page.goto('/blog/game-of-life-everywhere')
+  await page.goto('/blog/rebuilding-this-site')
   const hl = page.locator('.post-body .line.highlight').first()
   await expect(hl).toBeVisible()
   // the highlight reads via a left accent rail, not colour alone
   const border = await hl.evaluate((el) => parseFloat(getComputedStyle(el).borderLeftWidth))
   expect(border).toBeGreaterThan(0)
-})
-
-test('blog post shows related posts by shared tags', async ({ page }) => {
-  await page.goto('/blog/a-window-manager-in-a-div')
-  await expect(page.locator('.post-related')).toBeVisible()
-  const related = page.locator('.related-link')
-  await expect(related.first()).toBeVisible()
-  // a related post links somewhere in /blog/
-  await expect(related.first()).toHaveAttribute('href', /\/blog\//)
 })
 
 test('blog has an RSS subscribe affordance that copies the feed url', async ({ page, context }) => {
@@ -210,11 +201,11 @@ test('blog has an RSS subscribe affordance that copies the feed url', async ({ p
 
 test('blog index lists the newest post and it opens', async ({ page }) => {
   await page.goto('/blog')
-  const link = page.locator('.blog-link', { hasText: 'a window manager in a div' })
+  const link = page.locator('.blog-link', { hasText: 'stop rebasing the past' })
   await expect(link).toBeVisible()
   await link.click()
-  await expect(page).toHaveURL(/a-window-manager-in-a-div/)
-  await expect(page.locator('h1')).toContainText('a window manager in a div')
+  await expect(page).toHaveURL(/git-merge-vs-rebase/)
+  await expect(page.locator('h1')).toContainText('stop rebasing the past')
 })
 
 test('about timeline commits expand to a stack diff', async ({ page }) => {
@@ -229,12 +220,10 @@ test('about timeline commits expand to a stack diff', async ({ page }) => {
   await expect(firstAdd).toContainText('+')
 })
 
-test('/uses and /now show the refreshed content', async ({ page }) => {
+test('/uses shows the refreshed content', async ({ page }) => {
   await page.goto('/uses')
   await expect(page.getByText('./design-docs')).toBeVisible()
   await expect(page.getByText('Ghostty')).toBeVisible()
-  await page.goto('/now')
-  await expect(page.getByText('./away from the keyboard')).toBeVisible()
 })
 
 test('project filters support arrow-key navigation', async ({ page }) => {
@@ -313,15 +302,15 @@ test('blog tags filter the list with a shareable ?tag= url', async ({ page }) =>
   const entries = page.locator('.blog-entry')
   const all = await entries.count()
   expect(all).toBeGreaterThan(1)
-  await page.locator('.tag-btn', { hasText: '#games' }).first().click()
-  await expect(page).toHaveURL(/tag=games/)
+  await page.locator('.tag-btn', { hasText: '#git' }).first().click()
+  await expect(page).toHaveURL(/tag=git/)
   await expect.poll(() => entries.count()).toBeLessThan(all)
-  await expect(page.locator('.tag-filter')).toContainText("grep '#games'")
+  await expect(page.locator('.tag-filter')).toContainText("grep '#git'")
   // clearing restores the full list and drops the param
   await page.locator('.tag-clear').click()
   await expect.poll(() => entries.count()).toBe(all)
   // a direct visit with the param starts filtered
-  await page.goto('/blog?tag=games')
+  await page.goto('/blog?tag=git')
   await expect.poll(() => entries.count()).toBeLessThan(all)
 })
 
@@ -388,8 +377,3 @@ test('sitemap carries per-page git-derived lastmod dates', async ({ request }) =
   expect(new Set(dates).size).toBeGreaterThan(1)
 })
 
-test('/now shows a git-derived last-updated date', async ({ page }) => {
-  await page.goto('/now')
-  await expect(page.getByText(/last updated/)).toBeVisible()
-  await expect(page.locator('.subtitle .is-family-code').first()).toHaveText(/^\d{4}-\d{2}-\d{2}$/)
-})

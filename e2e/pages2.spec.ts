@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test'
 import { pressTerminalKey } from './helpers'
 
 test('subpages emit BreadcrumbList structured data matching the trail', async ({ page }) => {
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/rebuilding-this-site')
   const json = await page.locator('script[type="application/ld+json"]')
     .evaluateAll((nodes) => nodes.map((node) => node.textContent ?? ''))
   const breadcrumb = json.map((text) => JSON.parse(text)).find((data) => data['@type'] === 'BreadcrumbList')
   expect(breadcrumb).toBeTruthy()
   const names = breadcrumb.itemListElement.map((item: { name: string }) => item.name)
-  expect(names).toEqual(['home', 'blog', 'snake-in-the-terminal'])
+  expect(names).toEqual(['home', 'blog', 'rebuilding-this-site'])
   // the home page emits none
   await page.goto('/')
   await page.locator('.hero-name').waitFor()
@@ -33,13 +33,13 @@ test('blog titles carry matching view-transition names for the morph', async ({ 
 
 test('blog posts have a share affordance that copies the url', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/rebuilding-this-site')
   // headless chromium has no navigator.share, so the copy fallback runs
   const share = page.locator('.post-share')
   await share.click()
   await expect(share).toContainText('copied')
   const clip = await page.evaluate(() => navigator.clipboard.readText())
-  expect(clip).toContain('/blog/snake-in-the-terminal')
+  expect(clip).toContain('/blog/rebuilding-this-site')
 })
 
 test('the service worker precaches the no-uplink offline fallback', async ({ page, request }) => {
@@ -144,13 +144,13 @@ test('a post edited after publish shows an updated date and dateModified', async
   const posting = ld.find((d) => d['@type'] === 'BlogPosting')
   expect(posting.dateModified).toBeTruthy()
   // a post NOT edited after publish shows no updated line
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/git-merge-vs-rebase')
   await page.locator('h1').waitFor()
   await expect(page.locator('.post-updated')).toHaveCount(0)
 })
 
 test('blog code blocks show line numbers', async ({ page }) => {
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/rebuilding-this-site')
   const line = page.locator('.post-body pre code .line').first()
   await line.waitFor()
   // the numbering rule is active (a counter ::before is attached to each line)

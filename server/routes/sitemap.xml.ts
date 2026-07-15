@@ -24,7 +24,6 @@ const PAGE_SOURCES: Record<string, string[]> = {
   '/blog': ['app/pages/blog/index.vue', 'content/blog'],
   '/about': ['app/pages/about.vue', 'app/data/profile.ts'],
   '/uses': ['app/pages/uses.vue', 'app/data/uses.ts'],
-  '/now': ['app/pages/now.vue', 'app/data/now.ts'],
   '/cv': ['app/pages/cv.vue', 'app/data/profile.ts'],
   '/contact': ['app/pages/contact.vue'],
   '/life': ['app/pages/life.vue'],

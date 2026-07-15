@@ -92,7 +92,7 @@ export function createBrowseCommands(ctx: TerminalContext): Record<string, Termi
       category: 'content',
       usage: 'blog [post]',
       description: 'List blog posts — or read one right here',
-      examples: ['blog', 'blog snake-in-the-terminal', 'blog | grep terminal'],
+      examples: ['blog', 'blog rebuilding-this-site', 'blog | grep terminal'],
       argCandidates: postSlugCandidates,
       exec: (args) => {
         if (args[0]) {

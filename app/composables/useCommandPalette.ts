@@ -158,7 +158,6 @@ export function useCommandPalette() {
     { id: 'blog', label: 'Blog', icon: 'file', section: 'Pages', keywords: 'posts writing articles', perform: () => go('/blog') },
     { id: 'about', label: 'About', icon: 'globe', section: 'Pages', keywords: 'bio skills timeline', perform: () => go('/about') },
     { id: 'uses', label: 'Uses', icon: 'cpu', section: 'Pages', keywords: 'gear tools stack setup', perform: () => go('/uses') },
-    { id: 'now', label: 'Now', icon: 'globe', section: 'Pages', keywords: 'current doing building learning', perform: () => go('/now') },
     { id: 'changelog', label: 'Changelog', icon: 'code', section: 'Pages', keywords: 'git history commits updates', perform: () => go('/changelog') },
     { id: 'cv', label: 'CV / Resume', icon: 'file', section: 'Pages', keywords: 'resume curriculum print pdf', perform: () => go('/cv') },
     { id: 'contact', label: 'Contact', icon: 'mail', section: 'Pages', keywords: 'email reach', perform: () => go('/contact') },

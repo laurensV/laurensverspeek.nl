@@ -5,7 +5,7 @@
       <div class="is-flex is-align-items-center is-justify-content-space-between is-flex-wrap-wrap" style="gap: 1rem">
         <h1 class="title is-2 mb-0">About me</h1>
         <div class="is-flex" style="gap: 0.75rem">
-          <CmdButton to="/now">now</CmdButton>
+          <CmdButton to="/uses">uses</CmdButton>
           <CmdButton to="/cv" variant="primary">
             <AppIcon name="file" :size="15" />
             view cv

@@ -194,10 +194,10 @@ test('vim scrolling stays instant under reduced motion and quiet in inputs', asy
 })
 
 test('subpages show a pwd-style breadcrumb with clickable parents', async ({ page }) => {
-  await page.goto('/blog/snake-in-the-terminal')
+  await page.goto('/blog/rebuilding-this-site')
   const crumbs = page.locator('.crumbs')
   await expect(crumbs).toBeVisible()
-  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('snake-in-the-terminal')
+  await expect(crumbs.locator('[aria-current="page"]')).toHaveText('rebuilding-this-site')
   await crumbs.locator('.crumbs-link', { hasText: 'blog' }).click()
   await expect(page).toHaveURL(/\/blog\/?$/)
   // the home page keeps no trail
@@ -255,11 +255,11 @@ test('footer build stamp links the changelog', async ({ page }) => {
 })
 
 test('deep links flash their target section', async ({ page }) => {
-  await page.goto('/blog/game-of-life-everywhere')
+  await page.goto('/blog/rebuilding-this-site')
   const heading = page.locator('.post-body h2[id]').first()
   await heading.waitFor()
   const id = await heading.getAttribute('id')
-  await page.goto(`/blog/game-of-life-everywhere#${id}`)
+  await page.goto(`/blog/rebuilding-this-site#${id}`)
   await expect(page.locator(`#${id}`)).toHaveClass(/is-anchor-target/, { timeout: 5000 })
 })
 

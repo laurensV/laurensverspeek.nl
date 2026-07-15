@@ -25,7 +25,7 @@ Pages and components render from central data modules; edit these rather than ha
 
 - `app/data/profile.ts` — name, bio, skills, timeline, socials (read by nearly everything, including the terminal)
 - `app/data/projects.ts` — projects incl. detail-page stories (`/projects/[slug]`)
-- `app/data/uses.ts`, `app/data/now.ts` — the `/uses` and `/now` pages
+- `app/data/uses.ts` — the `/uses` page
 - `content/blog/*.md` — blog posts via Nuxt Content; frontmatter schema (date, description, tags) is enforced in `content.config.ts`
 
 ## Architecture

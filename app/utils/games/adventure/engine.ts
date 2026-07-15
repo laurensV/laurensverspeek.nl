@@ -158,7 +158,7 @@ export function advCommand(prev: AdvState, input: string): AdvResult {
     }
     if (noun === 'duck' && state.room === 'library') return { lines: ['yellow. serene. it has debugged more than you ever will.'], state }
     if (noun === 'prompt' && state.room === 'hall') return { lines: ['it blinks: ~$ █ — patient as ever.'], state }
-    if (noun === 'telescope' && state.room === 'observatory') return { lines: ['through the eyepiece: a kanban column labeled "someday", stretching to the horizon.'], state }
+    if (noun === 'telescope' && state.room === 'observatory') return { lines: ['through the eyepiece: a bar chart of visits, its tallest bar labeled "you, refreshing".'], state }
     if (noun === 'tubes' && state.room === 'postoffice') return { lines: ['the mail tube smells faintly of unread newsletters.'], state }
     if (noun === 'slot' && state.room === 'serverroom') return { lines: ['a floppy-shaped absence. it yearns.'], state }
     if (noun === 'trunk' && state.room === 'attic') {

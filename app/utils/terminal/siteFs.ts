@@ -1,6 +1,6 @@
 // The site as a filesystem: every page becomes a real folder with real files
 // in the terminal's home filesystem (blog posts as their actual markdown,
-// projects/about/uses/now/contact generated from the data modules). Seeds are
+// projects/about/uses/contact generated from the data modules). Seeds are
 // marked `sys`: rebuilt fresh every visit and never persisted. They're fully
 // yours though — editing writes a plain user node over the seed (an
 // "override", which persists and, for blog posts, changes the rendered post)
@@ -14,7 +14,6 @@ import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
 import { uses } from '~/data/uses'
-import { now } from '~/data/now'
 
 /** A seed: file content, or null for a directory. */
 export type SeedMap = Record<string, string | null>
@@ -201,13 +200,6 @@ export function siteSeeds(): SeedMap {
       ...group.items.map((item) => `- ${item.name}${item.note ? ` — ${item.note}` : ''}${item.url ? ` (${item.url})` : ''}`)
     ].join('\n')
   }
-
-  // ~/now
-  seeds['now'] = null
-  seeds['now/now.md'] = [
-    '# now',
-    ...now.sections.flatMap((section) => ['', `## ${section.title}`, ...section.items.map((item) => `- ${item}`)])
-  ].join('\n')
 
   // ~/cv
   seeds['cv'] = null

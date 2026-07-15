@@ -577,20 +577,20 @@ test('leaderboard explains itself when no relay is configured', async ({ page })
 test('mail lists the lvOS inbox and reading a message clears its unread flag', async ({ page }) => {
   await openTerminal(page)
   const output = page.locator('.terminal-output')
-  // the five blog-post newsletters arrive async — list until all ten are in
+  // the blog-post newsletters arrive async — list until all seven are in
   await expect(async () => {
     await run(page, 'mail')
-    await expect(output).toContainText('10 unread')
+    await expect(output).toContainText('7 unread')
   }).toPass({ timeout: 15000 })
   await expect(output).toContainText('new post:')
   await expect(output).toContainText('URGENT BUSINESS PROPOSAL')
-  // posts sort first, so the prince now holds slot 8
-  await run(page, 'mail 8')
+  // posts sort first, so the prince holds slot 5 (2 posts + 3rd house mail)
+  await run(page, 'mail 5')
   await expect(output).toContainText('definitely.real@royal.example')
   await expect(output).toContainText('localStorage bytes')
   // the shared read-state: a second listing shows one fewer unread
   await run(page, 'mail')
-  await expect(output).toContainText('9 unread')
+  await expect(output).toContainText('6 unread')
 })
 
 test('pong online degrades to the house AI when no relay is configured', async ({ page }) => {

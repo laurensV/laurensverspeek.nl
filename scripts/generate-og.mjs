@@ -112,7 +112,6 @@ const PAGES = [
   ['projects', 'ls ~/projects', 'Projects', 'Work, sides and experiments — from decentralized compute to self-coding websites.'],
   ['blog', 'ls ~/blog', 'Blog', 'Code, blockchain and website experiments, written up.'],
   ['uses', 'cat uses.txt', 'Uses', 'The gear, software and stack behind the work.'],
-  ['now', 'cat now.txt', 'Now', 'What Laurens is building, learning and tinkering with right now.'],
   ['contact', './contact.sh', 'Contact', 'Run the wizard, scan the QR, or just send a plain email.'],
   ['changelog', 'git log', 'Changelog', 'The living history of this site — real commits, baked at build time.'],
   ['stats', 'cat /proc/stats', 'Stats', 'Public, cookie-free visitor counters for the whole site.'],

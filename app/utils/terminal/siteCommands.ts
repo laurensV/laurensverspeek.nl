@@ -1,7 +1,6 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { profile } from '~/data/profile'
 import { uses as usesData } from '~/data/uses'
-import { now as nowData } from '~/data/now'
 import { buildContribGraph } from '~/utils/terminal/contribGraph'
 import { museum, exhibitCount } from '~/data/museum'
 import { escapeHtml } from '~/utils/escapeHtml'
@@ -15,7 +14,7 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
   const { push, out, muted, error, link } = ctx
   // captured at factory time (inside the composable), since command exec
   // handlers run outside the Nuxt instance
-  const { nowUpdated, goatcounter } = useRuntimeConfig().public
+  const { goatcounter } = useRuntimeConfig().public
   const leaderboard = useLeaderboard()
 
   return {
@@ -87,17 +86,6 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
         }
         say(message.slice(0, 80))
         muted(`(said to everyone browsing right now: "${message.slice(0, 80)}")`)
-      }
-    },
-    now: {
-      category: 'content',
-      description: `What I'm doing these days`,
-      exec: () => {
-        muted(`last updated ${nowUpdated}`)
-        for (const section of nowData.sections) {
-          push('primary', `./${section.title.toLowerCase()}`)
-          section.items.forEach((item) => out(`- ${item}`))
-        }
       }
     },
     uses: {

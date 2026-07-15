@@ -63,8 +63,8 @@ test('pipes chain through sort, uniq and wc', async ({ page }) => {
 
 test('reads a blog post as markdown in the terminal', async ({ page }) => {
   await openTerminal(page)
-  await run(page, 'blog snake-in-the-terminal')
-  await expect(page.locator('.terminal-output')).toContainText('putting a playable snake game')
+  await run(page, 'blog rebuilding-this-site')
+  await expect(page.locator('.terminal-output')).toContainText('rebuilding my portfolio')
   await expect(page.locator('.terminal-output')).toContainText('```ts')
 })
 

@@ -19,8 +19,8 @@ export const ROOMS: Record<string, Room> = {
     fixtures: ['prompt']
   },
   observatory: {
-    name: 'the /now observatory',
-    desc: 'a domed room with a telescope aimed not at stars but at a roadmap. sticky notes orbit it like moons. the only exit is south.',
+    name: 'the /stats observatory',
+    desc: 'a domed room with a telescope aimed not at stars but at a wall of visitor counters. the numbers orbit it like moons. the only exit is south.',
     exits: { south: { to: 'hall' } },
     items: [],
     fixtures: ['telescope']

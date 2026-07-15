@@ -23,7 +23,7 @@ const buildVersion = (() => {
   }
 })()
 
-// when a file last really changed, per git — /now's "last updated" is honest
+// when a file last really changed, per git — a post's "last updated" is honest
 const gitFileDate = (file: string) => {
   try {
     return execSync(`git log -1 --format=%as -- ${file}`, { encoding: 'utf8' }).trim()
@@ -174,7 +174,6 @@ export default defineNuxtConfig({
       buildHash,
       buildVersion,
       buildDate: new Date().toISOString().slice(0, 10),
-      nowUpdated: gitFileDate('app/data/now.ts') || new Date().toISOString().slice(0, 10),
       postUpdated
     }
   },
