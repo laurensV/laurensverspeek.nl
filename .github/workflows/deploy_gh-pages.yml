@@ -118,6 +118,9 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # this job has no checkout, so tell gh the repo explicitly — otherwise
+          # it shells out to git to infer it and dies with "not a git repository"
+          GH_REPO: ${{ github.repository }}
           SITE_VERSION: ${{ needs.build.outputs.site_version }}
         run: |
           gh release create "$SITE_VERSION" \
