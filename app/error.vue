@@ -100,10 +100,9 @@ const QUICK_LINKS = [
   { path: '/projects', label: '/projects' },
   { path: '/blog', label: '/blog' },
   { path: '/about', label: '/about' },
-  { path: '/uses', label: '/uses' },
   { path: '/contact', label: '/contact' }
 ]
-const ROUTES = ['/', '/projects', '/blog', '/about', '/uses', '/cv', '/contact']
+const ROUTES = ['/', '/projects', '/blog', '/about', '/cv', '/contact']
 
 // only guess a nearest page for a genuine 404 (not a 500)
 const suggestion = computed(() =>

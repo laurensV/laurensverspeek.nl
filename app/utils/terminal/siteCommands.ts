@@ -1,6 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { profile } from '~/data/profile'
-import { uses as usesData } from '~/data/uses'
 import { buildContribGraph } from '~/utils/terminal/contribGraph'
 import { museum, exhibitCount } from '~/data/museum'
 import { escapeHtml } from '~/utils/escapeHtml'
@@ -86,24 +85,6 @@ export function createSiteCommands(ctx: TerminalContext): Record<string, Termina
         }
         say(message.slice(0, 80))
         muted(`(said to everyone browsing right now: "${message.slice(0, 80)}")`)
-      }
-    },
-    uses: {
-      category: 'content',
-      description: 'Gear, software and stack I use',
-      exec: () => {
-        for (const group of usesData) {
-          push('primary', `./${group.group.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)
-          for (const item of group.items) {
-            push(
-              'output',
-              `<span class="term-accent">${item.name.padEnd(24, ' ')}</span> ${item.note ?? ''}`,
-              true
-            )
-          }
-          out('')
-        }
-        muted(`Full list at /uses — or run 'goto uses'.`)
       }
     },
     contact: {

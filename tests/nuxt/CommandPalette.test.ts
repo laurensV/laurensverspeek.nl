@@ -16,12 +16,12 @@ describe('CommandPalette', () => {
     expect(document.querySelector('.palette-window')).toBeTruthy()
 
     const input = document.querySelector('.palette-input') as HTMLInputElement
-    input.value = 'uses'
+    input.value = 'museum'
     input.dispatchEvent(new Event('input'))
     await flushPromises()
 
     const active = document.querySelector('.palette-item.is-active')
-    expect(active?.textContent).toContain('Uses')
+    expect(active?.textContent).toContain('Museum')
     expect(document.querySelector('.palette-item.is-active .palette-match')).toBeTruthy()
     palette.close()
   })

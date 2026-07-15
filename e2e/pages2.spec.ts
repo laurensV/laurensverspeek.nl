@@ -295,7 +295,7 @@ test('the boss key hides everything behind a spreadsheet until Esc', async ({ pa
 })
 
 test('top-level pages carry their own OG cards', async ({ page }) => {
-  for (const path of ['/about', '/uses', '/changelog']) {
+  for (const path of ['/about', '/museum', '/changelog']) {
     await page.goto(path)
     const og = page.locator('meta[property="og:image"]')
     await expect(og).toHaveAttribute('content', new RegExp(`/og/page-${path.slice(1)}\\.png$`))

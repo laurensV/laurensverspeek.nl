@@ -1,6 +1,6 @@
 // The site as a filesystem: every page becomes a real folder with real files
 // in the terminal's home filesystem (blog posts as their actual markdown,
-// projects/about/uses/contact generated from the data modules). Seeds are
+// projects/about/contact generated from the data modules). Seeds are
 // marked `sys`: rebuilt fresh every visit and never persisted. They're fully
 // yours though — editing writes a plain user node over the seed (an
 // "override", which persists and, for blog posts, changes the rendered post)
@@ -13,7 +13,6 @@ import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStora
 import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
-import { uses } from '~/data/uses'
 
 /** A seed: file content, or null for a directory. */
 export type SeedMap = Record<string, string | null>
@@ -132,8 +131,6 @@ export function restoreSeeds(files: Filesystem, prefix = ''): { files: Filesyste
   return { files: next, restored }
 }
 
-const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-
 /** The synchronous seeds, generated from the central data modules. */
 export function siteSeeds(): SeedMap {
   const seeds: SeedMap = {}
@@ -190,16 +187,6 @@ export function siteSeeds(): SeedMap {
 
   // ~/blog exists immediately; the posts land when the async fetch resolves
   seeds['blog'] = null
-
-  // ~/uses — one file per gear group
-  seeds['uses'] = null
-  for (const group of uses) {
-    seeds[`uses/${slugify(group.group)}.md`] = [
-      `# ${group.group}`,
-      '',
-      ...group.items.map((item) => `- ${item.name}${item.note ? ` — ${item.note}` : ''}${item.url ? ` (${item.url})` : ''}`)
-    ].join('\n')
-  }
 
   // ~/cv
   seeds['cv'] = null

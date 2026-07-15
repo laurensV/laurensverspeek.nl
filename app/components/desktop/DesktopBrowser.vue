@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 // A browser inside the site inside the browser. Browserception.
-const PAGES = ['/', '/projects', '/blog', '/about', '/uses', '/cv']
+const PAGES = ['/', '/projects', '/blog', '/about', '/cv']
 
 const url = ref('/blog')
 const frameKey = ref(0)

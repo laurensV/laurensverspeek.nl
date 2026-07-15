@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { test, expect } from '@playwright/test'
 import { openPalette } from './helpers'
 test('404 renders an interactive recovery shell', async ({ page }) => {
@@ -220,12 +221,6 @@ test('about timeline commits expand to a stack diff', async ({ page }) => {
   await expect(firstAdd).toContainText('+')
 })
 
-test('/uses shows the refreshed content', async ({ page }) => {
-  await page.goto('/uses')
-  await expect(page.getByText('./design-docs')).toBeVisible()
-  await expect(page.getByText('Ghostty')).toBeVisible()
-})
-
 test('project filters support arrow-key navigation', async ({ page }) => {
   await page.goto('/projects')
   const all = page.locator('.filter-flag', { hasText: '--all' })
@@ -273,10 +268,10 @@ test('command palette opens and filters', async ({ page }) => {
   await page.locator('.hero-name').waitFor()
   await openPalette(page)
   await expect(page.locator('.palette-window')).toBeVisible()
-  await page.locator('.palette-input').fill('uses')
-  await expect(page.locator('.palette-item.is-active')).toContainText('Uses')
+  await page.locator('.palette-input').fill('museum')
+  await expect(page.locator('.palette-item.is-active')).toContainText('Museum')
   // the matched characters are highlighted in the label
-  await expect(page.locator('.palette-item.is-active .palette-match')).toContainText('Uses')
+  await expect(page.locator('.palette-item.is-active .palette-match')).toContainText('Museum')
 })
 
 test('command palette opens the game of life', async ({ page }) => {
@@ -371,9 +366,17 @@ test('/changelog renders the baked git history', async ({ page }) => {
 test('sitemap carries per-page git-derived lastmod dates', async ({ request }) => {
   const res = await request.get('/sitemap.xml')
   const body = await res.text()
-  // every url has a lastmod, and they are not all the same build date
   const dates = [...body.matchAll(/<lastmod>(\d{4}-\d{2}-\d{2})<\/lastmod>/g)].map((m) => m[1])
   expect(dates.length).toBeGreaterThan(10)
-  expect(new Set(dates).size).toBeGreaterThan(1)
+  // each lastmod is the real git date of that page's sources, not the build
+  // date. (Asserting the dates merely *differ* would be a weaker proxy that
+  // fails whenever every source happens to have last changed on build day.)
+  const gitDate = (...files: string[]) =>
+    execSync(`git log -1 --format=%as -- ${files.join(' ')}`, { encoding: 'utf8' }).trim()
+  const lastmodFor = (loc: string) =>
+    body.match(new RegExp(`<loc>https://laurensverspeek\\.nl${loc}</loc><lastmod>([^<]+)</lastmod>`))?.[1]
+  expect(lastmodFor('/museum')).toBe(gitDate('app/pages/museum.vue', 'app/data/museum.ts'))
+  expect(lastmodFor('/contact')).toBe(gitDate('app/pages/contact.vue'))
+  expect(lastmodFor('/blog/rebuilding-this-site')).toBe(gitDate('content/blog/rebuilding-this-site.md'))
 })
 

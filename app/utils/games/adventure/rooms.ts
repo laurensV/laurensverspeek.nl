@@ -26,7 +26,7 @@ export const ROOMS: Record<string, Room> = {
     fixtures: ['telescope']
   },
   workshop: {
-    name: 'the /uses workshop',
+    name: 'the /keyboard workshop',
     desc: 'workbenches of mechanical keyboards in various states of surgery. a soldering iron cools in the corner. the hall is back east.',
     exits: { east: { to: 'hall' } },
     items: ['coffee'],

@@ -5,7 +5,7 @@ export interface SeoOptions {
   title: string
   /** One-sentence page description — feeds <meta description>, og and twitter. */
   description: string
-  /** Absolute site path, e.g. '/uses' — becomes the canonical og:url. */
+  /** Absolute site path, e.g. '/about' — becomes the canonical og:url. */
   path: string
   /** Absolute OG/Twitter card image URL. Defaults to the site's default card. */
   image?: string

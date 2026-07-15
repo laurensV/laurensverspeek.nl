@@ -6,7 +6,7 @@ import type { Filesystem } from '~/utils/terminal/filesystem'
 describe('siteSeeds', () => {
   it('exposes every page as a directory with files inside', () => {
     const seeds = siteSeeds()
-    for (const dir of ['about', 'projects', 'blog', 'uses', 'cv', 'contact']) {
+    for (const dir of ['about', 'projects', 'blog', 'cv', 'contact']) {
       expect(seeds[dir], dir).toBeNull() // null = directory
     }
     expect(seeds['about/bio.md']).toContain('# about')

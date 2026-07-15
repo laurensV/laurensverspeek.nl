@@ -127,7 +127,6 @@ const navItems = [
   { to: '/projects', label: 'projects' },
   { to: '/blog', label: 'blog' },
   { to: '/about', label: 'about' },
-  { to: '/uses', label: 'uses' },
   { to: '/contact', label: 'contact' }
 ]
 

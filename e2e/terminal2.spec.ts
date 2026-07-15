@@ -451,7 +451,7 @@ test('adventure explores the site as a dungeon and saves on Esc', async ({ page 
   await expect(frame).toContainText('the home directory')
   await page.keyboard.type('go west')
   await page.keyboard.press('Enter')
-  await expect(frame).toContainText('/uses workshop')
+  await expect(frame).toContainText('/keyboard workshop')
   await page.keyboard.type('examine keyboard')
   await page.keyboard.press('Enter')
   await expect(frame).toContainText('amber key')

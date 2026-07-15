@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { levenshtein, nearestRoute } from '~/utils/nearestRoute'
 
-const ROUTES = ['/projects', '/blog', '/about', '/uses', '/cv', '/contact']
+const ROUTES = ['/projects', '/blog', '/about', '/cv', '/contact']
 
 describe('levenshtein', () => {
   it('is zero for identical strings', () => {

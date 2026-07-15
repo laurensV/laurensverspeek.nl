@@ -1,7 +1,6 @@
 import type { IconName } from '~/utils/icons'
 import { projects } from '~/data/projects'
 import { profile } from '~/data/profile'
-import { uses } from '~/data/uses'
 import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStorage'
 import { writeClipboard } from '~/utils/clipboard'
 
@@ -157,7 +156,6 @@ export function useCommandPalette() {
     { id: 'projects', label: 'Projects', icon: 'code', section: 'Pages', keywords: 'work portfolio', perform: () => go('/projects') },
     { id: 'blog', label: 'Blog', icon: 'file', section: 'Pages', keywords: 'posts writing articles', perform: () => go('/blog') },
     { id: 'about', label: 'About', icon: 'globe', section: 'Pages', keywords: 'bio skills timeline', perform: () => go('/about') },
-    { id: 'uses', label: 'Uses', icon: 'cpu', section: 'Pages', keywords: 'gear tools stack setup', perform: () => go('/uses') },
     { id: 'changelog', label: 'Changelog', icon: 'code', section: 'Pages', keywords: 'git history commits updates', perform: () => go('/changelog') },
     { id: 'cv', label: 'CV / Resume', icon: 'file', section: 'Pages', keywords: 'resume curriculum print pdf', perform: () => go('/cv') },
     { id: 'contact', label: 'Contact', icon: 'mail', section: 'Pages', keywords: 'email reach', perform: () => go('/contact') },
@@ -183,26 +181,6 @@ export function useCommandPalette() {
       keywords: `${post.tags?.join(' ') ?? ''} ${post.description}`,
       perform: () => go(post.path)
     })),
-    // every gear item from /uses, so searching a tool name finds it — external
-    // links open in a tab, the rest jump to the page
-    ...uses.flatMap<PaletteAction>((group) =>
-      group.items.map((item) => ({
-        id: `uses-${item.name}`,
-        label: item.name,
-        hint: 'uses',
-        icon: item.icon ?? 'cpu',
-        section: 'Uses',
-        keywords: `${group.group} ${item.note ?? ''} gear tools setup`,
-        perform: () => {
-          if (item.url) {
-            close()
-            window.open(item.url, '_blank', 'noopener')
-          } else {
-            go('/uses')
-          }
-        }
-      }))
-    ),
     ...accents.map<PaletteAction>((a) => ({
       id: `accent-${a.name}`,
       label: `Accent: ${a.name}`,

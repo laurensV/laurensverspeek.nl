@@ -55,7 +55,7 @@ useSeo({
 const { goatcounter: code } = useRuntimeConfig().public
 const enabled = computed(() => Boolean(code))
 
-const PATHS = ['/', '/blog', '/projects', '/about', '/uses', '/contact', '/changelog']
+const PATHS = ['/', '/blog', '/projects', '/about', '/contact', '/changelog']
 
 const total = ref('')
 const failed = ref(false)

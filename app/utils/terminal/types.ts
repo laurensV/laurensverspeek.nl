@@ -30,7 +30,7 @@ export interface TerminalCommand {
   exec: (args: string[]) => void | Promise<void>
 }
 
-export const PAGES = ['home', 'projects', 'blog', 'about', 'uses', 'cv', 'contact'] as const
+export const PAGES = ['home', 'projects', 'blog', 'about', 'cv', 'contact'] as const
 
 /** Minimal shape of a blog post as the terminal needs it. */
 interface TerminalBlogPost {
