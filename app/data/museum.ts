@@ -45,7 +45,7 @@ export const museum: Wing[] = [
       { name: 'task manager', how: 'the taskmgr icon', blurb: 'Windows, terminal effects and games as killable processes — the same pids ps shows.' },
       { name: 'paint → wallpaper', how: 'lvpaint, then set as wallpaper', blurb: 'Your masterpiece becomes the desktop background. The museum does not judge.' },
       { name: 'about this computer', how: 'the start menu', blurb: 'Real uptime, your real resolution and browser, and exactly how much localStorage this whole circus uses.' },
-      { name: 'the lock screen', how: 'start menu → lock', blurb: 'Any password unlocks it. The security is ceremonial; the commitment is real.' },
+      { name: 'the lock screen', how: 'start menu → lock', blurb: 'One password opens it: the most famous one on IRC. Guess wrong and it judges you — and points out that everyone can see it is ******* anyway. The security is ceremonial (a reload walks past it); the commitment is real.' },
       { name: 'the boot sequence', how: 'reboot from the start menu', blurb: 'A BIOS POST screen with a memory check that has never once found a problem.' },
       { name: 'mail & the feed reader', how: 'the mail and rss icons', blurb: 'An inbox where real blog posts arrive as newsletters (and the prince remains hopeful), plus an RSS reader subscribed to this very site. The compose button drafts a real reply. Dog food: eaten.' },
       { name: 'system update', how: 'start menu → system update', blurb: 'Ceremonially installs this repo\'s actual recent commits, progress bar and "do not turn off your computer" and all. It remembers what it installed, so the nudge only returns when new work ships.' },

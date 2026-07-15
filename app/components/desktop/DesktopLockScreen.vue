@@ -22,7 +22,12 @@
 <script setup lang="ts">
 import { useNow } from '@vueuse/core'
 
-// The lock is strictly ceremonial: any password works, but it gets judged.
+// The one real password on the site: hunter2, the most famous password on IRC.
+// Wrong guesses get judged rather than just rejected. It's still not security —
+// `locked` isn't persisted, so a reload walks right past it.
+
+const PASSWORD = 'hunter2'
+const MASKED = '*******'
 
 const emit = defineEmits<{ unlock: [] }>()
 
@@ -33,25 +38,32 @@ const clock = computed(() =>
 )
 
 const password = ref('')
-const hint = ref('locked — type anything to get back in')
+const hint = ref('locked — hint: the most famous password on IRC')
 const field = ref<HTMLInputElement>()
 let unlockTimer: ReturnType<typeof setTimeout> | undefined
 
+// wrong guesses still get an opinion; the last one is the bash.org punchline
 const JUDGEMENTS = [
-  (pw: string) => (pw.length < 4 ? 'that would take seconds to crack. in you go.' : null),
-  (pw: string) => (/^[0-9]+$/.test(pw) ? 'all digits? bold. unlocked anyway.' : null),
-  (pw: string) => (pw.toLowerCase().includes('password') ? 'seriously? fine, welcome back.' : null),
-  (pw: string) => (pw.length > 16 ? 'now that is a passphrase. respect. unlocked.' : null)
+  (pw: string) => (/^[0-9]+$/.test(pw) ? 'all digits? bold. still not it.' : null),
+  (pw: string) => (pw.toLowerCase().includes('password') ? 'seriously? no.' : null),
+  (pw: string) => (pw.length > 16 ? 'now that is a passphrase. wrong one, though.' : null),
+  (pw: string) => (pw.length < 4 ? 'that would take seconds to crack. it is also wrong.' : null)
 ]
 
 const attempt = () => {
-  if (!password.value) {
-    hint.value = 'empty? even this lock has standards. type anything.'
+  const guess = password.value.trim()
+  if (!guess) {
+    hint.value = 'empty? even this lock has standards.'
     return
   }
-  hint.value = JUDGEMENTS.map((judge) => judge(password.value)).find(Boolean)
-    ?? 'correct! (everything is correct here)'
-  unlockTimer = setTimeout(() => emit('unlock'), 900)
+  if (guess.toLowerCase() === PASSWORD) {
+    hint.value = 'correct. welcome back.'
+    unlockTimer = setTimeout(() => emit('unlock'), 900)
+    return
+  }
+  hint.value = JUDGEMENTS.map((judge) => judge(guess)).find(Boolean)
+    ?? `access denied — everyone can see it's ${MASKED} though`
+  password.value = ''
 }
 
 onMounted(() => field.value?.focus())

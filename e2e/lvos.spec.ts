@@ -305,20 +305,31 @@ test('shutdown under reduced motion skips the animation and just exits', async (
   await expect(page).toHaveURL(/\/$/, { timeout: 10000 })
 })
 
-test('lock screen covers the desktop until any password unlocks it', async ({ page }) => {
+test('lock screen covers the desktop until the famous password unlocks it', async ({ page }) => {
   await bootDesktop(page)
   await page.locator('.lvos-start').click()
   await page.locator('.lvos-start-menu button', { hasText: 'lock' }).click()
   const lock = page.locator('.lock')
   await expect(lock).toBeVisible()
-  await expect(lock).toContainText('locked')
+  await expect(lock).toContainText('the most famous password on IRC')
   // Escape does NOT log out while locked
   await page.keyboard.press('Escape')
   await expect(page.locator('.lvos')).toBeVisible()
   await expect(lock).toBeVisible()
-  // an empty submit gets judged, any real input unlocks
+  // an empty submit gets judged
   await page.locator('.lock-input').press('Enter')
   await expect(lock).toContainText('standards')
+  // a wrong password is judged and does NOT unlock
+  await page.locator('.lock-input').fill('letmein')
+  await page.keyboard.press('Enter')
+  await expect(lock).toContainText("everyone can see it's *******")
+  await expect(lock).toBeVisible()
+  // ...and the judgements are specific about how wrong you are
+  await page.locator('.lock-input').fill('123456')
+  await page.keyboard.press('Enter')
+  await expect(lock).toContainText('all digits')
+  await expect(lock).toBeVisible()
+  // only hunter2 opens it
   await page.locator('.lock-input').fill('hunter2')
   await page.keyboard.press('Enter')
   await expect(lock).toHaveCount(0, { timeout: 5000 })
