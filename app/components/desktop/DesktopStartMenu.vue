@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import type { Wallpaper } from '~/composables/useWallpaper'
-import { DESKTOP_APPS, type StartAction } from '~/utils/desktopApps'
+import { searchApps, type StartAction } from '~/utils/desktopApps'
 
 // The lvOS start menu — pulled out of DesktopTaskbar so the bar stays about the
 // tray/clock/tasks. It reports every choice as one `select` action the taskbar
@@ -97,15 +97,9 @@ const emit = defineEmits<{ select: [action: StartAction], launch: [id: string] }
 const query = ref('')
 const searchRef = ref<HTMLInputElement>()
 
-// match on id or label so 'mines', 'time', 'terminal' all find their app; the
-// 'log out' entry is reachable from the session row, so keep it out of results
-const results = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  if (!q) return []
-  return DESKTOP_APPS.filter(
-    (app) => app.action !== 'logout' && (app.id.includes(q) || app.label.toLowerCase().includes(q))
-  )
-})
+// one shared matcher (desktopApps.searchApps) so the start menu, the Alt+R run
+// dialog and terminal `desktop <app>` all resolve names the same way
+const results = computed(() => searchApps(query.value))
 
 const launch = (id: string) => {
   query.value = ''

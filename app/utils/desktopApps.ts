@@ -86,7 +86,26 @@ export function matchApp(query: string, apps: DesktopApp[] = DESKTOP_APPS): Desk
   return apps.find((app) => app.id === q)
     ?? apps.find((app) => app.label.toLowerCase() === q)
     ?? apps.find((app) => app.id.startsWith(q) || app.label.toLowerCase().startsWith(q))
+    // fall back to the same substring search the start menu shows, so all three
+    // launch paths agree — 'machine' resolves to Time Machine everywhere, it
+    // doesn't launch from the start menu yet error in the run dialog / terminal
+    ?? searchApps(q, apps)[0]
     ?? null
+}
+
+/**
+ * Every app whose id or label *contains* the query — the start-menu search
+ * filter. Substring (not prefix) so 'machine' finds Time Machine and 'exe'
+ * finds mines.exe. Excludes `logout` (reached from the session row, not
+ * launched). Shared so the start menu, run dialog and terminal `desktop <app>`
+ * resolve names through one place instead of a per-surface inline filter.
+ */
+export function searchApps(query: string, apps: DesktopApp[] = DESKTOP_APPS): DesktopApp[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  return apps.filter(
+    (app) => app.action !== 'logout' && (app.id.includes(q) || app.label.toLowerCase().includes(q))
+  )
 }
 
 /** Completion candidates for a partial run-dialog query. */
