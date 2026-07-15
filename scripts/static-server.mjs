@@ -22,7 +22,10 @@ const TYPES = {
   '.xml': 'application/xml',
   '.pdf': 'application/pdf',
   '.vcf': 'text/vcard; charset=utf-8',
-  '.woff2': 'font/woff2'
+  '.woff2': 'font/woff2',
+  // without this the SQLite content engine can't streaming-compile and falls
+  // back to slower ArrayBuffer instantiation on every e2e run
+  '.wasm': 'application/wasm'
 }
 
 /** @param {string} path @returns {Promise<string | null>} */
