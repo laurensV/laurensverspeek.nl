@@ -122,6 +122,11 @@ test('destroy mode shoots real dom elements and esc repairs the site', async ({ 
   await run(page, 'destroy')
   const overlay = page.locator('.destroyer')
   await expect(overlay).toBeVisible()
+  // `destroy` closes the terminal, but the overlay outlives the ship by ~400ms.
+  // Fire before it unmounts and the bullets shred the dying terminal lines
+  // instead of the page — they get hidden, then Vue removes them, so the
+  // visibility:hidden this test counts leaves the DOM with them. Wait it out.
+  await expect(page.locator('.terminal-line')).toHaveCount(0)
   // the ship spawns bottom-centre facing up; a click fires straight ahead,
   // and the bullet travels up the centre column through the (centred) hero
   const hero = page.locator('.hero-name')
