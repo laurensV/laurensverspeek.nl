@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { effectProcs, SYSTEM_PROCS, killByPid, windowPid, windowProcs, lvshProc, lvosSessionProc, gameProc, LVSH_PID, registerSaverProc, unregisterSaverProc, saverProcs, SAVER_PID } from '../app/utils/terminal/effectProcs'
+import { effectProcs, SYSTEM_PROCS, killByPid, killByName, windowPid, windowProcs, lvshProc, lvosSessionProc, gameProc, LVSH_PID, registerSaverProc, unregisterSaverProc, saverProcs, SAVER_PID } from '../app/utils/terminal/effectProcs'
 import { ref } from 'vue'
 
 const makeEffects = () => ({
@@ -41,6 +41,46 @@ describe('effectProcs / killByPid', () => {
     expect(killByPid(procs, SYSTEM_PROCS, 314)).toEqual({ ok: false, reason: 'not-running' })
     expect(killByPid(procs, SYSTEM_PROCS, 1)).toEqual({ ok: false, reason: 'not-permitted' })
     expect(killByPid(procs, SYSTEM_PROCS, 9999)).toEqual({ ok: false, reason: 'no-such-process' })
+  })
+})
+
+describe('killByName', () => {
+  it('kills every running process matching the name, exact match first', () => {
+    const fx = makeEffects()
+    fx.party.value = true
+    const procs = effectProcs(fx as never)
+    const result = killByName(procs, SYSTEM_PROCS, 'party-mode')
+    expect(result).toEqual({ ok: true, killed: [{ pid: 217, name: 'party-mode' }] })
+    expect(fx.party.value).toBe(false)
+  })
+
+  it('falls back to a prefix match and is case-insensitive', () => {
+    const fx = makeEffects()
+    fx.fireworks.value = true
+    const procs = effectProcs(fx as never)
+    const result = killByName(procs, SYSTEM_PROCS, 'FIRE')
+    expect(result.ok).toBe(true)
+    expect(fx.fireworks.value).toBe(false)
+  })
+
+  it('kills all matches at once', () => {
+    let stops = 0
+    const procs = [
+      { pid: 11, name: 'demo.app', running: () => true, stop: () => stops++ },
+      { pid: 12, name: 'demo.app', running: () => true, stop: () => stops++ },
+      { pid: 13, name: 'other.app', running: () => true, stop: () => stops++ }
+    ]
+    const result = killByName(procs, SYSTEM_PROCS, 'demo.app')
+    expect(result.ok && result.killed).toHaveLength(2)
+    expect(stops).toBe(2)
+  })
+
+  it('reports not-running, not-permitted and no-such-process', () => {
+    const fx = makeEffects()
+    const procs = effectProcs(fx as never)
+    expect(killByName(procs, SYSTEM_PROCS, 'matrix-rain')).toEqual({ ok: false, reason: 'not-running' })
+    expect(killByName(procs, SYSTEM_PROCS, SYSTEM_PROCS[0]!.name)).toEqual({ ok: false, reason: 'not-permitted' })
+    expect(killByName(procs, SYSTEM_PROCS, 'nonexistent')).toEqual({ ok: false, reason: 'no-such-process' })
   })
 })
 

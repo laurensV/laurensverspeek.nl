@@ -121,6 +121,30 @@ export type KillResult =
   | { ok: true, name: string }
   | { ok: false, reason: 'not-running' | 'not-permitted' | 'no-such-process' }
 
+export type KillAllResult =
+  | { ok: true, killed: { pid: number, name: string }[] }
+  | { ok: false, reason: 'not-running' | 'not-permitted' | 'no-such-process' }
+
+/** Resolve a `killall <name>`: stop every running process matching the name
+ * (exact first, then prefix — so `killall snake` and `killall files` both work
+ * against names like `files.app`), or explain why not. */
+export function killByName(procs: EffectProc[], system: SystemProc[], rawName: string): KillAllResult {
+  const name = rawName.toLowerCase()
+  const matches = (candidates: { name: string }[]) => {
+    const exact = candidates.filter((proc) => proc.name.toLowerCase() === name)
+    return exact.length ? exact : candidates.filter((proc) => proc.name.toLowerCase().startsWith(name))
+  }
+  const matched = matches(procs) as EffectProc[]
+  if (matched.length) {
+    const running = matched.filter((proc) => proc.running())
+    if (!running.length) return { ok: false, reason: 'not-running' }
+    running.forEach((proc) => proc.stop())
+    return { ok: true, killed: running.map((proc) => ({ pid: proc.pid, name: proc.name })) }
+  }
+  if (matches(system).length) return { ok: false, reason: 'not-permitted' }
+  return { ok: false, reason: 'no-such-process' }
+}
+
 /** Resolve a `kill <pid>`: stop a running process, or explain why not. */
 export function killByPid(procs: EffectProc[], system: SystemProc[], pid: number): KillResult {
   const effect = procs.find((proc) => proc.pid === pid)

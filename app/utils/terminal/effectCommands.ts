@@ -1,5 +1,5 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
-import { LVSH_PID, LVOS_SESSION_PID, killByPid } from '~/utils/terminal/effectProcs'
+import { LVSH_PID, LVOS_SESSION_PID, killByPid, killByName } from '~/utils/terminal/effectProcs'
 import { DESKTOP_APPS, matchApp, appCandidates } from '~/utils/desktopApps'
 import { STATE_KEYS } from '~/utils/stateKeys'
 
@@ -150,6 +150,24 @@ export function createEffectCommands(ctx: TerminalContext): Record<string, Termi
         if (result.reason === 'not-running') return error(`kill: (${pid}) — no such process (it isn't running)`)
         if (result.reason === 'not-permitted') return error(`kill: (${pid}) — operation not permitted. this site needs that.`)
         error(`kill: (${pid}) — no such process`)
+      }
+    },
+    killall: {
+      category: 'system',
+      usage: 'killall <name>',
+      description: 'Stop every process matching a name (see ps)',
+      argCandidates: () => [...new Set(allProcs().filter((proc) => proc.running()).map((proc) => proc.name))],
+      exec: (args) => {
+        const name = args.find((arg) => !arg.startsWith('-'))
+        if (!name) return error('killall: usage: killall <name> — see ps for the candidates')
+        const result = killByName(allProcs(), systemProcs, name)
+        if (result.ok) {
+          result.killed.forEach(({ pid, name: procName }) => out(`[${pid}] ${procName} terminated`))
+          return
+        }
+        if (result.reason === 'not-running') return error(`killall: ${name}: no process found (it isn't running)`)
+        if (result.reason === 'not-permitted') return error(`killall: ${name}: operation not permitted. this site needs that.`)
+        error(`killall: ${name}: no process found`)
       }
     },
     boss: {
