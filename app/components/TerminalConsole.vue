@@ -479,6 +479,11 @@ defineExpose({ focusInput })
       color: hsl(var(--lv-scheme-hs), 85%);
       font: inherit;
       font-size: 0.8rem;
+      // wide labels ('⊞ split', 'space') painted past the rounded border when
+      // the flexed width came up short — clip inside the pill instead
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
       &:active {
         background-color: hsla(var(--lv-primary-hsl), 0.25);
