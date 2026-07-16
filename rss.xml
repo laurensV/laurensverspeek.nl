@@ -133,7 +133,7 @@ git merge origin/main</code></pre>
   // ...50 or so more
 }</code></pre>
 <p>State lives in <code>useState</code>, so the navbar button, the footer link and the overlay all talk to the same terminal instance rather than three lookalikes. Commands can navigate the router, toggle the theme, fetch the GitHub API, or take over the keyboard entirely.</p>
-<p>The rule that keeps it from being a toy: it reads the same data the pages do. <code>about</code> prints the same profile the <code>/about</code> page renders; <code>uses</code> prints the same gear list. There's no second copy of me to drift out of date.</p>
+<p>The rule that keeps it from being a toy: it reads the same data the pages do. <code>about</code> prints the same profile the <code>/about</code> page renders; <code>blog</code> lists the same posts the <code>/blog</code> index does. There's no second copy of me to drift out of date.</p>
 <h2>a game is a string factory</h2>
 <p>Taking over the keyboard is how <code>snake</code> ended up in there. The fun constraint: the &quot;screen&quot; is just a <code>&lt;pre&gt;</code> element. No canvas, no WebGL — monospace text re-rendered eight times a second.</p>
 <p>A game is a function handed two callbacks, one to draw a frame and one to report the final output:</p>
