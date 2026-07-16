@@ -5,6 +5,15 @@ const SNAKE_W = 26
 const SNAKE_H = 12
 const SNAKE_HIGHSCORE_KEY = 'lv-snake-highscore'
 
+// the ASCII frame is width*2-1 monospace columns (cells joined by spaces): 26
+// cells = 51 columns ≈ 357px, which overflows a phone's game frame (343px at
+// 375, 288px at 320) and hides the right wall mid-game — shrink the board on
+// narrow viewports so the whole arena is visible while playing
+const boardWidth = () =>
+  typeof window !== 'undefined' && window.innerWidth <= 480
+    ? (window.innerWidth <= 350 ? 18 : 22)
+    : SNAKE_W
+
 interface Cell {
   x: number
   y: number
@@ -25,6 +34,7 @@ export function createSnakeGame(
   { onFrame, onEnd }: GameCallbacks,
   onState?: (state: SnakeState) => void
 ): GameHandle {
+  const W = boardWidth()
   const snake: Cell[] = [
     { x: 8, y: 6 },
     { x: 7, y: 6 },
@@ -38,7 +48,7 @@ export function createSnakeGame(
   function spawnFood(): Cell {
     while (true) {
       const candidate = {
-        x: 1 + Math.floor(Math.random() * (SNAKE_W - 2)),
+        x: 1 + Math.floor(Math.random() * (W - 2)),
         y: 1 + Math.floor(Math.random() * (SNAKE_H - 2))
       }
       if (!snake.some((c) => c.x === candidate.x && c.y === candidate.y)) return candidate
@@ -48,7 +58,7 @@ export function createSnakeGame(
   function tick() {
     dir = nextDir
     const head = { x: snake[0]!.x + dir.x, y: snake[0]!.y + dir.y }
-    const hitWall = head.x <= 0 || head.x >= SNAKE_W - 1 || head.y <= 0 || head.y >= SNAKE_H - 1
+    const hitWall = head.x <= 0 || head.x >= W - 1 || head.y <= 0 || head.y >= SNAKE_H - 1
     // the tail vacates its cell this tick (unless we eat), so following your own
     // tail is legal — exclude the last segment from the self-collision test
     const eating = head.x === food.x && head.y === food.y
@@ -70,13 +80,13 @@ export function createSnakeGame(
 
   function render() {
     const grid: string[][] = Array.from({ length: SNAKE_H }, (_, y) =>
-      Array.from({ length: SNAKE_W }, (_, x) => {
+      Array.from({ length: W }, (_, x) => {
         if (y === 0 && x === 0) return '┌'
-        if (y === 0 && x === SNAKE_W - 1) return '┐'
+        if (y === 0 && x === W - 1) return '┐'
         if (y === SNAKE_H - 1 && x === 0) return '└'
-        if (y === SNAKE_H - 1 && x === SNAKE_W - 1) return '┘'
+        if (y === SNAKE_H - 1 && x === W - 1) return '┘'
         if (y === 0 || y === SNAKE_H - 1) return '─'
-        if (x === 0 || x === SNAKE_W - 1) return '│'
+        if (x === 0 || x === W - 1) return '│'
         return ' '
       })
     )
@@ -87,7 +97,7 @@ export function createSnakeGame(
     const rows = grid.map((row) => row.join(' ')).join('\n')
     onFrame(`SNAKE  score: ${score}  (arrows/wasd move, q quits)\n\n${rows}`)
     onState?.({
-      width: SNAKE_W,
+      width: W,
       height: SNAKE_H,
       snake: snake.map((c) => ({ x: c.x, y: c.y })),
       food: { x: food.x, y: food.y },
