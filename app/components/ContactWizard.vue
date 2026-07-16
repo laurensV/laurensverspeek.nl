@@ -226,6 +226,12 @@ onMounted(focusInput)
     text-align: center;
     font-size: 0.72rem;
     color: hsl(var(--lv-scheme-hs), 55%);
+    // same fix the terminal titlebar got: {name}@domain: ~/contact wrapped to
+    // three lines at 320px and bloated the fake titlebar
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
 }
 

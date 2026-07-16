@@ -149,6 +149,11 @@ onUnmounted(() => clearInterval(clock))
   text-align: left;
   word-break: break-all;
 
+  // the copy-key affordance measured 203×18 on a phone — pad it into a target
+  @media (pointer: coarse) {
+    padding: 0.6rem 0.2rem;
+  }
+
   &:hover,
   &:focus-visible {
     color: var(--bulma-primary-on-scheme);
