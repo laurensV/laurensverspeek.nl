@@ -96,7 +96,11 @@ export function createSnakeGame(
       grid[cell.y]![cell.x] = i === 0 ? '▓' : '█'
     })
     const rows = grid.map((row) => row.join(' ')).join('\n')
-    onFrame(`SNAKE  score: ${score}  (arrows/wasd move, q quits)\n\n${rows}`)
+    // the full hint is 44 columns — wider than a narrow board, so it would
+    // become the frame's overflow; phones get the short form (keys are on the
+    // quick-key row there anyway)
+    const hint = W < SNAKE_W ? '(q quits)' : '(arrows/wasd move, q quits)'
+    onFrame(`SNAKE  score: ${score}  ${hint}\n\n${rows}`)
     onState?.({
       width: W,
       height: SNAKE_H,

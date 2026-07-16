@@ -22,7 +22,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   // captured at plugin setup (valid Nuxt context); the hook runs later
   const files = useState<Filesystem>(STATE_KEYS.terminalFs, () => ({}))
   const pendingApp = useState<string>(STATE_KEYS.lvosPendingApp, () => '')
-  const router = useRouter()
 
   nuxtApp.hook('app:mounted', () => {
     if (!files.value['stickies']?.dir) {
@@ -37,8 +36,12 @@ export default defineNuxtPlugin((nuxtApp) => {
 
     // land the visitor in the notes app, note already pinned
     pendingApp.value = 'notes'
-    // the share params are one-shot — a reload or bookmark shouldn't re-pin
-    // (through the router, not raw replaceState, which vue-router overrides)
-    void router.replace({ path: '/desktop', query: {} })
+    // the share params are one-shot — a reload or bookmark shouldn't re-pin.
+    // Nuxt finalizes hydration with a replaceState of the ORIGINAL url some
+    // time after app:mounted (isReady/nextTick still lose the race), so the
+    // strip waits it out; a second late is invisible for a cosmetic url fix.
+    setTimeout(() => {
+      window.history.replaceState(window.history.state, '', '/desktop')
+    }, 1200)
   })
 })
