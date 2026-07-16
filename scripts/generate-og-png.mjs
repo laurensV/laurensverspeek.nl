@@ -1,9 +1,9 @@
 // Rasterize the branded OG cards to PNG. Social platforms (X, LinkedIn, Slack,
 // Discord, Facebook) refuse SVG for og:image/twitter:image, so every share
-// link would otherwise show no preview card. Runs after `nuxt generate`,
-// rendering each generated SVG in headless chromium (with the real webfonts)
-// and screenshotting it to a same-named .png alongside. Non-fatal: if chromium
-// isn't available it warns and exits 0, exactly like the resume step.
+// link would otherwise show no preview card. Runs as a scripts/postgenerate.mjs
+// step after `nuxt generate` (one shared browser boot), rendering each
+// generated SVG in headless chromium (with the real webfonts) and
+// screenshotting it to a same-named .png alongside.
 
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -13,7 +13,8 @@ const ogDir = fileURLToPath(new URL('../.output/public/og', import.meta.url))
 
 const FONTS = 'https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=JetBrains+Mono:wght@400;600;700&display=swap'
 
-const main = async () => {
+/** @param {{ browser: import('@playwright/test').Browser }} ctx */
+export const rasterizeOgCards = async ({ browser }) => {
   let svgs
   try {
     svgs = readdirSync(ogDir).filter((file) => file.endsWith('.svg'))
@@ -26,8 +27,6 @@ const main = async () => {
     return
   }
 
-  const { chromium } = await import('@playwright/test')
-  const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } })
 
   let count = 0
@@ -49,11 +48,6 @@ const main = async () => {
     count++
   }
 
-  await browser.close()
+  await page.close()
   console.log(`[og-png] rasterized ${count} OG card${count === 1 ? '' : 's'} to PNG`)
 }
-
-main().catch((error) => {
-  // never break the build over preview images
-  console.warn(`[og-png] skipped (${error?.message ?? error})`)
-})

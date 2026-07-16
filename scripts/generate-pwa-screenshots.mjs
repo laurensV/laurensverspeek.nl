@@ -1,21 +1,16 @@
 // Build-time PWA install-sheet screenshots. The manifest's `screenshots`
 // entries make Chrome/Android show the rich bottom-sheet install UI with
-// previews instead of the bare mini prompt. Serves the generated site (via
-// the shared static server) and captures one wide (desktop, the lvOS
-// desktop) and one narrow (phone, the home page) PNG into the output.
-// Non-fatal: if the browser isn't available it warns and exits 0.
+// previews instead of the bare mini prompt. Captures one wide (desktop, the
+// lvOS desktop) and one narrow (phone, the home page) PNG into the output.
+// Runs as a scripts/postgenerate.mjs step (one shared browser + server boot).
 
 import { copyFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createStaticServer } from './static-server.mjs'
 
-const root = fileURLToPath(new URL('../.output/public', import.meta.url))
 // also refresh the committed-adjacent copies in public/ (gitignored) so
 // `npm run dev` serves the manifest's screenshot URLs too
 const publicDir = fileURLToPath(new URL('../public', import.meta.url))
-
-const server = createStaticServer(root)
 
 // keep in sync with pwa.manifest.screenshots in nuxt.config.ts: the `sizes`
 // there must match these viewports (narrow is 375x812 at DPR 2 → 750x1624)
@@ -24,14 +19,8 @@ const SHOTS = [
   { name: 'pwa-screenshot-narrow.png', path: '/', waitFor: '.hero-name', width: 375, height: 812, scale: 2, mobile: true }
 ]
 
-const main = async () => {
-  const { chromium } = await import('@playwright/test')
-  await new Promise((resolve) => server.listen(0, () => resolve(undefined)))
-  const address = server.address()
-  if (!address || typeof address === 'string') throw new Error('server has no port')
-  const port = address.port
-
-  const browser = await chromium.launch()
+/** @param {{ browser: import('@playwright/test').Browser, port: number, root: string }} ctx */
+export const capturePwaScreenshots = async ({ browser, port, root }) => {
   for (const shot of SHOTS) {
     const context = await browser.newContext({
       viewport: { width: shot.width, height: shot.height },
@@ -57,13 +46,4 @@ const main = async () => {
     await copyFile(outFile, join(publicDir, shot.name))
     console.log(`[pwa-shots] wrote ${shot.name}`)
   }
-  await browser.close()
-}
-
-try {
-  await main()
-} catch (/** @type {any} */ error) {
-  console.warn('[pwa-shots] skipped screenshot generation:', error?.message ?? error)
-} finally {
-  server.close()
 }

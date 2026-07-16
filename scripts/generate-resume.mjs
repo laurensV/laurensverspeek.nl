@@ -1,29 +1,18 @@
-// Build-time resume PDF. Serves the generated site (via the shared static
-// server), prints /cv in its light, print-optimized form to a static PDF in
-// the output. Non-fatal: if the browser isn't available it warns and exits 0
-// so it never breaks a build.
+// Build-time resume PDF. Prints /cv in its light, print-optimized form to a
+// static PDF in the output. Runs as a scripts/postgenerate.mjs step (one
+// shared browser + static server boot); `npm run resume` invokes that
+// orchestrator with --only=resume.
 
 import { copyFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createStaticServer } from './static-server.mjs'
 
-const root = fileURLToPath(new URL('../.output/public', import.meta.url))
-const outFile = join(root, 'laurens-verspeek-resume.pdf')
 // also refresh the committed copy in public/ so `npm run dev` serves it too
 const sourceCopy = fileURLToPath(new URL('../public/laurens-verspeek-resume.pdf', import.meta.url))
 
-const server = createStaticServer(root)
-
-const main = async () => {
-  const { chromium } = await import('@playwright/test')
-  // an ephemeral port: a fixed one once collided with a parked dev server
-  await new Promise((resolve) => server.listen(0, () => resolve(undefined)))
-  const address = server.address()
-  if (!address || typeof address === 'string') throw new Error('server has no port')
-  const port = address.port
-
-  const browser = await chromium.launch()
+/** @param {{ browser: import('@playwright/test').Browser, port: number, root: string }} ctx */
+export const generateResume = async ({ browser, port, root }) => {
+  const outFile = join(root, 'laurens-verspeek-resume.pdf')
   const page = await browser.newPage()
   // force the light, print-optimized theme and skip the boot splash animation
   await page.addInitScript(() => {
@@ -42,15 +31,7 @@ const main = async () => {
     printBackground: true,
     margin: { top: '14mm', bottom: '14mm', left: '12mm', right: '12mm' }
   })
-  await browser.close()
+  await page.close()
   await copyFile(outFile, sourceCopy)
   console.log('[resume] wrote laurens-verspeek-resume.pdf')
-}
-
-try {
-  await main()
-} catch (/** @type {any} */ error) {
-  console.warn('[resume] skipped PDF generation:', error?.message ?? error)
-} finally {
-  server.close()
 }
