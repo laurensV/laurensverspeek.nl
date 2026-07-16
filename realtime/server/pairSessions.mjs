@@ -20,7 +20,7 @@
 
 // unambiguous alphabet: no O/0 and no I/1, so a code read out loud survives
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-export const PAIR_CODE_RE = /^[A-Z0-9]{4}$/
+const PAIR_CODE_RE = /^[A-Z0-9]{4}$/
 const MAX_GUESTS = 8
 const MAX_LINES_PER_FRAME = 40
 const MAX_LINE_TEXT = 400

@@ -121,7 +121,7 @@ export function bootProcs(): EffectProc[] {
 // watching guests) is a long-running background feature, not a game — like the
 // screensaver it registers hooks while hosting, so `ps` lists it and
 // `kill 2525` ends the session for everyone watching.
-export const PAIR_PID = 2525
+const PAIR_PID = 2525
 let pairHooks: { running: () => boolean, stop: () => void } | null = null
 export const registerPairProc = (hooks: { running: () => boolean, stop: () => void }) => {
   pairHooks = hooks
