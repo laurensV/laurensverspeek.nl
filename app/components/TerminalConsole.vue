@@ -3,13 +3,16 @@
     <!-- role=log lets screen readers announce command results; the game frame
          and spinner repaint every tick, so they stay out of the live region -->
     <div ref="outputRef" class="terminal-output" role="log" aria-live="polite" aria-label="Terminal output">
-      <template v-for="line in paneLines" :key="line.id">
+      <!-- lines are immutable once pushed: v-memo lets streamed output (tail -f,
+           animated commands) append without re-diffing 1500 settled lines per
+           tick. The wrapper is display:contents, invisible to layout/selectors. -->
+      <div v-for="line in paneLines" :key="line.id" v-memo="[line.id]" class="terminal-line-slot">
         <div v-if="line.type === 'input'" class="terminal-line">
           <span class="term-prompt">{{ prompt }}</span> {{ line.text }}
         </div>
         <pre v-else-if="line.html" class="terminal-line" :class="`is-${line.type}`" v-html="line.text" />
         <pre v-else class="terminal-line" :class="`is-${line.type}`">{{ line.text }}</pre>
-      </template>
+      </div>
       <pre v-if="activeGame && active" class="terminal-line game-frame" aria-hidden="true">{{ gameFrame }}</pre>
       <!-- invisible field: raises the soft keyboard so letter-driven games are
            playable on touch; its characters route into the game via onGameText -->
@@ -328,6 +331,11 @@ defineExpose({ focusInput })
   overflow-y: auto;
   font-size: calc(0.9rem * var(--term-font-scale, 1));
   line-height: 1.55;
+}
+
+// v-memo needs a real element per line; contents keeps it out of layout
+.terminal-line-slot {
+  display: contents;
 }
 
 .terminal-line {
