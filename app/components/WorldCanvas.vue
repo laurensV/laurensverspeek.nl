@@ -238,21 +238,37 @@ const draw = () => {
   drawMini()
 }
 
-const drawMini = () => {
-  const context = miniCtx
-  const cells = board.value
-  if (!context || !cells) return
+// the minimap's board pixels only change when `version` bumps, but drawMini
+// runs on every coalesced frame (pans, zooms, remote cursor moves) — cache the
+// 128×128 scan on an offscreen canvas and blit it, so a pan frame is one
+// drawImage plus a rectangle instead of 16k cell iterations
+let miniBoard: HTMLCanvasElement | null = null
+let miniBoardVersion = -1
+const paintMiniBoard = (cells: Uint8Array) => {
+  miniBoard ??= Object.assign(document.createElement('canvas'), { width: 96, height: 96 })
+  const boardCtx = miniBoard.getContext('2d')
+  if (!boardCtx) return
   const scale = 96 / SIZE
-  context.fillStyle = '#0a0a0d'
-  context.fillRect(0, 0, 96, 96)
+  boardCtx.fillStyle = '#0a0a0d'
+  boardCtx.fillRect(0, 0, 96, 96)
   for (let y = 0; y < SIZE; y++) {
     for (let x = 0; x < SIZE; x++) {
       const c = cells[y * SIZE + x]!
       if (c === 0) continue
-      context.fillStyle = PALETTE[c]!
-      context.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5)
+      boardCtx.fillStyle = PALETTE[c]!
+      boardCtx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5)
     }
   }
+  miniBoardVersion = version.value
+}
+
+const drawMini = () => {
+  const context = miniCtx
+  const cells = board.value
+  if (!context || !cells) return
+  if (!miniBoard || miniBoardVersion !== version.value) paintMiniBoard(cells)
+  if (miniBoard) context.drawImage(miniBoard, 0, 0)
+  const scale = 96 / SIZE
   // the current viewport box
   const v = view()
   const from = screenToBoard(cam, v, 0, 0)
