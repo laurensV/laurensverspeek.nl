@@ -57,6 +57,8 @@ const metrics = reactive<Metric[]>([
 ])
 
 const tick = () => {
+  // the memory sample walks all of localStorage — skip it in a hidden tab
+  if (document.hidden) return
   for (const metric of metrics) {
     const value = metric.sample()
     metric.samples = [...metric.samples.slice(1), value]

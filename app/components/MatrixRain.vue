@@ -25,6 +25,10 @@ let drops: number[] = []
 let vw = 0
 let vh = 0
 let acc = 0
+// getComputedStyle forces a style flush — read the glyph color once per
+// (re)size instead of every drawn frame; the var only moves on a theme switch,
+// which resizes nothing but is imperceptible mid-rain anyway
+let glyphColor = 'hsl(153, 53%, 53%)'
 
 const stop = () => {
   matrixActive.value = false
@@ -36,6 +40,7 @@ useCanvasScene(canvasRef, overlayRef, {
   onResize: (ctx, w, h) => {
     vw = w
     vh = h
+    glyphColor = getComputedStyle(document.documentElement).getPropertyValue('--bulma-success').trim() || glyphColor
     ctx.fillStyle = 'hsl(0, 0%, 0%)'
     ctx.fillRect(0, 0, w, h)
     drops = Array.from({ length: Math.ceil(w / 16) }, () => Math.floor(Math.random() * 40))
@@ -44,7 +49,6 @@ useCanvasScene(canvasRef, overlayRef, {
     acc += dt
     if (acc < 50) return // ~20fps, the classic cadence
     acc = 0
-    const glyphColor = getComputedStyle(document.documentElement).getPropertyValue('--bulma-success').trim() || 'hsl(153, 53%, 53%)'
     ctx.fillStyle = 'hsla(0, 0%, 0%, 0.08)'
     ctx.fillRect(0, 0, vw, vh)
     ctx.fillStyle = glyphColor

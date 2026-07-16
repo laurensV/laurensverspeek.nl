@@ -8,7 +8,7 @@
     @keydown="$emit('wake')"
   >
     <canvas ref="canvasRef" class="saver-stars" aria-hidden="true" />
-    <div class="saver-logo" :style="{ transform: `translate(${logo.x}px, ${logo.y}px)` }">
+    <div ref="logoRef" class="saver-logo">
       <span class="saver-logo-text">lvOS</span>
       <span class="saver-logo-time is-family-code">{{ clock }}</span>
     </div>
@@ -33,7 +33,10 @@ const clock = computed(() => now.value.toLocaleTimeString('en-GB'))
 
 const { saver } = useScreensaverChoice()
 const canvasRef = ref<HTMLCanvasElement>()
-const logo = reactive({ x: 80, y: 80 })
+const logoRef = ref<HTMLElement>()
+// plain object, written to the element imperatively — routing a 60fps position
+// through reactivity re-patched the component every animation frame
+const logo = { x: 80, y: 80 }
 let raf = 0
 
 onMounted(() => {
@@ -60,6 +63,7 @@ onMounted(() => {
     renderer.tick(ctx, canvas.width, canvas.height)
     ;[logo.x, vx] = bounce(logo.x, vx, 0, canvas.width - logoW)
     ;[logo.y, vy] = bounce(logo.y, vy, 0, canvas.height - logoH)
+    if (logoRef.value) logoRef.value.style.transform = `translate(${logo.x}px, ${logo.y}px)`
   }
 
   // reduced motion: paint a single quiet frame; the clock still ticks

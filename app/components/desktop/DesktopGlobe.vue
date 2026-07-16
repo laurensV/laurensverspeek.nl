@@ -31,7 +31,8 @@ onMounted(() => {
   watch(reduced, (r) => {
     clearInterval(timer)
     timer = undefined
-    if (!r) timer = setInterval(() => (spin.value += 0.08), 90)
+    // hidden tabs skip the spin (each step rebuilds the whole ASCII sphere)
+    if (!r) timer = setInterval(() => { if (!document.hidden) spin.value += 0.08 }, 90)
   }, { immediate: true })
 })
 onUnmounted(() => clearInterval(timer))

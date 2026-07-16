@@ -48,6 +48,8 @@ const fit = () => {
 }
 
 const tick = () => {
+  // no generations while the tab is hidden — nobody's watching the wallpaper
+  if (document.hidden) return
   grid = step(grid, cols, rows)
   // reseed a fizzled board so the wallpaper never goes still
   if (population(grid) < cols * rows * 0.02) seed()
