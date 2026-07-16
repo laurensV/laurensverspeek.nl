@@ -166,7 +166,10 @@ async function tmFetchInto(cache, sha, path) {
     try { await cache.put(url, res.clone()) } catch {}
     return res
   }
-  return null
+  // only a real CDN 404 means "not in this snapshot" — any other status
+  // (429 rate-limit, 403/5xx, a proxy's block page, an opaque status 0) is
+  // the archive failing to answer, and must render as unreachable, not 404
+  return res && res.status === 404 ? null : 'network'
 }
 
 async function tmServe(request, url, state) {
