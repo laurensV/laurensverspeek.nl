@@ -133,15 +133,19 @@ test('tile windows arranges every open window into a grid', async ({ page }) => 
   await page.locator('.lvos-window[data-win="clock"]').waitFor()
   await page.locator('.lvos-start').click()
   await page.locator('.lvos-start-menu button', { hasText: 'tile windows' }).click()
-  // two windows side by side, together spanning the full width
-  const calc = await page.locator('.lvos-window[data-win="calc"]').boundingBox()
-  const clock = await page.locator('.lvos-window[data-win="clock"]').boundingBox()
-  if (!calc || !clock) throw new Error('windows missing after tile')
-  const [left, right] = calc.x < clock.x ? [calc, clock] : [clock, calc]
-  // sub-pixel wobble from the window-open scale transition is fine
-  expect(left.x).toBeLessThan(4)
-  expect(left.width + right.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 4)
-  expect(Math.abs(right.x - left.width)).toBeLessThan(4)
+  // two windows side by side, together spanning the full width — windows GLIDE
+  // to their tile slots now (position is a transitioned transform), so poll
+  // until the layout settles instead of measuring mid-animation
+  await expect(async () => {
+    const calc = await page.locator('.lvos-window[data-win="calc"]').boundingBox()
+    const clock = await page.locator('.lvos-window[data-win="clock"]').boundingBox()
+    if (!calc || !clock) throw new Error('windows missing after tile')
+    const [left, right] = calc.x < clock.x ? [calc, clock] : [clock, calc]
+    // sub-pixel wobble from the window-open scale transition is fine
+    expect(left.x).toBeLessThan(4)
+    expect(left.width + right.width).toBeGreaterThanOrEqual(page.viewportSize()!.width - 4)
+    expect(Math.abs(right.x - left.width)).toBeLessThan(4)
+  }).toPass({ timeout: 5000 })
 })
 
 test('about this computer reports uptime and real machine specs', async ({ page }) => {
