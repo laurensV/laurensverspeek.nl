@@ -96,7 +96,14 @@ export default defineNuxtConfig({
         { name: 'Blog', short_name: 'Blog', url: '/blog', description: 'Read the latest posts' },
         { name: 'lvOS desktop', short_name: 'lvOS', url: '/desktop', description: 'Boot the desktop environment' },
         { name: 'Changelog', short_name: 'Changelog', url: '/changelog', description: "What's changed on the site" }
-      ]
+      ],
+      // OS share sheet target: shared links/text open lvOS and land as a
+      // sticky note in ~/stickies (plugins/shareTarget.client.ts)
+      share_target: {
+        action: '/desktop',
+        method: 'GET',
+        params: { title: 'share-title', text: 'share-text', url: 'share-url' }
+      }
     },
     workbox: {
       navigateFallback: null,
