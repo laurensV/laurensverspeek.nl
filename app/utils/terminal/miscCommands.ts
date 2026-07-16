@@ -550,8 +550,10 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             out(`Note: switching to '${ref}'.`)
             out('')
             out(`HEAD is now at ${target.source} ${escapeHtml(target.subject)}`)
-            // if the ref wasn't itself a deploy, say which deploy actually shipped it
-            if (!target.sha.startsWith(ref) && !target.source.startsWith(ref)) {
+            // if the ref wasn't itself a deploy, say which deploy actually shipped
+            // it (compare lowercased — resolveRef matched the ref case-insensitively)
+            const refLc = ref.toLowerCase()
+            if (!target.sha.startsWith(refLc) && !target.source.startsWith(refLc)) {
               muted(`${ref} first shipped in the ${target.date} deploy (${target.source}) — loading that build`)
             }
             muted(`Loading laurensverspeek.nl as it was on ${target.date} — welcome to the past…`)

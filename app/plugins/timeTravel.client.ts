@@ -14,7 +14,11 @@ export default defineNuxtPlugin(() => {
 
   void (async () => {
     const deploys = await timeMachine.load()
-    const target = timeMachine.resolveRef(ref, deploys)
+    // the full baked log lets a commit that wasn't itself a deploy tip resolve
+    // to the deploy that shipped it — same as the terminal's `git checkout`
+    // (without it, most /changelog hashes pasted into ?v= would silently no-op)
+    const commits = await $fetch<{ hash: string }[]>('/git-log.json', { timeout: 10_000 }).catch(() => [])
+    const target = timeMachine.resolveRef(ref, deploys, commits)
     // only travel to a real past snapshot — 'present'/null just means "stay"
     if (target && target !== 'present') await timeMachine.travelTo(target)
   })()
