@@ -1,6 +1,7 @@
 import type { TerminalCommand, TerminalContext } from '~/utils/terminal/types'
 import { profile } from '~/data/profile'
 import { pgp } from '~/data/pgp'
+import { writeFileAt } from '~/utils/terminal/filesystem'
 
 // Network-flavored commands: some real (curl), some theater (ping, telnet).
 
@@ -104,6 +105,55 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
           .catch((err: unknown) => error(err instanceof DOMException && err.name === 'TimeoutError'
             ? `curl: (28) connection to ${url.host} timed out after 10s`
             : `curl: (7) couldn't reach ${url.host} — it may block cross-origin requests`))
+          .finally(stopSpin)
+      }
+    },
+    wget: {
+      usage: 'wget [-O <file>] <url>',
+      description: 'Download a URL into the filesystem (CORS permitting)',
+      examples: ['wget https://api.github.com/zen', 'wget -O zen.json https://api.github.com/zen'],
+      exec: (args) => {
+        const oIndex = args.indexOf('-O')
+        const nameArg = oIndex >= 0 ? args[oIndex + 1] : undefined
+        if (oIndex >= 0 && !nameArg) return error('wget: option requires an argument -- O')
+        const raw = args.find((arg, i) => !arg.startsWith('-') && i !== oIndex + 1)
+        if (!raw) return error(`wget: missing URL — try 'wget https://api.github.com/zen'`)
+        let url: URL
+        try {
+          url = new URL(/^https?:\/\//.test(raw) ? raw : `https://${raw}`)
+        } catch {
+          return error(`wget: unable to resolve host address '${raw}'`)
+        }
+        const filename = nameArg ?? url.pathname.split('/').filter(Boolean).at(-1) ?? 'index.html'
+        muted(`--${new Date().toISOString().slice(0, 19).replace('T', ' ')}--  ${url.toString()}`)
+        muted(`Resolving ${url.host}... connected.`)
+        const stopSpin = ctx.spin(`HTTP request sent, awaiting response ...`)
+        // same discipline as curl: hard timeout, and a size cap because the VFS
+        // lives in localStorage — a big download would eat the whole quota
+        const MAX_BYTES = 64 * 1024
+        return fetch(url.toString(), {
+          headers: { accept: 'text/plain, application/json, */*' },
+          signal: AbortSignal.timeout(10_000)
+        })
+          .then(async (res) => {
+            out(`HTTP request sent, awaiting response... ${res.status} ${res.statusText}`.trim())
+            if (!res.ok) return error(`wget: server returned error: HTTP ${res.status}`)
+            const type = (res.headers.get('content-type') ?? '').split(';')[0]
+            const body = await res.text()
+            const clipped = body.length > MAX_BYTES
+            const content = clipped ? body.slice(0, MAX_BYTES) : body
+            out(`Length: ${body.length}${type ? ` [${type}]` : ''}`)
+            out(`Saving to: '${filename}'`)
+            const written = writeFileAt(ctx.files.value, ctx.fsCwd.value, filename, content)
+            if ('error' in written) return error(`wget: ${written.error}`)
+            ctx.files.value = written.files
+            out('')
+            out(`'${filename}' saved [${content.length}${clipped ? ` of ${body.length} — clipped to 64K` : ''}]`)
+            muted(`(it's a real file now — try 'cat ${filename}')`)
+          })
+          .catch((err: unknown) => error(err instanceof DOMException && err.name === 'TimeoutError'
+            ? `wget: connection to ${url.host} timed out after 10s`
+            : `wget: unable to reach ${url.host} — it may block cross-origin requests`))
           .finally(stopSpin)
       }
     },
