@@ -76,6 +76,7 @@
         :peek="peekedId === win.id"
         :dimmed="peekedId !== null && peekedId !== win.id"
         :flush="win.id === 'terminal'"
+        :class="{ 'is-manipulated': manipulating === win.id }"
         :style="windowStyle(win)"
         @focus="focusWindow(win)"
         @drag="startDrag(win, $event)"
@@ -238,6 +239,7 @@ const {
   togglePin,
   startDrag,
   startResize,
+  manipulating,
   snapPreview,
   keySnap,
   cycleWindows,
@@ -337,12 +339,18 @@ const titleMenuAct = (action: (win: DesktopWindow) => void) => {
 
 const zIndexFor = (win: DesktopWindow) => win.z + (win.pinned ? 1000 : 0)
 
+// position rides --wx/--wy custom props composed into the window's transform
+// (see DesktopWindow's styles) instead of left/top: a drag then moves the
+// window on the compositor without reflowing it — with backdrop-filter glass
+// on every window, left/top moves re-rasterized the blur region per frame
 const windowStyle = (win: DesktopWindow) =>
   win.maximized
-    ? { zIndex: zIndexFor(win), ...genie[win.id] }
+    // maximized windows are inset-positioned; the zeroed props keep the genie
+    // calc() (position + genie delta) valid without per-rule fallbacks
+    ? { '--wx': '0px', '--wy': '0px', zIndex: zIndexFor(win), ...genie[win.id] }
     : {
-        left: `${win.x}px`,
-        top: `${win.y}px`,
+        '--wx': `${win.x}px`,
+        '--wy': `${win.y}px`,
         zIndex: zIndexFor(win),
         width: win.width !== undefined ? `${win.width}px` : undefined,
         height: win.height !== undefined ? `${win.height}px` : undefined,

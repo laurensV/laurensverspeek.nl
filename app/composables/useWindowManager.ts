@@ -152,6 +152,11 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     snapHint.value && import.meta.client ? zoneRect(snapHint.value) : null
   )
 
+  // while a window is being dragged or resized its transform transition is
+  // suppressed (the position rides the compositor via --wx/--wy, and the genie
+  // transition would otherwise ease-chase every pointermove)
+  const manipulating = ref<string | null>(null)
+
   const startDrag = (win: DesktopWindow, event: PointerEvent) => {
     focusWindow(win)
     if (win.maximized) {
@@ -162,6 +167,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
       win.y = event.clientY - 14
     }
     dragging = win
+    manipulating.value = win.id
     dragOffset = { x: event.clientX - win.x, y: event.clientY - win.y }
   }
 
@@ -171,6 +177,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     if (win.maximized) return
     const el = (event.target as HTMLElement).closest<HTMLElement>('.lvos-window')
     resizing = win
+    manipulating.value = win.id
     resizeDir = dir
     resizeStart = {
       px: event.clientX,
@@ -182,31 +189,60 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     }
   }
 
+  // coalesce move/resize work to one reactive write per frame — high-Hz
+  // pointers can deliver several pointermoves between paints, and each write
+  // used to cost a Vue patch of its own
+  let pendingMove: (() => void) | null = null
+  let moveRaf = 0
+  const queueMove = (apply: () => void) => {
+    pendingMove = apply
+    if (moveRaf) return
+    moveRaf = requestAnimationFrame(() => {
+      moveRaf = 0
+      pendingMove?.()
+      pendingMove = null
+    })
+  }
+  const flushMove = () => {
+    if (moveRaf) cancelAnimationFrame(moveRaf)
+    moveRaf = 0
+    pendingMove?.()
+    pendingMove = null
+  }
+
   useEventListener('pointermove', (event: PointerEvent) => {
     if (dragging) {
-      const pos = clampDragPosition(event.clientX, event.clientY, dragOffset, window.innerWidth, window.innerHeight)
-      dragging.x = pos.x
-      dragging.y = pos.y
-      snapHint.value = edgeZone(event.clientX, event.clientY)
+      const win = dragging
+      queueMove(() => {
+        const pos = clampDragPosition(event.clientX, event.clientY, dragOffset, window.innerWidth, window.innerHeight)
+        win.x = pos.x
+        win.y = pos.y
+        snapHint.value = edgeZone(event.clientX, event.clientY)
+      })
     } else if (resizing) {
-      const rect = resizeRect(
-        resizeStart,
-        resizeDir,
-        event.clientX - resizeStart.px,
-        event.clientY - resizeStart.py,
-        MIN_W,
-        MIN_H
-      )
-      resizing.x = rect.x
-      resizing.y = rect.y
-      resizing.width = rect.width
-      resizing.height = rect.height
-      // manual resize means the snap/maximize restore rect is stale
-      resizing.restore = undefined
+      const win = resizing
+      queueMove(() => {
+        const rect = resizeRect(
+          resizeStart,
+          resizeDir,
+          event.clientX - resizeStart.px,
+          event.clientY - resizeStart.py,
+          MIN_W,
+          MIN_H
+        )
+        win.x = rect.x
+        win.y = rect.y
+        win.width = rect.width
+        win.height = rect.height
+        // manual resize means the snap/maximize restore rect is stale
+        win.restore = undefined
+      })
     }
   })
 
   useEventListener('pointerup', (event: PointerEvent) => {
+    // apply any move still waiting on its frame before deciding the drop
+    flushMove()
     if (dragging) {
       // release against an edge: maximize at the top-center, else snap to the
       // matching half or quadrant
@@ -216,6 +252,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     }
     dragging = null
     resizing = null
+    manipulating.value = null
     snapHint.value = null
   })
 
@@ -253,6 +290,7 @@ export function useWindowManager(titles: Record<string, string> = {}) {
     togglePin,
     startDrag,
     startResize,
+    manipulating,
     snapPreview,
     keySnap,
     cycleWindows,

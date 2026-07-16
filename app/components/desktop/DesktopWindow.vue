@@ -126,6 +126,12 @@ onUnmounted(() => clearTimeout(pressTimer))
 
 .lvos-window {
   position: absolute;
+  // the window's position lives in --wx/--wy (set inline by WebDesktop) and is
+  // applied via transform, not left/top: dragging then moves the window on the
+  // compositor instead of reflowing the glass blur every pointermove. Every
+  // transform state below must compose these props back in.
+  inset: 0 auto auto 0;
+  transform: translate3d(var(--wx), var(--wy), 0);
   display: flex;
   flex-direction: column;
   width: min(26rem, 88vw);
@@ -149,9 +155,19 @@ onUnmounted(() => clearTimeout(pressTimer))
   // generic downward sail)
   &.is-minimized {
     opacity: 0;
-    transform: translate(var(--gx, 0), var(--gy, 45vh)) scale(0.08);
+    transform: translate3d(calc(var(--wx) + var(--gx, 0rem)), calc(var(--wy) + var(--gy, 45vh)), 0) scale(0.08);
     visibility: hidden;
     pointer-events: none;
+  }
+
+  // mid-drag/resize the transform must track the pointer instantly — the
+  // 0.22s transition above would ease-chase every frame
+  &.is-manipulated {
+    transition: none;
+  }
+
+  &.is-maximized:not(.is-minimized) {
+    transform: none;
   }
 
   &.is-maximized {
@@ -174,7 +190,7 @@ onUnmounted(() => clearTimeout(pressTimer))
   // a peeked, minimized window ghosts back into view instead of staying hidden
   &.is-minimized.is-peek {
     opacity: 0.55;
-    transform: translateY(18vh) scale(0.7);
+    transform: translate3d(var(--wx), calc(var(--wy) + 18vh), 0) scale(0.7);
     visibility: visible;
   }
 
@@ -186,7 +202,8 @@ onUnmounted(() => clearTimeout(pressTimer))
 @keyframes lvos-window-open {
   from {
     opacity: 0;
-    transform: scale(0.94) translateY(0.5rem);
+    // keyframes replace the whole transform, so the position props ride along
+    transform: translate3d(var(--wx), calc(var(--wy) + 0.5rem), 0) scale(0.94);
   }
 }
 
@@ -197,7 +214,7 @@ onUnmounted(() => clearTimeout(pressTimer))
     transition: opacity 0.12s ease, visibility 0.12s;
 
     &.is-minimized {
-      transform: none;
+      transform: translate3d(var(--wx), var(--wy), 0);
     }
   }
 }
