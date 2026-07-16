@@ -460,7 +460,12 @@ const clock = computed(() =>
   align-items: center;
   padding: 0.25rem;
 
+  // narrow glyphs (volume, ⋯) measured ~22px wide on a phone — pad AND floor
+  // the box so every tray control is a real target
   @media (pointer: coarse) {
+    justify-content: center;
+    min-width: 2.4rem;
+    min-height: 2.4rem;
     padding: 0.55rem 0.45rem;
   }
   border: none;
@@ -505,6 +510,13 @@ const clock = computed(() =>
   font: inherit;
   font-size: 0.75rem;
   cursor: pointer;
+
+  // the clock is the only way into the calendar, and it measured 35×18 on a
+  // phone — the worst tap target in lvOS
+  @media (pointer: coarse) {
+    min-height: 2.4rem;
+    padding: 0.55rem 0.5rem;
+  }
 
   &:hover,
   &.is-open {

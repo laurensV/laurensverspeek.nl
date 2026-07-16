@@ -155,6 +155,12 @@ onMounted(() => searchRef.value?.focus())
     text-align: left;
     cursor: pointer;
 
+    // the system rows measured ~34px on a phone — match the 44px standard the
+    // search-result rows already meet (swatches opt back out below)
+    @media (pointer: coarse) {
+      min-height: 2.75rem;
+    }
+
     &:hover {
       background-color: hsla(var(--lv-primary-hsl), 0.15);
     }
@@ -274,6 +280,13 @@ onMounted(() => searchRef.value?.focus())
     border: 1px solid hsla(var(--lv-scheme-hs), 50%, 0.4);
     border-radius: 2px;
     cursor: pointer;
+
+    // stay a square swatch (like the Settings ones) rather than a 44px row
+    @media (pointer: coarse) {
+      width: 2rem;
+      height: 2rem;
+      min-height: 0;
+    }
 
     &.is-active {
       border-color: var(--bulma-primary);
