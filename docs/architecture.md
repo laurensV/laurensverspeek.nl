@@ -29,7 +29,11 @@ footer, overlay, the lvOS terminal window) shares its state via `useState`.
   flip the shared open flag (and queue a command to run on mount) without pulling
   the registry. Anything on a plain page that reads the terminal VFS
   (`useBlogOverrides`) restores it from storage itself, since the terminal may
-  never mount there.
+  never mount there. Lazy-mount focus trap: such a component mounts with its
+  open flag ALREADY true, so an `immediate` watch's `nextTick` still resolves
+  before the async component renders — both the overlay and the palette must
+  (and do) poll their input ref briefly in `onMounted` or first-open typing and
+  Escape are dead.
 
 - **Commands** are plain factories over a `TerminalContext`
   (`app/utils/terminal/types.ts`), grouped in per-domain modules under
@@ -74,7 +78,12 @@ additionally flips `fx-world-record` for a bigger burst + `WorldRecordToast`.
 ## lvOS (`app/components/WebDesktop.vue` + `app/components/desktop/`)
 
 A desktop on its own route (`/desktop`). `WebDesktop.vue` is the shell;
-mechanics live in composables: `useWindowManager` (drag/resize/snap/z-order),
+mechanics live in composables: `useWindowManager` (drag/resize/snap/z-order —
+window position is `--wx`/`--wy` custom props composed into `transform`, not
+`left/top`, so drags ride the compositor instead of re-rasterizing the glass
+blur; every transform state in `DesktopWindow.vue` — genie, peek, the open
+keyframe, reduced-motion — must compose those props back in, and programmatic
+moves like tile/snap now GLIDE, so e2e must poll after them),
 `useDesktopShortcuts` (the keyboard), `useDesktopPower` (lock/logout/CRT
 power-off), `useDesktopContextMenu` (right-click + touch long-press menu),
 `useWallpaper`, `useDesktopToasts`. The `~500ms` touch long-press-to-menu
@@ -137,11 +146,18 @@ is installable. Dismissing the install chip only hides the chip: the deferred
 keeps working. The manifest also carries install-sheet `screenshots` (one wide,
 one narrow), captured from the real build by
 `scripts/generate-pwa-screenshots.mjs` in postgenerate, so Chrome shows the
-rich install UI. When time-travelling, the injected bottom bar collapses to a
+rich install UI. Installed instances get two extras: the OS share sheet can
+target the app (manifest `share_target` → `/desktop?share-*`, where
+`plugins/shareTarget.client.ts` pins the shared content as a real sticky note
+in `~/stickies` after the VFS restore and opens Notes via the same pending-app
+hook `desktop <app>` uses), and the app icon wears the unread-mail count
+(`plugins/appBadge.client.ts`, Badging API, gated to standalone display mode).
+When time-travelling, the injected bottom bar collapses to a
 corner handle; its hover-peek (hold-open while the mouse is on the bar) is
 scoped to `(hover:hover)` devices because touch browsers stick `:hover` on the
 last tap, and the SW distinguishes a snapshot page that truly wasn't in a
-deploy (404) from jsDelivr being unreachable (503 with honest copy).
+deploy (404) from jsDelivr being unreachable — any non-404 answer, a 429/403
+proxy block page included, renders the honest 503, not "did not exist yet".
 
 ## Realtime (the cursors relay, opt-in)
 
@@ -165,6 +181,15 @@ the drawer's connection id (`by`, server-assigned) and a per-drag `sid`, so a
 `draw-undo` frame (which carries the client's resolved `sid`, not a
 server-guessed "highest") can drop exactly one drawer's stroke for everyone —
 and nothing, staying silent, if a flood-dropped drag never reached the server.
+
+The pair terminal (`realtime/server/pairSessions.mjs` + `pairShare.ts`/
+`pairWatch.ts`) shares a live shell: the host mirrors its pane-0 transcript
+(html stripped — raw HTML never crosses the relay; the mirror cursor is the
+line **id**, which survives `clear` and the scrollback cap's front-splices
+where an index would drift), guests watch through a 4-char code, and
+`pair allow` lets guest lines run on the host's real serialized shell queue.
+The server rebuilds every line frame from a whitelist rather than passing it
+through. The host session is a killable process (`pair-share.sh`, pid 2525).
 
 Every per-connection rate limiter is a `CooldownGate` built through the server's
 `gate()` helper, which registers it so a single `forgetConnection(id)` on socket
@@ -219,8 +244,15 @@ npm run test:e2e                   playwright against the served static build
 ```
 
 Build-time extras hang off `generate`: `scripts/generate-og.mjs`
-(pregenerate) writes one SVG card per page/post, `scripts/generate-resume.mjs`
-(postgenerate) prints `/cv` to PDF over the shared `scripts/static-server.mjs`.
+(pregenerate) writes one SVG card per page/post; `scripts/postgenerate.mjs`
+then boots ONE chromium + one `scripts/static-server.mjs` instance and runs
+the three capture steps over it (OG SVG→PNG rasterizing, the `/cv` resume
+PDF, the PWA install-sheet screenshots) — each step exports a
+`({ browser, port, root })` function from its own module, every step is
+non-fatal, and `npm run resume` is just `postgenerate --only=resume`. The
+static server's MIME map is pinned to the time-machine service worker's
+(`tests/staticServerTypes.test.ts`) so new asset types can't silently ship as
+`application/octet-stream` in e2e runs again.
 E2E helpers live in `e2e/helpers.ts` (`openTerminal`, `pressTerminalKey`,
 `bootDesktop`) — use them; they absorb hydration races.
 
