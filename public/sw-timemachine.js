@@ -73,7 +73,9 @@ const TM_TYPES = {
   xml: 'application/xml',
   map: 'application/json',
   wasm: 'application/wasm',
-  webmanifest: 'application/manifest+json'
+  webmanifest: 'application/manifest+json',
+  webm: 'video/webm',
+  mp4: 'video/mp4'
 }
 const tmContentType = (path) => {
   const ext = /\.([a-z0-9]+)$/i.exec(path)?.[1]?.toLowerCase()

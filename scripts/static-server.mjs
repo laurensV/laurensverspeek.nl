@@ -6,26 +6,39 @@ import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
 import { join, extname } from 'node:path'
 
+// keep in sync with TM_TYPES in public/sw-timemachine.js —
+// tests/staticServerTypes.test.ts asserts the two maps can't drift
 /** @type {Record<string, string>} */
-const TYPES = {
+export const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript',
   '.mjs': 'text/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
+  '.map': 'application/json',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
   '.webp': 'image/webp',
+  '.avif': 'image/avif',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml',
   '.pdf': 'application/pdf',
   '.vcf': 'text/vcard; charset=utf-8',
+  '.woff': 'font/woff',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
   // without this the SQLite content engine can't streaming-compile and falls
   // back to slower ArrayBuffer instantiation on every e2e run
-  '.wasm': 'application/wasm'
+  '.wasm': 'application/wasm',
+  // the build ships these (PWA manifest, project hover videos) — they were
+  // served as application/octet-stream in e2e/local runs
+  '.webmanifest': 'application/manifest+json',
+  '.webm': 'video/webm',
+  '.mp4': 'video/mp4'
 }
 
 /** @param {string} path @returns {Promise<string | null>} */
