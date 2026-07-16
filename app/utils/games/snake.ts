@@ -6,12 +6,13 @@ const SNAKE_H = 12
 const SNAKE_HIGHSCORE_KEY = 'lv-snake-highscore'
 
 // the ASCII frame is width*2-1 monospace columns (cells joined by spaces): 26
-// cells = 51 columns ≈ 357px, which overflows a phone's game frame (343px at
-// 375, 288px at 320) and hides the right wall mid-game — shrink the board on
-// narrow viewports so the whole arena is visible while playing
+// cells = 51 columns, which overflows a phone's game frame (343px at 375,
+// 288px at 320 — a column is ~8.8px at the coarse 0.72rem shrink) and hides
+// the right wall mid-game — shrink the board on narrow viewports so the whole
+// arena is visible while playing (19 cells = 37 cols ≈ 326px; 16 = 31 ≈ 273px)
 const boardWidth = () =>
   typeof window !== 'undefined' && window.innerWidth <= 480
-    ? (window.innerWidth <= 350 ? 18 : 22)
+    ? (window.innerWidth <= 350 ? 16 : 19)
     : SNAKE_W
 
 interface Cell {
