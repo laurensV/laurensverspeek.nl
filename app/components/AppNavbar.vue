@@ -426,14 +426,19 @@ onUnmounted(crtArmer.dispose)
 .mobile-footer {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
+  gap: 0.25rem 0.9rem;
   margin-top: auto;
   padding-top: 2rem;
 
   .mobile-action {
+    display: inline-flex;
+    align-items: center;
     border: none;
     background: none;
-    padding: 0;
+    // the footer actions measured 23px tall — half the touch standard for the
+    // menu's only terminal/social entry points; pad instead of bare text
+    padding: 0.6rem 0.15rem;
+    min-height: 2.75rem;
     color: var(--bulma-text-weak);
     font: inherit;
     font-size: 0.95rem;
