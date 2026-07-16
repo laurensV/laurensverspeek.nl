@@ -79,6 +79,19 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
   &.is-grid {
     grid-template: 1fr 1fr / 1fr 1fr;
   }
+
+  // a phone can't host side-by-side shells: a half-width pane clips the prompt
+  // and piles the quick-key row into overlapping pills — stack every layout
+  // vertically instead so each pane keeps the full width
+  @media (max-width: 640px) {
+    &.is-cols,
+    &.is-rows,
+    &.is-grid {
+      grid-template: none / 1fr;
+      grid-auto-flow: row;
+      grid-auto-rows: 1fr;
+    }
+  }
 }
 
 .terminal-pane {
@@ -86,7 +99,11 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  // clip, not hidden: focusing a pane's input made the browser scroll this
+  // clipping box sideways to reveal the caret (scrollLeft stuck at ~32px,
+  // chopping the prompt) — clip forbids programmatic scrolling entirely
   overflow: hidden;
+  overflow: clip;
 
   // pane borders only matter once there's more than one
   &:not(:only-child) {
