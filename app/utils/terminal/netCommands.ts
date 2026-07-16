@@ -27,6 +27,66 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
           ctx.startGame((callbacks) => createChatRoom({ chat: chatRoom, playerName: identityName.value }, callbacks), 'chat'))
       }
     },
+    pair: {
+      usage: 'pair [join <code> | allow | revoke | status | stop]',
+      description: 'Pair terminal: share this shell live, or watch a friend\'s',
+      examples: [
+        'pair            # host: start sharing, get a 4-char code',
+        'pair join AB2C  # guest: watch that session live',
+        'pair allow      # host: let guests type on your shell',
+        'pair revoke     # host: take the keyboard back',
+        'pair status     # code, watchers, keyboard state',
+        'pair stop       # end the session'
+      ],
+      argCandidates: () => ['join', 'allow', 'revoke', 'status', 'stop'],
+      exec: (args) => {
+        if (!cursorsWs) {
+          muted('pair needs the live relay — no relay on this build. just you and the machines today.')
+          return
+        }
+        const sub = (args[0] ?? '').toLowerCase()
+        if (sub === 'join') {
+          const code = (args[1] ?? '').toUpperCase()
+          if (!/^[A-Z0-9]{4}$/.test(code)) return error('pair: usage: pair join <CODE> (the 4 characters the host is looking at)')
+          muted(`joining pair session ${code}... esc leaves.`)
+          return import('~/utils/games/pairWatch').then(({ createPairWatch }) =>
+            ctx.startGame((callbacks) => createPairWatch({ code, cursorsWs, playerName: identityName.value }, callbacks), 'pair'))
+        }
+        return import('~/utils/terminal/pairShare').then(({ createPairHost, activePairHost }) => {
+          const host = activePairHost()
+          if (sub === 'allow' || sub === 'revoke') {
+            if (!host) return error(`pair: not hosting — start with 'pair' first`)
+            host.allow(sub === 'allow')
+            muted(sub === 'allow'
+              ? `pair: guests may type on this shell now — 'pair revoke' takes it back`
+              : 'pair: keyboard revoked — guests are watch-only again')
+            return
+          }
+          if (sub === 'stop') {
+            if (!host) return error('pair: not hosting')
+            host.stop()
+            return
+          }
+          if (sub === 'status') {
+            if (!host) return muted(`pair: not hosting — 'pair' starts a session, 'pair join <CODE>' watches one`)
+            out(`pair session ${host.code.value || '(waiting for a code)'} — ${host.watchers.value} watching · keyboard ${host.granted.value ? 'granted' : 'view-only'}`)
+            return
+          }
+          if (sub) return error(`pair: unknown subcommand '${sub}' — try 'pair', 'pair join <CODE>', 'pair allow', 'pair stop'`)
+          if (host) {
+            out(`pair: already hosting — code ${host.code.value || '(waiting for a code)'}, ${host.watchers.value} watching. 'pair stop' ends it.`)
+            return
+          }
+          muted('starting pair session...')
+          createPairHost({
+            lines: ctx.lines,
+            run: ctx.run,
+            cursorsWs,
+            onEvent: (text, style = 'muted') => push(style, text)
+          })
+        })
+      }
+    },
     ping: {
       usage: 'ping <host>',
       description: 'Send ICMP packets to a host',

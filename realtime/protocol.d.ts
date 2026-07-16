@@ -50,6 +50,23 @@ export interface DrawUndoIn { type: 'draw-undo', sid?: number }
  * others can see where everyone is drawing. Ephemeral — never stored. */
 export interface DrawCursorIn { type: 'draw-cursor', x: number, y: number, c: number }
 
+// ---- pair terminal (one visitor hosts their live transcript, others watch) --
+/** One mirrored transcript line. Always plain text — the host strips any HTML
+ * before it leaves the browser, and the server rebuilds/clips every entry. */
+export interface PairLine {
+  type: 'input' | 'output' | 'error' | 'muted' | 'primary'
+  text: string
+}
+export interface PairCreateIn { type: 'pair-create' }
+export interface PairJoinIn { type: 'pair-join', code: string }
+/** Host only. `for` routes a backlog to one guest id; omitted = broadcast. */
+export interface PairLinesIn { type: 'pair-lines', lines: PairLine[], for?: number }
+/** Host only; grants/revokes the keyboard for the whole room. */
+export interface PairAllowIn { type: 'pair-allow', granted: boolean }
+/** Guest → host: one command line, relayed only while the room is granted. */
+export interface PairRunIn { type: 'pair-run', line: string }
+export interface PairLeaveIn { type: 'pair-leave' }
+
 export interface RaceJoinIn { type: 'race-join', name?: string }
 export interface RaceLeaveIn { type: 'race-leave' }
 /** How many leading characters of the passage this player has typed correctly.
@@ -84,6 +101,12 @@ export type ClientMessage =
   | DrawClearIn
   | DrawUndoIn
   | DrawCursorIn
+  | PairCreateIn
+  | PairJoinIn
+  | PairLinesIn
+  | PairAllowIn
+  | PairRunIn
+  | PairLeaveIn
 
 // ---- server → client ----
 
@@ -186,4 +209,34 @@ export interface DrawCursorGoneMsg { type: 'draw-cursor-gone', id: number }
 /** What the co-draw whiteboard client consumes. */
 export type DrawServerMessage = DrawStateMsg | DrawStrokeMsg | DrawClearMsg | DrawUndoMsg | DrawCountMsg | DrawCursorMsg | DrawCursorGoneMsg
 
-export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage | DrawServerMessage
+/** The session code, sent to the host right after pair-create. */
+export interface PairCodeMsg { type: 'pair-code', code: string }
+/** To the joining guest: you're in (watchers includes you). */
+export interface PairJoinedMsg { type: 'pair-joined', code: string, watchers: number }
+/** To the host on membership change; `guest` is the joiner/leaver's connection
+ * id, so the host can route a transcript backlog with pair-lines `for`. */
+export interface PairPeerMsg { type: 'pair-peer', event: 'joined' | 'left', watchers: number, guest: number }
+/** To guests on membership change. */
+export interface PairWatchersMsg { type: 'pair-watchers', watchers: number }
+/** To guests: the host granted/revoked the room's keyboard. */
+export interface PairGrantedMsg { type: 'pair-granted', granted: boolean }
+/** Server-sanitized transcript lines, host → guests. */
+export interface PairLinesMsg { type: 'pair-lines', lines: PairLine[] }
+/** A granted guest's command line, relayed to the host. */
+export interface PairRunMsg { type: 'pair-run', line: string }
+/** The host left/disconnected — the session is gone. */
+export interface PairClosedMsg { type: 'pair-closed' }
+export interface PairErrorMsg { type: 'pair-error', reason: 'bad-code' | 'full' }
+/** What the pair-terminal clients (host + watching guests) consume. */
+export type PairServerMessage =
+  | PairCodeMsg
+  | PairJoinedMsg
+  | PairPeerMsg
+  | PairWatchersMsg
+  | PairGrantedMsg
+  | PairLinesMsg
+  | PairRunMsg
+  | PairClosedMsg
+  | PairErrorMsg
+
+export type ServerMessage = CursorsServerMessage | WorldServerMessage | ScoresServerMessage | PongServerMessage | ChessServerMessage | ChatServerMessage | RaceServerMessage | DrawServerMessage | PairServerMessage

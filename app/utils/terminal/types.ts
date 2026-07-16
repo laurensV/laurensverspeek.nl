@@ -111,6 +111,10 @@ export interface TerminalContext {
   fsCwd: Ref<string>
   /** Run script lines sequentially (used by `sh`); chains and pipes included */
   runScript: (lines: string[]) => Promise<void>
+  /** Run one line through the shell exactly as if the visitor typed it —
+   * queued behind whatever is running (the pair host executes a granted
+   * guest's command through this) */
+  run: (input: string) => void
   /** tmux-style panes: commands can split, clear and report the pane count */
   panes: {
     split: (dir: 'cols' | 'rows') => boolean

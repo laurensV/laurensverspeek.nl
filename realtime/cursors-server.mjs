@@ -17,6 +17,7 @@ import {
 import { validSubmission, addScore, cleanName, emptyBoards } from './scores-core.mjs'
 import { sanitizeStroke, validPen, MAX_STROKES } from './draw-core.mjs'
 import { createPongManager, createChessManager, createRaceManager } from './server/onlineDuels.mjs'
+import { createPairManager } from './server/pairSessions.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const MAX_CLIENTS = 64
@@ -143,6 +144,8 @@ const sendTo = (socket, payload) => {
 const pong = createPongManager({ wire, sendTo, gate })
 const chess = createChessManager({ wire, sendTo, gate })
 const race = createRaceManager({ wire, sendTo, gate })
+// the pair terminal (shared live sessions) follows the same factory shape
+const pair = createPairManager({ wire, sendTo, gate })
 
 // ---- the chat room: one ephemeral feed, a short ring buffer in memory ----
 const CHAT_LOG_MAX = 50
@@ -240,6 +243,7 @@ wss.on('connection', (socket) => {
     if (pong.handle(socket, msg, id)) return
     if (chess.handle(socket, msg, id)) return
     if (race.handle(socket, msg, id)) return
+    if (pair.handle(socket, msg, id)) return
     // ---- chat-room protocol (ephemeral, server-sanitized) ----
     if (msg.type === 'chat-join') {
       if (joinGate.check(id, Date.now()) > 0) return // drop rapid re-joins
@@ -417,6 +421,7 @@ wss.on('connection', (socket) => {
     pong.drop(socket) // mid-match disconnects forfeit to the opponent
     chess.drop(socket)
     race.drop(socket)
+    pair.drop(socket) // a hosted session dies with its host; watchers are told
     if (chatMembers.delete(socket)) broadcastChatCount()
     if (drawMembers.delete(socket)) {
       broadcastDrawCount()

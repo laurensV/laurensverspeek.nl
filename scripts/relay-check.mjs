@@ -419,6 +419,90 @@ try {
     c.close()
   }
 
+  // ---- pair terminal (shared live sessions) -----------------------------------
+  console.log('pair:')
+  {
+    const host = new Client(URL)
+    const g1 = new Client(URL)
+    const g2 = new Client(URL)
+    await Promise.all([host.open, g1.open, g2.open])
+
+    host.send({ type: 'pair-create' })
+    const codeMsg = await host.next('pair-code')
+    const code = String(codeMsg?.code ?? '')
+    check('create returns a 4-char unambiguous code', /^[A-Z0-9]{4}$/.test(code) && !/[O0I1]/.test(code))
+
+    const lost = new Client(URL)
+    await lost.open
+    // '0000' passes the shape check but can never be minted (0 is excluded)
+    lost.send({ type: 'pair-join', code: '0000' })
+    check('joining a dead code errors', (await lost.next('pair-error'))?.reason === 'bad-code')
+    lost.close()
+
+    g1.send({ type: 'pair-join', code: code.toLowerCase() }) // server uppercases
+    const joined = await g1.next('pair-joined')
+    const peer = await host.next('pair-peer')
+    check('a lowercase code joins and reports watchers', joined?.code === code && joined?.watchers === 1)
+    check('the host learns the joiner id', peer?.event === 'joined' && typeof peer?.guest === 'number' && peer?.watchers === 1)
+    const g1id = Number(peer?.guest)
+
+    // broadcast lines are REBUILT: 500-char text clipped to 400, an off-whitelist
+    // type dropped, extra fields never passed through
+    host.send({
+      type: 'pair-lines',
+      lines: [
+        { type: 'output', text: 'x'.repeat(500), evil: 'smuggled' },
+        { type: 'blink', text: 'nope' },
+        { type: 'input', text: 'ls' }
+      ]
+    })
+    const linesMsg = await g1.next('pair-lines')
+    const got = /** @type {{ type: string, text: string, evil?: string }[]} */ (linesMsg?.lines ?? [])
+    check('host lines reach the guest rebuilt: clipped, whitelisted, no extras',
+      got.length === 2 && got[0]?.text.length === 400 && got[0]?.evil === undefined
+      && got[1]?.type === 'input' && !got.some((line) => line.type === 'blink'))
+
+    // two broadcast frames back-to-back (synchronously, inside the 40ms gate):
+    // the first lands, the second is flood-dropped. Clear the gate first — the
+    // sanitize frame above may be less than 40ms behind us.
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    host.send({ type: 'pair-lines', lines: [{ type: 'output', text: 'one' }] })
+    host.send({ type: 'pair-lines', lines: [{ type: 'output', text: 'two' }] })
+    const flood = /** @type {{ text: string }[]} */ ((await g1.next('pair-lines'))?.lines ?? [])
+    check('rapid line frames are flood-dropped', flood[0]?.text === 'one' && await g1.silent('pair-lines'))
+
+    // a guest command is blocked while view-only, relayed once granted
+    g1.send({ type: 'pair-run', line: 'whoami' })
+    check('a guest command is blocked while view-only', await host.silent('pair-run'))
+    host.send({ type: 'pair-allow', granted: true })
+    check('granting the keyboard notifies guests', (await g1.next('pair-granted'))?.granted === true)
+    g1.send({ type: 'pair-run', line: 'whoami' })
+    check('a granted guest command reaches the host', (await host.next('pair-run'))?.line === 'whoami')
+
+    g2.send({ type: 'pair-join', code })
+    const joined2 = await g2.next('pair-joined')
+    const peer2 = await host.next('pair-peer')
+    check('a second guest bumps the watcher count for everyone',
+      joined2?.watchers === 2 && peer2?.guest !== g1id && (await g1.next('pair-watchers'))?.watchers === 2)
+    check('a mid-session joiner learns the room is already granted', (await g2.next('pair-granted'))?.granted === true)
+    const g2id = Number(peer2?.guest)
+
+    // a `for`-routed backlog reaches ONLY the named guest
+    host.send({ type: 'pair-lines', lines: [{ type: 'muted', text: 'backlog line' }], for: g2id })
+    const backlog = /** @type {{ text: string }[]} */ ((await g2.next('pair-lines'))?.lines ?? [])
+    check('a for-routed backlog reaches the target guest', backlog[0]?.text === 'backlog line')
+    check('the backlog does not leak to other guests', await g1.silent('pair-lines'))
+
+    g1.close() // a watcher wanders off
+    const left = await host.next('pair-peer')
+    check('a guest disconnect notifies the host', left?.event === 'left' && left?.guest === g1id && left?.watchers === 1)
+    check('remaining guests see the watcher count drop', (await g2.next('pair-watchers'))?.watchers === 1)
+
+    host.close() // the host pulls the plug
+    check('a host disconnect closes the session for guests', !!(await g2.next('pair-closed')))
+    g2.close()
+  }
+
   // ---- robustness: hostile frames must not crash the relay --------------------
   console.log('robustness:')
   {

@@ -271,6 +271,7 @@ export function useTerminal() {
     fsCwd,
     // defined below; command exec only ever runs after setup completes
     runScript: (scriptLines) => runScript(scriptLines),
+    run: (input) => run(input),
     panes: {
       split: (dir) => splitPane(dir),
       count: () => paneIds.value.length,

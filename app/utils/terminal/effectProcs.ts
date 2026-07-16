@@ -117,6 +117,24 @@ export function bootProcs(): EffectProc[] {
   return [{ pid: BOOT_REPLAY_PID, name: 'boot-replay.sh', running: () => hooks.running(), stop: () => hooks.stop() }]
 }
 
+// A live pair-share session (the `pair` command mirroring this terminal to
+// watching guests) is a long-running background feature, not a game — like the
+// screensaver it registers hooks while hosting, so `ps` lists it and
+// `kill 2525` ends the session for everyone watching.
+export const PAIR_PID = 2525
+let pairHooks: { running: () => boolean, stop: () => void } | null = null
+export const registerPairProc = (hooks: { running: () => boolean, stop: () => void }) => {
+  pairHooks = hooks
+}
+export const unregisterPairProc = () => {
+  pairHooks = null
+}
+export function pairProcs(): EffectProc[] {
+  if (!pairHooks) return []
+  const hooks = pairHooks
+  return [{ pid: PAIR_PID, name: 'pair-share.sh', running: () => hooks.running(), stop: () => hooks.stop() }]
+}
+
 export type KillResult =
   | { ok: true, name: string }
   | { ok: false, reason: 'not-running' | 'not-permitted' | 'no-such-process' }
