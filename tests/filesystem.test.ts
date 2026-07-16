@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing, renamePath, movePath } from '~/utils/terminal/filesystem'
+import { parseRedirect, resolvePath, dirEntries, writeFileAt, expandGlob, expandFileArgs, formatLongListing, renamePath, movePath, pruneNestedPaths } from '~/utils/terminal/filesystem'
 import type { Filesystem } from '~/utils/terminal/filesystem'
 
 describe('writeFileAt', () => {
@@ -229,5 +229,19 @@ describe('movePath', () => {
     const collide: Filesystem = { ...base(), 'inbox/a.txt': { dir: false, content: 'x' } }
     expect(movePath(collide, 'a.txt', 'inbox')).toHaveProperty('error')
     expect(movePath(base(), 'ghost.txt', 'inbox')).toHaveProperty('error')
+  })
+})
+
+describe('pruneNestedPaths', () => {
+  it('drops paths whose ancestor is also listed', () => {
+    expect(pruneNestedPaths(['docs', 'docs/deep.txt', 'a.txt'])).toEqual(['docs', 'a.txt'])
+  })
+
+  it('keeps siblings and prefix-lookalikes apart', () => {
+    expect(pruneNestedPaths(['docs', 'docs2/x.txt'])).toEqual(['docs', 'docs2/x.txt'])
+  })
+
+  it('prunes through deeper nesting', () => {
+    expect(pruneNestedPaths(['a', 'a/b/c.txt', 'a/b'])).toEqual(['a'])
   })
 })

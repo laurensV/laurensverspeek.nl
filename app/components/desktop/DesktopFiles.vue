@@ -15,13 +15,15 @@
         </button>
       </div>
       <!-- the list is a keyboard listbox: ↑↓ move, Enter opens, Del bins,
-           Backspace/← goes up; files drag onto folders to move -->
+           Backspace/← goes up; ctrl/cmd-click, shift-click and shift-↑↓
+           multi-select; files drag onto folders to move -->
       <div
         ref="listRef"
         class="files-list"
         tabindex="0"
         role="listbox"
         aria-label="Files"
+        aria-multiselectable="true"
         @keydown="onListKeydown"
       >
         <nav v-if="vfsDir" class="files-crumbs" aria-label="Current folder path">
@@ -52,7 +54,7 @@
           v-for="(entry, i) in vfsEntries"
           :key="entry.name"
           class="files-row"
-          :class="{ 'is-selected': i === selected, 'is-drop': entry.dir && dropTarget === entryPath(entry.name) }"
+          :class="{ 'is-selected': selectedSet.has(i), 'is-drop': entry.dir && dropTarget === entryPath(entry.name) }"
         >
           <template v-if="renaming === entry.name">
             <input
@@ -70,15 +72,15 @@
             <button
               class="files-file"
               :class="{ 'is-dir': entry.dir }"
-              :aria-selected="i === selected"
+              :aria-selected="selectedSet.has(i)"
               draggable="true"
-              @click="selected = i; openVfsEntry(entry)"
+              @click="onRowClick(entry, i, $event)"
               @contextmenu.prevent.stop="openFileMenu(entry, $event)"
               @touchstart="filePress.start($event, entry)"
               @touchmove="filePress.move($event)"
               @touchend="filePress.end($event)"
               @dragstart="onDragStart(entry, $event)"
-              @dragend="dragPath = null; dropTarget = null"
+              @dragend="dragPaths = []; dropTarget = null"
               @dragover="entry.dir ? (dropTarget = entryPath(entry.name)) : null"
               @dragleave="entry.dir ? (dropTarget = null) : null"
               @drop.prevent="entry.dir ? dropInto(entryPath(entry.name)) : null"
@@ -103,7 +105,8 @@
         </p>
       </div>
     </div>
-    <!-- right-click context menu on a file: open / rename / bin -->
+    <!-- right-click context menu on a file: open / rename / bin — bin acts on
+         the whole selection, rename stays single-target -->
     <div
       v-if="fileMenu"
       class="files-menu is-family-code"
@@ -111,9 +114,11 @@
     >
       <button @click="menuOpenEntry">open</button>
       <button v-if="fileMenu && !fileMenu.entry.dir" @click="menuEdit">edit in vim</button>
-      <button @click="menuRename">rename</button>
+      <button v-if="menuCount === 1" @click="menuRename">rename</button>
       <button @click="menuProperties">properties</button>
-      <button class="is-danger" @click="menuDelete">move to bin</button>
+      <button class="is-danger" @click="menuDelete">
+        {{ menuCount > 1 ? `move ${menuCount} to bin` : 'move to bin' }}
+      </button>
     </div>
 
     <!-- file properties dialog -->
@@ -164,10 +169,10 @@ const {
   vfsDir, preview, actionError, entryPath,
   deleteVfsEntry,
   fileMenu, renaming, renameValue, renameRef, openFileMenu,
-  menuOpenEntry, menuEdit, menuDelete, properties, menuProperties, menuRename, applyRename,
-  switchDir, crumbs, vfsEntries, openVfsEntry,
-  listRef, selected, onListKeydown,
-  dragPath, dropTarget, onDragStart, dropInto
+  menuOpenEntry, menuEdit, menuDelete, menuCount, properties, menuProperties, menuRename, applyRename,
+  switchDir, crumbs, vfsEntries,
+  listRef, selectedSet, onRowClick, onListKeydown,
+  dragPaths, dropTarget, onDragStart, dropInto
 } = useFileExplorer({
   window: (id) => emit('window', id),
   post: (path) => emit('post', path),
@@ -236,6 +241,9 @@ const filePress = useLongPress<VfsEntry>(({ x, y, currentTarget, payload }) => {
   flex-direction: column;
   gap: 0.1rem;
   outline: none;
+
+  // shift-click extends the selection — don't let it drag out a text selection
+  user-select: none;
 
   // keyboard focus on the listbox itself gets a faint frame
   &:focus-visible {
@@ -386,6 +394,7 @@ const filePress = useLongPress<VfsEntry>(({ x, y, currentTarget, payload }) => {
 
 .files-rename {
   flex: 1;
+  user-select: text;
   margin: 0.15rem 0;
   padding: 0.2rem 0.5rem;
   border: 1px solid hsla(var(--lv-primary-hsl), 0.5);

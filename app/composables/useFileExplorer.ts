@@ -1,5 +1,6 @@
 import { useEventListener } from '@vueuse/core'
-import { dirEntries, renamePath, movePath } from '~/utils/terminal/filesystem'
+import { dirEntries, renamePath, movePath, pruneNestedPaths } from '~/utils/terminal/filesystem'
+import { toggleIndex, rangeSet } from '~/utils/multiSelect'
 import { seedFor, isSysPath, markSeedsDeleted } from '~/utils/terminal/siteFs'
 
 // The lvOS file explorer's model over THE filesystem — the same one the
@@ -52,6 +53,10 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
   const renameRef = ref<HTMLInputElement[]>()
 
   const openFileMenu = (entry: VfsEntry, event: MouseEvent) => {
+    // right-click outside the current selection claims it (file-manager
+    // standard), so the menu always acts on the selection the row belongs to
+    const index = vfsEntries.value.findIndex((candidate) => candidate.name === entry.name)
+    if (index >= 0 && !selectedSet.value.has(index)) selectSingle(index)
     // position relative to the files pane (the window content scrolls with it)
     const host = (event.currentTarget as HTMLElement).closest('.files')?.getBoundingClientRect()
     fileMenu.value = {
@@ -73,9 +78,11 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
     fileMenu.value = null
   }
   const menuDelete = () => {
-    if (fileMenu.value) deleteVfsEntry(fileMenu.value.entry)
+    if (fileMenu.value) deleteSelection()
     fileMenu.value = null
   }
+  // how many rows the menu's batch actions cover (rename stays single-target)
+  const menuCount = computed(() => (fileMenu.value ? Math.max(1, selectedSet.value.size) : 0))
   const properties = ref<FileProps | null>(null)
   const menuProperties = () => {
     if (!fileMenu.value) return
@@ -165,14 +172,55 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
     preview.value = { name: entry.name, content: files.value[path]?.content ?? '' }
   }
 
-  // ---- keyboard navigation (the list is a listbox) ----
+  // ---- selection + keyboard navigation (the list is a multiselect listbox) ----
   const listRef = ref<HTMLElement>()
+  // `selected` is the focused row; `selectedSet` holds every selected index,
+  // and `anchor` is the row a shift-range grows from
   const selected = ref(0)
+  const anchor = ref(0)
+  const selectedSet = ref<ReadonlySet<number>>(new Set([0]))
+
+  const selectSingle = (index: number) => {
+    selected.value = index
+    anchor.value = index
+    selectedSet.value = new Set([index])
+  }
+  const toggleSelect = (index: number) => {
+    selectedSet.value = toggleIndex(selectedSet.value, index)
+    selected.value = index
+    anchor.value = index
+  }
+  const selectRange = (index: number) => {
+    selected.value = index
+    selectedSet.value = rangeSet(anchor.value, index)
+  }
+
+  const selectedEntries = () => [...selectedSet.value]
+    .sort((a, b) => a - b)
+    .map((index) => vfsEntries.value[index])
+    .filter((entry): entry is VfsEntry => !!entry)
+
+  const deleteSelection = () => {
+    const targets = selectedEntries()
+    for (const entry of targets) deleteVfsEntry(entry)
+    if (targets.length) selectSingle(Math.max(0, Math.min(selected.value, vfsEntries.value.length - 1)))
+  }
+
+  const onRowClick = (entry: VfsEntry, index: number, event: MouseEvent) => {
+    if (event.ctrlKey || event.metaKey) return toggleSelect(index)
+    if (event.shiftKey) return selectRange(index)
+    selectSingle(index)
+    openVfsEntry(entry)
+  }
+
   // keep the selection in range as the directory's contents change
   watch(vfsEntries, (entries) => {
     if (selected.value >= entries.length) selected.value = Math.max(0, entries.length - 1)
+    // the listing shrank past a selected row — those indices no longer mean
+    // the same entries, so collapse back to the focused one
+    if ([...selectedSet.value].some((index) => index >= entries.length)) selectSingle(selected.value)
   })
-  watch(vfsDir, () => (selected.value = 0))
+  watch(vfsDir, () => selectSingle(0))
 
   const parentDir = () => vfsDir.value.split('/').slice(0, -1).join('/')
 
@@ -183,14 +231,22 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
     if (event.target instanceof HTMLElement && event.target.closest('.files-rename')) return
     const entries = vfsEntries.value
     switch (event.key) {
-      case 'ArrowDown':
+      // plain arrows collapse to a single selection; shift-arrows grow the
+      // range from the anchor (file-manager standard)
+      case 'ArrowDown': {
         event.preventDefault()
-        selected.value = Math.min(selected.value + 1, entries.length - 1)
+        const next = Math.min(selected.value + 1, entries.length - 1)
+        if (event.shiftKey) selectRange(next)
+        else selectSingle(next)
         break
-      case 'ArrowUp':
+      }
+      case 'ArrowUp': {
         event.preventDefault()
-        selected.value = Math.max(selected.value - 1, 0)
+        const next = Math.max(selected.value - 1, 0)
+        if (event.shiftKey) selectRange(next)
+        else selectSingle(next)
         break
+      }
       case 'Enter':
       case 'ArrowRight': {
         event.preventDefault()
@@ -205,48 +261,61 @@ export function useFileExplorer(cb: ExplorerCallbacks) {
           vfsDir.value = parentDir()
         }
         break
-      case 'Delete': {
+      case 'Delete':
         event.preventDefault()
-        const entry = entries[selected.value]
-        if (entry) deleteVfsEntry(entry)
+        deleteSelection()
         break
-      }
     }
   }
 
   // ---- drag to move files/folders between directories ----
-  const dragPath = ref<string | null>(null)
+  const dragPaths = ref<string[]>([])
   const dropTarget = ref<string | null>(null)
 
   const onDragStart = (entry: VfsEntry, event: DragEvent) => {
-    dragPath.value = entryPath(entry.name)
-    event.dataTransfer?.setData('text/plain', dragPath.value)
+    // dragging a row that's part of the selection carries the whole selection;
+    // nested picks collapse into their ancestor so subtrees don't move twice
+    const index = vfsEntries.value.findIndex((candidate) => candidate.name === entry.name)
+    dragPaths.value = selectedSet.value.has(index) && selectedSet.value.size > 1
+      ? pruneNestedPaths(selectedEntries().map((selection) => entryPath(selection.name)))
+      : [entryPath(entry.name)]
+    event.dataTransfer?.setData('text/plain', dragPaths.value.join('\n'))
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
   }
 
   const dropInto = (destDir: string) => {
-    const from = dragPath.value
-    dragPath.value = null
+    const sources = dragPaths.value
+    dragPaths.value = []
     dropTarget.value = null
-    if (!from) return
-    const result = movePath(files.value, from, destDir)
-    if ('error' in result) {
-      actionError.value = result.error
-      return
+    if (!sources.length) return
+    let fs = files.value
+    const origins: string[] = []
+    let firstError = ''
+    for (const from of sources) {
+      const result = movePath(fs, from, destDir)
+      // a multi-drag can include the drop target itself or a name clash —
+      // skip those and still move the rest
+      if ('error' in result) {
+        if (!firstError) firstError = result.error
+        continue
+      }
+      fs = result.files
+      origins.push(...result.origins)
     }
-    files.value = result.files
+    files.value = fs
     // moving site content tombstones its original paths (so a reseed can restore)
-    markSeedsDeleted(result.origins)
-    actionError.value = ''
+    markSeedsDeleted(origins)
+    actionError.value = firstError
+    if (sources.length > 1) selectSingle(Math.max(0, Math.min(selected.value, vfsEntries.value.length - 1)))
   }
 
   return {
     vfsDir, preview, actionError, entryPath,
     deleteVfsEntry,
     fileMenu, renaming, renameValue, renameRef, openFileMenu,
-    menuOpenEntry, menuEdit, menuDelete, properties, menuProperties, menuRename, applyRename,
+    menuOpenEntry, menuEdit, menuDelete, menuCount, properties, menuProperties, menuRename, applyRename,
     switchDir, crumbs, vfsEntries, openVfsEntry,
-    listRef, selected, onListKeydown,
-    dragPath, dropTarget, onDragStart, dropInto
+    listRef, selected, selectedSet, onRowClick, onListKeydown,
+    dragPaths, dropTarget, onDragStart, dropInto
   }
 }

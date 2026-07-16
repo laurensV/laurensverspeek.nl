@@ -236,6 +236,14 @@ export function renamePath(
 }
 
 /**
+ * Drop paths that have an ancestor elsewhere in the list — moving/deleting the
+ * ancestor already carries its whole subtree, so acting on both would double up.
+ */
+export function pruneNestedPaths(paths: string[]): string[] {
+  return paths.filter((path) => !paths.some((other) => other !== path && path.startsWith(`${other}/`)))
+}
+
+/**
  * Move a node (and any subtree) into another directory, keeping its basename.
  * Pure: returns the new map plus the moved source paths (`origins`, for
  * tombstoning site content), or an error string. `destDir` is '' for home.
