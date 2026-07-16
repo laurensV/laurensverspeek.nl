@@ -160,6 +160,18 @@ watch(isOpen, async (open) => {
   }
 }, { immediate: true })
 
+// …but on that lazy first mount the immediate watch runs during setup, where
+// nextTick still resolves before this async component has rendered — the ref is
+// null, focus silently no-ops, and typing/Escape are dead until a second open
+// (the terminal overlay hit the same thing; same fix: poll briefly on mount).
+onMounted(() => {
+  const focusInput = (attempts = 0) => {
+    if (inputRef.value) inputRef.value.focus()
+    else if (attempts < 30) requestAnimationFrame(() => focusInput(attempts + 1))
+  }
+  void nextTick(() => focusInput())
+})
+
 watch(flat, (list) => {
   if (!list.some((a) => a.id === activeId.value)) {
     activeId.value = list[0]?.id ?? ''
