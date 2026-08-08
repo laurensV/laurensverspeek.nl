@@ -56,5 +56,11 @@
     "vitest": "^4.1.10",
     "vue-tsc": "^3.3.6",
     "ws": "^8.21.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.1": true,
+    "unrs-resolver@1.12.2": true,
+    "@parcel/watcher@2.5.6": true
   }
 }
