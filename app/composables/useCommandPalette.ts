@@ -159,6 +159,7 @@ export function useCommandPalette() {
     { id: 'changelog', label: 'Changelog', icon: 'code', section: 'Pages', keywords: 'git history commits updates', perform: () => go('/changelog') },
     { id: 'cv', label: 'CV / Resume', icon: 'file', section: 'Pages', keywords: 'resume curriculum print pdf', perform: () => go('/cv') },
     { id: 'contact', label: 'Contact', icon: 'mail', section: 'Pages', keywords: 'email reach', perform: () => go('/contact') },
+    { id: 'keys', label: 'Public keys', icon: 'terminal', section: 'Pages', keywords: 'pgp ssh gpg fingerprint public key', perform: () => go('/keys') },
     { id: 'museum', label: 'Museum', icon: 'layers', section: 'Pages', keywords: 'exhibits features catalog easter eggs', perform: () => go('/museum') },
     { id: 'keyboard', label: 'Keyboard shortcuts', icon: 'terminal', section: 'Pages', keywords: 'keys shortcuts reference vim chords', perform: () => go('/keyboard') },
     { id: 'stats', label: 'Stats', icon: 'code', section: 'Pages', keywords: 'analytics counters visits traffic', perform: () => go('/stats') },

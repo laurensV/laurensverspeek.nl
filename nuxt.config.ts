@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { pgp } from './app/data/pgp'
+import { pgp, sshKey } from './app/data/pgp'
 
 // baked into the footer's build stamp; the hash links into the terminal's git
 // command. --short=7 is load-bearing, like the changelog's --abbrev=7: plain
@@ -199,7 +199,7 @@ export default defineNuxtConfig({
     prerender: {
       // /desktop is client-only (lvOS), but prerender the shell so a direct hit
       // to the shareable URL gets a real file instead of only the SPA fallback
-      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/time-machine.json', '/contact.vcf', '/resume.json', '/desktop', '/life', '/keyboard', '/status', ...(pgp.publicKey ? ['/pgp.txt'] : [])]
+      routes: ['/sitemap.xml', '/rss.xml', '/git-log.json', '/time-machine.json', '/contact.vcf', '/resume.json', '/desktop', '/life', '/keyboard', '/status', '/keys', ...(pgp.publicKey ? ['/pgp.txt'] : []), ...(sshKey ? ['/ssh.txt'] : [])]
     }
   },
 

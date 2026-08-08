@@ -13,6 +13,13 @@ describe('siteSeeds', () => {
     expect(seeds['readme.md']).toContain('Laurens')
     expect(Object.keys(seeds).some((path) => path.startsWith('projects/') && path.endsWith('.md'))).toBe(true)
   })
+
+  it('seeds ~/.keys with the published public keys', () => {
+    const seeds = siteSeeds()
+    expect(seeds['.keys']).toBeNull()
+    expect(seeds['.keys/pgp.txt']).toContain('BEGIN PGP PUBLIC KEY BLOCK')
+    expect(seeds['.keys/ssh.txt']).toMatch(/^ssh-rsa AAAA/)
+  })
 })
 
 describe('applySeeds / restoreSeeds', () => {

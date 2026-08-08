@@ -636,6 +636,7 @@ export function createMiscCommands(ctx: TerminalContext): Record<string, Termina
             push('primary', `Welcome to ${host}!`)
             out('  * You were already here, but now it feels more official.')
             out(`  * Last login: just now, from your own browser`)
+            link('  * my actual public key lives at /ssh.txt — details on /keys', '/keys')
             muted(`(the prompt now agrees — type 'exit' to disconnect)`)
             sshHost.value = host
             resolve()

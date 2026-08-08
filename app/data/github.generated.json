@@ -1,12 +1,13 @@
 {
-  "generatedAt": "2026-07-15",
+  "generatedAt": "2026-08-08",
   "user": "laurensV",
   "followers": 18,
-  "publicRepos": 49,
+  "publicRepos": 50,
   "totalStars": 22,
   "starsByRepo": {
     "laurensverspeek.nl": 0,
     "laurensV": 0,
+    "bittorrent-protocol": 0,
     "self-coding-website": 1,
     "wallet-standard-vue": 0,
     "solana-standard-vue-example": 0,
@@ -55,92 +56,8 @@
     "NativeApp": 0,
     "TutoraatJava": 1
   },
-  "totalContributions": 2094,
+  "totalContributions": 2762,
   "contributions": [
-    {
-      "date": "2025-07-13",
-      "count": 1
-    },
-    {
-      "date": "2025-07-14",
-      "count": 1
-    },
-    {
-      "date": "2025-07-15",
-      "count": 2
-    },
-    {
-      "date": "2025-07-16",
-      "count": 2
-    },
-    {
-      "date": "2025-07-17",
-      "count": 1
-    },
-    {
-      "date": "2025-07-18",
-      "count": 3
-    },
-    {
-      "date": "2025-07-19",
-      "count": 1
-    },
-    {
-      "date": "2025-07-20",
-      "count": 1
-    },
-    {
-      "date": "2025-07-21",
-      "count": 1
-    },
-    {
-      "date": "2025-07-22",
-      "count": 1
-    },
-    {
-      "date": "2025-07-23",
-      "count": 1
-    },
-    {
-      "date": "2025-07-24",
-      "count": 1
-    },
-    {
-      "date": "2025-07-25",
-      "count": 1
-    },
-    {
-      "date": "2025-07-26",
-      "count": 1
-    },
-    {
-      "date": "2025-07-27",
-      "count": 1
-    },
-    {
-      "date": "2025-07-28",
-      "count": 1
-    },
-    {
-      "date": "2025-07-29",
-      "count": 1
-    },
-    {
-      "date": "2025-07-30",
-      "count": 1
-    },
-    {
-      "date": "2025-07-31",
-      "count": 2
-    },
-    {
-      "date": "2025-08-01",
-      "count": 1
-    },
-    {
-      "date": "2025-08-02",
-      "count": 1
-    },
     {
       "date": "2025-08-03",
       "count": 1
@@ -1479,19 +1396,19 @@
     },
     {
       "date": "2026-07-03",
-      "count": 2
+      "count": 10
     },
     {
       "date": "2026-07-04",
-      "count": 1
+      "count": 27
     },
     {
       "date": "2026-07-05",
-      "count": 1
+      "count": 11
     },
     {
       "date": "2026-07-06",
-      "count": 1
+      "count": 3
     },
     {
       "date": "2026-07-07",
@@ -1528,6 +1445,102 @@
     {
       "date": "2026-07-15",
       "count": 43
+    },
+    {
+      "date": "2026-07-16",
+      "count": 42
+    },
+    {
+      "date": "2026-07-17",
+      "count": 3
+    },
+    {
+      "date": "2026-07-18",
+      "count": 19
+    },
+    {
+      "date": "2026-07-19",
+      "count": 78
+    },
+    {
+      "date": "2026-07-20",
+      "count": 62
+    },
+    {
+      "date": "2026-07-21",
+      "count": 59
+    },
+    {
+      "date": "2026-07-22",
+      "count": 10
+    },
+    {
+      "date": "2026-07-23",
+      "count": 73
+    },
+    {
+      "date": "2026-07-24",
+      "count": 72
+    },
+    {
+      "date": "2026-07-25",
+      "count": 23
+    },
+    {
+      "date": "2026-07-26",
+      "count": 55
+    },
+    {
+      "date": "2026-07-27",
+      "count": 14
+    },
+    {
+      "date": "2026-07-28",
+      "count": 6
+    },
+    {
+      "date": "2026-07-29",
+      "count": 2
+    },
+    {
+      "date": "2026-07-30",
+      "count": 1
+    },
+    {
+      "date": "2026-07-31",
+      "count": 13
+    },
+    {
+      "date": "2026-08-01",
+      "count": 14
+    },
+    {
+      "date": "2026-08-02",
+      "count": 2
+    },
+    {
+      "date": "2026-08-03",
+      "count": 1
+    },
+    {
+      "date": "2026-08-04",
+      "count": 36
+    },
+    {
+      "date": "2026-08-05",
+      "count": 47
+    },
+    {
+      "date": "2026-08-06",
+      "count": 6
+    },
+    {
+      "date": "2026-08-07",
+      "count": 4
+    },
+    {
+      "date": "2026-08-08",
+      "count": 6
     }
   ]
 }

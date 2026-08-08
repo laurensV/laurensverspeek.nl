@@ -33,17 +33,10 @@
         </div>
       </div>
 
-      <p v-if="pgp.fingerprint" class="pgp-line is-family-code is-size-7 mt-4">
-        <button type="button" class="key-cmd" :title="pgpCopied ? 'copied ✓' : 'click to copy — it really works'" @click="copyPgp">$ curl -s https://{{ profile.domain }}/pgp.txt | gpg --import</button>
-        <span class="pgp-fpr">// {{ pgp.fingerprint }}</span>
-        · <a href="/pgp.txt">public key</a>
-        <span v-if="pgpCopied" class="key-copied">copied ✓</span>
-      </p>
-      <p class="ssh-line is-family-code is-size-7 mt-2">
-        ssh key
-        <button type="button" class="key-cmd" :title="sshCopied ? 'copied ✓' : 'click to copy my full ssh public key'" @click="copySsh">{{ sshShort }}</button>
-        · <a href="https://github.com/laurensV.keys" target="_blank" rel="noopener">github</a>
-        <span v-if="sshCopied" class="key-copied">copied ✓</span>
+      <p class="keys-line is-family-code is-size-7 mt-4" data-testid="keys-line">
+        // need my public keys?
+        <NuxtLink to="/keys">pgp &amp; ssh, with fingerprints</NuxtLink>
+        · raw: <a href="/pgp.txt">pgp.txt</a> <a href="/ssh.txt">ssh.txt</a>
       </p>
 
       <details class="vcard-box is-family-code mt-5">
@@ -60,21 +53,6 @@
 
 <script setup lang="ts">
 import { profile } from '~/data/profile'
-import { pgp, sshKey } from '~/data/pgp'
-
-// copyable key commands (recorded in the lvOS clipboard history). The pgp line
-// copies a real, absolute-URL command that works when pasted into a terminal;
-// the ssh line copies the full public key.
-const { copied: pgpCopied, copy: pgpCopyFn } = useCopyFlag()
-const { copied: sshCopied, copy: sshCopyFn } = useCopyFlag()
-const copyPgp = () => pgpCopyFn(`curl -s https://${profile.domain}/pgp.txt | gpg --import`)
-const copySsh = () => sshCopyFn(sshKey)
-const sshShort = computed(() => {
-  const parts = sshKey.split(' ')
-  const type = parts[0] ?? 'ssh-rsa'
-  const body = parts[1] ?? ''
-  return `${type} ${body.slice(0, 12)}…${body.slice(-8)}`
-})
 
 const ogImage = `${SITE_URL}/og/page-contact.png`
 useSeo({
@@ -125,44 +103,12 @@ onUnmounted(() => clearInterval(clock))
   gap: 0.75rem;
 }
 
-.pgp-line,
-.ssh-line {
+.keys-line {
   color: var(--bulma-text-weak);
-
-  .pgp-fpr {
-    letter-spacing: 0.06em;
-  }
 
   a {
     color: var(--bulma-primary-on-scheme);
   }
-}
-
-// the copyable key commands read as text but behave as a button
-.key-cmd {
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-  word-break: break-all;
-
-  // the copy-key affordance measured 203×18 on a phone — pad it into a target
-  @media (pointer: coarse) {
-    padding: 0.6rem 0.2rem;
-  }
-
-  &:hover,
-  &:focus-visible {
-    color: var(--bulma-primary-on-scheme);
-  }
-}
-
-.key-copied {
-  margin-left: 0.4rem;
-  color: var(--bulma-primary-on-scheme);
 }
 
 // status-line style local-time badge

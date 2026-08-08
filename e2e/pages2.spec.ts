@@ -231,14 +231,24 @@ test('/stats explains itself when analytics is not configured', async ({ page })
   await expect(page.locator('.stats-off')).toContainText('analytics is not enabled on this build')
 })
 
-test('the published pgp key is served and surfaced', async ({ page, request }) => {
-  // /pgp.txt is prerendered with the armored public key
-  const body = await (await request.get('/pgp.txt')).text()
-  expect(body).toContain('BEGIN PGP PUBLIC KEY BLOCK')
-  // the contact page shows the fingerprint + import line
+test('the published keys are served and surfaced', async ({ page, request }) => {
+  // /pgp.txt and /ssh.txt are prerendered as plain text
+  const pgpBody = await (await request.get('/pgp.txt')).text()
+  expect(pgpBody).toContain('BEGIN PGP PUBLIC KEY BLOCK')
+  const sshBody = await (await request.get('/ssh.txt')).text()
+  expect(sshBody).toMatch(/^ssh-rsa AAAA/)
+  // trailing newline so `curl >> authorized_keys` doesn't glue keys together
+  expect(sshBody.endsWith('\n')).toBe(true)
+  // the contact page points at /keys and both raw files
   await page.goto('/contact')
-  await expect(page.locator('.pgp-line')).toHaveCount(1)
-  await expect(page.locator('.pgp-line')).toContainText('/pgp.txt')
+  await expect(page.getByTestId('keys-line').locator('a[href="/keys"]')).toHaveCount(1)
+  await expect(page.getByTestId('keys-line')).toContainText('ssh.txt')
+  // /keys shows both cards: fingerprints and labeled copyable commands
+  await page.goto('/keys')
+  await expect(page.getByTestId('pgp-card')).toContainText(/A0B4 BD58/)
+  await expect(page.getByTestId('pgp-card').locator('.kc-cmd').first()).toContainText('gpg --import')
+  await expect(page.getByTestId('ssh-card')).toContainText('SHA256:')
+  await expect(page.getByTestId('ssh-card').locator('.kc-cmd').first()).toContainText('authorized_keys')
   // the hidden gpg command prints the key summary (from home — the contact
   // wizard autofocuses its own input, which would swallow the backtick)
   await page.goto('/')

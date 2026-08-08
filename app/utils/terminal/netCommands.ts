@@ -255,14 +255,15 @@ export function createNetCommands(ctx: TerminalContext): Record<string, Terminal
           // actually "import" the published key — the same one /pgp.txt serves
           const keyid = pgp.fingerprint.replace(/\s+/g, '').slice(-16)
           muted(`gpg: keybox '~/.gnupg/pubring.kbx' created`)
-          out(`gpg: key ${keyid}: public key "${profile.name} <${profile.email}>" imported`)
+          out(`gpg: key ${keyid}: public key "${profile.name} <${pgp.uid}>" imported`)
           out('gpg: Total number processed: 1')
           out('gpg:               imported: 1')
           return
         }
         out(`pub   ${pgp.fingerprint}`)
-        out(`uid   ${profile.name} <${profile.email}>`)
+        out(`uid   ${profile.name} <${pgp.uid}>`)
         ctx.link('the armored key lives at /pgp.txt', '/pgp.txt')
+        ctx.link('fingerprints + the ssh key: /keys', '/keys')
       }
     }
   }

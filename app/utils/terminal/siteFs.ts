@@ -13,6 +13,7 @@ import { storageGetJson, storageSetJson, isStringArray } from '~/utils/safeStora
 import { reportStorageWrite } from '~/utils/terminal/storageHealth'
 import { profile } from '~/data/profile'
 import { projects } from '~/data/projects'
+import { pgp, sshKey } from '~/data/pgp'
 
 /** A seed: file content, or null for a directory. */
 export type SeedMap = Record<string, string | null>
@@ -203,6 +204,12 @@ export function siteSeeds(): SeedMap {
     'this is the terminal, so you get the plain-text version: see resume.txt',
     'the real pdf lives at /laurens-verspeek-resume.pdf'
   ].join('\n')
+
+  // ~/.keys — the published public keys, same bytes as /pgp.txt and /ssh.txt
+  // (the /keys page's `ls ~/.keys` overline is a real command)
+  seeds['.keys'] = null
+  seeds['.keys/pgp.txt'] = pgp.publicKey
+  seeds['.keys/ssh.txt'] = sshKey
 
   // ~/contact
   seeds['contact'] = null

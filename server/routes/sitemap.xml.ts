@@ -25,6 +25,7 @@ const PAGE_SOURCES: Record<string, string[]> = {
   '/about': ['app/pages/about.vue', 'app/data/profile.ts'],
   '/cv': ['app/pages/cv.vue', 'app/data/profile.ts'],
   '/contact': ['app/pages/contact.vue'],
+  '/keys': ['app/pages/keys.vue', 'app/data/pgp.ts'],
   '/life': ['app/pages/life.vue'],
   '/desktop': ['app/pages/desktop.vue'],
   '/changelog': ['app/pages/changelog.vue'],

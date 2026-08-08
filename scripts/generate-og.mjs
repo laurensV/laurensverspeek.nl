@@ -112,6 +112,7 @@ const PAGES = [
   ['projects', 'ls ~/projects', 'Projects', 'Work, sides and experiments — from decentralized compute to self-coding websites.'],
   ['blog', 'ls ~/blog', 'Blog', 'Code, blockchain and website experiments, written up.'],
   ['contact', './contact.sh', 'Contact', 'Run the wizard, scan the QR, or just send a plain email.'],
+  ['keys', 'cat ~/.keys/*', 'Public keys', 'PGP and SSH public keys — fingerprints, raw files and one-line import commands.'],
   ['changelog', 'git log', 'Changelog', 'The living history of this site — real commits, baked at build time.'],
   ['stats', 'cat /proc/stats', 'Stats', 'Public, cookie-free visitor counters for the whole site.'],
   ['cv', 'less resume.pdf', 'Curriculum Vitae', 'Printable resume of Laurens Verspeek.'],

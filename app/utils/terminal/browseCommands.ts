@@ -5,7 +5,7 @@ import { searchSections } from '~/utils/terminal/search'
 import { postSlug, postSlugCandidates, createPostTools } from '~/utils/terminal/postHelpers'
 
 // pages cd used to warp to; now `goto` does, plus the deeper cuts
-const GOTO_PAGES: string[] = [...PAGES, 'stats', 'changelog', 'museum', 'life', 'world', 'desktop', 'keyboard', 'status']
+const GOTO_PAGES: string[] = [...PAGES, 'stats', 'changelog', 'museum', 'life', 'world', 'desktop', 'keyboard', 'status', 'keys']
 
 // Commands for browsing the site's content: projects, blog posts, search.
 
