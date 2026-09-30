@@ -81,6 +81,8 @@ test('dragging a window to a corner snaps it to a quadrant', async ({ page }) =>
 test('windows resize from an edge handle (not just the corner)', async ({ page }) => {
   await bootDesktop(page)
   const win = page.locator('.lvos-window').first()
+  // let the scale-in open animation settle, or the "before" box is mid-scale
+  await win.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)))
   const before = await win.boundingBox()
   if (!before) throw new Error('no window')
   const handle = win.locator('.lvos-resize.is-e')

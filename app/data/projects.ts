@@ -92,6 +92,44 @@ export const projects: Project[] = [
     ],
   },
   {
+    slug: "spaarradar",
+    title: "Spaarradar",
+    description:
+      "Dutch savings-rate comparison: every savings account and deposit you can open from the Netherlands, fresh rates with visible sources, and the real yield calculated for your amount.",
+    category: "hobby",
+    tech: ["Next.js", "TypeScript", "PostgreSQL", "Drizzle"],
+    thumbnail: "/img/projects/spaarradar.png",
+    thumbnailHover: "/img/projects/spaarradar-hover.png",
+    url: "https://spaarradar.nl",
+    featured: true,
+    year: "2026 — now",
+    role: "Creator",
+    story: [
+      "Comparing savings rates in the Netherlands is surprisingly hard: most comparison sites miss half the market, show stale rates, and quote a headline percentage that you never actually earn once tiers, caps, promotions and fees kick in. Spaarradar is my attempt to do it properly.",
+      "It covers the direct banks plus every Raisin partner bank, and a background worker scrapes each source on its own schedule, so every rate carries its provenance and the date it was last seen. The calculation engine (decimal.js, no floating-point money) works out the effective yield for your amount and term, and a strict deposit-guarantee rule means only offers with a verified European DGS make it into the public comparison.",
+      "Beyond the comparison there is a rate history per product, a weekly overview of what moved, an ECB-rate tracker going back to 2008 and a deposit-ladder planner. Every filter is a URL parameter, so every view is shareable.",
+    ],
+  },
+  {
+    slug: "countryduel",
+    title: "CountryDuel",
+    description:
+      "Explore the world through comparisons: pick two countries and every statistic gets a visual that fits it, from real-scale silhouettes to crowds of people, each with its source and year.",
+    category: "hobby",
+    tech: ["SvelteKit", "TypeScript", "D3", "Node.js"],
+    thumbnail: "/img/projects/countryduel.png",
+    thumbnailHover: "/img/projects/countryduel-hover.png",
+    url: "https://countryduel.com",
+    featured: true,
+    year: "2026 — now",
+    role: "Creator",
+    story: [
+      'CountryDuel puts two countries side by side and makes the numbers tangible. It shows that the Netherlands fits inside the United States 237 times by stacking real-scale silhouettes, not with a bar chart. Every metric gets a visual that fits its unit: people standing next to each other for height, crowds for population, a cube of gas next to a house for CO₂.',
+      "A data pipeline pulls from the World Bank, Our World in Data and the CIA Factbook, validates everything and writes immutable, versioned releases that the static SvelteKit site bakes in at build time. Every value carries its source and reference year, and the site never crowns a winner: there is no \"X wins 7–3\", just honest wording.",
+      "Around the duels there are rankings, an interactive world map, per-country profiles and a higher-or-lower game built from the same facts. The whole thing is fully static on GitHub Pages and installable as a PWA.",
+    ],
+  },
+  {
     slug: "self-coding-website",
     title: "Self-Coding Website",
     description:
