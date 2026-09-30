@@ -14,7 +14,7 @@ export interface Project {
   source?: string;
   /** Link to the live project */
   url?: string;
-  /** Featured projects are shown on the home page */
+  /** Featured projects are shown on the home page (max 3) */
   featured?: boolean;
   /** Years the project was active, e.g. '2021 — now' */
   year?: string;
@@ -65,7 +65,6 @@ export const projects: Project[] = [
     thumbnail: "/img/projects/effect-ai.png",
     source: "http://github.com/effectai",
     url: "https://effect.ai",
-    featured: true,
     year: "2017 — now",
     role: "Co-founder",
     story: [
@@ -140,7 +139,6 @@ export const projects: Project[] = [
     thumbnailHover: "/img/projects/self-coding-website-hover.webm",
     source: "https://github.com/laurensV/self-coding-website",
     url: "https://laurensv.github.io/self-coding-website/",
-    featured: true,
     year: "2021",
     role: "Creator",
     story: [
